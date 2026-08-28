@@ -1,0 +1,84 @@
+======================================================================
+BENCHMARK COMPARISON: AAD vs BUMP-AND-REPRICE
+======================================================================
+Generated: 2026-08-28 06:36:28
+
+1. BLACK-SCHOLES TIMING
+----------------------------------------------------------------------
+  Averaged over 1000 runs:
+  Method                     Time (ms)   Pricings   Greeks
+  -----------------------------------------------------
+  Single pricing                0.0004          1        0
+  AAD (forward+backward)        0.0161          1        4
+  Bump-and-reprice              0.0046         11        5
+
+  AAD overhead vs single pricing: 36.9x
+  Bump overhead vs single pricing: 10.5x
+  AAD speedup vs bump-and-reprice: 0.3x
+
+
+2. HESTON-COS TIMING
+----------------------------------------------------------------------
+  Averaged over 100 runs (N=128):
+  Method                     Time (ms)   Pricings   Greeks
+  -----------------------------------------------------
+  Single pricing                0.3105          1        0
+  AAD (forward+backward)       19.2276          1        7
+  Bump-and-reprice              5.4664         15        7
+
+  AAD overhead: 61.9x single pricing
+  Bump overhead: 17.6x single pricing
+  AAD speedup vs bump: 0.3x
+  Tape size: 18184 entries
+
+
+3. ACCURACY COMPARISON
+----------------------------------------------------------------------
+  BS Greeks — Error vs Closed-Form:
+  Greek            AAD Error      Bump Error   AAD Advantage
+  -------------------------------------------------------
+  Delta             0.00e+00        1.12e-11             infx
+  Vega              0.00e+00        7.69e-10             infx
+  Theta             0.00e+00        5.28e-10             infx
+  Rho               0.00e+00        4.24e-10             infx
+
+
+4. SCALING ANALYSIS (Why AAD Wins)
+----------------------------------------------------------------------
+
+  Number of Greeks (n) vs Computation Cost:
+
+      n        AAD Cost       Bump Cost   AAD Advantage
+  --------------------------------------------------
+      1             ~2x             ~3x              2x
+      2             ~2x             ~5x              2x
+      5             ~2x            ~11x              6x
+      7             ~2x            ~15x              8x
+     10             ~2x            ~21x             10x
+     20             ~2x            ~41x             20x
+     50             ~2x           ~101x             50x
+    100             ~2x           ~201x            100x
+
+  Key insight: AAD cost is O(1) with respect to number of Greeks.
+  Bump-and-reprice cost is O(n).
+  For Heston (n=7), AAD is ~7.5x more efficient in theory.
+  For large portfolios with many risk factors, the advantage is massive.
+
+
+5. HARDWARE PROJECTION
+----------------------------------------------------------------------
+
+  Estimated FPGA performance (based on Weiss et al. reference):
+
+  Metric                             Bump-and-Reprice         AAD Pipeline
+  ----------------------------------------------------------------------
+  Forward pricings needed                          15                    1
+  Backward passes needed                            0                    1
+  Total pipeline passes                            15                    2
+  Relative latency                                15x                ~2-3x
+  Latency advantage                          baseline           ~6x faster
+
+  Note: The AAD backward pass has similar complexity to the forward pass
+  (same number of operations, but in reverse with accumulation).
+  The 2-3x estimate accounts for forward + backward + tape storage overhead.
+

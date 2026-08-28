@@ -1,0 +1,42 @@
+======================================================================
+CORRECTNESS VALIDATION REPORT
+======================================================================
+Generated: 2026-08-28 06:36:25
+
+1. AAD ENGINE PRIMITIVES
+----------------------------------------------------------------------
+  [PASS] f=x*y+sin(x)                    max_err=0.00e+00
+  [PASS] f=x*y+sin(x)                    max_err=0.00e+00
+  [PASS] f=x*y+sin(x)                    max_err=0.00e+00
+  [PASS] f=exp(log(x))                   max_err=0.00e+00
+  [PASS] f=x^3                           max_err=0.00e+00
+
+2. BLACK-SCHOLES PRICING + GREEKS
+----------------------------------------------------------------------
+  [PASS] BS call S=100 K=105 T=0.5                 max_err=0.00e+00
+  [PASS] BS call S=100 K=80 T=1.0                  max_err=8.88e-16
+  [PASS] BS call S=100 K=120 T=1.0                 max_err=0.00e+00
+  [PASS] BS call S=100 K=100 T=0.01                max_err=0.00e+00
+  [PASS] BS put S=100 K=100 T=2.0                  max_err=4.26e-14
+  [PASS] BS put S=50 K=60 T=0.5                    max_err=1.11e-16
+  [PASS] BS call S=200 K=180 T=0.25                max_err=7.11e-15
+  [PASS] BS put S=100 K=100 T=5.0                  max_err=8.53e-14
+
+3. HESTON-COS PRICING + GREEKS
+----------------------------------------------------------------------
+  [PASS] Heston S=100 K=100 v0=0.04                max_rel_err=1.13e-09
+  [PASS] Heston S=100 K=120 v0=0.09                max_rel_err=2.23e-07
+  [PASS] Heston S=100 K=80 v0=0.01                 max_rel_err=3.41e-08
+  [PASS] Heston S=50 K=60 v0=0.16                  max_rel_err=1.78e-02
+
+4. CROSS-VALIDATION: HESTON -> BS LIMIT
+----------------------------------------------------------------------
+  [PASS] BS price = 10.450584, Heston price = 10.450581, rel_err = 2.02e-07
+
+======================================================================
+VALIDATION SUMMARY
+======================================================================
+
+Total: 18 PASSED, 0 FAILED, 18 total
+
+ALL VALIDATION CHECKS PASSED!
