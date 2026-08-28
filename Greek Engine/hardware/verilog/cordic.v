@@ -43,7 +43,7 @@ module cordic #(
     
     initial begin
         // atan(2^0)  = 0.7853981634 rad
-        atan_table[ 0] = 32'sd0_0C90FDAA >> (28 - AF); // Adjusted for AF
+        // atan_table[ 0] = 32'sd0_0C90FDAA >> (28 - AF); // Adjusted for AF
         // For AF=28, these are pre-computed atan(2^-i) * 2^28
         atan_table[ 0] = (AF >= 28) ? 32'sh0C90FDAA : (32'sh0C90FDAA >> (28 - AF));
         atan_table[ 1] = (AF >= 28) ? 32'sh076B19C2 : (32'sh076B19C2 >> (28 - AF));
