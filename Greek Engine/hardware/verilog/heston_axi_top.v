@@ -29,18 +29,34 @@ module heston_axi_top #(
     output wire        m_axis_tlast
 );
 
-    // Unpack input data
-    wire signed [WL-1:0] S0    = s_axis_tdata[31:0];
-    wire signed [WL-1:0] K     = s_axis_tdata[63:32];
-    wire signed [WL-1:0] T     = s_axis_tdata[95:64];
-    wire signed [WL-1:0] r     = s_axis_tdata[127:96];
-    wire signed [WL-1:0] v0    = s_axis_tdata[159:128];
-    wire signed [WL-1:0] kappa = s_axis_tdata[191:160];
-    wire signed [WL-1:0] theta = s_axis_tdata[223:192];
-    wire signed [WL-1:0] xi    = s_axis_tdata[255:224];
-    wire signed [WL-1:0] rho   = s_axis_tdata[287:256];
-    wire                 is_call = s_axis_tdata[288];
-    
+    // Unpack input data. NOTE: is_call now occupies its own full 32-bit
+    // aligned lane ([319:288]) rather than a single stray bit at [288] —
+    // that matches this module's own documented "10 parameters * 32 bits
+    // = 320 bits" layout above, whereas the single-bit packing left bits
+    // [319:289] as unexplained padding and put is_call in a position no
+    // AXI master built to the documented layout would expect.
+    wire signed [WL-1:0] S0_w    = s_axis_tdata[31:0];
+    wire signed [WL-1:0] K_w     = s_axis_tdata[63:32];
+    wire signed [WL-1:0] T_w     = s_axis_tdata[95:64];
+    wire signed [WL-1:0] r_w     = s_axis_tdata[127:96];
+    wire signed [WL-1:0] v0_w    = s_axis_tdata[159:128];
+    wire signed [WL-1:0] kappa_w = s_axis_tdata[191:160];
+    wire signed [WL-1:0] theta_w = s_axis_tdata[223:192];
+    wire signed [WL-1:0] xi_w    = s_axis_tdata[255:224];
+    wire signed [WL-1:0] rho_w   = s_axis_tdata[287:256];
+    wire                 is_call_w = s_axis_tdata[288];
+
+    // NOTE: latched into registers on the transfer edge (s_axis_tvalid &&
+    // s_axis_tready), rather than wiring the engine straight off
+    // s_axis_tdata — AXI-Stream lets the master change tdata as soon as
+    // the transfer completes (tvalid && tready), but the engine underneath
+    // is a many-hundred-thousand-cycle multi-stage pipeline that keeps
+    // referencing these signals for its *entire* run, not just at the
+    // moment `start` pulses, so leaving them as live combinational wires
+    // let the master silently corrupt an in-flight computation.
+    reg signed [WL-1:0] S0, K, T, r, v0, kappa, theta, xi, rho;
+    reg                 is_call;
+
     // Core engine interface
     reg  engine_start;
     wire engine_done;
@@ -100,6 +116,16 @@ module heston_axi_top #(
             case (state)
                 S_IDLE: begin
                     if (s_axis_tvalid) begin
+                        // s_axis_tready is asserted throughout S_IDLE (see
+                        // the assign below), so tvalid here is exactly the
+                        // AXI-Stream transfer condition (tvalid && tready)
+                        // — latch the whole parameter vector now, since
+                        // s_axis_tdata is only guaranteed valid up to and
+                        // including this cycle.
+                        S0    <= S0_w;    K     <= K_w;     T   <= T_w;
+                        r     <= r_w;     v0    <= v0_w;
+                        kappa <= kappa_w; theta <= theta_w; xi  <= xi_w;
+                        rho   <= rho_w;   is_call <= is_call_w;
                         engine_start <= 1'b1;
                         state <= S_BUSY;
                     end

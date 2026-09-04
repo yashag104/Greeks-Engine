@@ -10,7 +10,7 @@ module heston_forward_tb;
     reg clk;
     reg rst;
     reg start;
-    
+
     // Model parameters
     reg signed [WL-1:0] S0, K, T, r, v0, kappa, theta, xi, rho;
     reg is_call;
@@ -18,7 +18,7 @@ module heston_forward_tb;
     // Outputs
     wire signed [WL-1:0] price;
     wire done;
-    
+
     // Tape write interface monitor
     wire tape_we;
     wire [15:0] tape_addr;
@@ -48,13 +48,21 @@ module heston_forward_tb;
         forever #5 clk = ~clk;
     end
 
+    function real q16(input signed [WL-1:0] v);
+        q16 = v / 65536.0;
+    endfunction
+
     // Test sequence
     initial begin
         // Initialize Inputs
         rst = 1;
         start = 0;
-        
-        // Example Parameters in Q16
+
+        // Example Parameters in Q16 — matches
+        // hardware/matlab/heston_top_level.m's own defaults, and the
+        // reference price below was computed with
+        // hardware/matlab/heston_cos_forward_core.m's own chi_func/
+        // psi_func/eval_char formulas (N_TERMS=128, L=10 truncation).
         S0    = 32'h0064_0000; // 100.0
         K     = 32'h0064_0000; // 100.0
         T     = 32'h0001_0000; // 1.0
@@ -70,20 +78,18 @@ module heston_forward_tb;
         #100;
         rst = 0;
         #10;
-        
+
         $display("Starting Heston COS Forward Pass...");
         start = 1;
         #10;
         start = 0;
-        
+
         wait(done);
         #10;
-        
+
         $display("Forward Pass Completed.");
-        $display("Calculated Price (Q16): %h", price);
-        
-        // TODO: Add $fopen / $fscanf to read MATLAB test vectors and compare.
+        $display("Calculated Price = %f (expect ~10.387139, N=128 COS reference)", q16(price));
         $finish;
     end
-      
+
 endmodule

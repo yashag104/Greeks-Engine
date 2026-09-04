@@ -26,20 +26,39 @@ module fp_log #(
     localparam IL = WL - FL;
 
     // ln(2) in Q(IL, FL)
-    wire signed [WL-1:0] LN2 = $signed( (0.6931471805599453 * (2.0**FL)) );
+    // NOTE: $signed() requires an integer/vector argument, not a `real` — the
+    // real-valued constant expression must be rounded to an integer with
+    // $rtoi() first (real args to $signed produced an elaboration error).
+    // $rtoi returns a 32-bit *signed* integer, though, so computing it
+    // directly at (2.0**FL) overflows/wraps for FL >= ~31 (e.g. this module
+    // is instantiated with FL=32 inside complex_log.v). Instead, round at
+    // min(FL,16) fractional bits — comfortably inside $rtoi's 32-bit range
+    // for any real FL used in this design — and left-shift the rest of the
+    // way when FL > 16 (that's exact: it just appends zero fractional
+    // bits, not a further rounding step).
+    wire signed [WL-1:0] LN2 = (FL <= 16)
+        ? $signed( $rtoi(0.6931471805599453 * (2.0**FL)) )
+        : $signed( $rtoi(0.6931471805599453 * (2.0**16)) ) <<< (FL-16);
 
     // Polynomial coefficients for ln(1+t) where t = m - 1, t ∈ [0, 1)
     // ln(1+t) ≈ t - t²/2 + t³/3 - t⁴/4 + t⁵/5
     // Using Horner's form: t*(1 + t*(-1/2 + t*(1/3 + t*(-1/4 + t*(1/5)))))
-    wire signed [WL-1:0] P5 = $signed( ( 0.2               * (2.0**FL)) ); //  1/5
-    wire signed [WL-1:0] P4 = $signed( (-0.25              * (2.0**FL)) ); // -1/4
-    wire signed [WL-1:0] P3 = $signed( ( 0.3333333333       * (2.0**FL)) ); //  1/3
-    wire signed [WL-1:0] P2 = $signed( (-0.5               * (2.0**FL)) ); // -1/2
-    wire signed [WL-1:0] P1 = $signed( ( 1.0               * (2.0**FL)) ); //  1
+    wire signed [WL-1:0] P5 = (FL <= 16) ? $signed( $rtoi( 0.2              * (2.0**FL)) ) : $signed( $rtoi( 0.2              * (2.0**16)) ) <<< (FL-16); //  1/5
+    wire signed [WL-1:0] P4 = (FL <= 16) ? $signed( $rtoi(-0.25             * (2.0**FL)) ) : $signed( $rtoi(-0.25             * (2.0**16)) ) <<< (FL-16); // -1/4
+    wire signed [WL-1:0] P3 = (FL <= 16) ? $signed( $rtoi( 0.3333333333     * (2.0**FL)) ) : $signed( $rtoi( 0.3333333333     * (2.0**16)) ) <<< (FL-16); //  1/3
+    wire signed [WL-1:0] P2 = (FL <= 16) ? $signed( $rtoi(-0.5              * (2.0**FL)) ) : $signed( $rtoi(-0.5              * (2.0**16)) ) <<< (FL-16); // -1/2
+    wire signed [WL-1:0] P1 = (FL <= 16) ? $signed( $rtoi( 1.0              * (2.0**FL)) ) : $signed( $rtoi( 1.0              * (2.0**16)) ) <<< (FL-16); //  1
+
+    // sqrt(2) - 1, in Q(IL,FL) — the rebalancing threshold used in
+    // S_RESCALE below.
+    wire signed [WL-1:0] SQRT2_M1 = (FL <= 16)
+        ? $signed( $rtoi(0.41421356237309515 * (2.0**FL)) )
+        : $signed( $rtoi(0.41421356237309515 * (2.0**16)) ) <<< (FL-16);
 
     // FSM
     localparam S_IDLE      = 4'd0;
     localparam S_NORMALIZE = 4'd1;
+    localparam S_RESCALE   = 4'd9;
     localparam S_HORNER    = 4'd2;
     localparam S_MUL       = 4'd3;
     localparam S_ADD       = 4'd4;
@@ -104,6 +123,24 @@ module fp_log #(
                         t_val <= (x << (FL - (WL - 1 - lzc))) - (1 << FL);
                     end
                     
+                    state <= S_RESCALE;
+                end
+
+                // ln(1+t) is only computed via a 5-term truncated Taylor
+                // series below, which is accurate for small |t| but has
+                // very large error as t approaches 1 (m approaches 2) —
+                // e.g. for m=1.9 the 5-term series is off by ~8%. Rebalance
+                // any m > sqrt(2) down into [sqrt(2)/2, sqrt(2)] (t into
+                // roughly [-0.293, 0.414]) by halving m and bumping k,
+                // which keeps the series' worst-case error an order of
+                // magnitude smaller across the whole [1,2) input range.
+                S_RESCALE: begin
+                    if (t_val > SQRT2_M1) begin
+                        // m_new = m/2  =>  t_new = (m-1-1)/2 = (t_val-ONE)/2
+                        t_val <= (t_val - (1 <<< FL)) >>> 1;
+                        k_val <= k_val + 1'b1;
+                    end
+
                     // Start Horner's method with innermost coefficient
                     accum     <= P5;
                     poly_step <= 3; // 4 multiply-add steps remaining

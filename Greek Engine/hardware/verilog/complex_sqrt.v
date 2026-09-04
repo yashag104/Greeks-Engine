@@ -47,6 +47,12 @@ module complex_sqrt #(
     reg signed [2*WL-1:0] wide_prod;
     reg signed [WL-1:0] re_arg, im_arg;
 
+    // NOTE: hoisted out of the nested begin/end block in S_MAG_SQ below —
+    // declaring locals inside a nested unnamed begin/end block requires
+    // SystemVerilog; plain Verilog only allows declarations at the top of a
+    // module or named block.
+    reg signed [2*WL-1:0] p1, p2;
+
     // Shared sqrt instance
     fp_sqrt #(.WL(WL), .FL(FL)) sqrt_inst (
         .clk(clk), .rst(rst),
@@ -72,12 +78,9 @@ module complex_sqrt #(
 
                 S_MAG_SQ: begin
                     // Compute a² + b²
-                    begin
-                        reg signed [2*WL-1:0] p1, p2;
-                        p1 = $signed(a_r) * $signed(a_r);
-                        p2 = $signed(a_i) * $signed(a_i);
-                        sqrt_input <= (p1 + p2) >>> FL; // Truncate back to WL
-                    end
+                    p1 = $signed(a_r) * $signed(a_r);
+                    p2 = $signed(a_i) * $signed(a_i);
+                    sqrt_input <= (p1 + p2) >>> FL; // Truncate back to WL
                     sqrt_start <= 1'b1;
                     state      <= S_WAIT_MAG;
                 end

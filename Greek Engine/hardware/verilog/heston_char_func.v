@@ -75,9 +75,18 @@ module heston_char_func #(
     localparam S_PHI         = 5'd21;  // phi = exp(exponent)
     localparam S_WAIT_PHI    = 5'd22;
     localparam S_DONE        = 5'd23;
+    // D-term states (kappa*theta/xi^2, num/xi^2, (1-edT)/(1-g*edT), and
+    // their product) — inserted between S_C_D and S_EXPONENT.
+    localparam S_KTH_XI2      = 5'd24;
+    localparam S_KTH_XI2_WAIT = 5'd25;
+    localparam S_NXI2         = 5'd26;
+    localparam S_NXI2_WAIT    = 5'd27;
+    localparam S_OME_DR       = 5'd28;
+    localparam S_DR_WAIT      = 5'd29;
+    localparam S_DMUL         = 5'd30;
+    localparam S_DMUL_WAIT    = 5'd31;
 
     reg [4:0] state;
-    reg [15:0] tape_base_addr;
 
     // Working registers — all complex (real, imag pairs)
     reg signed [WL-1:0] rho_xi_val;     // rho * xi (real scalar)
@@ -100,9 +109,33 @@ module heston_char_func #(
     reg signed [WL-1:0] D_r, D_i;
     reg signed [WL-1:0] exponent_r, exponent_i;
 
+    // D-term intermediates: nxi2 = num/xi^2 (complex/real), dr = (1-edT)/(1-g*edT)
+    reg signed [WL-1:0] nxi2_r, nxi2_i;
+    reg signed [WL-1:0] ome_r, ome_i;       // 1 - exp(-dT)
+    reg signed [WL-1:0] dr_r, dr_i;
+    reg signed [WL-1:0] kth_xi2;            // kappa*theta/xi^2
+    reg signed [WL-1:0] numT_r, numT_i;     // num*T (real & imag), reused by C_r/C_i
+
     reg signed [2*WL-1:0] wp1, wp2, wp3, wp4; // Wide product temps
 
-    wire signed [WL-1:0] ONE = $signed( (1.0 * (2.0**FL)) );
+    // NOTE: hoisted out of nested begin/end blocks further down (each was a
+    // SystemVerilog-only construct — plain Verilog only allows declarations
+    // at the top of a module or a *named* block, not a nested unnamed one).
+    reg signed [2*WL-1:0] xi2_u2, kt, ruT;
+
+    // NOTE: $signed() requires an integer/vector argument, not a `real` —
+    // the real-valued constant expression must be rounded to an integer
+    // with $rtoi() first (real args to $signed produced an elaboration
+    // error). $rtoi returns a 32-bit *signed* integer, though, so
+    // computing it directly at (2.0**FL) overflows/wraps for FL >= ~31
+    // (this module defaults to FL=32). Instead, round at min(FL,16)
+    // fractional bits — comfortably inside $rtoi's 32-bit range for any
+    // real FL used in this design — and left-shift the rest of the way
+    // when FL > 16 (exact: it just appends zero fractional bits, not a
+    // further rounding step).
+    wire signed [WL-1:0] ONE = (FL <= 16)
+        ? $signed( $rtoi(1.0 * (2.0**FL)) )
+        : $signed( $rtoi(1.0 * (2.0**16)) ) <<< (FL-16);
 
     // Sub-module instances
     // Complex sqrt
@@ -176,6 +209,20 @@ module heston_char_func #(
         .done(clog_done)
     );
 
+    // Real divider — used for kappa*theta/xi^2 (a real/real division that
+    // doesn't need the full complex divider above).
+    reg fdiv_start;
+    reg [WL-1:0] fdiv_a, fdiv_b;
+    wire [WL-1:0] fdiv_result;
+    wire fdiv_ready;
+
+    fp_div #(.WL(WL), .FL(FL)) fdiv_inst (
+        .clk(clk), .rst(rst),
+        .a(fdiv_a), .b(fdiv_b), .start(fdiv_start),
+        .result(fdiv_result), .ready(fdiv_ready),
+        .divide_by_zero(), .overflow()
+    );
+
     // ==================================================================
     // Main FSM
     // ==================================================================
@@ -191,12 +238,18 @@ module heston_char_func #(
             cexp_start  <= 1'b0;
             cmul_valid  <= 1'b0;
             clog_start  <= 1'b0;
+            fdiv_start  <= 1'b0;
 
             case (state)
                 S_IDLE: begin
                     done <= 1'b0;
+                    // NOTE: this module's tape_* ports are not currently
+                    // wired up by its only caller (heston_cos_forward.v
+                    // leaves them unconnected) — per-term AAD through the
+                    // characteristic function isn't attempted; Heston
+                    // Greeks are instead computed by bump-and-reprice in
+                    // heston_reverse_pass.v. tape_we simply stays 0.
                     if (start) begin
-                        tape_base_addr <= tape_addr;
                         state <= S_RHO_XI;
                     end
                 end
@@ -229,13 +282,10 @@ module heston_char_func #(
                     // under_sqrt = term1² + xi²*(u² + iu)
                     // xi²*u² (real)
                     wp4 = $signed(xi_sq) * $signed(u_in);
-                    begin
-                        reg signed [2*WL-1:0] xi2_u2;
-                        xi2_u2 = (wp4 >>> FL) * $signed(u_in);  // xi²*u²
-                        
-                        under_sqrt_r <= ((wp1 - wp2) >>> FL) + (xi2_u2 >>> FL);
-                        under_sqrt_i <= (2 * (wp3 >>> FL)) + (wp4 >>> FL); // +xi²*u
-                    end
+                    xi2_u2 = (wp4 >>> FL) * $signed(u_in);  // xi²*u²
+
+                    under_sqrt_r <= ((wp1 - wp2) >>> FL) + (xi2_u2 >>> FL);
+                    under_sqrt_i <= (2 * (wp3 >>> FL)) + (wp4 >>> FL); // +xi²*u
                     state <= S_D;
                 end
 
@@ -350,46 +400,102 @@ module heston_char_func #(
                 end
 
                 // ---- Step 11: Compute C and D ----
+                // C_r = kth_xi2 * (num_r*T - 2*log_ratio_r)
+                // C_i = r*u*T + kth_xi2 * (num_i*T - 2*log_ratio_i)
+                // D   = (num/xi²) * (1-edT) / (1-g*edT)
                 S_C_D: begin
-                    // kappa*theta / xi²
-                    begin
-                        reg signed [2*WL-1:0] kt;
-                        kt = $signed(kappa_in) * $signed(theta_in);
-                        // Divide by xi² — use iterative approach
-                        // For now, pre-compute as multiply by 1/xi²
-                        // In full pipeline, use fp_div
+                    kt = $signed(kappa_in) * $signed(theta_in);
+                    fdiv_a <= kt >>> FL;
+                    fdiv_b <= xi_sq;
+                    fdiv_start <= 1'b1;
+
+                    // NOTE: route through the wide (2*WL-bit) wp1/wp2 temps
+                    // rather than computing `($signed(a)*$signed(b))>>>FL`
+                    // directly — a raw multiply's self-determined width is
+                    // the max of its *operand* widths (both WL bits here),
+                    // not the width of whatever it's eventually assigned
+                    // to, so at this module's WL=64/FL=32 the product of
+                    // two ordinary O(1)-valued operands (each ~2^32 raw)
+                    // is ~2^64 and silently overflows a WL-bit-wide result
+                    // before the shift ever runs.
+                    wp1 = $signed(num_r) * $signed(T_in);
+                    wp2 = $signed(num_i) * $signed(T_in);
+                    numT_r <= wp1 >>> FL;
+                    numT_i <= wp2 >>> FL;
+
+                    ruT = $signed(r_in) * $signed(u_in);
+                    C_i  <= (((ruT >>> FL) * $signed(T_in)) >>> FL); // r*u*T (D_i term added below)
+
+                    state <= S_KTH_XI2_WAIT;
+                end
+
+                S_KTH_XI2_WAIT: begin
+                    if (fdiv_ready) begin
+                        kth_xi2 <= fdiv_result;
+                        state <= S_KTH_XI2;
                     end
-                    
-                    // C_r = (kappa*theta/xi²) * (num_r*T - 2*log_ratio_r)
-                    // C_i = r*u*T + (kappa*theta/xi²) * (num_i*T - 2*log_ratio_i)
-                    begin
-                        reg signed [2*WL-1:0] numT_r, numT_i, p_kt_xi2;
-                        numT_r = $signed(num_r) * $signed(T_in);
-                        numT_i = $signed(num_i) * $signed(T_in);
-                        
-                        p_kt_xi2 = $signed(kappa_in) * $signed(theta_in);
-                        // Note: division by xi² requires fp_div. Using behavioral here.
-                        // In synthesis, replace with a divider instance.
-                        
-                        C_r <= 0; // Placeholder — needs div by xi²
-                        
-                        // C_i = r*u*T + kth_xi2 * (num_i*T - 2*lr_i)
-                        begin
-                            reg signed [2*WL-1:0] ruT;
-                            ruT = $signed(r_in) * $signed(u_in);
-                            C_i <= (ruT >>> FL) * $signed(T_in) >>> FL; // r*u*T
-                        end
+                end
+
+                S_KTH_XI2: begin
+                    // C_r = kth_xi2 * (numT_r - 2*log_ratio_r)
+                    // C_i = (r*u*T) + kth_xi2 * (numT_i - 2*log_ratio_i)
+                    wp1 = $signed(kth_xi2) * (numT_r - (log_ratio_r <<< 1));
+                    wp2 = $signed(kth_xi2) * (numT_i - (log_ratio_i <<< 1));
+                    C_r <= wp1 >>> FL;
+                    C_i <= C_i + (wp2 >>> FL);
+
+                    // Kick off D: nxi2 = num / xi^2 (complex / real, via the
+                    // complex divider with a zero imaginary denominator).
+                    cdiv_a_r <= num_r; cdiv_a_i <= num_i;
+                    cdiv_b_r <= xi_sq; cdiv_b_i <= 0;
+                    cdiv_start <= 1'b1;
+                    state <= S_NXI2_WAIT;
+                end
+
+                S_NXI2_WAIT: begin
+                    if (cdiv_done) begin
+                        nxi2_r <= cdiv_res_r;
+                        nxi2_i <= cdiv_res_i;
+                        state <= S_NXI2;
                     end
-                    
-                    // D = (num/xi²) * (1-edT) / (1-g*edT)
-                    // This requires another complex division
-                    // For the FSM, we compute this in subsequent states
-                    // Simplified: store intermediate and move on
-                    
-                    D_r <= 0; // Placeholder
-                    D_i <= 0;
-                    
-                    state <= S_EXPONENT;
+                end
+
+                S_NXI2: begin
+                    // dr = (1 - exp(-dT)) / (1 - g*exp(-dT))
+                    ome_r <= ONE - edT_r;
+                    ome_i <= -edT_i;
+                    state <= S_OME_DR;
+                end
+
+                S_OME_DR: begin
+                    cdiv_a_r <= ome_r;  cdiv_a_i <= ome_i;
+                    cdiv_b_r <= omge_r; cdiv_b_i <= omge_i;
+                    cdiv_start <= 1'b1;
+                    state <= S_DR_WAIT;
+                end
+
+                S_DR_WAIT: begin
+                    if (cdiv_done) begin
+                        dr_r <= cdiv_res_r;
+                        dr_i <= cdiv_res_i;
+                        state <= S_DMUL;
+                    end
+                end
+
+                S_DMUL: begin
+                    // D = nxi2 * dr
+                    cmul_a_r <= nxi2_r; cmul_a_i <= nxi2_i;
+                    cmul_b_r <= dr_r;   cmul_b_i <= dr_i;
+                    cmul_valid <= 1'b1;
+                    state <= S_DMUL_WAIT;
+                end
+
+                S_DMUL_WAIT: begin
+                    if (cmul_valid_out) begin
+                        D_r <= cmul_res_r;
+                        D_i <= cmul_res_i;
+                        state <= S_EXPONENT;
+                    end
                 end
 
                 // ---- Step 12: exponent = C + D*v0 + i*u*x ----

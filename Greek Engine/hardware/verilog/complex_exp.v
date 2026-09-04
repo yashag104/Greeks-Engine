@@ -9,8 +9,18 @@
 module complex_exp #(
     parameter WL = 64,
     parameter FL = 32,
-    parameter AL = 64,       // Angle word length
-    parameter AF = 48        // Angle fractional bits
+    // NOTE: default AL/AF off of WL/FL (rather than a fixed 64/48) so that
+    // instantiating this module with a different WL/FL still gives a
+    // same-width angle port instead of silently slicing out of range —
+    // and, importantly, AF=FL (not some larger value) so that the angle
+    // (a_i, the imaginary part) shares the *same* Q(.,FL) format as the
+    // real/imaginary values themselves. cordic.v's z_in/z_out are only
+    // ever used here as a direct bit-reinterpretation of a_i/res_i with no
+    // separate rescale step, so their fractional format must match FL
+    // exactly (cordic.v itself correctly rescales its internal atan table
+    // to whatever AF it's given, including AF > 28).
+    parameter AL = WL,       // Angle word length
+    parameter AF = FL        // Angle fractional bits
 ) (
     input  wire              clk,
     input  wire              rst,
@@ -49,7 +59,18 @@ module complex_exp #(
     // CORDIC input: x=1/K (pre-compensated), y=0, z=angle
     // After CORDIC: x_out = cos(z), y_out = sin(z)
     // To pre-compensate for CORDIC gain, we initialize x = 1/K ≈ 0.6073
-    wire signed [WL-1:0] CORDIC_1_OVER_K = $signed( (0.6072529350088814 * (2.0**FL)) );
+    // NOTE: $signed() requires an integer/vector argument, not a `real` — the
+    // real-valued constant expression must be rounded to an integer with
+    // $rtoi() first (real args to $signed produced an elaboration error).
+    // $rtoi returns a 32-bit *signed* integer, though, so computing it
+    // directly at (2.0**FL) overflows/wraps for FL >= ~31 (this module
+    // defaults to FL=32). Instead, round at min(FL,16) fractional bits —
+    // comfortably inside $rtoi's 32-bit range for any real FL used in this
+    // design — and left-shift the rest of the way when FL > 16 (exact: it
+    // just appends zero fractional bits, not a further rounding step).
+    wire signed [WL-1:0] CORDIC_1_OVER_K = (FL <= 16)
+        ? $signed( $rtoi(0.6072529350088814 * (2.0**FL)) )
+        : $signed( $rtoi(0.6072529350088814 * (2.0**16)) ) <<< (FL-16);
 
     cordic #(
         .WL(WL), .AL(AL), .N_ITER(30), .AF(AF)
@@ -69,6 +90,12 @@ module complex_exp #(
     reg exp_finished, cordic_finished;
     reg signed [WL-1:0] exp_a_val;
     reg signed [WL-1:0] cos_b_val, sin_b_val;
+
+    // NOTE: hoisted out of the nested begin/end block in S_COMBINE below —
+    // declaring locals inside a nested unnamed begin/end block requires
+    // SystemVerilog; plain Verilog only allows declarations at the top of a
+    // module or named block.
+    reg signed [2*WL-1:0] prod_r, prod_i;
 
     always @(posedge clk) begin
         if (rst) begin
@@ -114,13 +141,10 @@ module complex_exp #(
 
                 S_COMBINE: begin
                     // res = exp(a) * (cos(b) + i*sin(b))
-                    begin
-                        reg signed [2*WL-1:0] prod_r, prod_i;
-                        prod_r = $signed(exp_a_val) * $signed(cos_b_val);
-                        prod_i = $signed(exp_a_val) * $signed(sin_b_val);
-                        res_r <= prod_r >>> FL;
-                        res_i <= prod_i >>> FL;
-                    end
+                    prod_r = $signed(exp_a_val) * $signed(cos_b_val);
+                    prod_i = $signed(exp_a_val) * $signed(sin_b_val);
+                    res_r <= prod_r >>> FL;
+                    res_i <= prod_i >>> FL;
                     state <= S_DONE;
                 end
 
