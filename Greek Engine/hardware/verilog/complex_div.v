@@ -35,7 +35,13 @@ module complex_div #(
 
     reg signed [2*WL-1:0] wide_prod;
     reg signed [WL-1:0] num_r, num_i, denom;
-    
+
+    // NOTE: hoisted out of the nested begin/end block in S_PRODUCTS below —
+    // declaring locals inside a nested unnamed begin/end block requires
+    // SystemVerilog; plain Verilog only allows declarations at the top of a
+    // module or named block.
+    reg signed [2*WL-1:0] p1, p2, p3, p4, p5, p6;
+
     // Divider signals
     reg [WL-1:0] div_a, div_b;
     reg div_start;
@@ -72,19 +78,16 @@ module complex_div #(
                     
                     // We compute sequentially using the wide multiply register
                     // In a fully pipelined design, these would be parallel DSPs
-                    begin
-                        reg signed [2*WL-1:0] p1, p2, p3, p4, p5, p6;
-                        p1 = $signed(a_r) * $signed(b_r);
-                        p2 = $signed(a_i) * $signed(b_i);
-                        p3 = $signed(a_i) * $signed(b_r);
-                        p4 = $signed(a_r) * $signed(b_i);
-                        p5 = $signed(b_r) * $signed(b_r);
-                        p6 = $signed(b_i) * $signed(b_i);
+                    p1 = $signed(a_r) * $signed(b_r);
+                    p2 = $signed(a_i) * $signed(b_i);
+                    p3 = $signed(a_i) * $signed(b_r);
+                    p4 = $signed(a_r) * $signed(b_i);
+                    p5 = $signed(b_r) * $signed(b_r);
+                    p6 = $signed(b_i) * $signed(b_i);
 
-                        num_r <= (p1 + p2) >>> FL;
-                        num_i <= (p3 - p4) >>> FL;
-                        denom <= (p5 + p6) >>> FL;
-                    end
+                    num_r <= (p1 + p2) >>> FL;
+                    num_i <= (p3 - p4) >>> FL;
+                    denom <= (p5 + p6) >>> FL;
 
                     state <= S_DIV_R;
                 end

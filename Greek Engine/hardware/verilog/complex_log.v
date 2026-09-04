@@ -12,8 +12,18 @@
 module complex_log #(
     parameter WL = 64,
     parameter FL = 32,
-    parameter AL = 64,
-    parameter AF = 48
+    // NOTE: default AL/AF off of WL/FL (rather than a fixed 64/48) so that
+    // instantiating this module with a different WL/FL still gives a
+    // same-width angle port instead of silently slicing out of range —
+    // and, importantly, AF=FL (not some larger value) so that res_i (the
+    // imaginary part, atan2's result) shares the *same* Q(.,FL) format as
+    // the real/imaginary values themselves. cordic.v's z_in/z_out are only
+    // ever used here as a direct bit-reinterpretation of res_i with no
+    // separate rescale step, so their fractional format must match FL
+    // exactly (cordic.v itself correctly rescales its internal atan table
+    // to whatever AF it's given, including AF > 28).
+    parameter AL = WL,
+    parameter AF = FL
 ) (
     input  wire              clk,
     input  wire              rst,
@@ -35,6 +45,12 @@ module complex_log #(
     // Compute a² + b² then ln of that
     reg signed [WL-1:0] mag_sq;
     reg signed [2*WL-1:0] wide_prod;
+
+    // NOTE: hoisted out of the nested begin/end block in S_IDLE below —
+    // declaring locals inside a nested unnamed begin/end block requires
+    // SystemVerilog; plain Verilog only allows declarations at the top of a
+    // module or named block.
+    reg signed [2*WL-1:0] p1, p2;
 
     // fp_log for ln(a² + b²)
     reg log_start;
@@ -86,12 +102,9 @@ module complex_log #(
                     cordic_finished <= 0;
                     if (start) begin
                         // Compute a² + b²
-                        begin
-                            reg signed [2*WL-1:0] p1, p2;
-                            p1 = $signed(a_r) * $signed(a_r);
-                            p2 = $signed(a_i) * $signed(a_i);
-                            mag_sq <= (p1 + p2) >>> FL;
-                        end
+                        p1 = $signed(a_r) * $signed(a_r);
+                        p2 = $signed(a_i) * $signed(a_i);
+                        mag_sq <= (p1 + p2) >>> FL;
                         state <= S_LAUNCH;
                     end
                 end

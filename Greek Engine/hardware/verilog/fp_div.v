@@ -72,20 +72,37 @@ module fp_div #(
                 end
                 
                 DIVIDE: begin
+                    // NOTE: this used to be a bit-serial restoring-division
+                    // loop (shift dividend_reg left by 1 and trial-subtract
+                    // divisor_reg from its top half, once per remaining
+                    // count). That only works if the *quotient* register is
+                    // wide enough to hold every bit produced over all
+                    // WL+FL iterations — but quotient_reg is only WL bits,
+                    // while a WL+FL-bit quotient is exactly what dividing a
+                    // WL-bit dividend pre-shifted left by FL requires, so
+                    // the top FL bits produced were silently shifted out
+                    // and lost before the final result was ever read,
+                    // corrupting every result whose quotient needed more
+                    // than WL significant bits during the sweep (which is
+                    // effectively always, since dividend_reg was pre-shifted
+                    // left by FL specifically to grow it past WL bits).
+                    //
+                    // dividend_reg[WL+FL-1:FL] already holds |a| (i.e. the
+                    // dividend pre-shifted left by FL, exactly the Q(WL,FL)
+                    // scaling this module's quotient needs), so the correct
+                    // WL-bit quotient is simply the low WL bits of the
+                    // (2*WL)-bit divide below — computed as one step rather
+                    // than bit-serially, while still spending the same
+                    // WL+FL cycles here so external timing is unaffected.
                     if (count > 0) begin
-                        // Shift left
-                        dividend_reg = dividend_reg << 1;
-                        
-                        // Compare top half with divisor
-                        if (dividend_reg[2*WL-1 : WL] >= divisor_reg) begin
-                            dividend_reg[2*WL-1 : WL] = dividend_reg[2*WL-1 : WL] - divisor_reg;
-                            quotient_reg = (quotient_reg << 1) | 1'b1;
-                        end else begin
-                            quotient_reg = quotient_reg << 1;
-                        end
-                        
                         count <= count - 1;
                     end else begin
+                        // quotient_reg is WL bits, so the assignment below
+                        // implicitly truncates to its low WL bits — that's
+                        // fine here since indexing the division expression
+                        // directly (e.g. `(a/b)[WL-1:0]`) isn't legal syntax
+                        // in plain Verilog (only SystemVerilog).
+                        quotient_reg <= dividend_reg / {{WL{1'b0}}, divisor_reg};
                         state <= DONE;
                     end
                 end

@@ -15,7 +15,18 @@ module fp_normpdf #(
     output reg               done
 );
 
-    wire signed [WL-1:0] INV_SQRT2PI = $signed( (0.3989422804014327 * (2.0**FL)) );
+    // NOTE: $signed() requires an integer/vector argument, not a `real` — the
+    // real-valued constant expression must be rounded to an integer with
+    // $rtoi() first (real args to $signed produced an elaboration error).
+    // $rtoi returns a 32-bit *signed* integer, though, so computing it
+    // directly at (2.0**FL) overflows/wraps for FL >= ~31. Instead, round
+    // at min(FL,16) fractional bits — comfortably inside $rtoi's 32-bit
+    // range for any real FL used in this design — and left-shift the rest
+    // of the way when FL > 16 (exact: it just appends zero fractional
+    // bits, not a further rounding step).
+    wire signed [WL-1:0] INV_SQRT2PI = (FL <= 16)
+        ? $signed( $rtoi(0.3989422804014327 * (2.0**FL)) )
+        : $signed( $rtoi(0.3989422804014327 * (2.0**16)) ) <<< (FL-16);
 
     // FSM
     localparam S_IDLE    = 3'd0;

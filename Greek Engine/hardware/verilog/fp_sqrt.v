@@ -38,6 +38,10 @@ module fp_sqrt #(
     reg [WL-1:0]   root;
     reg [6:0]      bit_idx;    // Current bit being computed
 
+    // Combinational "bring down next 2 bits" value used by S_COMPUTE below.
+    wire [2*WL-1:0] remainder_shifted =
+        {remainder[2*WL-3:0], radicand[2*WL-1], radicand[2*WL-2]};
+
     // The radicand needs to be shifted so that the binary point
     // aligns with the output format.
     // For Q(IL, FL) input: we want sqrt to produce Q(ceil(IL/2), FL') output.
@@ -66,17 +70,25 @@ module fp_sqrt #(
                 S_COMPUTE: begin
                     // Non-restoring square root: process 2 bits at a time
                     // from the radicand, producing 1 bit of root per cycle.
-
-                    // Bring down next 2 bits from radicand
-                    remainder <= {remainder[2*WL-3:0], radicand[2*WL-1], radicand[2*WL-2]};
-                    radicand  <= radicand << 2;
+                    //
+                    // NOTE: the trial subtraction must compare against the
+                    // remainder *after* the next 2 bits are brought down, not
+                    // the stale pre-shift value — and since both the "bring
+                    // down" and "subtract" assignments below target the same
+                    // reg with nonblocking assignments in one always block,
+                    // driving them both off the single remainder_shifted
+                    // value (rather than the old `remainder`) keeps them
+                    // consistent instead of the subtract branch silently
+                    // discarding the newly shifted-in bits.
+                    radicand <= radicand << 2;
 
                     // Trial subtraction
-                    if (remainder >= {root, 2'b01}) begin
-                        remainder <= remainder - {root, 2'b01};
+                    if (remainder_shifted >= {root, 2'b01}) begin
+                        remainder <= remainder_shifted - {root, 2'b01};
                         root      <= {root[WL-2:0], 1'b1};
                     end else begin
-                        root <= {root[WL-2:0], 1'b0};
+                        remainder <= remainder_shifted;
+                        root      <= {root[WL-2:0], 1'b0};
                     end
 
                     if (bit_idx == 0) begin

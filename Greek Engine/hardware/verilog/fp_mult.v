@@ -29,7 +29,13 @@ module fp_mult #(
     // Max and min values for saturation
     wire [WL-2:0] max_val = {(WL-1){1'b1}};
     wire [WL-2:0] min_val = {(WL-1){1'b0}};
-    
+
+    // NOTE: hoisted out of the nested `if` block below — declaring locals
+    // inside a nested unnamed begin/end block requires SystemVerilog; plain
+    // Verilog only allows declarations at the top of a module or named block.
+    integer i;
+    reg ovf;
+
     always @(posedge clk) begin
         if (rst) begin
             result <= 0;
@@ -51,8 +57,6 @@ module fp_mult #(
                 // Note: bit WL+FL-1 is the sign bit of our extracted result.
                 
                 // To avoid parameter range issues, we implement a generic check
-                integer i;
-                reg ovf;
                 ovf = 0;
                 
                 for (i = WL+FL-1; i < 2*WL; i = i + 1) begin
