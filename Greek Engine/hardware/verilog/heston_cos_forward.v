@@ -1,18 +1,26 @@
 `timescale 1ns / 1ps
 //============================================================================
-// Heston-COS Forward Engine — Main Summation Loop
+// Heston-COS Forward + Reverse-Mode AAD Engine — Main Summation Loop
 //============================================================================
-// Computes the Heston-COS call/put price: domain truncation [a,b], then
-// iterates k = 0..N_TERMS-1 accumulating F_k * V_k, then discounts by
-// exp(-rT). Direct RTL port of hardware/matlab/heston_cos_forward_core.m's
-// price computation (see heston_payoff_coeff.v for the chi/psi algebra and
-// heston_char_func.v for phi(u)).
+// Computes the Heston-COS call/put price AND all Greeks in a single pass:
+// domain truncation [a,b], then iterates k = 0..N_TERMS-1, and for each
+// term calls heston_char_func with a reverse-mode seed derived from that
+// term's contribution to the price sum — accumulating both the price
+// (forward) and 8 raw Greek adjoints (reverse) together, then applying the
+// discount factor and the S0/K chain (through x=ln(S0/K)) once at the end.
+//
+// This is the module that makes this design's Heston Greeks genuine
+// reverse-mode AAD (one augmented forward+backward pass, same asymptotic
+// cost regardless of how many Greeks) rather than bump-and-reprice (one
+// full forward pass per bumped parameter) — see heston_char_func.v's
+// header for the calculus, and hardware/matlab / software/models for the
+// reference this is verified against.
 //
 // This module's own arithmetic runs at WL=32/FL=16; heston_char_func runs
-// at a wider WL=64/FL=32 internally for precision, so parameters, x and
-// u_k are converted Q16.16 -> Q32.32 (a left-shift by FL2-FL1=16 bits) on
-// the way in, and phi_r/phi_i are converted back (a right-shift by the
-// same 16 bits) on the way out.
+// at a wider WL=64/FL=32 internally for precision, so parameters, x, u_k
+// and the per-term seed are converted Q16.16 -> Q32.32 (a left-shift by
+// FL2-FL1=16 bits) on the way in, and phi_r/phi_i/the 8 adjoints are
+// converted back (a right-shift by the same 16 bits) on the way out.
 //============================================================================
 
 module heston_cos_forward #(
@@ -31,13 +39,17 @@ module heston_cos_forward #(
     output reg  signed [WL-1:0] price,
     output reg               done,
 
-    // Tape write interface (not used — see heston_reverse_pass.v, which
-    // computes Greeks by bump-and-reprice against this forward pricer
-    // rather than a generic AAD sweep; kept for interface stability).
-    output reg               tape_we,
-    output reg  [15:0]       tape_addr,
-    output reg  signed [WL-1:0] tape_data_val,
-    output reg  signed [WL-1:0] tape_data_partial
+    // Greeks: dPrice/d(param), computed by reverse-mode AAD through the
+    // characteristic function (see heston_char_func.v).
+    output reg  signed [WL-1:0] adj_S0,
+    output reg  signed [WL-1:0] adj_K,
+    output reg  signed [WL-1:0] adj_T,
+    output reg  signed [WL-1:0] adj_r,
+    output reg  signed [WL-1:0] adj_v0,
+    output reg  signed [WL-1:0] adj_kappa,
+    output reg  signed [WL-1:0] adj_theta,
+    output reg  signed [WL-1:0] adj_xi,
+    output reg  signed [WL-1:0] adj_rho
 );
 
     localparam N_TERMS = 128;
@@ -85,19 +97,26 @@ module heston_cos_forward #(
     localparam S_ANGLE        = 6'd22;
     localparam S_CORDIC_WAIT  = 6'd23;
     localparam S_CHAR_START   = 6'd24;
-    localparam S_CHAR_WAIT    = 6'd25;
-    localparam S_PAYOFF_START = 6'd26;
     localparam S_PAYOFF_WAIT  = 6'd27;
+    localparam S_SEED         = 6'd33;
+    localparam S_CHAR_WAIT    = 6'd25;
     localparam S_ACCUM        = 6'd28;
     localparam S_DISC         = 6'd29;
     localparam S_DISC_WAIT    = 6'd30;
+    localparam S_FINAL1       = 6'd34; // discount-chain corrections for T, r
+    localparam S_FINAL2       = 6'd39;
+    localparam S_INV_S0       = 6'd35;
+    localparam S_INV_S0_WAIT  = 6'd36;
+    localparam S_INV_K        = 6'd37;
+    localparam S_INV_K_WAIT   = 6'd38;
     localparam S_FINISH       = 6'd31;
 
     reg [5:0] state;
     reg [7:0] k_counter;
     reg is_call_r;
 
-    reg signed [47:0] accumulator; // Extra bits for accumulation
+    reg signed [47:0] accumulator; // price sum (extra bits for accumulation)
+    reg signed [47:0] acc_T, acc_r, acc_v0, acc_kappa, acc_theta, acc_xi, acc_rho, acc_x;
     reg signed [2*WL-1:0] wp1, wp2, wp3;
     reg signed [WL+48-1:0] wp_price; // wide enough for discount(WL) * accumulator(48)
 
@@ -106,8 +125,19 @@ module heston_cos_forward #(
     reg signed [WL-1:0] exp_a_val, exp_b_val;
     reg signed [WL-1:0] u_k, angle, cos_ua, sin_ua;
     reg signed [WL-1:0] phi_r32, phi_i32;
-    reg signed [WL-1:0] F_k;
+    reg signed [WL-1:0] F_k, weighted_V_k;
+    reg signed [WL-1:0] seed_r32, seed_i32;
     reg signed [WL-1:0] contrib;
+    reg signed [WL-1:0] discount_val;
+    reg signed [WL-1:0] adjT_32, adjr_32, adjx_32;
+    // Blocking scratch for S_ACCUM (computed-then-immediately-consumed in
+    // the same cycle — using the "_32" regs above for that would read
+    // their *stale* pre-update value, since a nonblocking assignment's new
+    // value isn't visible until the next cycle).
+    reg signed [WL-1:0] t_adjT, t_adjr, t_adjv0, t_adjkappa, t_adjtheta, t_adjxi, t_adjrho, t_adjx;
+    reg signed [WL-1:0] t_phi_r, t_phi_i;
+    reg signed [WL-1:0] inv_S0, inv_K;
+    reg signed [WL-1:0] neg_r_disc, neg_T_disc;
     // Scratch for S_C2/S_AB: computed via blocking assignment as plain
     // WL-bit *signed* regs, rather than combined into further arithmetic
     // directly as `wide_wire[WL-1:0]` — a raw part-select is always
@@ -165,10 +195,13 @@ module heston_cos_forward #(
         .x_out(cordic_x_out), .y_out(cordic_y_out), .z_out(), .done(cordic_done)
     );
 
-    // Characteristic Function (phi) — WL2/FL2 (Q32.32) precision
+    // Characteristic Function (phi) + reverse-mode adjoints — WL2/FL2
+    // (Q32.32) precision
     reg char_start;
     reg signed [WL2-1:0] char_T, char_r, char_v0, char_kappa, char_theta, char_xi, char_rho, char_x, char_u;
+    reg signed [WL2-1:0] char_seed_r, char_seed_i;
     wire signed [WL2-1:0] phi_r, phi_i;
+    wire signed [WL2-1:0] cf_adj_T, cf_adj_r, cf_adj_v0, cf_adj_kappa, cf_adj_theta, cf_adj_xi, cf_adj_rho, cf_adj_x;
     wire char_done;
 
     heston_char_func #(.WL(WL2), .FL(FL2)) char_func_inst (
@@ -177,8 +210,11 @@ module heston_cos_forward #(
         .theta_in(char_theta), .xi_in(char_xi), .rho_in(char_rho),
         .x_in(char_x), .u_in(char_u),
         .start(char_start),
-        .phi_r(phi_r), .phi_i(phi_i), .done(char_done),
-        .tape_we(), .tape_addr(), .tape_data_val(), .tape_data_partial()
+        .seed_r(char_seed_r), .seed_i(char_seed_i),
+        .phi_r(phi_r), .phi_i(phi_i),
+        .adj_T(cf_adj_T), .adj_r(cf_adj_r), .adj_v0(cf_adj_v0), .adj_kappa(cf_adj_kappa),
+        .adj_theta(cf_adj_theta), .adj_xi(cf_adj_xi), .adj_rho(cf_adj_rho), .adj_x(cf_adj_x),
+        .done(char_done)
     );
 
     // Payoff Coefficient
@@ -201,13 +237,11 @@ module heston_cos_forward #(
         if (rst) begin
             state <= S_IDLE;
             done  <= 0;
-            tape_we <= 0;
             div_start <= 0; log_start <= 0; exp_start <= 0; sqrt_start <= 0;
             cordic_start <= 0; char_start <= 0; payoff_start <= 0;
         end else begin
             div_start <= 0; log_start <= 0; exp_start <= 0; sqrt_start <= 0;
             cordic_start <= 0; char_start <= 0; payoff_start <= 0;
-            tape_we <= 0;
 
             case (state)
                 S_IDLE: begin
@@ -334,6 +368,9 @@ module heston_cos_forward #(
                         exp_b_val <= exp_result;
                         k_counter <= 8'd0;
                         accumulator <= 48'sd0;
+                        acc_T <= 48'sd0; acc_r <= 48'sd0; acc_v0 <= 48'sd0;
+                        acc_kappa <= 48'sd0; acc_theta <= 48'sd0; acc_xi <= 48'sd0;
+                        acc_rho <= 48'sd0; acc_x <= 48'sd0;
                         state <= S_LOOP_START;
                     end
                 end
@@ -360,62 +397,99 @@ module heston_cos_forward #(
 
                 // NOTE: reusing S_CHAR_START as the CORDIC wait target below
                 // keeps this a plain linear chain; cordic_done is polled
-                // there before launching heston_char_func.
+                // there before launching heston_payoff_coeff (V_k doesn't
+                // depend on phi, so it can run before/while char_func does
+                // — but we need V_k *before* char_func's seed can be built,
+                // so it's sequenced first here).
                 S_CHAR_START: begin
                     if (cordic_done) begin
                         cos_ua <= cordic_x_out;
                         sin_ua <= cordic_y_out;
-
-                        char_T     <= {{(WL2-WL){T[WL-1]}}, T}         <<< (FL2-FL);
-                        char_r     <= {{(WL2-WL){r[WL-1]}}, r}         <<< (FL2-FL);
-                        char_v0    <= {{(WL2-WL){v0[WL-1]}}, v0}       <<< (FL2-FL);
-                        char_kappa <= {{(WL2-WL){kappa[WL-1]}}, kappa} <<< (FL2-FL);
-                        char_theta <= {{(WL2-WL){theta[WL-1]}}, theta} <<< (FL2-FL);
-                        char_xi    <= {{(WL2-WL){xi[WL-1]}}, xi}       <<< (FL2-FL);
-                        char_rho   <= {{(WL2-WL){rho[WL-1]}}, rho}     <<< (FL2-FL);
-                        char_x     <= {{(WL2-WL){x_val[WL-1]}}, x_val} <<< (FL2-FL);
-                        char_u     <= {{(WL2-WL){u_k[WL-1]}}, u_k}     <<< (FL2-FL);
-                        char_start <= 1'b1;
-                        state <= S_CHAR_WAIT;
+                        payoff_start <= 1'b1;
+                        state <= S_PAYOFF_WAIT;
                     end
-                end
-
-                S_CHAR_WAIT: begin
-                    if (char_done) begin
-                        phi_r32 <= phi_r >>> (FL2-FL);
-                        phi_i32 <= phi_i >>> (FL2-FL);
-                        state <= S_PAYOFF_START;
-                    end
-                end
-
-                S_PAYOFF_START: begin
-                    payoff_start <= 1'b1;
-                    state <= S_PAYOFF_WAIT;
                 end
 
                 S_PAYOFF_WAIT: begin
                     if (payoff_done) begin
-                        // F_k = Re[phi * exp(-i*u_k*a)] = phi_r*cos_ua + phi_i*sin_ua
-                        wp1 = $signed(phi_r32) * $signed(cos_ua);
-                        wp2 = $signed(phi_i32) * $signed(sin_ua);
-                        F_k <= (wp1 >>> FL) + (wp2 >>> FL);
-                        state <= S_ACCUM;
+                        state <= S_SEED;
                     end
                 end
 
-                S_ACCUM: begin
-                    // contrib = weight * F_k * V_k  (weight = 0.5 at k=0, else 1.0)
-                    wp1 = $signed(F_k) * $signed(V_k);
-                    wp2 = (k_counter == 8'd0) ? (wp1 >>> 1) : wp1;
-                    contrib = wp2 >>> FL; // Q(.,FL), same truncate-on-narrower-assign
-                                          // pattern used everywhere else in this file
-                    accumulator <= accumulator + {{(48-WL){contrib[WL-1]}}, contrib};
+                // seed = weight * V_k * (cos_ua, sin_ua)  — this term's
+                // contribution to d(price_sum)/d(phi_r, phi_i).
+                S_SEED: begin
+                    weighted_V_k = (k_counter == 8'd0) ? (V_k >>> 1) : V_k;
+                    wp2 = $signed(weighted_V_k) * $signed(cos_ua);
+                    seed_r32 <= wp2 >>> FL;
+                    wp3 = $signed(weighted_V_k) * $signed(sin_ua);
+                    seed_i32 <= wp3 >>> FL;
 
-                    if (k_counter == N_TERMS - 1) begin
-                        state <= S_DISC;
-                    end else begin
-                        k_counter <= k_counter + 1'b1;
-                        state <= S_LOOP_START;
+                    char_T     <= {{(WL2-WL){T[WL-1]}}, T}         <<< (FL2-FL);
+                    char_r     <= {{(WL2-WL){r[WL-1]}}, r}         <<< (FL2-FL);
+                    char_v0    <= {{(WL2-WL){v0[WL-1]}}, v0}       <<< (FL2-FL);
+                    char_kappa <= {{(WL2-WL){kappa[WL-1]}}, kappa} <<< (FL2-FL);
+                    char_theta <= {{(WL2-WL){theta[WL-1]}}, theta} <<< (FL2-FL);
+                    char_xi    <= {{(WL2-WL){xi[WL-1]}}, xi}       <<< (FL2-FL);
+                    char_rho   <= {{(WL2-WL){rho[WL-1]}}, rho}     <<< (FL2-FL);
+                    char_x     <= {{(WL2-WL){x_val[WL-1]}}, x_val} <<< (FL2-FL);
+                    char_u     <= {{(WL2-WL){u_k[WL-1]}}, u_k}     <<< (FL2-FL);
+                    state <= S_CHAR_WAIT;
+                end
+
+                S_CHAR_WAIT: begin
+                    // Wait one extra cycle so seed_r32/seed_i32 (and the
+                    // char_* input registers) set in S_SEED are stable
+                    // before we latch them into the Q32.32 seed and issue
+                    // start — then wait for the (forward+reverse) run.
+                    char_seed_r <= {{(WL2-WL){seed_r32[WL-1]}}, seed_r32} <<< (FL2-FL);
+                    char_seed_i <= {{(WL2-WL){seed_i32[WL-1]}}, seed_i32} <<< (FL2-FL);
+                    char_start  <= 1'b1;
+                    state <= S_ACCUM;
+                end
+
+                S_ACCUM: begin
+                    if (char_done) begin
+                        t_phi_r = phi_r >>> (FL2-FL);
+                        t_phi_i = phi_i >>> (FL2-FL);
+                        phi_r32 <= t_phi_r;
+                        phi_i32 <= t_phi_i;
+
+                        // F_k = Re[phi * exp(-i*u_k*a)] = phi_r*cos_ua + phi_i*sin_ua
+                        wp1 = $signed(t_phi_r) * $signed(cos_ua);
+                        wp2 = $signed(t_phi_i) * $signed(sin_ua);
+                        F_k <= (wp1 >>> FL) + (wp2 >>> FL);
+
+                        // contrib = weight * F_k * V_k  (weight already
+                        // folded into weighted_V_k)
+                        wp3 = ((wp1 >>> FL) + (wp2 >>> FL)) * $signed(weighted_V_k);
+                        contrib = wp3 >>> FL;
+                        accumulator <= accumulator + {{(48-WL){contrib[WL-1]}}, contrib};
+
+                        t_adjT     = cf_adj_T     >>> (FL2-FL);
+                        t_adjr     = cf_adj_r     >>> (FL2-FL);
+                        t_adjv0    = cf_adj_v0    >>> (FL2-FL);
+                        t_adjkappa = cf_adj_kappa >>> (FL2-FL);
+                        t_adjtheta = cf_adj_theta >>> (FL2-FL);
+                        t_adjxi    = cf_adj_xi    >>> (FL2-FL);
+                        t_adjrho   = cf_adj_rho   >>> (FL2-FL);
+                        t_adjx     = cf_adj_x     >>> (FL2-FL);
+
+                        acc_T     <= acc_T     + {{(48-WL){t_adjT[WL-1]}},     t_adjT};
+                        acc_r     <= acc_r     + {{(48-WL){t_adjr[WL-1]}},     t_adjr};
+                        acc_v0    <= acc_v0    + {{(48-WL){t_adjv0[WL-1]}},    t_adjv0};
+                        acc_kappa <= acc_kappa + {{(48-WL){t_adjkappa[WL-1]}}, t_adjkappa};
+                        acc_theta <= acc_theta + {{(48-WL){t_adjtheta[WL-1]}}, t_adjtheta};
+                        acc_xi    <= acc_xi    + {{(48-WL){t_adjxi[WL-1]}},    t_adjxi};
+                        acc_rho   <= acc_rho   + {{(48-WL){t_adjrho[WL-1]}},   t_adjrho};
+                        acc_x     <= acc_x     + {{(48-WL){t_adjx[WL-1]}},     t_adjx};
+
+                        if (k_counter == N_TERMS - 1) begin
+                            state <= S_DISC;
+                        end else begin
+                            k_counter <= k_counter + 1'b1;
+                            state <= S_LOOP_START;
+                        end
                     end
                 end
 
@@ -428,6 +502,7 @@ module heston_cos_forward #(
                 end
                 S_DISC_WAIT: begin
                     if (exp_done) begin
+                        discount_val <= exp_result;
                         // discount (Q(.,FL)) * accumulator (Q(.,FL), 48-bit
                         // headroom) -> Q(.,2*FL); >>> FL then truncate to
                         // WL bits on assignment gives Q(.,FL) again, same
@@ -435,6 +510,75 @@ module heston_cos_forward #(
                         // everywhere else in this file.
                         wp_price = $signed(exp_result) * accumulator;
                         price <= wp_price >>> FL;
+
+                        // Discount every raw Greek accumulator by the same
+                        // factor (valid since the char-func reverse pass
+                        // is linear in the seed, and the seed itself never
+                        // included the discount — see heston_char_func.v).
+                        wp_price = $signed(exp_result) * acc_v0;
+                        adj_v0    <= wp_price >>> FL;
+                        wp_price = $signed(exp_result) * acc_kappa;
+                        adj_kappa <= wp_price >>> FL;
+                        wp_price = $signed(exp_result) * acc_theta;
+                        adj_theta <= wp_price >>> FL;
+                        wp_price = $signed(exp_result) * acc_xi;
+                        adj_xi    <= wp_price >>> FL;
+                        wp_price = $signed(exp_result) * acc_rho;
+                        adj_rho   <= wp_price >>> FL;
+                        wp_price = $signed(exp_result) * acc_x;
+                        adjx_32   <= wp_price >>> FL;
+                        wp_price = $signed(exp_result) * acc_T;
+                        adjT_32   <= wp_price >>> FL;
+                        wp_price = $signed(exp_result) * acc_r;
+                        adjr_32   <= wp_price >>> FL;
+
+                        state <= S_FINAL1;
+                    end
+                end
+
+                // adj_T also gets -r*discount*price_sum (d(discount)/dT);
+                // adj_r also gets -T*discount*price_sum (d(discount)/dr).
+                // NOTE: multiplies against the *full* 48-bit accumulator
+                // (not a truncating accumulator[WL-1:0] part-select, which
+                // is (a) always unsigned per the LRM regardless of the
+                // parent reg's signedness — silently forcing this whole
+                // expression unsigned — and (b) throws away accumulator's
+                // extra headroom bits) via the same wp_price temp used for
+                // exactly this "narrow Q(.,FL) value times the wide
+                // accumulator" pattern in S_DISC_WAIT above.
+                S_FINAL1: begin
+                    wp1 = -$signed(r) * $signed(discount_val);
+                    neg_r_disc <= wp1 >>> FL;
+                    wp2 = -$signed(T) * $signed(discount_val);
+                    neg_T_disc <= wp2 >>> FL;
+                    state <= S_FINAL2;
+                end
+
+                S_FINAL2: begin
+                    wp_price = $signed(neg_r_disc) * accumulator;
+                    adj_T <= adjT_32 + (wp_price >>> FL);
+                    wp_price = $signed(neg_T_disc) * accumulator;
+                    adj_r <= adjr_32 + (wp_price >>> FL);
+
+                    div_a <= ONE_C; div_b <= S0; div_start <= 1'b1;
+                    state <= S_INV_S0_WAIT;
+                end
+
+                S_INV_S0_WAIT: begin
+                    if (div_ready) begin
+                        inv_S0 <= div_result;
+                        div_a <= ONE_C; div_b <= K; div_start <= 1'b1;
+                        state <= S_INV_K_WAIT;
+                    end
+                end
+
+                S_INV_K_WAIT: begin
+                    if (div_ready) begin
+                        inv_K <= div_result;
+                        wp1 = $signed(adjx_32) * $signed(inv_S0);
+                        adj_S0 <= wp1 >>> FL;
+                        wp2 = -$signed(adjx_32) * $signed(div_result);
+                        adj_K <= wp2 >>> FL;
                         state <= S_FINISH;
                     end
                 end

@@ -1,13 +1,15 @@
 `timescale 1ns / 1ps
 //============================================================================
-// NOTE: heston_reverse_pass.v computes Greeks by bump-and-reprice — 16 full
-// forward-pricer runs (see its header for why) — so this testbench takes
-// on the order of 3M clock cycles (a few minutes under a Verilog
-// simulator) to reach `done`. Expected values below come from
-// hardware/matlab/heston_top_level.m's own heston_bump_reference(), scaled
-// to the same (larger, fixed-point-appropriate) bump size this hardware
-// uses — see heston_reverse_pass.v's header for why that differs from the
-// ~1e-5 relative bump the MATLAB reference uses.
+// heston_cos_forward.v computes the price and all 8 Greeks together in one
+// forward + reverse-mode-AAD pass through the characteristic function (see
+// heston_char_func.v's header for the calculus) — about 400K clock cycles
+// here (N_TERMS=128), roughly 2x a price-only forward pass and ~7x faster
+// than the bump-and-reprice baseline this replaced (16 full forward runs,
+// ~3M cycles). Expected values below are
+// hardware/matlab/heston_top_level.m's own heston_bump_reference() (the
+// project's finite-difference validation baseline, ~1e-5 relative bump) —
+// the RTL AAD result is independently verified against that, not tuned to
+// match it.
 //============================================================================
 
 module heston_greeks_tb;
@@ -86,8 +88,8 @@ module heston_greeks_tb;
         rst = 0;
         #10;
 
-        $display("Starting Heston Full Pipeline (Forward + Bump-and-Reprice Reverse)...");
-        $display("(this takes ~3M cycles — be patient)");
+        $display("Starting Heston Full Pipeline (Forward + Reverse-Mode AAD)...");
+        $display("(now ~400K cycles: one augmented forward+reverse pass, not 16 forward-only bump runs)");
         start = 1;
         #10;
         start = 0;
@@ -95,7 +97,7 @@ module heston_greeks_tb;
         wait(done);
         #10;
 
-        $display("Pipeline Completed.");
+        $display("AAD Pipeline Completed.");
         $display("Price      : %f  (expect ~10.387139)", q16(price));
         $display("Delta      : %f  (expect ~0.708162 dV/dS0)",     q16(delta));
         $display("Vega       : %f  (expect ~46.772442 dV/dv0)",    q16(vega));

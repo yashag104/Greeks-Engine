@@ -1,4 +1,11 @@
 `timescale 1ns / 1ps
+//============================================================================
+// heston_cos_forward now computes the price and all Greeks together in one
+// forward + reverse-mode-AAD pass (see heston_char_func.v / heston_cos_
+// forward.v headers) — there's no separate tape-write interface to monitor
+// any more, so this testbench just exercises price + a couple of Greeks as
+// a quick (~400K cycle) sanity check; see tb/heston_greeks_tb.v for all 8.
+//============================================================================
 
 module heston_forward_tb;
 
@@ -17,12 +24,8 @@ module heston_forward_tb;
 
     // Outputs
     wire signed [WL-1:0] price;
+    wire signed [WL-1:0] adj_S0, adj_K, adj_T, adj_r, adj_v0, adj_kappa, adj_theta, adj_xi, adj_rho;
     wire done;
-
-    // Tape write interface monitor
-    wire tape_we;
-    wire [15:0] tape_addr;
-    wire signed [WL-1:0] tape_data_val, tape_data_partial;
 
     // Instantiate the Unit Under Test (UUT)
     heston_cos_forward #(
@@ -36,10 +39,9 @@ module heston_forward_tb;
         .start(start),
         .price(price),
         .done(done),
-        .tape_we(tape_we),
-        .tape_addr(tape_addr),
-        .tape_data_val(tape_data_val),
-        .tape_data_partial(tape_data_partial)
+        .adj_S0(adj_S0), .adj_K(adj_K), .adj_T(adj_T), .adj_r(adj_r),
+        .adj_v0(adj_v0), .adj_kappa(adj_kappa), .adj_theta(adj_theta),
+        .adj_xi(adj_xi), .adj_rho(adj_rho)
     );
 
     // Clock generation
@@ -79,7 +81,7 @@ module heston_forward_tb;
         rst = 0;
         #10;
 
-        $display("Starting Heston COS Forward Pass...");
+        $display("Starting Heston COS Forward + AAD Pass...");
         start = 1;
         #10;
         start = 0;
@@ -87,8 +89,10 @@ module heston_forward_tb;
         wait(done);
         #10;
 
-        $display("Forward Pass Completed.");
+        $display("Pass Completed.");
         $display("Calculated Price = %f (expect ~10.387139, N=128 COS reference)", q16(price));
+        $display("Delta (dV/dS0)   = %f (expect ~0.708162, bump-reference)", q16(adj_S0));
+        $display("Vega  (dV/dv0)   = %f (expect ~46.772442, bump-reference)", q16(adj_v0));
         $finish;
     end
 
