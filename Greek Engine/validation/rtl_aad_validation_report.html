@@ -1,0 +1,391 @@
+<title>Greeks Engine Validation</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --bg: #eef1ee;
+    --surface: #ffffff;
+    --surface2: #f7f8f6;
+    --border: #d7ded9;
+    --text: #16211d;
+    --text-muted: #56645c;
+    --accent: #b5701a;
+    --accent-bg: #b5701a15;
+    --accent2: #1f8f8a;
+    --accent2-bg: #1f8f8a15;
+    --good: #2f9e5c;
+    --good-bg: #2f9e5c14;
+    --bad: #c1453c;
+    --bad-bg: #c1453c14;
+    --warn: #a97a12;
+    --shadow: 0 1px 2px rgba(20,30,25,0.06), 0 8px 24px rgba(20,30,25,0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0b1110;
+      --surface: #121a18;
+      --surface2: #182220;
+      --border: #23322c;
+      --text: #e7ece8;
+      --text-muted: #90a099;
+      --accent: #f0a63e;
+      --accent-bg: #f0a63e1c;
+      --accent2: #52c7c2;
+      --accent2-bg: #52c7c21c;
+      --good: #6fcf8f;
+      --good-bg: #6fcf8f1c;
+      --bad: #e2685f;
+      --bad-bg: #e2685f1c;
+      --warn: #e0b84a;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b1110;
+    --surface: #121a18;
+    --surface2: #182220;
+    --border: #23322c;
+    --text: #e7ece8;
+    --text-muted: #90a099;
+    --accent: #f0a63e;
+    --accent-bg: #f0a63e1c;
+    --accent2: #52c7c2;
+    --accent2-bg: #52c7c21c;
+    --good: #6fcf8f;
+    --good-bg: #6fcf8f1c;
+    --bad: #e2685f;
+    --bad-bg: #e2685f1c;
+    --warn: #e0b84a;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    line-height: 1.55;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace; }
+  h1, h2, h3 { text-wrap: balance; font-weight: 600; }
+  table { font-variant-numeric: tabular-nums; }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px 96px; }
+
+  /* ---------- Header ---------- */
+  header.top {
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .top-inner {
+    max-width: 900px; margin: 0 auto; padding: 28px 24px 26px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--accent); font-weight: 500;
+  }
+  h1.title { font-size: 30px; margin: 2px 0 4px; letter-spacing: -0.01em; }
+  .subtitle { color: var(--text-muted); font-size: 15px; max-width: 62ch; }
+  .meta-row {
+    display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px;
+    font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--text-muted);
+  }
+  .meta-row b { color: var(--text); font-weight: 500; }
+
+  /* ---------- Section scaffolding ---------- */
+  section { padding-top: 56px; }
+  .sec-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 18px; }
+  .sec-num {
+    font-family: "IBM Plex Mono", monospace; font-size: 12.5px; color: var(--text-muted);
+    border-left: 2px solid var(--accent); padding-left: 10px; letter-spacing: 0.04em;
+  }
+  h2.sec-title { font-size: 21px; margin: 0; }
+  .sec-lede { color: var(--text-muted); font-size: 14.5px; max-width: 68ch; margin: -6px 0 22px; }
+
+  /* ---------- Headline stat tiles ---------- */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .tile { background: var(--surface); padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 4px; }
+  .tile .num { font-family: "IBM Plex Mono", monospace; font-size: 26px; font-weight: 600; letter-spacing: -0.01em; }
+  .tile .num small { font-size: 14px; font-weight: 500; color: var(--text-muted); }
+  .tile .lbl { font-size: 12.5px; color: var(--text-muted); }
+  .tile.good .num { color: var(--good); }
+  .tile.accent .num { color: var(--accent); }
+
+  /* ---------- Tables ---------- */
+  .tblwrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+  table.data { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
+  table.data th, table.data td { padding: 9px 12px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.data th:first-child, table.data td:first-child { text-align: left; font-family: "IBM Plex Sans", sans-serif; }
+  table.data thead th { font-family: "IBM Plex Mono", monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 500; background: var(--surface2); }
+  table.data tbody tr:last-child td { border-bottom: none; }
+  table.data td.err-ok { color: var(--good); }
+  table.data td.err-warn { color: var(--warn); }
+  .rowlabel-note { display: block; font-size: 11px; color: var(--text-muted); font-weight: 400; }
+
+  /* ---------- Callouts ---------- */
+  .callout { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 16px 18px; font-size: 14px; }
+  .callout.bad-tint { background: var(--bad-bg); border-color: color-mix(in srgb, var(--bad) 35%, var(--border)); }
+  .callout.good-tint { background: var(--good-bg); border-color: color-mix(in srgb, var(--good) 35%, var(--border)); }
+  .callout p { margin: 0 0 8px; }
+  .callout p:last-child { margin-bottom: 0; }
+
+  /* ---------- Before/after comparison ---------- */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 620px) { .compare { grid-template-columns: 1fr; } }
+  .compare .card { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; background: var(--surface); }
+  .compare .card h3 { font-size: 13px; margin: 0 0 10px; font-family: "IBM Plex Mono", monospace; letter-spacing: 0.03em; }
+  .compare .card.before { border-top: 3px solid var(--bad); }
+  .compare .card.after { border-top: 3px solid var(--good); }
+  .compare ul { margin: 0; padding-left: 18px; font-size: 13.5px; }
+  .compare li { margin-bottom: 6px; }
+  .compare .stat { font-family: "IBM Plex Mono", monospace; font-weight: 600; }
+
+  /* ---------- Chart chrome ---------- */
+  .chart-card { border: 1px solid var(--border); border-radius: 10px; background: var(--surface); padding: 18px 20px 14px; }
+  .chart-title { font-size: 13.5px; font-weight: 600; margin-bottom: 2px; }
+  .chart-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 10px; }
+  svg text { fill: var(--text); font-family: "IBM Plex Mono", monospace; }
+  svg .muted { fill: var(--text-muted); }
+  svg .gridline { stroke: var(--border); stroke-width: 1; }
+  .legend { display: flex; gap: 18px; font-size: 12px; margin-top: 8px; color: var(--text-muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+  /* ---------- Two-col metric grid ---------- */
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 620px) { .grid2 { grid-template-columns: 1fr; } }
+
+  code.inline { font-family: "IBM Plex Mono", monospace; font-size: 0.9em; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; }
+
+  footer.pagefoot { margin-top: 64px; padding-top: 20px; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 12.5px; }
+</style>
+
+<header class="top">
+  <div class="top-inner">
+    <div class="eyebrow">Hardware validation report</div>
+    <h1 class="title">Greeks Engine — RTL Validation &amp; Novelty Check</h1>
+    <div class="subtitle">Black-Scholes and Heston-COS pricing + Greeks, in fixed-point Verilog. This report runs the full simulated pipeline, checks it against independent references at every level, and measures whether it actually delivers the project's core claim: Greeks via one reverse-mode AAD pass, not bump-and-reprice.</div>
+    <div class="meta-row">
+      <span><b>Target</b> Q16.16 / Q32.32 fixed-point, Icarus Verilog 12 (strict Verilog-2005)</span>
+      <span><b>Synthesis</b> Yosys 0.68, generic cell library</span>
+      <span><b>Simulated</b> 2026-09-07</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ============================================================ -->
+  <section id="s0">
+    <div class="sec-head"><span class="sec-num">00</span><h2 class="sec-title">What changed since the last pass</h2></div>
+    <p class="sec-lede" style="margin-top:-8px">The RTL compiled and ran cleanly, but Heston Greeks were computed by bump-and-reprice — 16 full re-pricings. That's the exact method the project's own literature review names as the thing to beat, not the thing to build. This pass replaces it with a real reverse-mode adjoint through the characteristic function.</p>
+    <div class="tiles">
+      <div class="tile good"><div class="num">7.4<small>×</small></div><div class="lbl">Fewer cycles for Heston Greeks (3.09M → 415K)</div></div>
+      <div class="tile good"><div class="num">10<small>×</small></div><div class="lbl">Lower mean Greek error (7.86% → 0.79%)</div></div>
+      <div class="tile accent"><div class="num">1</div><div class="lbl">Forward + backward pass, for all 8 Greeks together</div></div>
+      <div class="tile"><div class="num">0</div><div class="lbl">Repricings needed per additional Greek</div></div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="s1">
+    <div class="sec-head"><span class="sec-num">01</span><h2 class="sec-title">Does it run correctly — Black-Scholes</h2></div>
+    <p class="sec-lede">bs_top_level.v: forward AAD tape (25 entries) + generic reverse sweep, both call and put, against the closed-form reference at five deliberately varied points — ATM, deep ITM/OTM, high/low vol, short/long maturity.</p>
+
+    <div class="tblwrap">
+      <table class="data">
+        <thead>
+          <tr><th>Case</th><th>Price</th><th>Δ err</th><th>Vega err</th><th>Θ err</th><th>ρ err</th><th>Strike-sens err</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>ATM call, 1y<span class="rowlabel-note">S=K=100, T=1, r=5%, σ=20%</span></td><td class="mono">10.4516</td><td class="mono err-ok">+0.033%</td><td class="mono err-ok">−0.026%</td><td class="mono err-ok">+0.003%</td><td class="mono err-ok">+0.040%</td><td class="mono err-ok">+0.042%</td></tr>
+          <tr><td>Deep ITM call<span class="rowlabel-note">S=100 K=80, T=0.25, σ=35%</span></td><td class="mono">21.2853</td><td class="mono err-ok">+0.015%</td><td class="mono err-ok">−0.117%</td><td class="mono err-ok">−0.079%</td><td class="mono err-ok">+0.011%</td><td class="mono err-ok">+0.013%</td></tr>
+          <tr><td>Deep OTM call<span class="rowlabel-note">S=100 K=130, T=2, σ=15%</span></td><td class="mono">2.5030</td><td class="mono err-ok">+0.012%</td><td class="mono err-ok">+0.010%</td><td class="mono err-ok">+0.002%</td><td class="mono err-ok">+0.016%</td><td class="mono err-ok">+0.026%</td></tr>
+          <tr><td>OTM put, high vol<span class="rowlabel-note">S=50 K=55, T=0.5, σ=40%</span></td><td class="mono">8.3579</td><td class="mono err-ok">+0.001%</td><td class="mono err-ok">−0.009%</td><td class="mono err-ok">−0.011%</td><td class="mono err-ok">−0.014%</td><td class="mono err-ok">−0.015%</td></tr>
+          <tr><td>Deep ITM put<span class="rowlabel-note">S=200 K=190, T=0.1, σ=10%</span></td><td class="mono">0.0839</td><td class="mono err-warn">−1.061%</td><td class="mono err-warn">−0.869%</td><td class="mono err-warn">−0.811%</td><td class="mono err-warn">−1.088%</td><td class="mono err-warn">−1.120%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-top:10px">Four of five cases land under 0.12% error. The fifth is a genuine edge case — a 0.085-price option, close to the Q16.16 resolution floor relative to a 200-notional spot — not a sign of a wrong formula.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="s2">
+    <div class="sec-head"><span class="sec-num">02</span><h2 class="sec-title">Does it run correctly — Heston-COS</h2></div>
+    <p class="sec-lede">Three levels of check, from the primitive up: the reverse-mode adjoint inside the characteristic function against the actual software AAD engine's own tape; the forward COS price against an independent 128-term reference; the full Greeks against the project's own MATLAB bump-and-reprice validation baseline.</p>
+
+    <div class="grid2">
+      <div class="chart-card">
+        <div class="chart-title">Reverse-mode adjoint, unit level</div>
+        <div class="chart-sub"><code class="inline">heston_char_func.v</code> vs <code class="inline">software/aad_engine</code>, at u=5.13</div>
+        <div class="tblwrap" style="border:none">
+          <table class="data" style="min-width:0">
+            <thead><tr><th>∂φ/∂param</th><th>error</th></tr></thead>
+            <tbody>
+              <tr><td>∂φ<sub>r</sub>/∂T</td><td class="mono err-ok">−0.0030%</td></tr>
+              <tr><td>∂φ<sub>r</sub>/∂v₀</td><td class="mono err-ok">−0.0025%</td></tr>
+              <tr><td>∂φ<sub>i</sub>/∂r</td><td class="mono err-ok">−0.0027%</td></tr>
+              <tr><td>∂φ<sub>i</sub>/∂ξ</td><td class="mono err-ok">−0.0019%</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Forward price, N=128 COS terms</div>
+        <div class="chart-sub">S₀=K=100, T=1, r=5%, v₀=4%, κ=1.5, θ=4%, ξ=30%, ρ=−0.9</div>
+        <div class="tiles" style="grid-template-columns:1fr 1fr">
+          <div class="tile"><div class="num">10.4706</div><div class="lbl">RTL price (Q16.16)</div></div>
+          <div class="tile"><div class="num">10.3871</div><div class="lbl">Independent Python N=128 reference</div></div>
+        </div>
+        <p style="font-size:12.5px;color:var(--text-muted);margin-top:10px">0.80% error — consistent with the polynomial/CORDIC approximations compounding over 128 terms × ~30-step characteristic function evaluations.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="s3">
+    <div class="sec-head"><span class="sec-num">03</span><h2 class="sec-title">AAD vs. bump-and-reprice, head to head</h2></div>
+    <p class="sec-lede">Same RTL forward pricer, same test point, two ways of getting the Greeks out of it. Reference is <code class="inline">heston_bump_reference()</code> from <code class="inline">hardware/matlab/heston_top_level.m</code> — the project's own floating-point validation baseline (~1e-5 relative bump), not tuned to either method.</p>
+
+    <div class="tblwrap">
+      <table class="data">
+        <thead>
+          <tr><th>Greek</th><th>Reference</th><th>Bump-and-reprice</th><th>err</th><th>Reverse-mode AAD</th><th>err</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Delta (∂V/∂S₀)</td><td class="mono">0.7082</td><td class="mono">0.7169</td><td class="mono err-warn">+1.23%</td><td class="mono">0.7136</td><td class="mono err-ok">+0.77%</td></tr>
+          <tr><td>Vega (∂V/∂v₀)</td><td class="mono">46.7724</td><td class="mono">45.4111</td><td class="mono err-warn">−2.91%</td><td class="mono">46.6610</td><td class="mono err-ok">−0.24%</td></tr>
+          <tr><td>Rho (∂V/∂r)</td><td class="mono">60.9928</td><td class="mono">64.8286</td><td class="mono err-warn">+6.29%</td><td class="mono">60.9321</td><td class="mono err-ok">−0.10%</td></tr>
+          <tr><td>Theta (∂V/∂T)</td><td class="mono">6.4162</td><td class="mono">7.4978</td><td class="mono err-warn">+16.86%</td><td class="mono">6.4105</td><td class="mono err-ok">−0.09%</td></tr>
+          <tr><td>κ-sens (∂V/∂κ)</td><td class="mono">0.0620</td><td class="mono">0.0749</td><td class="mono err-warn">+20.77%</td><td class="mono">0.0621</td><td class="mono err-ok">+0.19%</td></tr>
+          <tr><td>θ-sens (∂V/∂θ)</td><td class="mono">44.3615</td><td class="mono">41.2974</td><td class="mono err-warn">−6.91%</td><td class="mono">44.2626</td><td class="mono err-ok">−0.22%</td></tr>
+          <tr><td>ξ-sens (∂V/∂ξ)</td><td class="mono">−1.2038</td><td class="mono">−1.2903</td><td class="mono err-warn">+7.19%</td><td class="mono">−1.2225</td><td class="mono err-ok">+1.56%</td></tr>
+          <tr><td>ρ-corr (∂V/∂ρ)</td><td class="mono">−0.1171</td><td class="mono">−0.1179</td><td class="mono err-ok">+0.69%</td><td class="mono">−0.1207</td><td class="mono err-warn">+3.14%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tiles" style="margin-top:16px">
+      <div class="tile"><div class="num">7.86<small>%</small></div><div class="lbl">Mean |error|, bump-and-reprice</div></div>
+      <div class="tile good"><div class="num">0.79<small>%</small></div><div class="lbl">Mean |error|, reverse-mode AAD</div></div>
+      <div class="tile"><div class="num">3.09M</div><div class="lbl">Cycles, bump-and-reprice (16 forward passes)</div></div>
+      <div class="tile good"><div class="num">415K</div><div class="lbl">Cycles, reverse-mode AAD (1 forward + 1 backward)</div></div>
+    </div>
+
+    <div class="chart-card" style="margin-top:18px">
+      <div class="chart-title">Simulated latency, log scale</div>
+      <div class="chart-sub">Same clock, same N=128 terms — bars are cycle counts, drawn to scale</div>
+      <svg id="cyclechart" width="100%" height="190" viewBox="0 0 820 190" role="img" aria-label="Cycle count comparison"></svg>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="s4">
+    <div class="sec-head"><span class="sec-num">04</span><h2 class="sec-title">What it costs — synthesized resource footprint</h2></div>
+    <p class="sec-lede">Yosys generic synthesis (coarse: multiplies/divides kept as <code class="inline">$mul</code>/<code class="inline">$div</code> cells rather than exploded to primitive gates — the number that maps to DSP-block count on a real FPGA, not LUT count). One physical instance of every arithmetic unit, shared in time across the 128 COS terms — not replicated 128×.</p>
+
+    <div class="tblwrap">
+      <table class="data">
+        <thead><tr><th>Module</th><th>Cells</th><th>Flip-flop bits</th><th>Multipliers</th><th>Dividers</th><th>Mem blocks</th></tr></thead>
+        <tbody>
+          <tr><td>bs_top_level<span class="rowlabel-note">BS forward + reverse AAD</span></td><td class="mono">1,099</td><td class="mono">2,864</td><td class="mono">28</td><td class="mono">2</td><td class="mono">5</td></tr>
+          <tr><td>heston_char_func<span class="rowlabel-note">the AAD engine itself</span></td><td class="mono">1,643</td><td class="mono">10,093</td><td class="mono">80</td><td class="mono">2</td><td class="mono">—</td></tr>
+          <tr><td>heston_top_level<span class="rowlabel-note">full forward + AAD Greeks</span></td><td class="mono">2,562</td><td class="mono">13,228</td><td class="mono">125</td><td class="mono">4</td><td class="mono">3</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-top:10px">76% of the Heston engine's flip-flops sit inside <code class="inline">heston_char_func</code> alone — the reverse-mode adjoint sweep roughly doubles that one module's state, which is where AAD's "~2–4× a single forward pass" cost is actually paid. It's paid once per pricing, not once per Greek.</p>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="s5">
+    <div class="sec-head"><span class="sec-num">05</span><h2 class="sec-title">Is the novelty claim actually backed now</h2></div>
+    <p class="sec-lede">The project's own claim, from <code class="inline">greeks_engine_project_plan.md</code>: <em>"AAD computes all Greeks in one pipelined backward pass instead of n separate re-pricings — existing FPGA-finance work accelerates pricing (Monte Carlo) or accelerates Greeks (bump-and-reprice), never Greeks via AAD."</em> Klaisoongnoen et al. — bump-and-reprice Heston Greeks on FPGA — is named as the direct competitor.</p>
+
+    <div class="compare">
+      <div class="card before">
+        <h3 style="color:var(--bad)">BEFORE THIS PASS</h3>
+        <ul>
+          <li>Black-Scholes: genuine tape + reverse sweep AAD</li>
+          <li>Heston: <span class="stat">bump-and-reprice</span> — 16 full forward re-pricings</li>
+          <li>That's structurally the same method as the named competitor, just on this project's own hardware</li>
+          <li>The paper's central claim held for the easy model, not the one the claim is really about</li>
+        </ul>
+      </div>
+      <div class="card after">
+        <h3 style="color:var(--good)">AFTER THIS PASS</h3>
+        <ul>
+          <li>Black-Scholes: unchanged, still genuine AAD</li>
+          <li>Heston: <span class="stat">reverse-mode AAD</span> — one forward pass, one backward pass, all 8 Greeks</li>
+          <li>Adjoint derived analytically per operation (every step here is complex-holomorphic away from its branch cuts) and verified against the project's own software AAD tape to 4 decimal places</li>
+          <li>7.4× fewer cycles, 10× lower mean error, vs. the bump baseline it replaced</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:18px">
+      <p><b>What I checked, and what I didn't.</b> Two web searches for "FPGA AAD Heston Greeks" and adjacent phrasing turned up software-only AAD papers (Giles &amp; Glasserman, Capriotti) and FPGA-Heston pricing-only work, consistent with — but not proof of — the gap the project's own literature review names. That review cites a specific 2024 FPGA survey as calling AAD-on-FPGA an explicitly open direction; I did not independently re-read that survey or do a full literature search myself. Treat the novelty claim as <i>supported by this implementation</i>, not independently adjudicated against the literature by me.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================ -->
+  <section id="s6">
+    <div class="sec-head"><span class="sec-num">06</span><h2 class="sec-title">What's still open</h2></div>
+    <div class="grid2">
+      <div class="callout">
+        <p><b>Domain-bound sensitivity is dropped.</b> The COS truncation range [a,b] and payoff coefficients depend on the model parameters too, but both this RTL and the project's own software AAD engine treat them as constants when differentiating — standard for the COS method (the price is insensitive to the exact truncation choice at N=128), and it's why bump-and-reprice and AAD already agreed to ~1e-8 in software before any of this hardware existed.</p>
+      </div>
+      <div class="callout">
+        <p><b>Precision is fixed-point-bounded, not proof-bounded.</b> Every error figure above is empirical (measured against references), not a formally derived fixed-point error bound. The project plan calls for exactly that analysis as a "must-have" — a stated bit budget with margin, not just observed agreement — and it isn't done here.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer class="pagefoot">
+    Simulated in Icarus Verilog 12 (strict Verilog-2005) and Verilator; synthesized (generic, coarse) in Yosys 0.68. All reference values from this repository's own <code class="inline">hardware/matlab/</code> and <code class="inline">software/</code> models, or independently re-derived in Python from the same formulas. No vendor toolchain (Vivado/Quartus) or real board run performed — cycle counts are simulated clock cycles, not wall-clock or power measurements.
+  </footer>
+</div>
+
+<script>
+(function(){
+  var data = [
+    {label: 'Forward price only', value: 181703, color: 'var(--accent2)'},
+    {label: 'Reverse-mode AAD (all 8 Greeks)', value: 415281, color: 'var(--good)'},
+    {label: 'Bump-and-reprice (all 8 Greeks)', value: 3089396, color: 'var(--bad)'}
+  ];
+  var svg = document.getElementById('cyclechart');
+  var W = 820, H = 190;
+  var marginL = 230, marginR = 90, marginT = 10, marginB = 30;
+  var plotW = W - marginL - marginR;
+  var plotH = H - marginT - marginB;
+  var logMin = Math.log10(100000), logMax = Math.log10(4000000);
+  function x(v){ return marginL + (Math.log10(v) - logMin) / (logMax - logMin) * plotW; }
+  var ns = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs){
+    var e = document.createElementNS(ns, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  // gridlines + tick labels at 1e5, 1e6, 3e6
+  [100000, 1000000, 3000000].forEach(function(v){
+    var gx = x(v);
+    svg.appendChild(el('line', {x1: gx, x2: gx, y1: marginT, y2: marginT+plotH, class: 'gridline'}));
+    var t = el('text', {x: gx, y: marginT+plotH+18, 'text-anchor': 'middle', class: 'muted', 'font-size': 11});
+    t.textContent = v >= 1000000 ? (v/1000000)+'M' : (v/1000)+'K';
+    svg.appendChild(t);
+  });
+  var barH = 30, gap = (plotH - barH*3) / 4;
+  data.forEach(function(d, i){
+    var y = marginT + gap*(i+1) + barH*i;
+    var bx = x(100000);
+    var bw = x(d.value) - bx;
+    svg.appendChild(el('rect', {x: bx, y: y, width: Math.max(bw,2), height: barH, rx: 4, fill: d.color}));
+    var lbl = el('text', {x: marginL - 12, y: y + barH/2 + 4, 'text-anchor': 'end', 'font-size': 12.5});
+    lbl.textContent = d.label;
+    svg.appendChild(lbl);
+    var val = el('text', {x: x(d.value) + 10, y: y + barH/2 + 4, 'text-anchor': 'start', 'font-size': 12.5, 'font-weight': 600, fill: d.color});
+    val.textContent = d.value.toLocaleString() + ' cyc';
+    svg.appendChild(val);
+  });
+})();
+</script>
