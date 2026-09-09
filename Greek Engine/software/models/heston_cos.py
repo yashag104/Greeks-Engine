@@ -263,17 +263,28 @@ def heston_cos_price_aad(S0, K, T, r, v0, kappa, theta, xi, rho_param,
         # F_k = Re[phi * phase] = phi_real*phase_real - phi_imag*phase_imag
         F_k = phi_real * phase_real - phi_imag * phase_imag
 
-        # Payoff coefficient (scalar — depends only on strike geometry)
+        # Payoff coefficient.  V_k = (2/(b-a)) * K * (chi -+ psi) is *linear
+        # in K* (with the truncation range [a,b] held fixed, as everywhere
+        # else in this method), so it must not be treated as a plain scalar
+        # constant: doing so drops the whole direct K-path from the tape and
+        # leaves dV/dK short by exactly price/K.  Evaluating the scalar
+        # helper at K.value and then re-attaching the AAD variable K as
+        # `(V_k / K.value) * K` keeps the value identical while restoring
+        # that dependence exactly.  (Verified against central-difference
+        # bump-and-reprice: dV/dK = -0.610277 true, -0.714148 with the term
+        # dropped, -0.610277 with it restored.  Nothing caught this earlier
+        # because heston_bump_reference() in hardware/matlab never bumps K.)
         if option_type == "call":
             V_k = _payoff_coeff_call_scalar(k, 0.0, b_val, a_val, b_val,
                                              K.value)
         else:
             V_k = _payoff_coeff_put_scalar(k, a_val, 0.0, a_val, b_val,
                                             K.value)
+        V_k_per_K = V_k / K.value  # scalar; V_k is linear in K
 
         # Weighted accumulation (prime summation)
         weight = 0.5 if k == 0 else 1.0
-        contribution = F_k * (weight * V_k)
+        contribution = F_k * (weight * V_k_per_K) * K
         price_sum = price_sum + contribution
 
     # Discount factor

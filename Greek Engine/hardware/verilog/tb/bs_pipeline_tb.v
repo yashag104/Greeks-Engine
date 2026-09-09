@@ -22,6 +22,7 @@ module bs_pipeline_tb;
 
     wire [WL-1:0] price;
     wire [47:0]   delta, vega, theta, rho, strike_sens;
+    wire signed [WL-1:0] gamma, vanna, volga, charm;
     wire          done;
 
     bs_top_level uut (
@@ -29,7 +30,9 @@ module bs_pipeline_tb;
         .S(S), .K(K), .T(T), .r(r), .sigma(sigma), .is_call(is_call),
         .start(start),
         .price(price), .delta(delta), .vega(vega), .theta(theta),
-        .rho(rho), .strike_sens(strike_sens), .done(done)
+        .rho(rho), .strike_sens(strike_sens),
+        .gamma(gamma), .vanna(vanna), .volga(volga), .charm(charm),
+        .done(done)
     );
 
     initial begin
@@ -46,7 +49,8 @@ module bs_pipeline_tb;
 
     task run_case(
         input [WL-1:0] S_v, K_v, T_v, r_v, sigma_v, input is_call_v,
-        input real exp_price, exp_delta, exp_vega, exp_theta, exp_rho, exp_strike_sens
+        input real exp_price, exp_delta, exp_vega, exp_theta, exp_rho, exp_strike_sens,
+        input real exp_gamma, exp_vanna, exp_volga, exp_charm
     );
         begin
             S = S_v; K = K_v; T = T_v; r = r_v; sigma = sigma_v; is_call = is_call_v;
@@ -58,6 +62,11 @@ module bs_pipeline_tb;
             $display("  theta       = %10.6f  (expect %10.6f)", q1632(theta), exp_theta);
             $display("  rho         = %10.6f  (expect %10.6f)", q1632(rho), exp_rho);
             $display("  strike_sens = %10.6f  (expect %10.6f)", q1632(strike_sens), exp_strike_sens);
+            $display("  -- second order (forward-over-reverse AAD) --");
+            $display("  gamma       = %10.6f  (expect %10.6f)", q16(gamma), exp_gamma);
+            $display("  vanna       = %10.6f  (expect %10.6f)", q16(vanna), exp_vanna);
+            $display("  volga       = %10.6f  (expect %10.6f)", q16(volga), exp_volga);
+            $display("  charm       = %10.6f  (expect %10.6f)", q16(charm), exp_charm);
             #10;
         end
     endtask
@@ -72,11 +81,13 @@ module bs_pipeline_tb;
         // S=100, K=105, T=0.5, r=0.05, sigma=0.2 (Q16.16)
         $display("--- Call ---");
         run_case(32'd100 << 16, 32'd105 << 16, 32'd32768, 32'd3277, 32'd13107, 1'b1,
-                  4.581680, 0.461160, 28.075684, 7.691854, 20.767171, -0.395565);
+                  4.581680, 0.461160, 28.075684, 7.691854, 20.767171, -0.395565,
+                  0.028076, 0.474341, 3.270620, 0.235246);
 
         $display("--- Put ---");
         run_case(32'd100 << 16, 32'd105 << 16, 32'd32768, 32'd3277, 32'd13107, 1'b0,
-                  6.989221, -0.538840, 28.075684, 2.571477, -30.436599, 0.579745);
+                  6.989221, -0.538840, 28.075684, 2.571477, -30.436599, 0.579745,
+                  0.028076, 0.474341, 3.270620, 0.235247);
 
         $finish;
     end
