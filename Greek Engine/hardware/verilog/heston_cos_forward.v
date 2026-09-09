@@ -575,9 +575,28 @@ module heston_cos_forward #(
                 S_INV_K_WAIT: begin
                     if (div_ready) begin
                         inv_K <= div_result;
+                        // S0 enters the price only through x = ln(S0/K), so
+                        // delta is just the x-adjoint scaled by dx/dS0 = 1/S0.
                         wp1 = $signed(adjx_32) * $signed(inv_S0);
                         adj_S0 <= wp1 >>> FL;
-                        wp2 = -$signed(adjx_32) * $signed(div_result);
+
+                        // K, however, enters *twice*: through x (dx/dK =
+                        // -1/K) and directly through the payoff coefficient
+                        // V_k = (2/(b-a))*K*(chi-psi), which is linear in K.
+                        // With [a,b] held fixed (the standard COS
+                        // simplification this design and the software
+                        // reference both make), that second path
+                        // contributes exactly d(price)/dK = price/K, since
+                        // price = disc * SUM w_k F_k V_k is itself linear in
+                        // K through every V_k. Dropping it — as
+                        // software/models/heston_cos.py's own AAD path does,
+                        // because it passes K.value into the scalar payoff
+                        // helper — leaves dV/dK short by price/K (verified:
+                        // -0.7141 reported vs -0.6103 true at the canonical
+                        // test point, the difference being price/K =
+                        // 0.10387). Nothing caught it before because
+                        // heston_bump_reference() never bumps K.
+                        wp2 = ($signed(price) - $signed(adjx_32)) * $signed(div_result);
                         adj_K <= wp2 >>> FL;
                         state <= S_FINISH;
                     end

@@ -1,5 +1,36 @@
 # Heston-COS Tape Schema
 
+> **Implementation note (added after the RTL AAD pass landed):** the RTL
+> (`hardware/verilog/heston_char_func.v`, `heston_cos_forward.v`) does
+> *not* implement the ~18,184-entry generic micro-op tape this document
+> describes. It reverse-mode-differentiates the characteristic function
+> analytically instead: every one of the ~17 named complex steps below
+> (`d`, `g`, `exp(-dT)`, `C`, `D`, ...) is complex-holomorphic away from its
+> branch cut, so its adjoint reduces to "multiply by the conjugate of its
+> own local complex derivative" — one hand-derived macro reverse-step per
+> forward step, reusing the *same* `complex_mult`/`complex_div` instances
+> the forward pass uses, rather than a separate generic tape-walk over
+> every one of the ~72 elementary ops per term. The two are mathematically
+> equivalent (composing a holomorphic function's derivative is associative
+> regardless of how finely you decompose the chain), and the RTL's reverse
+> pass is verified against this project's own `software/aad_engine` tape
+> node-by-node (see `Greek Engine/validation/rtl_aad_validation_report.html`,
+> §2) — but if you're reading this file expecting to find an 18K-entry
+> BRAM tape and a generic reverse sweep in the RTL, you won't; that
+> architecture was superseded because a hand-derived analytic adjoint
+> needed roughly two orders of magnitude less tape memory and no
+> data-dependent addressing, at the cost of being harder to *derive*
+> (though no harder to verify) than a fully generic implementation.
+>
+> The domain-truncation range `[a,b]` and payoff coefficients `V_k`
+> described in Step 2 and Step 3c below are treated as constants when
+> differentiating in *both* the RTL and `software/models/heston_cos.py`'s
+> own `heston_cos_price_aad()` — neither back-propagates through them.
+> That's a deliberate, standard COS-method simplification (the price is
+> insensitive to the exact truncation choice once N is large enough), not
+> a hardware shortcut: it's why software bump-and-reprice and software AAD
+> already agreed to ~1e-8 before any RTL existed.
+
 ## Overview
 
 Precise, ordered operation list for the Heston-COS pricer. The hardware must replicate these operations for the forward pricing pass, then reverse them for the AAD backward pass.

@@ -33,6 +33,7 @@ module heston_top_level #(
     output wire signed [WL-1:0] theta_sens,
     output wire signed [WL-1:0] xi_sens,
     output wire signed [WL-1:0] rho_corr,
+    output wire signed [WL-1:0] strike_sens,
 
     output wire               done
 );
@@ -46,7 +47,11 @@ module heston_top_level #(
         .price(price),
         .done(done),
         .adj_S0(delta),
-        .adj_K(),           // Strike adj not strictly a standard Greek
+        .adj_K(strike_sens), // dV/dK — not one of the 8 "standard" Heston
+                              // Greeks, but heston_cos_forward computes it
+                              // for free (it falls out of x=ln(S0/K)'s own
+                              // adjoint), so it's exposed here too, mirroring
+                              // bs_top_level's strike_sens output.
         .adj_T(theta_greek),
         .adj_r(rho_greek),
         .adj_v0(vega),

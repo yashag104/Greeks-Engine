@@ -43,7 +43,16 @@ module bs_forward_core #(
     output reg  signed [WL-1:0] tape_partial_1,
     output reg  signed [WL-1:0] tape_partial_2,
     output reg  [7:0]   tape_parent_1,
-    output reg  [7:0]   tape_parent_2
+    output reg  [7:0]   tape_parent_2,
+
+    // Second-order local partials, for the forward-over-reverse pass in
+    // bs_second_order.v:  h11 = d2f/dp1^2, h12 = d2f/dp1dp2, h22 = d2f/dp2^2
+    // at this node, where p1/p2 are the parents named above. Every one of
+    // them turns out to be a polynomial in quantities the forward pass has
+    // already computed (see S_H2 below) — no extra divides needed.
+    output reg  signed [WL-1:0] tape_h11,
+    output reg  signed [WL-1:0] tape_h12,
+    output reg  signed [WL-1:0] tape_h22
 );
 
     // NOTE: this module (like the rest of the design) is used at its
@@ -100,6 +109,7 @@ module bs_forward_core #(
     localparam S_P_D1A_WAIT    = 6'd40;
     localparam S_P_D1B         = 6'd41;
     localparam S_P_D1B_WAIT    = 6'd42;
+    localparam S_H2            = 6'd45; // second-order local partials
     localparam S_TAPE_BURST    = 6'd43;
     localparam S_DONE          = 6'd44;
 
@@ -120,6 +130,21 @@ module bs_forward_core #(
 
     // Partial-derivative-only helper results
     reg signed [WL-1:0] p_sqrtT_r, p_SK1_r, p_SK2_r, p_lnSK_r, p_d1a_r, p_d1b_r;
+
+    // Second-order local partials, one set per non-linear tape node. Each
+    // is the elementary operation's own second derivative evaluated at the
+    // forward values — the second-order analogue of the p_* first partials
+    // above, and the only extra thing a generic forward-over-reverse sweep
+    // needs. Derived per node in S_H2 below:
+    //   sqrt : d2/dT2   sqrt(T)      = -2*(1/(2*sqrt(T)))^3   = -2*p_sqrtT^3
+    //   a/b  : d2/dadb  (a/b)        = -1/b^2 ; d2/db2 = 2a/b^3
+    //   ln   : d2/dx2   ln(x)        = -1/x^2 = -(1/x)^2
+    //   exp  : d2/dx2   exp(x)       = exp(x)
+    //   N    : d2/dx2   N(+-x)       = -+ x*n(x)
+    //   a*b  : d2/dadb  (a*b)        = 1  (h11 = h22 = 0)
+    //   +,-  : all second partials zero
+    reg signed [WL-1:0] h6_11, h8_12, h8_22, h9_11, h15_12, h15_22;
+    reg signed [WL-1:0] h19_11, h20_11, h21_11;
 
     // Slots 22-24 (branch-dependent identity/position; slot 25 is always price)
     reg signed [WL-1:0] t22_val, t23_val, t24_val;
@@ -489,40 +514,85 @@ module bs_forward_core #(
                 S_P_D1B_WAIT: begin
                     if (div_ready) begin
                         p_d1b_r <= div_result;
-                        burst_idx <= 5'd0;
-                        state <= S_TAPE_BURST;
+                        state <= S_H2;
                     end
+                end
+
+                // ---- Second-order local partials for every non-linear node.
+                // Each is that elementary operation's own second derivative
+                // evaluated at the forward values; every one reduces to a
+                // product of quantities the forward pass already produced,
+                // so no additional divides are required here.
+                S_H2: begin
+                    // node 6: sqrt(T), d2/dT2 = -2 * p_sqrtT^3
+                    wp = $signed(p_sqrtT_r) * $signed(p_sqrtT_r);
+                    wp = (wp >>> FL) * $signed(p_sqrtT_r);
+                    h6_11 <= -((wp >>> FL) <<< 1);
+
+                    // node 8: S/K, d2/dSdK = -1/K^2 = -(p_SK1)^2
+                    //              d2/dK2  = 2S/K^3 = 2 * (S/K) * (1/K)^2
+                    wp = $signed(p_SK1_r) * $signed(p_SK1_r);
+                    h8_12 <= -(wp >>> FL);
+                    wp = (wp >>> FL) * $signed(S_over_K_r);
+                    h8_22 <= (wp >>> FL) <<< 1;
+
+                    // node 9: ln(x), d2/dx2 = -(1/x)^2
+                    wp = $signed(p_lnSK_r) * $signed(p_lnSK_r);
+                    h9_11 <= -(wp >>> FL);
+
+                    // node 15: num/sst, d2/d(num)d(sst) = -1/sst^2
+                    //                   d2/d(sst)2      = 2*num/sst^3 = 2*d1/sst^2
+                    wp = $signed(p_d1a_r) * $signed(p_d1a_r);
+                    h15_12 <= -(wp >>> FL);
+                    wp = (wp >>> FL) * $signed(d1_r);
+                    h15_22 <= (wp >>> FL) <<< 1;
+
+                    // node 19: exp(x), d2/dx2 = exp(x)
+                    h19_11 <= discount_r;
+
+                    // nodes 20/21: N(+-d), d2/dd2 = -+ d*n(d)
+                    wp = $signed(d1_r) * $signed(pdf1_r);
+                    h20_11 <= is_call_r ? -(wp >>> FL) : (wp >>> FL);
+                    wp = $signed(d2_r) * $signed(pdf2_r);
+                    h21_11 <= is_call_r ? -(wp >>> FL) : (wp >>> FL);
+
+                    burst_idx <= 5'd0;
+                    state <= S_TAPE_BURST;
                 end
 
                 // ---- Write all 25 tape entries, one per cycle ----
                 S_TAPE_BURST: begin
                     tape_we   <= 1'b1;
                     tape_addr <= burst_idx + 8'd1;
+                    // Second-order partials default to zero (correct for
+                    // every input node and every purely additive node); the
+                    // non-linear nodes override below.
+                    tape_h11 <= 0; tape_h12 <= 0; tape_h22 <= 0;
                     case (burst_idx)
                         5'd0:  begin tape_val<=S_in;    tape_partial_1<=0; tape_partial_2<=0; tape_parent_1<=0; tape_parent_2<=0; end
                         5'd1:  begin tape_val<=K_in;    tape_partial_1<=0; tape_partial_2<=0; tape_parent_1<=0; tape_parent_2<=0; end
                         5'd2:  begin tape_val<=T_in;    tape_partial_1<=0; tape_partial_2<=0; tape_parent_1<=0; tape_parent_2<=0; end
                         5'd3:  begin tape_val<=r_in;    tape_partial_1<=0; tape_partial_2<=0; tape_parent_1<=0; tape_parent_2<=0; end
                         5'd4:  begin tape_val<=sigma_in;tape_partial_1<=0; tape_partial_2<=0; tape_parent_1<=0; tape_parent_2<=0; end
-                        5'd5:  begin tape_val<=sqrt_T_r;        tape_partial_1<=p_sqrtT_r; tape_partial_2<=0; tape_parent_1<=8'd3; tape_parent_2<=0; end
-                        5'd6:  begin tape_val<=sigma_sqrt_T_r;  tape_partial_1<=sqrt_T_r;  tape_partial_2<=sigma_in; tape_parent_1<=8'd5; tape_parent_2<=8'd6; end
-                        5'd7:  begin tape_val<=S_over_K_r;      tape_partial_1<=p_SK1_r;   tape_partial_2<=(-p_SK2_r); tape_parent_1<=8'd1; tape_parent_2<=8'd2; end
-                        5'd8:  begin tape_val<=ln_S_K_r;        tape_partial_1<=p_lnSK_r;  tape_partial_2<=0; tape_parent_1<=8'd8; tape_parent_2<=0; end
-                        5'd9:  begin tape_val<=sigma_sq_r;      tape_partial_1<=sigma_in;  tape_partial_2<=sigma_in; tape_parent_1<=8'd5; tape_parent_2<=8'd5; end
+                        5'd5: begin tape_val<=sqrt_T_r;        tape_partial_1<=p_sqrtT_r; tape_partial_2<=0; tape_parent_1<=8'd3; tape_parent_2<=0;  tape_h11<=h6_11; end
+                        5'd6: begin tape_val<=sigma_sqrt_T_r;  tape_partial_1<=sqrt_T_r;  tape_partial_2<=sigma_in; tape_parent_1<=8'd5; tape_parent_2<=8'd6;  tape_h12<=ONE_C; end
+                        5'd7: begin tape_val<=S_over_K_r;      tape_partial_1<=p_SK1_r;   tape_partial_2<=(-p_SK2_r); tape_parent_1<=8'd1; tape_parent_2<=8'd2;  tape_h12<=h8_12; tape_h22<=h8_22; end
+                        5'd8: begin tape_val<=ln_S_K_r;        tape_partial_1<=p_lnSK_r;  tape_partial_2<=0; tape_parent_1<=8'd8; tape_parent_2<=0;  tape_h11<=h9_11; end
+                        5'd9: begin tape_val<=sigma_sq_r;      tape_partial_1<=sigma_in;  tape_partial_2<=sigma_in; tape_parent_1<=8'd5; tape_parent_2<=8'd5;  tape_h12<=ONE_C; end
                         5'd10: begin tape_val<=sigma_sq_half_r; tape_partial_1<=32'sd32768; tape_partial_2<=0; tape_parent_1<=8'd10; tape_parent_2<=0; end
                         5'd11: begin tape_val<=r_plus_r;        tape_partial_1<=ONE_C; tape_partial_2<=ONE_C; tape_parent_1<=8'd4; tape_parent_2<=8'd11; end
-                        5'd12: begin tape_val<=drift_T_r;       tape_partial_1<=T_in; tape_partial_2<=r_plus_r; tape_parent_1<=8'd12; tape_parent_2<=8'd3; end
+                        5'd12: begin tape_val<=drift_T_r;       tape_partial_1<=T_in; tape_partial_2<=r_plus_r; tape_parent_1<=8'd12; tape_parent_2<=8'd3;  tape_h12<=ONE_C; end
                         5'd13: begin tape_val<=num_r;           tape_partial_1<=ONE_C; tape_partial_2<=ONE_C; tape_parent_1<=8'd9; tape_parent_2<=8'd13; end
-                        5'd14: begin tape_val<=d1_r;            tape_partial_1<=p_d1a_r; tape_partial_2<=(-p_d1b_r); tape_parent_1<=8'd14; tape_parent_2<=8'd7; end
+                        5'd14: begin tape_val<=d1_r;            tape_partial_1<=p_d1a_r; tape_partial_2<=(-p_d1b_r); tape_parent_1<=8'd14; tape_parent_2<=8'd7;  tape_h12<=h15_12; tape_h22<=h15_22; end
                         5'd15: begin tape_val<=d2_r;            tape_partial_1<=ONE_C; tape_partial_2<=NEG_ONE_C; tape_parent_1<=8'd15; tape_parent_2<=8'd7; end
-                        5'd16: begin tape_val<=rT_r;            tape_partial_1<=T_in; tape_partial_2<=r_in; tape_parent_1<=8'd4; tape_parent_2<=8'd3; end
+                        5'd16: begin tape_val<=rT_r;            tape_partial_1<=T_in; tape_partial_2<=r_in; tape_parent_1<=8'd4; tape_parent_2<=8'd3;  tape_h12<=ONE_C; end
                         5'd17: begin tape_val<=neg_rT_r;        tape_partial_1<=NEG_ONE_C; tape_partial_2<=0; tape_parent_1<=8'd17; tape_parent_2<=0; end
-                        5'd18: begin tape_val<=discount_r;      tape_partial_1<=discount_r; tape_partial_2<=0; tape_parent_1<=8'd18; tape_parent_2<=0; end
-                        5'd19: begin tape_val<=Nd1_r;           tape_partial_1<=(is_call_r?pdf1_r:(-pdf1_r)); tape_partial_2<=0; tape_parent_1<=8'd15; tape_parent_2<=0; end
-                        5'd20: begin tape_val<=Nd2_r;           tape_partial_1<=(is_call_r?pdf2_r:(-pdf2_r)); tape_partial_2<=0; tape_parent_1<=8'd16; tape_parent_2<=0; end
-                        5'd21: begin tape_val<=t22_val; tape_partial_1<=t22_pp1; tape_partial_2<=t22_pp2; tape_parent_1<=t22_p1; tape_parent_2<=t22_p2; end
-                        5'd22: begin tape_val<=t23_val; tape_partial_1<=t23_pp1; tape_partial_2<=t23_pp2; tape_parent_1<=t23_p1; tape_parent_2<=t23_p2; end
-                        5'd23: begin tape_val<=t24_val; tape_partial_1<=t24_pp1; tape_partial_2<=t24_pp2; tape_parent_1<=t24_p1; tape_parent_2<=t24_p2; end
+                        5'd18: begin tape_val<=discount_r;      tape_partial_1<=discount_r; tape_partial_2<=0; tape_parent_1<=8'd18; tape_parent_2<=0;  tape_h11<=h19_11; end
+                        5'd19: begin tape_val<=Nd1_r;           tape_partial_1<=(is_call_r?pdf1_r:(-pdf1_r)); tape_partial_2<=0; tape_parent_1<=8'd15; tape_parent_2<=0;  tape_h11<=h20_11; end
+                        5'd20: begin tape_val<=Nd2_r;           tape_partial_1<=(is_call_r?pdf2_r:(-pdf2_r)); tape_partial_2<=0; tape_parent_1<=8'd16; tape_parent_2<=0;  tape_h11<=h21_11; end
+                        5'd21: begin tape_val<=t22_val; tape_partial_1<=t22_pp1; tape_partial_2<=t22_pp2; tape_parent_1<=t22_p1; tape_parent_2<=t22_p2;  tape_h12<=ONE_C; end
+                        5'd22: begin tape_val<=t23_val; tape_partial_1<=t23_pp1; tape_partial_2<=t23_pp2; tape_parent_1<=t23_p1; tape_parent_2<=t23_p2;  tape_h12<=ONE_C; end
+                        5'd23: begin tape_val<=t24_val; tape_partial_1<=t24_pp1; tape_partial_2<=t24_pp2; tape_parent_1<=t24_p1; tape_parent_2<=t24_p2;  tape_h12<=ONE_C; end
                         5'd24: begin
                             tape_val<=price_r;
                             if (is_call_r) begin

@@ -6,7 +6,7 @@
 // seamless integration into a Zynq / Alveo FPGA system.
 //
 // In_Stream:  Receives parameter vector [S0, K, T, r, v0, kappa, theta, xi, rho, is_call]
-// Out_Stream: Sends result vector [price, delta, vega, rho, theta, kappa_sens, theta_sens, xi_sens, rho_corr]
+// Out_Stream: Sends result vector [price, delta, vega, rho, theta, kappa_sens, theta_sens, xi_sens, rho_corr, strike_sens]
 //============================================================================
 
 module heston_axi_top #(
@@ -15,15 +15,15 @@ module heston_axi_top #(
 ) (
     input  wire        aclk,
     input  wire        aresetn,
-    
+
     // AXI4-Stream Slave (Input Parameters)
     input  wire [319:0] s_axis_tdata, // 10 parameters * 32 bits = 320 bits
     input  wire        s_axis_tvalid,
     output wire        s_axis_tready,
     input  wire        s_axis_tlast,
-    
+
     // AXI4-Stream Master (Output Results)
-    output wire [287:0] m_axis_tdata, // 9 results * 32 bits = 288 bits
+    output wire [319:0] m_axis_tdata, // 10 results * 32 bits = 320 bits
     output wire        m_axis_tvalid,
     input  wire        m_axis_tready,
     output wire        m_axis_tlast
@@ -70,7 +70,8 @@ module heston_axi_top #(
     wire signed [WL-1:0] theta_sens;
     wire signed [WL-1:0] xi_sens;
     wire signed [WL-1:0] rho_corr;
-    
+    wire signed [WL-1:0] strike_sens;
+
     // Instantiate Core
     heston_top_level #(.WL(WL), .FL(FL)) core (
         .clk(aclk),
@@ -88,6 +89,7 @@ module heston_axi_top #(
         .theta_sens(theta_sens),
         .xi_sens(xi_sens),
         .rho_corr(rho_corr),
+        .strike_sens(strike_sens),
         .done(engine_done)
     );
     
@@ -103,7 +105,7 @@ module heston_axi_top #(
     assign m_axis_tlast  = 1'b1; // Single beat response
     
     assign m_axis_tdata = {
-        rho_corr, xi_sens, theta_sens, kappa_sens,
+        strike_sens, rho_corr, xi_sens, theta_sens, kappa_sens,
         theta_greek, rho_greek, vega, delta, price
     };
     

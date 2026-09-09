@@ -1,5 +1,23 @@
 # Fixed-Point Bit-Width Budget
 
+> **Implementation note:** the per-variable Q-formats below (e.g. Q(1,14,17)
+> for S, Q(1,1,30) for r) were the original design target, allocating
+> fractional bits per-variable to match each one's expected range. The
+> shipped RTL simplifies this to two *uniform* formats instead — Q16.16
+> (WL=32, FL=16) for every Black-Scholes signal and every outer
+> Heston-COS signal (S0, K, T, r, v0, κ, θ, ξ, ρ, a, b, u_k, V_k, the price
+> accumulator, all Greeks), and Q32.32 (WL=64, FL=32) for everything inside
+> `heston_char_func`'s complex arithmetic — rather than a different
+> fractional-bit count per named variable. This matches the "Design
+> Decisions" section below (which already called for 32-bit / 64-bit as the
+> two working widths) even where the later per-variable table doesn't; it
+> trades a little headroom on variables that would've benefited from more
+> fractional bits (T, r) for a much smaller, uniform set of arithmetic
+> units to implement, instantiate, and verify. See "Empirical Error
+> Validation" at the end of this document for what that simplification
+> actually costs in measured accuracy, as a check against the theoretical
+> "Error Budget" below.
+
 ## Overview
 
 This document specifies the Q-format (fixed-point representation) for every intermediate variable in the BS and Heston-COS pricing pipelines. The format Q(I.F) means I integer bits (including sign) and F fractional bits, for a total word width of I+F bits.
