@@ -1,113 +1,82 @@
 `timescale 1ns / 1ps
 //============================================================================
-// heston_cos_forward.v computes the price and all 8 Greeks together in one
-// forward + reverse-mode-AAD pass through the characteristic function (see
-// heston_char_func.v's header for the calculus) — about 400K clock cycles
-// here (N_TERMS=128), roughly 2x a price-only forward pass and ~7x faster
-// than the bump-and-reprice baseline this replaced (16 full forward runs,
-// ~3M cycles). Expected values below are
-// hardware/matlab/heston_top_level.m's own heston_bump_reference() (the
-// project's finite-difference validation baseline, ~1e-5 relative bump) —
-// the RTL AAD result is independently verified against that, not tuned to
-// match it.
+// Heston AAD engine: price + all 9 sensitivities from one forward + reverse
+// pass (heston_top_level, Q32.32), self-checking.
+// Reference values: validation/reference/heston_reference.py cos_price /
+// cos_greeks (double precision, same COS algorithm: N=128, L=10 cumulant
+// range held fixed when differentiating). Tolerance 1e-6 * max(1, |ref|);
+// measured errors are ~1e-7 absolute (see docs/precision_bound.md).
 //============================================================================
 
 module heston_greeks_tb;
+    localparam WL = 64;
+    localparam FL = 32;
 
-    // Parameters
-    localparam WL = 32;
-    localparam FL = 16;
+    reg clk = 0, rst = 1, start = 0;
+    always #5 clk = ~clk;
 
-    // Inputs
-    reg clk;
-    reg rst;
-    reg start;
-
-    // Model parameters
     reg signed [WL-1:0] S0, K, T, r, v0, kappa, theta, xi, rho;
     reg is_call;
-
-    // Outputs
-    wire signed [WL-1:0] price;
-    wire signed [WL-1:0] delta, vega, rho_greek, theta_greek;
-    wire signed [WL-1:0] kappa_sens, theta_sens, xi_sens, rho_corr;
+    wire signed [WL-1:0] price, delta, vega, rho_greek, theta_greek;
+    wire signed [WL-1:0] kappa_sens, theta_sens, xi_sens, rho_corr, strike_sens;
     wire done;
+    integer failures = 0, cycles = 0;
 
-    // Instantiate the Unit Under Test (UUT)
-    heston_top_level #(
-        .WL(WL), .FL(FL)
-    ) uut (
-        .clk(clk),
-        .rst(rst),
+    heston_top_level #(.WL(WL), .FL(FL)) uut (
+        .clk(clk), .rst(rst),
         .S0(S0), .K(K), .T(T), .r(r), .v0(v0),
         .kappa(kappa), .theta(theta), .xi(xi), .rho(rho),
-        .is_call(is_call),
-        .start(start),
-        .price(price),
-        .delta(delta),
-        .vega(vega),
-        .rho_greek(rho_greek),
-        .theta_greek(theta_greek),
-        .kappa_sens(kappa_sens),
-        .theta_sens(theta_sens),
-        .xi_sens(xi_sens),
-        .rho_corr(rho_corr),
+        .is_call(is_call), .start(start),
+        .price(price), .delta(delta), .vega(vega), .rho_greek(rho_greek),
+        .theta_greek(theta_greek), .kappa_sens(kappa_sens), .theta_sens(theta_sens),
+        .xi_sens(xi_sens), .rho_corr(rho_corr), .strike_sens(strike_sens),
         .done(done)
     );
 
-    // Clock generation
+    // |rtl - ref| <= tol * max(1, |ref|)
+    task check(input [8*12-1:0] name, input signed [WL-1:0] v, input real ref, input real tol);
+        real got, err, scale;
+        begin
+            got = v / 4294967296.0;
+            err = got - ref; if (err < 0) err = -err;
+            scale = (ref < 0 ? -ref : ref); if (scale < 1.0) scale = 1.0;
+            if (err > tol * scale) begin
+                $display("FAIL %s rtl=%.10f ref=%.10f err=%.3e", name, got, ref, err);
+                failures = failures + 1;
+            end else
+                $display("ok   %s rtl=%.10f ref=%.10f err=%.3e", name, got, ref, err);
+        end
+    endtask
+
     initial begin
-        clk = 0;
-        forever #5 clk = ~clk;
-    end
-
-    function real q16(input signed [WL-1:0] v);
-        q16 = v / 65536.0;
-    endfunction
-
-    // Test sequence
-    initial begin
-        // Initialize Inputs
-        rst = 1;
-        start = 0;
-
-        // Example Parameters in Q16
-        S0    = 32'h0064_0000; // 100.0
-        K     = 32'h0064_0000; // 100.0
-        T     = 32'h0001_0000; // 1.0
-        r     = 32'h0000_0CCD; // 0.05
-        v0    = 32'h0000_0A3D; // 0.04
-        kappa = 32'h0001_8000; // 1.5
-        theta = 32'h0000_0A3D; // 0.04
-        xi    = 32'h0000_4CCC; // 0.3
-        rho   = 32'hFFFF_199A; // -0.9
+        S0    = 64'sd429496729600; // 100.0
+        K     = 64'sd429496729600; // 100.0
+        T     = 64'sd4294967296; // 1.0
+        r     = 64'sd214748365; // 0.05
+        v0    = 64'sd171798692; // 0.04
+        kappa = 64'sd6442450944; // 1.5
+        theta = 64'sd171798692; // 0.04
+        xi    = 64'sd1288490189; // 0.3
+        rho   = -64'sd3865470566; // -0.9
         is_call = 1;
-
-        // Wait for global reset
-        #100;
-        rst = 0;
-        #10;
-
-        $display("Starting Heston Full Pipeline (Forward + Reverse-Mode AAD)...");
-        $display("(now ~400K cycles: one augmented forward+reverse pass, not 16 forward-only bump runs)");
-        start = 1;
-        #10;
-        start = 0;
-
-        wait(done);
-        #10;
-
-        $display("AAD Pipeline Completed.");
-        $display("Price      : %f  (expect ~10.387139)", q16(price));
-        $display("Delta      : %f  (expect ~0.708162 dV/dS0)",     q16(delta));
-        $display("Vega       : %f  (expect ~46.772442 dV/dv0)",    q16(vega));
-        $display("Rho        : %f  (expect ~60.992782 dV/dr)",     q16(rho_greek));
-        $display("Theta      : %f  (expect ~6.416244  dV/dT)",     q16(theta_greek));
-        $display("Kappa sens : %f  (expect ~0.061984  dV/dkappa)", q16(kappa_sens));
-        $display("Theta sens : %f  (expect ~44.361521 dV/dtheta)", q16(theta_sens));
-        $display("Xi sens    : %f  (expect ~-1.203770 dV/dxi)",    q16(xi_sens));
-        $display("Rho corr   : %f  (expect ~-0.117065 dV/drho)",   q16(rho_corr));
+        #100 rst = 0;
+        @(negedge clk) start = 1;
+        @(negedge clk) start = 0;
+        while (!done) begin @(posedge clk); cycles = cycles + 1; end
+        #1;
+        $display("AAD pass completed in %0d cycles", cycles);
+        check("price", price, 10.387139265110, 1e-6);
+        check("delta", delta, 0.714149030000, 1e-6);
+        check("vega", vega, 46.600078345200, 1e-6);
+        check("rho_greek", rho_greek, 61.027763732000, 1e-6);
+        check("theta_greek", theta_greek, 6.414380938900, 1e-6);
+        check("kappa_sens", kappa_sens, 0.061943319000, 1e-6);
+        check("theta_sens", theta_sens, 44.186415478200, 1e-6);
+        check("xi_sens", xi_sens, -1.204606597800, 1e-6);
+        check("rho_corr", rho_corr, -0.116698662000, 1e-6);
+        check("strike_sens", strike_sens, -0.610277637300, 1e-6);
+        if (failures == 0) $display("PASS: all outputs within tolerance");
+        else               $display("FAIL: %0d output(s) out of tolerance", failures);
         $finish;
     end
-
 endmodule

@@ -11,8 +11,8 @@
 //============================================================================
 
 module heston_top_level #(
-    parameter WL = 32,
-    parameter FL = 16
+    parameter WL = 64,
+    parameter FL = 32
 ) (
     input  wire              clk,
     input  wire              rst,
@@ -44,6 +44,7 @@ module heston_top_level #(
         .kappa(kappa), .theta(theta), .xi(xi), .rho(rho),
         .is_call(is_call),
         .start(start),
+        .fwd_only(1'b0),
         .price(price),
         .done(done),
         .adj_S0(delta),

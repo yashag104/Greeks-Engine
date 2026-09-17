@@ -53,6 +53,10 @@ module heston_char_func #(
     input  wire signed [WL-1:0] u_in,      // Current frequency u_k
 
     input  wire              start,
+    // 1 = price only: skip the reverse sweep (adjoint outputs are zero).
+    // Used by the bump-and-reprice baseline, which needs forward passes
+    // only; must be stable from start to done.
+    input  wire              fwd_only,
 
     // Reverse-mode seed: (seed_r, seed_i) = (dL/d phi_r, dL/d phi_i) for
     // whatever scalar loss L the caller is differentiating. Must be valid
@@ -77,6 +81,9 @@ module heston_char_func #(
 
     output reg               done
 );
+
+    `include "fx_lib.vh"
+
 
     // ==================================================================
     // FSM — forward pipeline, then reverse-mode AAD pipeline
@@ -175,6 +182,7 @@ module heston_char_func #(
     localparam R_XISQ          = 8'd102; // adj_xi from adj_xi_sq (accumulated)
     localparam R_RHOXI         = 8'd103; // adj_rho, adj_xi from adj_rho_xi
     localparam R_FINISH        = 8'd104;
+    localparam R_PHI_NORM      = 8'd105; // normalize adj_exponent (see R_PHI)
 
     reg [7:0] state;
 
@@ -209,9 +217,7 @@ module heston_char_func #(
 
     reg signed [2*WL-1:0] xi2_u2, kt, ruT;
 
-    wire signed [WL-1:0] ONE = (FL <= 16)
-        ? $signed( $rtoi(1.0 * (2.0**FL)) )
-        : $signed( $rtoi(1.0 * (2.0**16)) ) <<< (FL-16);
+    wire signed [WL-1:0] ONE = q60(64'sh1000000000000000);
 
     // ---- Reverse-mode adjoint accumulators ----
     reg signed [WL-1:0] a_exponent_r, a_exponent_i;
@@ -244,6 +250,14 @@ module heston_char_func #(
     reg signed [WL-1:0] a_undersqrt_r, a_undersqrt_i;
 
     reg signed [WL-1:0] inv_xi_sq;
+
+    // Adjoint normalization (see R_PHI): the whole reverse sweep is linear
+    // in adj_exponent, so it is run on adj_exponent * 2^adj_shift and every
+    // leaf adjoint is shifted back down by adj_shift in R_FINISH.
+    reg signed [2*WL-1:0] wn_r, wn_i;
+    reg        [2*WL-1:0] wn_abs;
+    reg        [7:0]      adj_shift;
+    integer               nb, npos;
 
     // Sub-module instances
     // Complex sqrt
@@ -356,10 +370,10 @@ module heston_char_func #(
                 // ---- Step 1: rho * xi ----
                 S_RHO_XI: begin
                     wp1 = $signed(rho_in) * $signed(xi_in);
-                    rho_xi_val <= wp1 >>> FL;
+                    rho_xi_val <= rshr(wp1);
 
                     wp2 = $signed(xi_in) * $signed(xi_in);
-                    xi_sq <= wp2 >>> FL;
+                    xi_sq <= rshr(wp2);
 
                     state <= S_TERM1;
                 end
@@ -368,7 +382,7 @@ module heston_char_func #(
                 S_TERM1: begin
                     term1_r <= -kappa_in;
                     wp1 = $signed(rho_xi_val) * $signed(u_in);
-                    term1_i <= wp1 >>> FL;
+                    term1_i <= rshr(wp1);
                     state <= S_TERM1_SQ;
                 end
 
@@ -379,10 +393,10 @@ module heston_char_func #(
                     wp3 = $signed(term1_r) * $signed(term1_i);
 
                     wp4 = $signed(xi_sq) * $signed(u_in);
-                    xi2_u2 = (wp4 >>> FL) * $signed(u_in);  // xi²*u²
+                    xi2_u2 = (rshr(wp4)) * $signed(u_in);  // xi²*u²
 
-                    under_sqrt_r <= ((wp1 - wp2) >>> FL) + (xi2_u2 >>> FL);
-                    under_sqrt_i <= (2 * (wp3 >>> FL)) + (wp4 >>> FL); // +xi²*u
+                    under_sqrt_r <= (rshr((wp1 - wp2))) + (rshr(xi2_u2));
+                    under_sqrt_i <= (2 * (rshr(wp3))) + (rshr(wp4)); // +xi²*u
                     state <= S_D;
                 end
 
@@ -430,8 +444,8 @@ module heston_char_func #(
                 S_NEG_DT: begin
                     wp1 = -$signed(d_r) * $signed(T_in);
                     wp2 = -$signed(d_i) * $signed(T_in);
-                    cexp_a_r <= wp1 >>> FL;
-                    cexp_a_i <= wp2 >>> FL;
+                    cexp_a_r <= rshr(wp1);
+                    cexp_a_i <= rshr(wp2);
                     cexp_start <= 1'b1;
                     state <= S_WAIT_EDT;
                 end
@@ -497,18 +511,18 @@ module heston_char_func #(
                 // ---- Step 11: Compute C and D ----
                 S_C_D: begin
                     kt = $signed(kappa_in) * $signed(theta_in);
-                    fdiv_a <= kt >>> FL;
+                    fdiv_a <= rshr(kt);
                     fdiv_b <= xi_sq;
                     fdiv_start <= 1'b1;
 
                     wp1 = $signed(num_r) * $signed(T_in);
                     wp2 = $signed(num_i) * $signed(T_in);
-                    numT_r <= wp1 >>> FL;
-                    numT_i <= wp2 >>> FL;
+                    numT_r <= rshr(wp1);
+                    numT_i <= rshr(wp2);
 
                     ruT = $signed(r_in) * $signed(u_in);
-                    r_u_T_val <= (ruT >>> FL) * $signed(T_in) >>> FL;
-                    C_i  <= (((ruT >>> FL) * $signed(T_in)) >>> FL); // r*u*T (D_i term added below)
+                    r_u_T_val <= rshr(rshr(ruT) * $signed(T_in));
+                    C_i  <= rshr(rshr(ruT) * $signed(T_in)); // r*u*T (D_i term added below)
 
                     state <= S_KTH_XI2_WAIT;
                 end
@@ -523,8 +537,8 @@ module heston_char_func #(
                 S_KTH_XI2: begin
                     wp1 = $signed(kth_xi2) * (numT_r - (log_ratio_r <<< 1));
                     wp2 = $signed(kth_xi2) * (numT_i - (log_ratio_i <<< 1));
-                    C_r <= wp1 >>> FL;
-                    C_i <= C_i + (wp2 >>> FL);
+                    C_r <= rshr(wp1);
+                    C_i <= C_i + (rshr(wp2));
 
                     cdiv_a_r <= num_r; cdiv_a_i <= num_i;
                     cdiv_b_r <= xi_sq; cdiv_b_i <= 0;
@@ -582,8 +596,8 @@ module heston_char_func #(
                     wp2 = $signed(D_i) * $signed(v0_in);
                     wp3 = $signed(u_in) * $signed(x_in);
 
-                    cexp_a_r <= C_r + (wp1 >>> FL);
-                    cexp_a_i <= C_i + (wp2 >>> FL) + (wp3 >>> FL);
+                    cexp_a_r <= C_r + (rshr(wp1));
+                    cexp_a_i <= C_i + (rshr(wp2)) + (rshr(wp3));
                     cexp_start <= 1'b1;
                     state <= S_WAIT_PHI;
                 end
@@ -593,7 +607,14 @@ module heston_char_func #(
                     if (cexp_done) begin
                         phi_r <= cexp_res_r;
                         phi_i <= cexp_res_i;
-                        state <= R_INIT;
+                        if (fwd_only) begin
+                            adj_shift <= 0;
+                            adj_T <= 0; adj_r <= 0; adj_v0 <= 0; adj_kappa <= 0;
+                            adj_theta <= 0; adj_xi <= 0; adj_rho <= 0; adj_x <= 0;
+                            state <= R_FINISH;
+                        end else begin
+                            state <= R_INIT;
+                        end
                     end
                 end
 
@@ -626,19 +647,41 @@ module heston_char_func #(
                     end
                 end
 
-                // adj_exponent = conj(phi) (x) seed
+                // adj_exponent = conj(phi) (x) seed, kept at 2*FL fractional
+                // bits (not truncated to FL yet).
+                //
+                // At high COS frequencies |phi| ~ 1e-5, so adj_exponent is
+                // only a few hundred ULPs in magnitude; truncating it (and
+                // everything downstream of it) at FL and then multiplying by
+                // local partials of size |u_k| ~ 10^2 lost most of its
+                // significant bits -- the dominant remaining error in
+                // dV/drho. Instead the sweep runs on a copy normalized to
+                // magnitude ~1 (R_PHI_NORM) and is scaled back in R_FINISH.
                 R_PHI: begin
-                    cmul_a_r <= phi_r; cmul_a_i <= -phi_i;
-                    cmul_b_r <= seed_r; cmul_b_i <= seed_i;
-                    cmul_valid <= 1'b1;
-                    state <= R_PHI_WAIT;
+                    wn_r <= $signed(phi_r) * $signed(seed_r) + $signed(phi_i) * $signed(seed_i);
+                    wn_i <= $signed(phi_r) * $signed(seed_i) - $signed(phi_i) * $signed(seed_r);
+                    state <= R_PHI_NORM;
                 end
-                R_PHI_WAIT: begin
-                    if (cmul_valid_out) begin
-                        a_exponent_r <= cmul_res_r;
-                        a_exponent_i <= cmul_res_i;
-                        state <= R_EXPONENT;
+                R_PHI_NORM: begin
+                    wn_abs = (wn_r[2*WL-1] ? -wn_r : wn_r) | (wn_i[2*WL-1] ? -wn_i : wn_i);
+                    npos = 0;
+                    for (nb = 0; nb < 2*WL; nb = nb + 1)
+                        if (wn_abs[nb]) npos = nb;
+                    // leading one at bit 2*FL  <=>  magnitude in [1, 2)
+                    if (npos >= 2*FL) begin
+                        adj_shift    <= 0;
+                        a_exponent_r <= rshr(wn_r);
+                        a_exponent_i <= rshr(wn_i);
+                    end else if (npos >= FL) begin
+                        adj_shift    <= 2*FL - npos;
+                        a_exponent_r <= wn_r >>> (npos - FL);
+                        a_exponent_i <= wn_i >>> (npos - FL);
+                    end else begin               // below one ULP: max gain
+                        adj_shift    <= FL;
+                        a_exponent_r <= wn_r;
+                        a_exponent_i <= wn_i;
                     end
+                    state <= R_EXPONENT;
                 end
 
                 // exponent = C + Dv0 + (0,iuximag): fan out unchanged
@@ -654,14 +697,14 @@ module heston_char_func #(
                 // Dv0 = D*v0 ; iuximag = x*u
                 R_DV0_X: begin
                     wp1 = $signed(a_Dv0_r) * $signed(v0_in);
-                    a_D_r <= wp1 >>> FL;
+                    a_D_r <= rshr(wp1);
                     wp2 = $signed(a_Dv0_i) * $signed(v0_in);
-                    a_D_i <= wp2 >>> FL;
+                    a_D_i <= rshr(wp2);
                     wp3 = $signed(a_Dv0_r) * $signed(D_r);
                     wp4 = $signed(a_Dv0_i) * $signed(D_i);
-                    adj_v0 <= adj_v0 + (wp3 >>> FL) + (wp4 >>> FL);
+                    adj_v0 <= adj_v0 + (rshr(wp3)) + (rshr(wp4));
                     wp1 = $signed(a_iuximag) * $signed(u_in);
-                    adj_x <= adj_x + (wp1 >>> FL);
+                    adj_x <= adj_x + (rshr(wp1));
                     state <= R_D_MUL;
                 end
 
@@ -750,13 +793,13 @@ module heston_char_func #(
                 //   adj_xi_sq += -(adj_nxi2.num)*inv_xi_sq
                 R_NXI2: begin
                     wp1 = $signed(a_nxi2_r) * $signed(inv_xi_sq);
-                    a_num_r <= a_num_r + (wp1 >>> FL);
+                    a_num_r <= a_num_r + (rshr(wp1));
                     wp2 = $signed(a_nxi2_i) * $signed(inv_xi_sq);
-                    a_num_i <= a_num_i + (wp2 >>> FL);
+                    a_num_i <= a_num_i + (rshr(wp2));
                     wp3 = $signed(a_nxi2_r) * $signed(nxi2_r);
                     wp4 = $signed(a_nxi2_i) * $signed(nxi2_i);
-                    wp1 = ((wp3 >>> FL) + (wp4 >>> FL)) * $signed(inv_xi_sq);
-                    a_xi_sq <= a_xi_sq - (wp1 >>> FL);
+                    wp1 = ((rshr(wp3)) + (rshr(wp4))) * $signed(inv_xi_sq);
+                    a_xi_sq <= a_xi_sq - (rshr(wp1));
                     state <= R_CFUNC;
                 end
 
@@ -768,12 +811,12 @@ module heston_char_func #(
                 R_CFUNC: begin
                     a_r_u_T <= a_C_i;
                     wp1 = $signed(kth_xi2) * $signed(a_C_r);
-                    a_bracket_r <= wp1 >>> FL;
+                    a_bracket_r <= rshr(wp1);
                     wp2 = $signed(kth_xi2) * $signed(a_C_i);
-                    a_bracket_i <= wp2 >>> FL;
+                    a_bracket_i <= rshr(wp2);
                     wp3 = $signed(a_C_r) * (numT_r - (log_ratio_r <<< 1));
                     wp4 = $signed(a_C_i) * (numT_i - (log_ratio_i <<< 1));
-                    a_kth_xi2 <= (wp3 >>> FL) + (wp4 >>> FL);
+                    a_kth_xi2 <= (rshr(wp3)) + (rshr(wp4));
                     state <= R_BRACKET;
                 end
 
@@ -790,12 +833,12 @@ module heston_char_func #(
                 //   adj_T += adj_numT.num (dot)
                 R_NUMT: begin
                     wp1 = $signed(a_numT_r) * $signed(T_in);
-                    a_num_r <= a_num_r + (wp1 >>> FL);
+                    a_num_r <= a_num_r + (rshr(wp1));
                     wp2 = $signed(a_numT_i) * $signed(T_in);
-                    a_num_i <= a_num_i + (wp2 >>> FL);
+                    a_num_i <= a_num_i + (rshr(wp2));
                     wp3 = $signed(a_numT_r) * $signed(num_r);
                     wp4 = $signed(a_numT_i) * $signed(num_i);
-                    adj_T <= adj_T + (wp3 >>> FL) + (wp4 >>> FL);
+                    adj_T <= adj_T + (rshr(wp3)) + (rshr(wp4));
                     state <= R_P_RUT;
                 end
 
@@ -805,17 +848,17 @@ module heston_char_func #(
                 //   adj_kappa = adj_p*theta ; adj_theta = adj_p*kappa
                 R_P_RUT: begin
                     wp1 = $signed(a_r_u_T) * $signed(u_in);
-                    wp1 = (wp1 >>> FL) * $signed(r_in);
-                    adj_T <= adj_T + (wp1 >>> FL);
+                    wp1 = (rshr(wp1)) * $signed(r_in);
+                    adj_T <= adj_T + (rshr(wp1));
                     wp2 = $signed(a_r_u_T) * $signed(u_in);
-                    wp2 = (wp2 >>> FL) * $signed(T_in);
-                    adj_r <= adj_r + (wp2 >>> FL);
+                    wp2 = (rshr(wp2)) * $signed(T_in);
+                    adj_r <= adj_r + (rshr(wp2));
 
                     wp3 = $signed(a_kth_xi2) * $signed(inv_xi_sq);
-                    a_p <= wp3 >>> FL;
+                    a_p <= rshr(wp3);
                     wp4 = $signed(a_kth_xi2) * $signed(kth_xi2);
-                    wp4 = (wp4 >>> FL) * $signed(inv_xi_sq);
-                    a_xi_sq <= a_xi_sq - (wp4 >>> FL);
+                    wp4 = (rshr(wp4)) * $signed(inv_xi_sq);
+                    a_xi_sq <= a_xi_sq - (rshr(wp4));
 
                     state <= R_LOGRATIO_INV;
                 end
@@ -826,9 +869,9 @@ module heston_char_func #(
                 // log_ratio = log(ratio), f'=1/ratio
                 R_LOGRATIO_INV: begin
                     wp1 = $signed(a_p) * $signed(theta_in);
-                    adj_kappa <= adj_kappa + (wp1 >>> FL);
+                    adj_kappa <= adj_kappa + (rshr(wp1));
                     wp2 = $signed(a_p) * $signed(kappa_in);
-                    adj_theta <= adj_theta + (wp2 >>> FL);
+                    adj_theta <= adj_theta + (rshr(wp2));
 
                     cdiv_a_r <= ONE; cdiv_a_i <= 0;
                     cdiv_b_r <= ratio_r; cdiv_b_i <= ratio_i;
@@ -949,12 +992,12 @@ module heston_char_func #(
                 // negdT = -d*T : adj_d += -adj_negdT*T ; adj_T += -(adj_negdT.d)
                 R_NEGDT: begin
                     wp1 = -$signed(a_negdT_r) * $signed(T_in);
-                    a_d_r <= a_d_r + (wp1 >>> FL);
+                    a_d_r <= a_d_r + (rshr(wp1));
                     wp2 = -$signed(a_negdT_i) * $signed(T_in);
-                    a_d_i <= a_d_i + (wp2 >>> FL);
+                    a_d_i <= a_d_i + (rshr(wp2));
                     wp3 = -$signed(a_negdT_r) * $signed(d_r);
                     wp4 = -$signed(a_negdT_i) * $signed(d_i);
-                    adj_T <= adj_T + (wp3 >>> FL) + (wp4 >>> FL);
+                    adj_T <= adj_T + (rshr(wp3)) + (rshr(wp4));
                     state <= R_G_INV;
                 end
 
@@ -1037,9 +1080,9 @@ module heston_char_func #(
                 //   => adj_xi_sq += adj_us_r*u^2 + adj_us_i*u
                 R_UNDERSQRT: begin
                     wp3 = $signed(u_in) * $signed(u_in);
-                    wp1 = $signed(a_undersqrt_r) * (wp3 >>> FL);
+                    wp1 = $signed(a_undersqrt_r) * (rshr(wp3));
                     wp2 = $signed(a_undersqrt_i) * $signed(u_in);
-                    a_xi_sq <= a_xi_sq + (wp1 >>> FL) + (wp2 >>> FL);
+                    a_xi_sq <= a_xi_sq + (rshr(wp1)) + (rshr(wp2));
                     state <= R_TERM1SQ_MUL;
                 end
 
@@ -1062,27 +1105,37 @@ module heston_char_func #(
                 R_TERM1: begin
                     adj_kappa <= adj_kappa - a_term1_r;
                     wp1 = $signed(a_term1_i) * $signed(u_in);
-                    a_rho_xi <= wp1 >>> FL;
+                    a_rho_xi <= rshr(wp1);
                     state <= R_XISQ;
                 end
 
                 // xi_sq = xi*xi => adj_xi(part1) = 2*xi*adj_xi_sq
                 R_XISQ: begin
                     wp1 = $signed(a_xi_sq) * ($signed(xi_in) <<< 1);
-                    adj_xi <= adj_xi + (wp1 >>> FL);
+                    adj_xi <= adj_xi + (rshr(wp1));
                     state <= R_RHOXI;
                 end
 
                 // rho_xi = rho*xi => adj_rho = a_rho_xi*xi ; adj_xi += a_rho_xi*rho
                 R_RHOXI: begin
                     wp1 = $signed(a_rho_xi) * $signed(xi_in);
-                    adj_rho <= adj_rho + (wp1 >>> FL);
+                    adj_rho <= adj_rho + (rshr(wp1));
                     wp2 = $signed(a_rho_xi) * $signed(rho_in);
-                    adj_xi <= adj_xi + (wp2 >>> FL);
+                    adj_xi <= adj_xi + (rshr(wp2));
                     state <= R_FINISH;
                 end
 
                 R_FINISH: begin
+                    if (adj_shift != 0) begin
+                        adj_T     <= (adj_T     + (64'sd1 <<< (adj_shift - 1))) >>> adj_shift;
+                        adj_r     <= (adj_r     + (64'sd1 <<< (adj_shift - 1))) >>> adj_shift;
+                        adj_v0    <= (adj_v0    + (64'sd1 <<< (adj_shift - 1))) >>> adj_shift;
+                        adj_kappa <= (adj_kappa + (64'sd1 <<< (adj_shift - 1))) >>> adj_shift;
+                        adj_theta <= (adj_theta + (64'sd1 <<< (adj_shift - 1))) >>> adj_shift;
+                        adj_xi    <= (adj_xi    + (64'sd1 <<< (adj_shift - 1))) >>> adj_shift;
+                        adj_rho   <= (adj_rho   + (64'sd1 <<< (adj_shift - 1))) >>> adj_shift;
+                        adj_x     <= (adj_x     + (64'sd1 <<< (adj_shift - 1))) >>> adj_shift;
+                    end
                     done  <= 1'b1;
                     state <= S_IDLE;
                 end

@@ -37,6 +37,9 @@ module fp_normcdf #(
     output reg               done
 );
 
+    `include "fx_lib.vh"
+
+
     // Constants in Q(IL, FL) format
     // NOTE: $signed() requires an integer/vector argument, not a `real` — the
     // real-valued constant expression must be rounded to an integer with
@@ -47,15 +50,15 @@ module fp_normcdf #(
     // range for any real FL used in this design — and left-shift the rest
     // of the way when FL > 16 (exact: it just appends zero fractional
     // bits, not a further rounding step).
-    wire signed [WL-1:0] CONST_P  = (FL<=16) ? $signed( $rtoi(0.2316419     * (2.0**FL)) ) : $signed( $rtoi(0.2316419     * (2.0**16)) ) <<< (FL-16);
-    wire signed [WL-1:0] CONST_A1 = (FL<=16) ? $signed( $rtoi(0.319381530   * (2.0**FL)) ) : $signed( $rtoi(0.319381530   * (2.0**16)) ) <<< (FL-16);
-    wire signed [WL-1:0] CONST_A2 = (FL<=16) ? $signed( $rtoi(-0.356563782  * (2.0**FL)) ) : $signed( $rtoi(-0.356563782  * (2.0**16)) ) <<< (FL-16);
-    wire signed [WL-1:0] CONST_A3 = (FL<=16) ? $signed( $rtoi(1.781477937   * (2.0**FL)) ) : $signed( $rtoi(1.781477937   * (2.0**16)) ) <<< (FL-16);
-    wire signed [WL-1:0] CONST_A4 = (FL<=16) ? $signed( $rtoi(-1.821255978  * (2.0**FL)) ) : $signed( $rtoi(-1.821255978  * (2.0**16)) ) <<< (FL-16);
-    wire signed [WL-1:0] CONST_A5 = (FL<=16) ? $signed( $rtoi(1.330274429   * (2.0**FL)) ) : $signed( $rtoi(1.330274429   * (2.0**16)) ) <<< (FL-16);
-    wire signed [WL-1:0] CONST_1  = (FL<=16) ? $signed( $rtoi(1.0           * (2.0**FL)) ) : $signed( $rtoi(1.0           * (2.0**16)) ) <<< (FL-16);
-    wire signed [WL-1:0] CONST_HALF = (FL<=16) ? $signed( $rtoi(0.5         * (2.0**FL)) ) : $signed( $rtoi(0.5         * (2.0**16)) ) <<< (FL-16);
-    wire signed [WL-1:0] INV_SQRT2PI = (FL<=16) ? $signed( $rtoi(0.3989422804014327 * (2.0**FL)) ) : $signed( $rtoi(0.3989422804014327 * (2.0**16)) ) <<< (FL-16);
+    wire signed [WL-1:0] CONST_P  = q60(64'sh03B4CE230E2201B3);
+    wire signed [WL-1:0] CONST_A1 = q60(64'sh051C2FCEA4BE3AE4);
+    wire signed [WL-1:0] CONST_A2 = q60(-64'sh05B47C396A0C96C5);
+    wire signed [WL-1:0] CONST_A3 = q60(64'sh1C80EF025F5E67F3);
+    wire signed [WL-1:0] CONST_A4 = q60(-64'sh1D23DD4EF278D043);
+    wire signed [WL-1:0] CONST_A5 = q60(64'sh1548CDD6F4294356);
+    wire signed [WL-1:0] CONST_1  = q60(64'sh1000000000000000);
+    wire signed [WL-1:0] CONST_HALF = q60(64'sh0800000000000000);
+    wire signed [WL-1:0] INV_SQRT2PI = q60(64'sh0662114CF50D943D);
 
     // FSM
     localparam S_IDLE      = 4'd0;

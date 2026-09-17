@@ -30,6 +30,9 @@ module complex_exp #(
     output reg               done
 );
 
+    `include "fx_lib.vh"
+
+
     // FSM
     localparam S_IDLE      = 3'd0;
     localparam S_LAUNCH    = 3'd1;
@@ -68,12 +71,10 @@ module complex_exp #(
     // comfortably inside $rtoi's 32-bit range for any real FL used in this
     // design — and left-shift the rest of the way when FL > 16 (exact: it
     // just appends zero fractional bits, not a further rounding step).
-    wire signed [WL-1:0] CORDIC_1_OVER_K = (FL <= 16)
-        ? $signed( $rtoi(0.6072529350088814 * (2.0**FL)) )
-        : $signed( $rtoi(0.6072529350088814 * (2.0**16)) ) <<< (FL-16);
+    wire signed [WL-1:0] CORDIC_1_OVER_K = q60(C_CORDIC_INV_K);
 
     cordic #(
-        .WL(WL), .AL(AL), .N_ITER(30), .AF(AF)
+        .WL(WL), .AL(AL), .AF(AF)
     ) cordic_sincos_inst (
         .clk(clk), .rst(rst),
         .start(cordic_start),
@@ -143,8 +144,8 @@ module complex_exp #(
                     // res = exp(a) * (cos(b) + i*sin(b))
                     prod_r = $signed(exp_a_val) * $signed(cos_b_val);
                     prod_i = $signed(exp_a_val) * $signed(sin_b_val);
-                    res_r <= prod_r >>> FL;
-                    res_i <= prod_i >>> FL;
+                    res_r <= rshr(prod_r);
+                    res_i <= rshr(prod_i);
                     state <= S_DONE;
                 end
 
