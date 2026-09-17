@@ -3,7 +3,9 @@
 #
 #   vivado -mode batch -source synth_impl.tcl -tclargs <top> <part> <clk_ns> <outdir>
 #
-#   <top>    heston_top_level   (AAD engine: price + 9 sensitivities)
+#   <top>    heston_aad_z7      (generated shared-multiplier AAD engine, Zynq-7020 config)
+#            heston_aad_zu      (generated, 32 multipliers, high throughput)
+#            heston_top_level   (previous FSM AAD engine: price + 9 sensitivities)
 #            heston_bump_top    (bump-and-reprice baseline, same pricing core)
 #            heston_cos_forward (price only; one "reprice")
 #   <part>   e.g. xc7z020clg400-1 (Zynq-7000, PYNQ-Z2 / Zybo Z7-20)
@@ -24,12 +26,17 @@ set here   [file dirname [file normalize [info script]]]
 set vdir   [file normalize "$here/../verilog"]
 file mkdir $outdir
 
-set srcs {
-  heston_top_level.v heston_bump_top.v heston_cos_forward.v heston_char_func.v
-  heston_payoff_coeff.v complex_div.v complex_exp.v complex_log.v complex_mult.v
-  complex_sqrt.v cordic.v fp_div.v fp_exp.v fp_log.v fp_sqrt.v
+if {[string match "heston_aad_*" $top]} {
+  # generated shared-multiplier datapath (hardware/gen): one self-contained file
+  read_verilog "$vdir/gen/$top.v"
+} else {
+  set srcs {
+    heston_top_level.v heston_bump_top.v heston_cos_forward.v heston_char_func.v
+    heston_payoff_coeff.v complex_div.v complex_exp.v complex_log.v complex_mult.v
+    complex_sqrt.v cordic.v fp_div.v fp_exp.v fp_log.v fp_sqrt.v
+  }
+  foreach f $srcs { read_verilog "$vdir/$f" }
 }
-foreach f $srcs { read_verilog "$vdir/$f" }
 
 synth_design -top $top -part $part -mode out_of_context \
              -include_dirs $vdir -flatten_hierarchy rebuilt

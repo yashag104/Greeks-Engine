@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 PARTS=${PARTS:-"xc7z020clg400-1 xczu7ev-ffvc1156-2-e"}
-TOPS=${TOPS:-"heston_top_level heston_bump_top heston_cos_forward"}
+TOPS=${TOPS:-"heston_aad_z7 heston_aad_zu heston_top_level heston_bump_top heston_cos_forward"}
 CLK_NS=${CLK_NS:-10.0}
 for part in $PARTS; do
   for top in $TOPS; do
