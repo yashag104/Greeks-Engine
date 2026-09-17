@@ -3,7 +3,9 @@
 #
 #   vivado -mode batch -source synth_impl.tcl -tclargs <top> <part> <clk_ns> <outdir>
 #
-#   <top>    heston_aad_z7      (generated shared-multiplier AAD engine, Zynq-7020 config)
+#   <top>    heston_aad_z7h     (generated AAD loop, setup/finish on the ARM: Zynq-7020 target)
+#            heston_aad_z7      (generated shared-multiplier AAD engine, fully on-chip)
+#            heston_bump_z7/zu  (bump-and-reprice on the generated pricer, same architecture)
 #            heston_aad_zu      (generated, 32 multipliers, high throughput)
 #            heston_top_level   (previous FSM AAD engine: price + 9 sensitivities)
 #            heston_bump_top    (bump-and-reprice baseline, same pricing core)
@@ -26,9 +28,12 @@ set here   [file dirname [file normalize [info script]]]
 set vdir   [file normalize "$here/../verilog"]
 file mkdir $outdir
 
-if {[string match "heston_aad_*" $top]} {
-  # generated shared-multiplier datapath (hardware/gen): one self-contained file
+if {[string match "heston_aad_*" $top] || [string match "heston_bump_z*" $top]} {
+  # generated shared-multiplier designs (hardware/gen): self-contained files
   read_verilog "$vdir/gen/$top.v"
+  if {[string match "heston_bump_z7" $top]} { read_verilog "$vdir/gen/z7_pricer.v" }
+  if {[string match "heston_bump_zu" $top]} { read_verilog "$vdir/gen/zu_pricer.v" }
+  if {[string match "*_axi" $top]} { read_verilog "$vdir/gen/[string range $top 0 end-4].v" }
 } else {
   set srcs {
     heston_top_level.v heston_bump_top.v heston_cos_forward.v heston_char_func.v

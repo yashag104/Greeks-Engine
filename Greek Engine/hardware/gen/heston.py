@@ -40,6 +40,7 @@ def build_setup(g):
     c2 = g.max(g.add(g.mul(v0, T), g.mul(half_th, T)), g.const(2.0 ** -fl))
     sq = P.sqrt(g, c2)
     ten = g.add(g.shl(sq, 3), g.shl(sq, 1))
+    s["c1"], s["ten_sqrt_c2"] = c1, ten
     s["a"] = g.sub(c1, ten)
     s["b"] = g.add(c1, ten)
     bma = g.shl(ten, 1)
@@ -60,8 +61,10 @@ def build_setup(g):
     return s
 
 
-def term(g, s, k):
-    """one COS term; k is an integer input node. Returns node dict."""
+def term(g, s, k, greeks=True):
+    """one COS term; k is an integer input node. Returns node dict.
+    greeks=False: forward pass only (the price-only pricer used by the
+    bump-and-reprice baseline)."""
     g.part = "term"
     fl, mf = g.fl, g.mf
     T, r, v0, kappa, theta, xi, rho = (s[n] for n in ["T", "r", "v0", "kappa", "theta", "xi", "rho"])
@@ -123,6 +126,8 @@ def term(g, s, k):
     # price contribution
     F = g.add(g.mul(phi[0], cu), g.mul(phi[1], su))
     contrib = g.mul(F, wV)
+    if not greeks:
+        return {"price": contrib}
 
     # ---- reverse sweep (normalized) ----
     wn_r = g.add(g.mul(phi[0], seed[0], raw=True), g.mul(phi[1], seed[1], raw=True))
@@ -195,9 +200,12 @@ def term(g, s, k):
     return outs
 
 
-def build_finish(g, s):
+def build_finish(g, s, greeks=True):
     g.part = "finish"
     fl = g.fl
+    if not greeks:
+        acc_price = g.inp("acc_price")
+        return {"price": g.mul(P.exp(g, g.neg(s["rT"])), acc_price)}
     acc = {n: g.inp("acc_" + n) for n in ACC}
     r, T, S0 = s["r"], s["T"], s["S0"]
     disc = P.exp(g, g.neg(s["rT"]))
@@ -222,14 +230,17 @@ OUTPUTS = ["price", "delta", "strike_sens", "theta_greek", "rho_greek", "vega",
 class Datapath:
     """setup graph + one term graph + finish graph (for scheduling / RTL)"""
 
-    def __init__(self, wl=64, fl=32, simplify=True):
+    def __init__(self, wl=64, fl=32, simplify=True, greeks=True):
         self.g = Graph(wl, fl)
+        self.greeks = greeks
+        self.acc_names = ACC if greeks else ["price"]
+        self.outputs = OUTPUTS if greeks else ["price"]
         P.install_tables(self.g)
         self.setup = build_setup(self.g)
         self.g.part = "term"
         self.k = self.g.inp("k", frac=0)
-        self.term = term(self.g, self.setup, self.k)
-        self.finish = build_finish(self.g, self.setup)
+        self.term = term(self.g, self.setup, self.k, greeks)
+        self.finish = build_finish(self.g, self.setup, greeks)
         if simplify:
             roots = list(self.term.values()) + list(self.finish.values())
             m = ir_simplify(self.g, roots)
@@ -293,17 +304,17 @@ def emulate(dp, q, n_terms=N_TERMS, keep_terms=()):
     g.overflows = []
     vals = g.eval_fixed(q, part="setup")
     trace = {"setup": list(vals)}
-    acc = {n: 0 for n in ACC}
+    acc = {n: 0 for n in dp.acc_names}
     for k in range(n_terms):
         tv = list(vals)
         tv[dp.k] = k
         g.eval_fixed(dict(q, k=k), values=tv, part="term")
-        for n in ACC:
+        for n in dp.acc_names:
             acc[n] += tv[dp.term[n]]
         if k in keep_terms:
             trace[k] = tv
     fin = list(vals)
-    g.eval_fixed(dict(q, **{"acc_" + n: acc[n] for n in ACC}), values=fin, part="finish")
+    g.eval_fixed(dict(q, **{"acc_" + n: acc[n] for n in dp.acc_names}), values=fin, part="finish")
     trace["finish"] = fin
     trace["acc"] = acc
-    return {o: fin[dp.finish[o]] for o in OUTPUTS}, trace
+    return {o: fin[dp.finish[o]] for o in dp.outputs}, trace

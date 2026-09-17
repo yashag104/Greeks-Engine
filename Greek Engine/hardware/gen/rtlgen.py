@@ -23,6 +23,7 @@ import math
 import os
 
 import heston as H
+import ranges as RG
 from ir import ATAN_DEC, CORDIC_INVK_DEC, PI_DEC, RESOURCE_OPS, round_half_up
 from sched import Config, schedule
 
@@ -56,8 +57,12 @@ class Gen:
         for o in dp.term.values():                      # accumulator reads
             self.last_use[o] = max(self.last_use.get(o, -1), s.ready[o])
         for o in dp.finish.values():                    # module outputs
-            self.last_use[o] = max(self.last_use.get(o, -1), s.ready[o] + 1)
+            if o in s.ready:                            # (finish is on the host in host_setup mode)
+                self.last_use[o] = max(self.last_use.get(o, -1), s.ready[o] + 1)
         self.chains = {}                                # id -> number of storage regs
+        self.ranges = RG.get(dp, os.path.join(os.path.dirname(os.path.abspath(__file__)), "build"))
+        self.err_terms = []                             # range-check conditions
+        self.host_inputs = {}                           # host_setup: setup node id -> port name
 
     # ------------------------------------------------------------ helpers
     def width(self, n):
@@ -97,6 +102,9 @@ class Gen:
                 return name
             return "p_" + name
         if n.part != part:                               # setup value used later
+            if self.cfg.host_setup and n.part == "setup":
+                self.host_inputs[n.id] = "hs_%d" % n.id
+                return "hs_%d" % n.id
             return "v%d" % n.id
         r = self.sch.ready[n.id]
         if part != "term":
@@ -133,6 +141,24 @@ class Gen:
             self.roms[key] = (name, body)
         return self.roms[key][0]
 
+    @staticmethod
+    def bits(x):
+        return max(1, int(x).bit_length())
+
+    def const_shift(self, v, sh):
+        """exact round-half-up shift by a constant"""
+        if sh > 0:
+            return "(((%s >>> %d) + 1) >>> 1)" % (v, sh - 1)
+        if sh < 0:
+            return "(%s <<< %d)" % (v, -sh)
+        return v
+
+    def valid_expr(self, part, c):
+        """1 when the op of `part` at part-relative time c belongs to a real term"""
+        if part != "term":
+            return "1'b1"
+        return "(t >= 32'd%d && t <= 32'd%d)" % (self.S + c, self.S + c + (self.NT - 1) * self.II)
+
     # ------------------------------------------------------------ glue expr
     def expr(self, n, c):
         g, W, D = self.g, self.W, self.D
@@ -146,9 +172,9 @@ class Gen:
         if op == "neg":
             return "-%s" % a[0]
         if op == "refrac":
-            return "shr_rnd(%s, 16'sd%d)" % (a[0], fa[0] - n.frac)
+            return self.const_shift(a[0], fa[0] - n.frac)
         if op == "scale":
-            return "shr_rnd(%s, %s - %s)" % (a[0], lit(fa[0] - n.frac, 16), "$signed(%s)" % a[1])
+            return "sc%d_out" % n.id
         if op == "abs":
             return "((%s < 0) ? -%s : %s)" % (a[0], a[0], a[0])
         if op == "max":
@@ -168,7 +194,8 @@ class Gen:
         if op == "shl":
             return "(%s <<< %d)" % (a[0], n.attrs["n"])
         if op == "norm_e":
-            e = "(lead_pos(%s) - %s)" % (a[0], lit(fa[0], 16))
+            fn = "lead_pos_d" if g.nodes[n.args[0]].width == "D" else "lead_pos_w"
+            e = "(%s(%s) - %s)" % (fn, a[0], lit(fa[0], 16))
             return ("(%s & ~16'sd1)" % e) if n.attrs["even"] else e
         if op == "idx":
             nb = n.attrs["nbits"]
@@ -180,6 +207,44 @@ class Gen:
             fn = self.rom_fn(n.attrs["table"], n.frac, W)
             return "%s(%s)" % (fn, a[0])
         raise ValueError(op)
+
+    def host_interface(self):
+        """port -> meaning for host_setup designs"""
+        names = {}
+        for k, v in self.dp.setup.items():
+            for j, nid in enumerate(v if isinstance(v, tuple) else (v,)):
+                names.setdefault(nid, k + ("[%d]" % j if isinstance(v, tuple) else ""))
+        g = self.g
+        return {port: {"node": nid, "setup_value": names.get(nid, "internal"), "frac": g.nodes[nid].frac,
+                       "width": self.width(g.nodes[nid])} for nid, port in sorted(self.host_inputs.items())}
+
+    def emit_scale(self, n, st, decls, B, en):
+        """range-limited rounding shifter for a scale node"""
+        g = self.g
+        src = g.nodes[n.args[0]]
+        wv = self.width(src)
+        lo, hi = self.ranges[n.id]
+        cap = wv + 1
+        hi_c = min(hi, cap)
+        lo = min(lo, hi_c)
+        kb = self.bits(hi_c - lo)
+        a0 = self.loc(n.args[0], n.part, st)
+        e = self.loc(n.args[1], n.part, st)
+        A = lo - 1
+        wb = wv + max(0, -A)
+        decls.append("wire signed [15:0] sc%d_sh = %s - $signed(%s);" % (n.id, lit(RG.fixed_shift(g, n), 16), e))
+        decls.append("wire [%d:0] sc%d_v = (sc%d_sh > %s) ? %d'd%d : ((sc%d_sh < %s) ? %d'd0 : sc%d_sh - %s);"
+                     % (kb - 1, n.id, n.id, lit(hi_c, 16), kb, hi_c - lo, n.id, lit(lo, 16), kb, n.id, lit(lo, 16)))
+        if A >= 0:
+            base = "($signed(%s) >>> %d)" % (a0, A)
+        else:
+            base = "($signed(%s) <<< %d)" % (a0, -A)
+        decls.append("wire signed [%d:0] sc%d_b = %s;" % (wb - 1, n.id, base))
+        decls.append("wire signed [%d:0] sc%d_out = ((sc%d_b >>> sc%d_v) + 1) >>> 1;" % (wb - 1, n.id, n.id, n.id))
+        cond = "(sc%d_sh < %s)" % (n.id, lit(lo, 16))
+        if hi < cap:
+            cond = "(%s || sc%d_sh > %s)" % (cond, n.id, lit(hi, 16))
+        self.err_terms.append("(%s && %s && %s)" % (en(n, st), self.valid_expr(n.part, st), cond))
 
     # ------------------------------------------------------------ emit
     def emit(self):
@@ -203,10 +268,12 @@ class Gen:
         for n in g.nodes:
             if n.op in ("const", "in", "pick", "mul", "crot", "cvec", "shl"):
                 continue
-            if n.part == "setup" and cfg.host_setup:
+            if n.part in ("setup", "finish") and cfg.host_setup:
                 continue
             decls.append(self.decl(n) + ";")
             st = sch.start[n.id]
+            if n.op == "scale":
+                self.emit_scale(n, st, decls, B, en)
             B("    always @(posedge clk) if %s v%d <= %s;" % (en(n, st), n.id, self.expr(n, st)))
         # captures of unit outputs used in setup/finish, and term storage chains
         for n in g.nodes:
@@ -214,12 +281,14 @@ class Gen:
                 continue
             if n.id not in self.last_use:
                 continue
+            if n.part in ("setup", "finish") and cfg.host_setup:
+                continue
             r = sch.ready[n.id]
             if n.part in ("setup", "finish"):
                 decls.append(self.decl(n) + ";")
                 B("    always @(posedge clk) if %s v%d <= %s;" % (en(n, r), n.id, self.unit_out(n)))
         # accumulators
-        for name in H.ACC:
+        for name in self.dp.acc_names:
             o = self.dp.term[name]
             r = sch.ready[o]
             src = self.loc(o, "term", r)
@@ -243,8 +312,33 @@ class Gen:
             decls.append("reg signed [%d:0] mu%d_P, mu%d_Q, mu%d_out;" % (D - 1, u, u, u))
             decls.append("reg signed [15:0] mu%d_sh, mu%d_S1, mu%d_S2, mu%d_S3;" % (u, u, u, u))
             decls.append("reg mu%d_neg, mu%d_N1, mu%d_N2;" % (u, u, u))
+            decls.append("reg mu%d_val, mu%d_V1, mu%d_V2, mu%d_V3;" % (u, u, u, u))
+            # shift range of this unit (union over its operations)
+            ulo, uhi = 10 ** 9, -10 ** 9
+            for n in ops:
+                if n.attrs.get("raw"):
+                    lo_, hi_ = 0, 0
+                elif len(n.args) == 3:
+                    lo_, hi_ = self.ranges[n.id]
+                else:
+                    lo_ = hi_ = RG.fixed_shift(g, n)
+                ulo, uhi = min(ulo, lo_), max(uhi, hi_)
+            cap = D + 1
+            uhi_c = min(uhi, cap)
+            ulo = min(ulo, uhi_c)
+            kb = self.bits(uhi_c - ulo)
+            A = ulo - 1
+            wb = D + max(0, -A)
+            decls.append("wire [%d:0] mu%d_sv = (mu%d_S3 > %s) ? %d'd%d : ((mu%d_S3 < %s) ? %d'd0 : mu%d_S3 - %s);"
+                         % (kb - 1, u, u, lit(uhi_c, 16), kb, uhi_c - ulo, u, lit(ulo, 16), kb, u, lit(ulo, 16)))
+            base = ("($signed(mu%d_Q) >>> %d)" % (u, A)) if A >= 0 else ("($signed(mu%d_Q) <<< %d)" % (u, -A))
+            decls.append("wire signed [%d:0] mu%d_bq = %s;" % (wb - 1, u, base))
+            cond = "(mu%d_S3 < %s)" % (u, lit(ulo, 16))
+            if uhi < cap:
+                cond = "(%s || mu%d_S3 > %s)" % (cond, u, lit(uhi, 16))
+            self.err_terms.append("(mu%d_V3 && %s)" % (u, cond))
             B("    always @* begin")
-            B("        mu%d_a = 0; mu%d_b = 0; mu%d_sh = 0; mu%d_neg = 0;" % (u, u, u, u))
+            B("        mu%d_a = 0; mu%d_b = 0; mu%d_sh = 0; mu%d_neg = 0; mu%d_val = 0;" % (u, u, u, u, u))
             for part, cond, key in (("setup", "in_setup", "t"), ("term", "in_term", "ph"), ("finish", "in_fin", "t")):
                 pops = [n for n in ops if n.part == part]
                 if not pops:
@@ -260,16 +354,17 @@ class Gen:
                     else:
                         base = fa[0] + fa[1] - n.frac
                         sh = lit(base, 16) if len(a) == 2 else "(%s - $signed(%s))" % (lit(base, 16), a[2])
-                    B("            %d: begin mu%d_a = %s; mu%d_b = %s; mu%d_sh = %s; mu%d_neg = 1'b%d; end"
-                      % (lab, u, a[0], u, a[1], u, sh, u, 1 if n.attrs.get("negate") else 0))
+                    B("            %d: begin mu%d_a = %s; mu%d_b = %s; mu%d_sh = %s; mu%d_neg = 1'b%d; mu%d_val = %s; end"
+                      % (lab, u, a[0], u, a[1], u, sh, u, 1 if n.attrs.get("negate") else 0, u,
+                         self.valid_expr(part, st)))
                 B("            default: ;")
                 B("        endcase")
             B("    end")
             B("    always @(posedge clk) begin")
-            B("        mu%d_A <= mu%d_a; mu%d_B <= mu%d_b; mu%d_S1 <= mu%d_sh; mu%d_N1 <= mu%d_neg;" % ((u,) * 8))
-            B("        mu%d_P <= mu%d_A * mu%d_B; mu%d_S2 <= mu%d_S1; mu%d_N2 <= mu%d_N1;" % ((u,) * 7))
-            B("        mu%d_Q <= mu%d_N2 ? -mu%d_P : mu%d_P; mu%d_S3 <= mu%d_S2;" % ((u,) * 6))
-            B("        mu%d_out <= shr_rnd(mu%d_Q, mu%d_S3);" % (u, u, u))
+            B("        mu%d_A <= mu%d_a; mu%d_B <= mu%d_b; mu%d_S1 <= mu%d_sh; mu%d_N1 <= mu%d_neg; mu%d_V1 <= mu%d_val;" % ((u,) * 10))
+            B("        mu%d_P <= mu%d_A * mu%d_B; mu%d_S2 <= mu%d_S1; mu%d_N2 <= mu%d_N1; mu%d_V2 <= mu%d_V1;" % ((u,) * 9))
+            B("        mu%d_Q <= mu%d_N2 ? -mu%d_P : mu%d_P; mu%d_S3 <= mu%d_S2; mu%d_V3 <= mu%d_V2;" % ((u,) * 8))
+            B("        mu%d_out <= ((mu%d_bq >>> mu%d_sv) + 1) >>> 1;" % (u, u, u))
             B("    end")
 
         # CORDIC units
@@ -322,9 +417,18 @@ class Gen:
         for p_ in H.PARAMS:
             P("    input  wire signed [%d:0] %s," % (W - 1, p_))
         P("    input  wire is_call,")
-        for o in H.OUTPUTS:
-            P("    output wire signed [%d:0] %s," % (W - 1, o))
-        P("    output reg  done")
+        if cfg.host_setup:
+            P("    // per-evaluation constants computed by the host (see %s_host.json); hold stable while running" % self.name)
+            for nid, port in sorted(self.host_inputs.items()):
+                w = self.width(g.nodes[nid])
+                P("    input  wire %s%s," % (("signed [%d:0] " % (w - 1)) if w > 1 else "", port))
+            for a_ in self.dp.acc_names:
+                P("    output wire signed [%d:0] sum_%s," % (W - 1, a_))
+        else:
+            for o in self.dp.outputs:
+                P("    output wire signed [%d:0] %s," % (W - 1, o))
+        P("    output reg  done,")
+        P("    output reg  range_err   // sticky: a shift fell outside its verified range (result invalid)")
         P(");")
         P("    localparam WL = %d;" % W)
         P("    reg running; reg [31:0] t; reg [15:0] ph; reg [15:0] kcur;")
@@ -371,14 +475,15 @@ class Gen:
         P("            else shr_rnd = v;")
         P("        end")
         P("    endfunction")
-        P("    function signed [15:0] lead_pos;")
-        P("        input signed [%d:0] v;" % (D - 1))
-        P("        integer i; reg [%d:0] x;" % (D - 1))
-        P("        begin")
-        P("            x = (v < 0) ? -v : v; lead_pos = 0;")
-        P("            for (i = 0; i < %d; i = i + 1) if (x[i]) lead_pos = i;" % D)
-        P("        end")
-        P("    endfunction")
+        for suf, ww in (("w", W), ("d", D)):
+            P("    function signed [15:0] lead_pos_%s;" % suf)
+            P("        input signed [%d:0] v;" % (ww - 1))
+            P("        integer i; reg [%d:0] x;" % (ww - 1))
+            P("        begin")
+            P("            x = (v < 0) ? -v : v; lead_pos_%s = 0;" % suf)
+            P("            for (i = 0; i < %d; i = i + 1) if (x[i]) lead_pos_%s = i;" % (ww, suf))
+            P("        end")
+            P("    endfunction")
         P("    function signed [15:0] adj_shift_fn;")
         P("        input signed [%d:0] a; input signed [%d:0] b; input signed [15:0] fr; input signed [15:0] cap;" % (D - 1, D - 1))
         P("        integer i; reg [%d:0] x; reg signed [15:0] s; reg found;" % (D - 1))
@@ -397,9 +502,17 @@ class Gen:
         out += rom_text
         out += ["    " + d for d in decls]
         out += body_text
-        for o in H.OUTPUTS:
-            n = g.nodes[self.dp.finish[o]]
-            P("    assign %s = %s;" % (o, "v%d" % n.id if n.op != "in" else "0"))
+        out.append("    always @(posedge clk) begin")
+        out.append("        if (rst || start_evt) range_err <= 1'b0;")
+        out.append("        else if (%s) range_err <= 1'b1;" % (" ||\n            ".join(self.err_terms) if self.err_terms else "1'b0"))
+        out.append("    end")
+        if cfg.host_setup:
+            for a_ in self.dp.acc_names:
+                P("    assign sum_%s = acc_%s;" % (a_, a_))
+        else:
+            for o in self.dp.outputs:
+                n = g.nodes[self.dp.finish[o]]
+                P("    assign %s = %s;" % (o, "v%d" % n.id if n.op != "in" else "0"))
         out.append("endmodule")
         out.append("")
         out += (self.cordic_modules_pipelined(nit) if cfg.cordic_pipelined else self.cordic_modules(nit))
@@ -521,12 +634,14 @@ def main():
     ap.add_argument("--cvec", type=int, default=2)
     ap.add_argument("--terms", type=int, default=128)
     ap.add_argument("--pipe-cordic", action="store_true")
+    ap.add_argument("--price-only", action="store_true")
+    ap.add_argument("--host-setup", action="store_true")
     ap.add_argument("--name", default="heston_aad_z7")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
     cfg = Config(wl=a.wl, fl=a.fl, mults=a.mults, crot=a.crot, cvec=a.cvec, cordic_pipelined=a.pipe_cordic,
-                 n_terms=a.terms)
-    dp = H.Datapath(a.wl, a.fl)
+                 n_terms=a.terms, host_setup=a.host_setup)
+    dp = H.Datapath(a.wl, a.fl, greeks=not a.price_only)
     gen = Gen(dp, cfg, a.name)
     text = gen.emit()
     path = a.out or os.path.join(os.path.dirname(__file__), "..", "verilog", "gen", a.name + ".v")
