@@ -1,0 +1,116 @@
+{
+ "hs_11": {
+  "node": 11,
+  "setup_value": "is_call",
+  "frac": 0,
+  "width": 1
+ },
+ "hs_60": {
+  "node": 60,
+  "setup_value": "x",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_122": {
+  "node": 122,
+  "setup_value": "internal",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_152": {
+  "node": 152,
+  "setup_value": "internal",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_153": {
+  "node": 153,
+  "setup_value": "a",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_154": {
+  "node": 154,
+  "setup_value": "b",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_180": {
+  "node": 180,
+  "setup_value": "pob",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_183": {
+  "node": 183,
+  "setup_value": "tkb",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_185": {
+  "node": 185,
+  "setup_value": "kpi",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_210": {
+  "node": 210,
+  "setup_value": "exp_a",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_235": {
+  "node": 235,
+  "setup_value": "exp_b",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_236": {
+  "node": 236,
+  "setup_value": "rho_xi",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_237": {
+  "node": 237,
+  "setup_value": "xi_sq",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_238": {
+  "node": 238,
+  "setup_value": "kappa2",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_260": {
+  "node": 260,
+  "setup_value": "recip_xi_sq[0]",
+  "frac": 53,
+  "width": 56
+ },
+ "hs_261": {
+  "node": 261,
+  "setup_value": "recip_xi_sq[1]",
+  "frac": 0,
+  "width": 56
+ },
+ "hs_263": {
+  "node": 263,
+  "setup_value": "kth",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_264": {
+  "node": 264,
+  "setup_value": "rT",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_265": {
+  "node": 265,
+  "setup_value": "t1r",
+  "frac": 28,
+  "width": 56
+ }
+}

@@ -40,25 +40,37 @@ def main():
     ap.add_argument("--terms", type=int, default=128)
     ap.add_argument("--cases", type=int, default=3)
     ap.add_argument("--pipe-cordic", action="store_true")
+    ap.add_argument("--price-only", action="store_true")
+    ap.add_argument("--host-setup", action="store_true")
     ap.add_argument("--name", default="heston_aad_z7")
     a = ap.parse_args()
     cfg = Config(wl=a.wl, fl=a.fl, mults=a.mults, crot=a.crot, cvec=a.cvec, cordic_pipelined=a.pipe_cordic,
-                 n_terms=a.terms)
-    dp = H.Datapath(a.wl, a.fl)
+                 n_terms=a.terms, host_setup=a.host_setup)
+    dp = H.Datapath(a.wl, a.fl, greeks=not a.price_only)
     gen = Gen(dp, cfg, a.name)
     rtl = gen.emit()
     os.makedirs(BUILD, exist_ok=True)
     rtl_path = os.path.join(BUILD, a.name + ".v")
     open(rtl_path, "w").write(rtl)
+    host = a.host_setup
+    if host:
+        import json
+        json.dump(gen.host_interface(), open(os.path.join(BUILD, a.name + "_host.json"), "w"), indent=1)
+    outs = ["sum_" + x for x in dp.acc_names] if host else dp.outputs
+    hs_ports = sorted(gen.host_inputs.items())
     g, sch, W = dp.g, gen.sch, a.wl
     cycles_expected = gen.TF + gen.F + 2   # start-sampling edge .. done visible
 
+    g0 = dp.g
     tb = ["`timescale 1ns/1ps", "module tb;", "  reg clk = 0, rst = 1, start = 0; always #5 clk = ~clk;",
           "  reg signed [%d:0] %s;" % (W - 1, ", ".join(H.PARAMS)), "  reg is_call;",
-          "  wire signed [%d:0] %s;" % (W - 1, ", ".join(H.OUTPUTS)), "  wire done;",
+          "  wire signed [%d:0] %s;" % (W - 1, ", ".join(outs)), "  wire done, range_err;",
+          "".join("  reg %s%s;\n" % (("signed [%d:0] " % (gen.width(g0.nodes[nid]) - 1)) if gen.width(g0.nodes[nid]) > 1 else "", port)
+                  for nid, port in hs_ports),
           "  integer errors = 0, checks = 0, cyc;",
           "  %s uut(.clk(clk), .rst(rst), .start(start), %s, .is_call(is_call), %s, .done(done));"
-          % (a.name, ", ".join(".%s(%s)" % (p, p) for p in H.PARAMS), ", ".join(".%s(%s)" % (o, o) for o in H.OUTPUTS))]
+          % (a.name, ", ".join(".%s(%s)" % (p, p) for p in H.PARAMS) + "".join(", .%s(%s)" % (pt, pt) for _, pt in hs_ports),
+             ", ".join(".%s(%s)" % (o, o) for o in outs) + ", .range_err(range_err)")]
 
     # register-level checks for the first case
     q0 = H.quantize_inputs(CASES[0][0], CASES[0][1], a.fl)
@@ -76,6 +88,8 @@ def main():
         w = gen.width(n)
         r = sch.ready.get(n.id)
         if r is None:
+            continue
+        if host and n.part != "term":
             continue
         if n.part == "setup":
             times = [(r, trace["setup"])]
@@ -101,19 +115,40 @@ def main():
     tb.append("    #20 rst = 0;")
     for ci, (p, call) in enumerate(CASES[:a.cases]):
         q = H.quantize_inputs(p, call, a.fl)
-        outs, _ = H.emulate(dp, q, n_terms=a.terms)
+        exp_outs, tr = H.emulate(dp, q, n_terms=a.terms)
+        if host:
+            exp_outs = {"sum_" + x: tr["acc"][x] for x in dp.acc_names}
         tb.append("    // case %d: %s call=%s" % (ci, p, call))
         for name in H.PARAMS:
             tb.append("    %s = %s;" % (name, lit(q[name], W)))
+        for nid, port in hs_ports:
+            v = tr["setup"][nid]
+            tb.append("    %s = %s;" % (port, ("1'b%d" % int(v)) if gen.width(g0.nodes[nid]) == 1 else lit(v, W)))
         tb.append("    is_call = %d; check_on = %d;" % (q["is_call"], 1 if ci == 0 else 0))
         tb.append("    @(negedge clk) start = 1; @(negedge clk) start = 0; cyc = 1;")
         tb.append("    while (!done) begin @(posedge clk); cyc = cyc + 1; end")
         tb.append("    #1;")
-        for o in H.OUTPUTS:
+        tb.append("    if (range_err !== 1'b0) begin errors = errors + 1; $display(\"FAIL case %d: range_err raised\"); end" % ci)
+        for o in outs:
             tb.append("    if (%s !== %s) begin errors = errors + 1; $display(\"FAIL case %d %s got %%0d exp %d\", %s); end"
-                      % (o, lit(outs[o], W), ci, o, outs[o], o))
-        tb.append("    $display(\"case %d done in %%0d cycles (schedule predicts %d); price = %%f delta = %%f\", cyc - 1, price * 1.0 / %d.0, delta * 1.0 / %d.0);"
-                  % (ci, cycles_expected, 2 ** a.fl, 2 ** a.fl))
+                      % (o, lit(exp_outs[o], W), ci, o, exp_outs[o], o))
+        tb.append("    $display(\"case %d done in %%0d cycles (schedule predicts %d); %s = %%f\", cyc - 1, %s * 1.0 / %d.0);"
+                  % (ci, cycles_expected, outs[0], outs[0], 2 ** a.fl))
+    # out-of-domain input (T = 0.01, below the verified T >= 0.1): range_err must fire
+    q = H.quantize_inputs([100, 100, .01, .05, .04, 1.5, .04, .3, -.9], True, a.fl)
+    tb.append("    // out-of-domain case: expect range_err")
+    for name in H.PARAMS:
+        tb.append("    %s = %s;" % (name, lit(q[name], W)))
+    if host:
+        _, trx = H.emulate(dp, q, n_terms=1)
+        for nid, port in hs_ports:
+            v = trx["setup"][nid]
+            tb.append("    %s = %s;" % (port, ("1'b%d" % int(v)) if gen.width(g0.nodes[nid]) == 1 else lit(v, W)))
+    tb.append("    is_call = 1; check_on = 0;")
+    tb.append("    @(negedge clk) start = 1; @(negedge clk) start = 0;")
+    tb.append("    while (!done) @(posedge clk);")
+    tb.append("    #1 if (range_err !== 1'b1) begin errors = errors + 1; $display(\"FAIL: range_err not raised for out-of-domain input\"); end")
+    tb.append("    else $display(\"out-of-domain input (T=0.01) correctly flagged by range_err\");")
     tb.append("    if (errors == 0) $display(\"PASS: RTL matches emulator bit-exactly (%%0d register checks + outputs)\", %d);" % len(checks))
     tb.append("    else $display(\"FAIL: %0d mismatches\", errors);")
     tb.append("    $finish;")

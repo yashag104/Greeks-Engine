@@ -12,6 +12,11 @@ Figures (each skipped with a message if its data is missing):
   fig5_cost_vs_greeks      clock cycles vs number of sensitivities
   fig6_resources           LUT/FF/DSP per design and board (needs vivado.csv)
   fig7_energy_latency      latency and energy per Greek set (needs vivado.csv)
+  fig8_architecture_cycles cycles per evaluation: FSM engine vs generated
+                           shared-multiplier datapaths, AAD vs bump-and-reprice
+  fig9_cycles_vs_mults     cycles per evaluation vs shared multipliers
+  fig10_gen_bump_vs_aad    bump size vs error on the generated architecture
+  fig11_gen_accuracy       generated datapaths over the parameter grid
 """
 import csv
 import math
@@ -240,6 +245,111 @@ def fig_vivado(viv, acc_rows, bump_rows):
 
 
 # ---------------------------------------------------------------------------
+# generated shared-multiplier architecture
+ARCH = [  # label, AAD cycles, bump cycles (all measured in RTL simulation)
+    ("FSM engine\n(64-bit)", None, None),
+    ("generated, Zynq-7020\n(56-bit, 8 mults)", ("gen_cycles.csv", "z7", 8)),
+    ("generated, 64-bit\n(32 mults)", ("gen_cycles.csv", "zu", 32)),
+]
+
+
+def fig_arch(acc, bump, gen_cyc):
+    labels, aad, bmp = [], [], []
+    for item in ARCH:
+        if item[1] is None:
+            if not (acc and bump):
+                continue
+            labels.append(item[0]); aad.append(acc[0]["cycles"]); bmp.append(bump[0]["cycles_bump"])
+        else:
+            _, fam, m = item[1]
+            r = next((r for r in gen_cyc if r["family"] == fam and int(r["mults"]) == m), None)
+            if r is None:
+                continue
+            labels.append(item[0]); aad.append(r["cycles_aad"]); bmp.append(r["cycles_bump"])
+    fig, ax = plt.subplots(figsize=(7.0, 2.4))
+    y = list(range(len(labels)))
+    ax.barh([v + 0.2 for v in y], aad, height=0.36, color=C3, label="AAD: price + 9 sensitivities")
+    ax.barh([v - 0.2 for v in y], bmp, height=0.36, color=C2, label="bump-and-reprice: price + 9 sensitivities")
+    for v, a_, b_ in zip(y, aad, bmp):
+        ax.text(a_ * 1.08, v + 0.2, "{:,}".format(int(a_)), va="center", color=INK2, fontsize=7)
+        ax.text(b_ * 1.08, v - 0.2, "{:,}  ({:.1f}x AAD)".format(int(b_), b_ / a_), va="center", color=INK2, fontsize=7)
+    ax.set_xscale("log")
+    ax.set_yticks(y)
+    ax.set_yticklabels(labels)
+    ax.invert_yaxis()
+    ax.set_xlim(5e2, 3e7)
+    ax.set_xlabel("clock cycles per evaluation (RTL simulation, 128 COS terms)")
+    ax.grid(axis="y", visible=False)
+    ax.legend(frameon=False, loc="lower right")
+    save(fig, "fig8_architecture_cycles")
+
+
+def fig_mults(gen_cyc):
+    rows = sorted([r for r in gen_cyc if r["family"] == "zu"], key=lambda r: r["mults"])
+    m = [r["mults"] for r in rows]
+    fig, ax = plt.subplots(figsize=(3.4, 2.5))
+    ax.loglog(m, [r["cycles_bump"] for r in rows], color=C2, marker="o", ms=3.5, label="bump-and-reprice (19 pricings)")
+    ax.loglog(m, [r["cycles_aad"] for r in rows], color=C3, marker="s", ms=3.5, label="AAD (forward + reverse)")
+    verified = {16: "aad", 32: "both"}
+    for r in rows:
+        v = verified.get(int(r["mults"]))
+        if v:
+            ax.plot([r["mults"]], [r["cycles_aad"]], ls="none", marker="o", ms=8, mfc="none", mec=INK)
+            if v == "both":
+                ax.plot([r["mults"]], [r["cycles_bump"]], ls="none", marker="o", ms=8, mfc="none", mec=INK)
+    ax.plot([], [], ls="none", marker="o", ms=8, mfc="none", mec=INK, label="simulated RTL (bit-exact)")
+    ax.set_xticks(m)
+    ax.set_xticklabels([str(int(x)) for x in m])
+    ax.set_xlabel("shared multipliers (64-bit datapath)")
+    ax.set_ylabel("clock cycles per evaluation")
+    ax.legend(frameon=False, fontsize=6.5)
+    save(fig, "fig9_cycles_vs_mults")
+
+
+def fig_gen_bump(rows):
+    fig, axes = plt.subplots(3, 3, figsize=(7.0, 6.0), sharex=True)
+    for ax, o in zip(axes.flat, GREEKS):
+        for fam, col, mk, ls, lbl in (("z7", C2, "o", "-", "Zynq-7020 config (56-bit)"), ("zu", C1, "s", "--", "64-bit config")):
+            pts = sorted([r for r in rows if r["output"] == o and r["family"] == fam], key=lambda r: r["rel_h"])
+            if not pts:
+                continue
+            h = [r["rel_h"] for r in pts]
+            ax.loglog(h, [max(rel(r["bump"] - r["ref_cos"], r["ref_cos"]), 1e-16) for r in pts], color=col, marker=mk,
+                      ms=3.5, ls=ls, label="bump-and-reprice, " + lbl)
+            e_aad = max(rel(pts[0]["aad"] - pts[0]["ref_cos"], pts[0]["ref_cos"]), 1e-16)
+            ax.axhline(e_aad, color=C3, lw=2 if fam == "z7" else 1.2, ls=ls, label="AAD, " + lbl)
+        ax.set_title(LABEL[o])
+        ax.yaxis.set_major_locator(LogLocator(numticks=5))
+    for ax in axes[-1]:
+        ax.set_xlabel("relative bump size h")
+    for ax in axes[:, 0]:
+        ax.set_ylabel("relative error")
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(handles, labels, loc="upper center", ncol=2, frameon=False, bbox_to_anchor=(0.5, 1.04))
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    save(fig, "fig10_gen_bump_vs_aad")
+
+
+def fig_gen_accuracy(rows):
+    fig, ax = plt.subplots(figsize=(7.0, 2.6))
+    for j, o in enumerate(OUTPUTS):
+        for dz, fam, col, mk, lbl in ((-0.17, "heston_aad_z7", C1, "o", "Zynq-7020 config (56-bit)"),
+                                      (0.08, "heston_aad_zu", C3, "s", "64-bit config")):
+            pts = [r for r in rows if r["output"] == o and r["design"] == fam]
+            xs = [j + dz + 0.09 * (i / max(len(pts) - 1, 1)) for i in range(len(pts))]
+            ax.scatter(xs, [max(rel(r["fixed"] - r["ref_cos"], r["ref_cos"]), 1e-13) for r in pts], s=8, color=col,
+                       marker=mk, lw=0, label=lbl if j == 0 else None)
+    ax.set_yscale("log")
+    ax.set_xticks(range(len(OUTPUTS)))
+    ax.set_xticklabels([LABEL[o] for o in OUTPUTS], rotation=30, ha="right")
+    ax.set_ylabel("relative error")
+    ax.grid(axis="x", visible=False)
+    n = len({r["case"] for r in rows})
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), frameon=False, ncol=2,
+              title="Generated shared-multiplier datapaths vs double-precision COS, %d parameter sets" % n)
+    save(fig, "fig11_gen_accuracy")
+
+
 def tables(acc, fl_rows, bump):
     out = []
     if acc:
@@ -265,6 +375,33 @@ def tables(acc, fl_rows, bump):
                                                          best[0], best[1], worst[0]))
         out.append("\nCycles: AAD %d, bump-and-reprice %d (%.1fx)\n" % (
             bump[0]["cycles_aad"], bump[0]["cycles_bump"], bump[0]["cycles_bump"] / bump[0]["cycles_aad"]))
+    gen_cyc, gen_acc, ys = load("gen_cycles.csv"), load("gen_accuracy.csv"), load("yosys.csv")
+    if gen_cyc:
+        out.append("## Generated shared-multiplier datapaths: cycles per evaluation\n")
+        out.append("| config | multipliers | II (AAD) | AAD | price only | bump-and-reprice | bump / AAD |")
+        out.append("|---|---|---|---|---|---|---|")
+        for r in gen_cyc:
+            out.append("| %s (WL%d/FL%d) | %d | %d | %d | %d | %d | %.1f |" % (r["family"], r["wl"], r["fl"], r["mults"], r["ii_aad"],
+                                                                     r["cycles_aad"], r["cycles_price"], r["cycles_bump"], r["bump_over_aad"]))
+        out.append("")
+    if gen_acc:
+        out.append("## Generated datapaths: worst relative error over the parameter grid\n")
+        out.append("| output | Zynq-7020 config (56-bit) | 64-bit config | max error / bound |")
+        out.append("|---|---|---|---|")
+        for o in OUTPUTS:
+            e = {}
+            for d in ("heston_aad_z7", "heston_aad_zu"):
+                e[d] = max(rel(r["fixed"] - r["ref_cos"], r["ref_cos"]) for r in gen_acc if r["output"] == o and r["design"] == d)
+            ratio = max(abs(r["fixed"] - r["float_alg"]) / r["bound"] for r in gen_acc if r["output"] == o)
+            out.append("| %s | %.1e | %.1e | %.3f |" % (o, e["heston_aad_z7"], e["heston_aad_zu"], ratio))
+        out.append("")
+    if ys:
+        out.append("## Yosys synth_xilinx cell counts (estimates; carry column = CARRY4, xc7 only)\n")
+        out.append("| design | LUT | FF | SRL | CARRY4 | DSP | note |")
+        out.append("|---|---|---|---|---|---|---|")
+        for r in ys:
+            out.append("| %s | %d | %d | %d | %d | %d | %s |" % (r["design"], r["lut"], r["ff"], r["srl"], r["carry4"], r["dsp"], r["note"]))
+        out.append("")
     if out:
         path = os.path.join(FIG, "tables.md")
         os.makedirs(FIG, exist_ok=True)
@@ -285,4 +422,12 @@ if __name__ == "__main__":
         fig_cost(acc, bump)
     if viv and acc:
         fig_vivado(viv, acc, bump)
+    gen_cyc, gen_bump, gen_acc = load("gen_cycles.csv"), load("gen_bump.csv"), load("gen_accuracy.csv")
+    if gen_cyc:
+        fig_arch(acc, bump, gen_cyc)
+        fig_mults(gen_cyc)
+    if gen_bump:
+        fig_gen_bump(gen_bump)
+    if gen_acc:
+        fig_gen_accuracy(gen_acc)
     tables(acc, fl_rows, bump)
