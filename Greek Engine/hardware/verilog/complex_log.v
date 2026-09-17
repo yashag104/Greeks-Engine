@@ -33,6 +33,9 @@ module complex_log #(
     output reg               done
 );
 
+    `include "fx_lib.vh"
+
+
     // FSM
     localparam S_IDLE     = 3'd0;
     localparam S_LAUNCH   = 3'd1;
@@ -70,7 +73,7 @@ module complex_log #(
     wire cordic_done;
 
     cordic #(
-        .WL(WL), .AL(AL), .N_ITER(30), .AF(AF)
+        .WL(WL), .AL(AL), .AF(AF)
     ) cordic_atan2_inst (
         .clk(clk), .rst(rst),
         .start(cordic_start),
@@ -104,7 +107,7 @@ module complex_log #(
                         // Compute a² + b²
                         p1 = $signed(a_r) * $signed(a_r);
                         p2 = $signed(a_i) * $signed(a_i);
-                        mag_sq <= (p1 + p2) >>> FL;
+                        mag_sq <= rshr((p1 + p2));
                         state <= S_LAUNCH;
                     end
                 end

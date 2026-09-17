@@ -2,15 +2,25 @@
 //============================================================================
 // Fixed-Point Exponential Function — exp(x)
 //============================================================================
-// Computes exp(x) for signed fixed-point inputs using range reduction
-// and a degree-6 minimax polynomial approximation.
-//
 // Algorithm:
-//   1. Range reduction: decompose x = k*ln(2) + r, where |r| <= ln(2)/2
-//   2. Approximate exp(r) using polynomial: 1 + r + r²/2 + r³/6 + ...
-//   3. Reconstruct: exp(x) = exp(r) * 2^k (left shift by k)
+//   1. Range reduction: k = round(x / ln2), r = x - k*ln2, so |r| <= ln2/2
+//      (k*ln2 is formed from the Q4.60 ln2 constant, so r carries no
+//      constant-quantization error beyond one ULP).
+//   2. exp(r) by Horner evaluation of its degree-N Taylor polynomial, with
+//      N picked from FL so the truncation remainder |r|^(N+1)/(N+1)! is
+//      below one ULP:  FL<=16: N=6 (1.2e-7), <=24: N=8 (2.0e-10),
+//      <=32: N=10 (2.6e-13), else N=13.
+//   3. exp(x) = exp(r) * 2^k  (shift), saturating on overflow.
 //
-// Latency: ~20 cycles (iterative multiply-accumulate for polynomial)
+// Error bound (per call): |err| <= (N+2) ULP * exp(r) * 2^k + remainder,
+// i.e. relative error ~ (N+3) * 2^-FL.
+//
+// NOTE (previous version): k was floor(x/ln2) rather than round, so r ran
+// over [0, ln2) instead of [-ln2/2, ln2/2], and the polynomial stopped at
+// degree 5 with 16-bit-truncated coefficients — a relative error of up to
+// 1.5e-4 at *any* FL, including the Q32.32 characteristic-function path.
+//
+// Latency: 3 + 2N cycles.
 //============================================================================
 
 module fp_exp #(
@@ -25,68 +35,20 @@ module fp_exp #(
     output reg               done
 );
 
-    localparam IL = WL - FL; // Integer bits (including sign)
+    `include "fx_lib.vh"
 
-    // Constants in Q(IL, FL) format
-    // ln(2) ≈ 0.693147... 
-    // 1/ln(2) ≈ 1.442695...
-    // We need these as fixed-point constants
-    
-    // ln(2) in Q(IL, FL): round(0.6931471805599453 * 2^FL)
-    // NOTE: $signed() requires an integer/vector argument, not a `real` — the
-    // real-valued constant expression must be rounded to an integer with
-    // $rtoi() first (real args to $signed produced an elaboration error).
-    // $rtoi returns a 32-bit *signed* integer, though, so computing it
-    // directly at (2.0**FL) overflows/wraps for FL >= ~31 (e.g. this
-    // module is instantiated with FL=32 inside complex_exp.v). Instead,
-    // round at min(FL,16) fractional bits — comfortably inside $rtoi's
-    // 32-bit range for any real FL used in this design — and left-shift
-    // the rest of the way when FL > 16 (that's exact: it just appends
-    // zero fractional bits, not a further rounding step).
-    wire signed [WL-1:0] LN2     = (FL <= 16)
-        ? $signed( $rtoi(0.6931471805599453 * (2.0**FL)) )
-        : $signed( $rtoi(0.6931471805599453 * (2.0**16)) ) <<< (FL-16);
-    wire signed [WL-1:0] INV_LN2 = (FL <= 16)
-        ? $signed( $rtoi(1.4426950408889634 * (2.0**FL)) )
-        : $signed( $rtoi(1.4426950408889634 * (2.0**16)) ) <<< (FL-16);
+    localparam integer NDEG = (FL <= 16) ? 6 : (FL <= 24) ? 8 : (FL <= 32) ? 10 : 13;
 
-    // Polynomial coefficients for exp(r) ≈ c0 + c1*r + c2*r² + c3*r³ + c4*r⁴ + c5*r⁵
-    // Minimax approximation on [-ln(2)/2, ln(2)/2]
-    wire signed [WL-1:0] C0 = (FL <= 16) ? $signed( $rtoi(1.0 * (2.0**FL)) ) : $signed( $rtoi(1.0 * (2.0**16)) ) <<< (FL-16); // 1.0
-    wire signed [WL-1:0] C1 = (FL <= 16) ? $signed( $rtoi(1.0 * (2.0**FL)) ) : $signed( $rtoi(1.0 * (2.0**16)) ) <<< (FL-16); // 1.0
-    wire signed [WL-1:0] C2 = (FL <= 16) ? $signed( $rtoi(0.5 * (2.0**FL)) ) : $signed( $rtoi(0.5 * (2.0**16)) ) <<< (FL-16); // 1/2!
-    wire signed [WL-1:0] C3 = (FL <= 16) ? $signed( $rtoi(0.16666666666666666  * (2.0**FL)) ) : $signed( $rtoi(0.16666666666666666  * (2.0**16)) ) <<< (FL-16); // 1/3!
-    wire signed [WL-1:0] C4 = (FL <= 16) ? $signed( $rtoi(0.041666666666666664 * (2.0**FL)) ) : $signed( $rtoi(0.041666666666666664 * (2.0**16)) ) <<< (FL-16); // 1/4!
-    wire signed [WL-1:0] C5 = (FL <= 16) ? $signed( $rtoi(0.008333333333333333 * (2.0**FL)) ) : $signed( $rtoi(0.008333333333333333 * (2.0**16)) ) <<< (FL-16); // 1/5!
+    wire signed [WL-1:0] INV_LN2 = q60(C_INV_LN2);
 
-    // FSM states
-    localparam S_IDLE       = 4'd0;
-    localparam S_RANGE_RED  = 4'd1;
-    localparam S_POLY_INIT  = 4'd2;
-    localparam S_POLY_MUL   = 4'd3;
-    localparam S_POLY_ADD   = 4'd4;
-    localparam S_POLY_NEXT  = 4'd5;
-    localparam S_RECON      = 4'd6;
-    localparam S_DONE       = 4'd7;
+    localparam S_IDLE = 3'd0, S_RANGE = 3'd1, S_MUL = 3'd2, S_ADD = 3'd3,
+               S_RECON = 3'd4, S_DONE = 3'd5;
 
-    reg [3:0] state;
-
-    // Working registers
-    reg signed [2*WL-1:0] wide_product;  // For multiply intermediate
-    reg signed [WL-1:0]   r_val;         // Reduced argument
-    reg signed [WL-1:0]   k_val;         // Integer part (shift amount)
-    reg signed [WL-1:0]   accum;         // Horner accumulator
-    reg signed [WL-1:0]   r_power;       // Current power of r
-    reg [3:0]              poly_step;     // Polynomial evaluation step
-
-    // Horner's method: exp(r) = C0 + r*(C1 + r*(C2 + r*(C3 + r*(C4 + r*C5))))
-    // We evaluate inside-out
-
-    reg signed [WL-1:0] coeffs [0:5];
-
-    // Scratch for the k-extraction step below (needs to be wide enough to
-    // hold wide_product >>> (2*FL) before truncating to WL bits).
-    reg signed [2*WL-1:0] k_val_c;
+    reg [2:0] state;
+    reg signed [2*WL-1:0] wide;
+    reg signed [127:0]    kln2;
+    reg signed [WL-1:0]   k_val, r_val, accum;
+    reg [3:0]             step;
 
     always @(posedge clk) begin
         if (rst) begin
@@ -97,71 +59,43 @@ module fp_exp #(
             case (state)
                 S_IDLE: begin
                     done <= 1'b0;
-                    if (start) begin
-                        state <= S_RANGE_RED;
-                    end
+                    if (start) state <= S_RANGE;
                 end
 
-                S_RANGE_RED: begin
-                    // k = round(x / ln(2))
-                    wide_product = $signed(x) * INV_LN2;
-                    // Extract integer part of x/ln(2) via an arithmetic
-                    // right-shift (sign-extending) rather than a raw
-                    // [2*FL+IL-1:2*FL] part-select — a part-select is always
-                    // unsigned per the LRM, so it *zero*-extended into the
-                    // wider k_val whenever k was negative, corrupting it.
-                    k_val_c = wide_product >>> (2*FL);
-
-                    // r = x - k * ln(2)
-                    // NOTE: use k_val_c (computed via blocking assignment,
-                    // above) here, not k_val itself — k_val is only updated
-                    // by the nonblocking assignment below, which doesn't
-                    // take effect until the end of this clock edge, so
-                    // reading k_val in this same state would see its
-                    // *stale* (pre-update, initially undefined) value.
-                    k_val <= k_val_c[WL-1:0];
-                    r_val <= x - k_val_c[WL-1:0] * LN2;
-                    
-                    // Initialize Horner's method: start with innermost coeff
-                    accum     <= C5;
-                    poly_step <= 4;  // We'll do 5 multiply-add steps
-                    state     <= S_POLY_MUL;
+                S_RANGE: begin
+                    // k = round(x * (1/ln2))
+                    wide  = $signed(x) * INV_LN2;
+                    wide  = (wide + ($signed({{(2*WL-1){1'b0}}, 1'b1}) <<< (2*FL-1))) >>> (2*FL);
+                    k_val <= wide[WL-1:0];
+                    // r = x - k*ln2, with ln2 at 60 fractional bits
+                    kln2  = $signed(wide[WL-1:0]) * C_LN2;
+                    kln2  = (kln2 + ($signed(128'sd1) <<< (60-FL-1))) >>> (60-FL);
+                    r_val <= x - kln2[WL-1:0];
+                    accum <= q60(inv_fact(NDEG));
+                    step  <= NDEG - 1;
+                    state <= S_MUL;
                 end
 
-                S_POLY_MUL: begin
-                    // accum = accum * r + C[poly_step]
-                    wide_product = $signed(accum) * $signed(r_val);
-                    accum <= wide_product[WL + FL - 1 : FL]; // Truncate back to Q format
-                    state <= S_POLY_ADD;
+                S_MUL: begin
+                    wide  = $signed(accum) * $signed(r_val);
+                    accum <= rshr(wide);
+                    state <= S_ADD;
                 end
 
-                S_POLY_ADD: begin
-                    // Add the next coefficient
-                    case (poly_step)
-                        4: accum <= accum + C4;
-                        3: accum <= accum + C3;
-                        2: accum <= accum + C2;
-                        1: accum <= accum + C1;
-                        0: accum <= accum + C0;
-                    endcase
-                    state <= S_POLY_NEXT;
-                end
-
-                S_POLY_NEXT: begin
-                    if (poly_step == 0) begin
-                        state <= S_RECON;
-                    end else begin
-                        poly_step <= poly_step - 1;
-                        state     <= S_POLY_MUL;
+                S_ADD: begin
+                    accum <= accum + q60(inv_fact(step));
+                    if (step == 0) state <= S_RECON;
+                    else begin
+                        step  <= step - 1'b1;
+                        state <= S_MUL;
                     end
                 end
 
                 S_RECON: begin
-                    // Reconstruct: exp(x) = exp(r) * 2^k
-                    // 2^k is a left shift by k (if k >= 0) or right shift (if k < 0)
                     if (k_val[WL-1]) begin
-                        // k < 0: right shift
-                        result <= accum >>> (-k_val);
+                        result <= ((-k_val) >= WL) ? {WL{1'b0}} : ((accum + ($signed({{(WL-1){1'b0}}, 1'b1}) <<< (-k_val - 1))) >>> (-k_val));
+                    end else if (k_val >= WL-FL-1) begin
+                        result <= {1'b0, {(WL-1){1'b1}}};   // saturate
                     end else begin
                         result <= accum <<< k_val;
                     end
@@ -172,6 +106,8 @@ module fp_exp #(
                     done  <= 1'b1;
                     state <= S_IDLE;
                 end
+
+                default: state <= S_IDLE;
             endcase
         end
     end

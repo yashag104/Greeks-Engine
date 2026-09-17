@@ -16,16 +16,20 @@
 // header for the calculus, and hardware/matlab / software/models for the
 // reference this is verified against.
 //
-// This module's own arithmetic runs at WL=32/FL=16; heston_char_func runs
-// at a wider WL=64/FL=32 internally for precision, so parameters, x, u_k
-// and the per-term seed are converted Q16.16 -> Q32.32 (a left-shift by
-// FL2-FL1=16 bits) on the way in, and phi_r/phi_i/the 8 adjoints are
-// converted back (a right-shift by the same 16 bits) on the way out.
+// Precision: the whole engine -- truncation range, u_k grid, CORDIC phase,
+// payoff coefficients, characteristic function, and every accumulator --
+// runs at one format Q(WL-FL, FL), Q32.32 by default (heston_top_level).
+// The previous revision ran this outer loop at Q16.16 and only the
+// characteristic function at Q32.32; the per-term payoff coefficients V_k
+// (|V_k| up to ~300) amplify Q16.16 rounding of cos/sin(u_k*a) and of
+// pi/(b-a) by two orders of magnitude, which (together with the
+// 16-bit-truncated constants fixed in fx_lib.vh) produced the 0.8% price
+// error. Accumulators carry 8 extra integer bits of headroom (AW = WL+8).
 //============================================================================
 
 module heston_cos_forward #(
-    parameter WL = 32,
-    parameter FL = 16
+    parameter WL = 64,
+    parameter FL = 32
 ) (
     input  wire              clk,
     input  wire              rst,
@@ -34,6 +38,7 @@ module heston_cos_forward #(
     input  wire signed [WL-1:0] S0, K, T, r, v0, kappa, theta, xi, rho,
     input  wire              is_call,
     input  wire              start,
+    input  wire              fwd_only,   // 1 = price only (no reverse sweep)
 
     // Result
     output reg  signed [WL-1:0] price,
@@ -52,24 +57,18 @@ module heston_cos_forward #(
     output reg  signed [WL-1:0] adj_rho
 );
 
-    localparam N_TERMS = 128;
-    localparam WL2 = 64, FL2 = 32; // heston_char_func's internal precision
+    `include "fx_lib.vh"
 
-    localparam signed [WL-1:0] ONE_C  = (FL<=16) ? (32'sd1<<<FL) : (32'sd1<<<16)<<<(FL-16);
-    localparam signed [WL-1:0] HALF_C = ONE_C >>> 1;
-    localparam signed [WL-1:0] TEN_C  = ONE_C * 10;
-    localparam signed [WL-1:0] TWO_C  = ONE_C <<< 1;
-    // pi, in Q(.,FL)
-    localparam signed [WL-1:0] PI_C = (FL<=16)
-        ? $signed($rtoi(3.14159265358979323846 * (2.0**FL)))
-        : $signed($rtoi(3.14159265358979323846 * (2.0**16))) <<< (FL-16);
+    localparam N_TERMS = 128;
+    localparam AW = WL + 8;   // accumulator width
+
+    wire signed [WL-1:0] ONE_C = q60(C_ONE);
+    wire signed [WL-1:0] PI_C  = q60(C_PI);
     // CORDIC gain compensation (see cordic.v / complex_exp.v)
-    localparam signed [WL-1:0] CORDIC_1_OVER_K = (FL<=16)
-        ? $signed($rtoi(0.6072529350088814 * (2.0**FL)))
-        : $signed($rtoi(0.6072529350088814 * (2.0**16))) <<< (FL-16);
-    // Minimum positive c2 (true reference clamps at 1e-8, unrepresentable
-    // at Q16.16 resolution ~1.5e-5 — clamp to the smallest positive step).
-    localparam signed [WL-1:0] MIN_C2 = 32'sd1;
+    wire signed [WL-1:0] CORDIC_1_OVER_K = q60(C_CORDIC_INV_K);
+    // Minimum positive c2 (the float reference clamps at 1e-8; clamp to
+    // the smallest positive step, which is below that for FL >= 27).
+    wire signed [WL-1:0] MIN_C2 = {{(WL-1){1'b0}}, 1'b1};
 
     // FSM States
     localparam S_IDLE         = 6'd0;
@@ -115,10 +114,11 @@ module heston_cos_forward #(
     reg [7:0] k_counter;
     reg is_call_r;
 
-    reg signed [47:0] accumulator; // price sum (extra bits for accumulation)
-    reg signed [47:0] acc_T, acc_r, acc_v0, acc_kappa, acc_theta, acc_xi, acc_rho, acc_x;
+    reg signed [AW-1:0] accumulator; // price sum
+    reg signed [AW-1:0] acc_T, acc_r, acc_v0, acc_kappa, acc_theta, acc_xi, acc_rho, acc_x;
     reg signed [2*WL-1:0] wp1, wp2, wp3;
-    reg signed [WL+48-1:0] wp_price; // wide enough for discount(WL) * accumulator(48)
+    reg signed [WL+AW-1:0] wp_price; // discount(WL) * accumulator(AW)
+    wire signed [WL+AW-1:0] RND_P = $signed({{(WL+AW-1){1'b0}}, 1'b1}) <<< (FL-1);
 
     reg signed [WL-1:0] x_val, exp_negkT, term_c1b, c1_val, c2_val, sqrt_c2;
     reg signed [WL-1:0] a_val, b_val, bma_val, inv_bma, pi_over_bma, two_K_over_bma;
@@ -189,27 +189,27 @@ module heston_cos_forward #(
     reg                   cordic_start;
     wire signed [WL-1:0]  cordic_x_out, cordic_y_out;
     wire                  cordic_done;
-    cordic #(.WL(WL), .AL(WL), .N_ITER(30), .AF(FL)) cordic_inst (
+    cordic #(.WL(WL), .AL(WL), .AF(FL)) cordic_inst (
         .clk(clk), .rst(rst), .start(cordic_start), .mode(1'b0),
         .x_in(CORDIC_1_OVER_K), .y_in({WL{1'b0}}), .z_in(angle),
         .x_out(cordic_x_out), .y_out(cordic_y_out), .z_out(), .done(cordic_done)
     );
 
-    // Characteristic Function (phi) + reverse-mode adjoints — WL2/FL2
-    // (Q32.32) precision
+    // Characteristic Function (phi) + reverse-mode adjoints
     reg char_start;
-    reg signed [WL2-1:0] char_T, char_r, char_v0, char_kappa, char_theta, char_xi, char_rho, char_x, char_u;
-    reg signed [WL2-1:0] char_seed_r, char_seed_i;
-    wire signed [WL2-1:0] phi_r, phi_i;
-    wire signed [WL2-1:0] cf_adj_T, cf_adj_r, cf_adj_v0, cf_adj_kappa, cf_adj_theta, cf_adj_xi, cf_adj_rho, cf_adj_x;
+    reg signed [WL-1:0] char_T, char_r, char_v0, char_kappa, char_theta, char_xi, char_rho, char_x, char_u;
+    reg signed [WL-1:0] char_seed_r, char_seed_i;
+    wire signed [WL-1:0] phi_r, phi_i;
+    wire signed [WL-1:0] cf_adj_T, cf_adj_r, cf_adj_v0, cf_adj_kappa, cf_adj_theta, cf_adj_xi, cf_adj_rho, cf_adj_x;
     wire char_done;
 
-    heston_char_func #(.WL(WL2), .FL(FL2)) char_func_inst (
+    heston_char_func #(.WL(WL), .FL(FL)) char_func_inst (
         .clk(clk), .rst(rst),
         .T_in(char_T), .r_in(char_r), .v0_in(char_v0), .kappa_in(char_kappa),
         .theta_in(char_theta), .xi_in(char_xi), .rho_in(char_rho),
         .x_in(char_x), .u_in(char_u),
         .start(char_start),
+        .fwd_only(fwd_only),
         .seed_r(char_seed_r), .seed_i(char_seed_i),
         .phi_r(phi_r), .phi_i(phi_i),
         .adj_T(cf_adj_T), .adj_r(cf_adj_r), .adj_v0(cf_adj_v0), .adj_kappa(cf_adj_kappa),
@@ -274,7 +274,7 @@ module heston_cos_forward #(
                 // ---- exp(-kappa*T) ----
                 S_NEG_KT: begin
                     wp1 = $signed(kappa) * $signed(T);
-                    exp_x <= -(wp1 >>> FL);
+                    exp_x <= -(rshr(wp1));
                     exp_start <= 1'b1;
                     state <= S_NEG_KT_WAIT;
                 end
@@ -303,7 +303,7 @@ module heston_cos_forward #(
                 S_C1_COMBINE: begin
                     wp1 = (r - (theta >>> 1)) * $signed(T);
                     wp2 = $signed(term_c1b) * (theta - v0);
-                    c1_val <= x_val + (wp1 >>> FL) + (wp2 >>> FL);
+                    c1_val <= x_val + (rshr(wp1)) + (rshr(wp2));
                     state <= S_C2;
                 end
 
@@ -311,7 +311,7 @@ module heston_cos_forward #(
                 S_C2: begin
                     wp1 = $signed(v0) * $signed(T);
                     wp2 = (theta >>> 1) * $signed(T);
-                    c2_raw = (wp1 >>> FL) + (wp2 >>> FL);
+                    c2_raw = (rshr(wp1)) + (rshr(wp2));
                     c2_val <= (c2_raw < MIN_C2) ? MIN_C2 : c2_raw;
                     sqrt_x <= (c2_raw < MIN_C2) ? MIN_C2 : c2_raw;
                     sqrt_start <= 1'b1;
@@ -346,9 +346,9 @@ module heston_cos_forward #(
                 // ---- pi/bma and 2K/bma (both reused for every k) ----
                 S_SCALARS: begin
                     wp1 = $signed(PI_C) * $signed(div_result);
-                    pi_over_bma <= wp1 >>> FL;
+                    pi_over_bma <= rshr(wp1);
                     wp2 = (K <<< 1) * $signed(div_result);
-                    two_K_over_bma <= wp2 >>> FL;
+                    two_K_over_bma <= rshr(wp2);
                     exp_x <= a_val;
                     exp_start <= 1'b1;
                     state <= S_EXP_A_WAIT;
@@ -367,10 +367,10 @@ module heston_cos_forward #(
                     if (exp_done) begin
                         exp_b_val <= exp_result;
                         k_counter <= 8'd0;
-                        accumulator <= 48'sd0;
-                        acc_T <= 48'sd0; acc_r <= 48'sd0; acc_v0 <= 48'sd0;
-                        acc_kappa <= 48'sd0; acc_theta <= 48'sd0; acc_xi <= 48'sd0;
-                        acc_rho <= 48'sd0; acc_x <= 48'sd0;
+                        accumulator <= 0;
+                        acc_T <= 0; acc_r <= 0; acc_v0 <= 0;
+                        acc_kappa <= 0; acc_theta <= 0; acc_xi <= 0;
+                        acc_rho <= 0; acc_x <= 0;
                         state <= S_LOOP_START;
                     end
                 end
@@ -384,7 +384,7 @@ module heston_cos_forward #(
 
                 S_ANGLE: begin
                     wp1 = $signed(u_k) * $signed(a_val);
-                    angle <= wp1 >>> FL;
+                    angle <= rshr(wp1);
                     state <= S_CORDIC_WAIT;
                 end
 
@@ -421,19 +421,19 @@ module heston_cos_forward #(
                 S_SEED: begin
                     weighted_V_k = (k_counter == 8'd0) ? (V_k >>> 1) : V_k;
                     wp2 = $signed(weighted_V_k) * $signed(cos_ua);
-                    seed_r32 <= wp2 >>> FL;
+                    seed_r32 <= rshr(wp2);
                     wp3 = $signed(weighted_V_k) * $signed(sin_ua);
-                    seed_i32 <= wp3 >>> FL;
+                    seed_i32 <= rshr(wp3);
 
-                    char_T     <= {{(WL2-WL){T[WL-1]}}, T}         <<< (FL2-FL);
-                    char_r     <= {{(WL2-WL){r[WL-1]}}, r}         <<< (FL2-FL);
-                    char_v0    <= {{(WL2-WL){v0[WL-1]}}, v0}       <<< (FL2-FL);
-                    char_kappa <= {{(WL2-WL){kappa[WL-1]}}, kappa} <<< (FL2-FL);
-                    char_theta <= {{(WL2-WL){theta[WL-1]}}, theta} <<< (FL2-FL);
-                    char_xi    <= {{(WL2-WL){xi[WL-1]}}, xi}       <<< (FL2-FL);
-                    char_rho   <= {{(WL2-WL){rho[WL-1]}}, rho}     <<< (FL2-FL);
-                    char_x     <= {{(WL2-WL){x_val[WL-1]}}, x_val} <<< (FL2-FL);
-                    char_u     <= {{(WL2-WL){u_k[WL-1]}}, u_k}     <<< (FL2-FL);
+                    char_T     <= T;
+                    char_r     <= r;
+                    char_v0    <= v0;
+                    char_kappa <= kappa;
+                    char_theta <= theta;
+                    char_xi    <= xi;
+                    char_rho   <= rho;
+                    char_x     <= x_val;
+                    char_u     <= u_k;
                     state <= S_CHAR_WAIT;
                 end
 
@@ -442,47 +442,47 @@ module heston_cos_forward #(
                     // char_* input registers) set in S_SEED are stable
                     // before we latch them into the Q32.32 seed and issue
                     // start — then wait for the (forward+reverse) run.
-                    char_seed_r <= {{(WL2-WL){seed_r32[WL-1]}}, seed_r32} <<< (FL2-FL);
-                    char_seed_i <= {{(WL2-WL){seed_i32[WL-1]}}, seed_i32} <<< (FL2-FL);
+                    char_seed_r <= seed_r32;
+                    char_seed_i <= seed_i32;
                     char_start  <= 1'b1;
                     state <= S_ACCUM;
                 end
 
                 S_ACCUM: begin
                     if (char_done) begin
-                        t_phi_r = phi_r >>> (FL2-FL);
-                        t_phi_i = phi_i >>> (FL2-FL);
+                        t_phi_r = phi_r;
+                        t_phi_i = phi_i;
                         phi_r32 <= t_phi_r;
                         phi_i32 <= t_phi_i;
 
                         // F_k = Re[phi * exp(-i*u_k*a)] = phi_r*cos_ua + phi_i*sin_ua
                         wp1 = $signed(t_phi_r) * $signed(cos_ua);
                         wp2 = $signed(t_phi_i) * $signed(sin_ua);
-                        F_k <= (wp1 >>> FL) + (wp2 >>> FL);
+                        F_k <= (rshr(wp1)) + (rshr(wp2));
 
                         // contrib = weight * F_k * V_k  (weight already
                         // folded into weighted_V_k)
-                        wp3 = ((wp1 >>> FL) + (wp2 >>> FL)) * $signed(weighted_V_k);
-                        contrib = wp3 >>> FL;
-                        accumulator <= accumulator + {{(48-WL){contrib[WL-1]}}, contrib};
+                        wp3 = ((rshr(wp1)) + (rshr(wp2))) * $signed(weighted_V_k);
+                        contrib = rshr(wp3);
+                        accumulator <= accumulator + {{(AW-WL){contrib[WL-1]}}, contrib};
 
-                        t_adjT     = cf_adj_T     >>> (FL2-FL);
-                        t_adjr     = cf_adj_r     >>> (FL2-FL);
-                        t_adjv0    = cf_adj_v0    >>> (FL2-FL);
-                        t_adjkappa = cf_adj_kappa >>> (FL2-FL);
-                        t_adjtheta = cf_adj_theta >>> (FL2-FL);
-                        t_adjxi    = cf_adj_xi    >>> (FL2-FL);
-                        t_adjrho   = cf_adj_rho   >>> (FL2-FL);
-                        t_adjx     = cf_adj_x     >>> (FL2-FL);
+                        t_adjT     = cf_adj_T;
+                        t_adjr     = cf_adj_r;
+                        t_adjv0    = cf_adj_v0;
+                        t_adjkappa = cf_adj_kappa;
+                        t_adjtheta = cf_adj_theta;
+                        t_adjxi    = cf_adj_xi;
+                        t_adjrho   = cf_adj_rho;
+                        t_adjx     = cf_adj_x;
 
-                        acc_T     <= acc_T     + {{(48-WL){t_adjT[WL-1]}},     t_adjT};
-                        acc_r     <= acc_r     + {{(48-WL){t_adjr[WL-1]}},     t_adjr};
-                        acc_v0    <= acc_v0    + {{(48-WL){t_adjv0[WL-1]}},    t_adjv0};
-                        acc_kappa <= acc_kappa + {{(48-WL){t_adjkappa[WL-1]}}, t_adjkappa};
-                        acc_theta <= acc_theta + {{(48-WL){t_adjtheta[WL-1]}}, t_adjtheta};
-                        acc_xi    <= acc_xi    + {{(48-WL){t_adjxi[WL-1]}},    t_adjxi};
-                        acc_rho   <= acc_rho   + {{(48-WL){t_adjrho[WL-1]}},   t_adjrho};
-                        acc_x     <= acc_x     + {{(48-WL){t_adjx[WL-1]}},     t_adjx};
+                        acc_T     <= acc_T     + {{(AW-WL){t_adjT[WL-1]}},     t_adjT};
+                        acc_r     <= acc_r     + {{(AW-WL){t_adjr[WL-1]}},     t_adjr};
+                        acc_v0    <= acc_v0    + {{(AW-WL){t_adjv0[WL-1]}},    t_adjv0};
+                        acc_kappa <= acc_kappa + {{(AW-WL){t_adjkappa[WL-1]}}, t_adjkappa};
+                        acc_theta <= acc_theta + {{(AW-WL){t_adjtheta[WL-1]}}, t_adjtheta};
+                        acc_xi    <= acc_xi    + {{(AW-WL){t_adjxi[WL-1]}},    t_adjxi};
+                        acc_rho   <= acc_rho   + {{(AW-WL){t_adjrho[WL-1]}},   t_adjrho};
+                        acc_x     <= acc_x     + {{(AW-WL){t_adjx[WL-1]}},     t_adjx};
 
                         if (k_counter == N_TERMS - 1) begin
                             state <= S_DISC;
@@ -496,7 +496,7 @@ module heston_cos_forward #(
                 // ---- Final price = exp(-rT) * accumulator ----
                 S_DISC: begin
                     wp1 = $signed(r) * $signed(T);
-                    exp_x <= -(wp1 >>> FL);
+                    exp_x <= -(rshr(wp1));
                     exp_start <= 1'b1;
                     state <= S_DISC_WAIT;
                 end
@@ -509,28 +509,28 @@ module heston_cos_forward #(
                         // truncate-on-narrower-assign pattern used
                         // everywhere else in this file.
                         wp_price = $signed(exp_result) * accumulator;
-                        price <= wp_price >>> FL;
+                        price <= (wp_price + RND_P) >>> FL;
 
                         // Discount every raw Greek accumulator by the same
                         // factor (valid since the char-func reverse pass
                         // is linear in the seed, and the seed itself never
                         // included the discount — see heston_char_func.v).
                         wp_price = $signed(exp_result) * acc_v0;
-                        adj_v0    <= wp_price >>> FL;
+                        adj_v0    <= (wp_price + RND_P) >>> FL;
                         wp_price = $signed(exp_result) * acc_kappa;
-                        adj_kappa <= wp_price >>> FL;
+                        adj_kappa <= (wp_price + RND_P) >>> FL;
                         wp_price = $signed(exp_result) * acc_theta;
-                        adj_theta <= wp_price >>> FL;
+                        adj_theta <= (wp_price + RND_P) >>> FL;
                         wp_price = $signed(exp_result) * acc_xi;
-                        adj_xi    <= wp_price >>> FL;
+                        adj_xi    <= (wp_price + RND_P) >>> FL;
                         wp_price = $signed(exp_result) * acc_rho;
-                        adj_rho   <= wp_price >>> FL;
+                        adj_rho   <= (wp_price + RND_P) >>> FL;
                         wp_price = $signed(exp_result) * acc_x;
-                        adjx_32   <= wp_price >>> FL;
+                        adjx_32   <= (wp_price + RND_P) >>> FL;
                         wp_price = $signed(exp_result) * acc_T;
-                        adjT_32   <= wp_price >>> FL;
+                        adjT_32   <= (wp_price + RND_P) >>> FL;
                         wp_price = $signed(exp_result) * acc_r;
-                        adjr_32   <= wp_price >>> FL;
+                        adjr_32   <= (wp_price + RND_P) >>> FL;
 
                         state <= S_FINAL1;
                     end
@@ -548,17 +548,17 @@ module heston_cos_forward #(
                 // accumulator" pattern in S_DISC_WAIT above.
                 S_FINAL1: begin
                     wp1 = -$signed(r) * $signed(discount_val);
-                    neg_r_disc <= wp1 >>> FL;
+                    neg_r_disc <= rshr(wp1);
                     wp2 = -$signed(T) * $signed(discount_val);
-                    neg_T_disc <= wp2 >>> FL;
+                    neg_T_disc <= rshr(wp2);
                     state <= S_FINAL2;
                 end
 
                 S_FINAL2: begin
                     wp_price = $signed(neg_r_disc) * accumulator;
-                    adj_T <= adjT_32 + (wp_price >>> FL);
+                    adj_T <= adjT_32 + ((wp_price + RND_P) >>> FL);
                     wp_price = $signed(neg_T_disc) * accumulator;
-                    adj_r <= adjr_32 + (wp_price >>> FL);
+                    adj_r <= adjr_32 + ((wp_price + RND_P) >>> FL);
 
                     div_a <= ONE_C; div_b <= S0; div_start <= 1'b1;
                     state <= S_INV_S0_WAIT;
@@ -578,7 +578,7 @@ module heston_cos_forward #(
                         // S0 enters the price only through x = ln(S0/K), so
                         // delta is just the x-adjoint scaled by dx/dS0 = 1/S0.
                         wp1 = $signed(adjx_32) * $signed(inv_S0);
-                        adj_S0 <= wp1 >>> FL;
+                        adj_S0 <= rshr(wp1);
 
                         // K, however, enters *twice*: through x (dx/dK =
                         // -1/K) and directly through the payoff coefficient
@@ -597,7 +597,7 @@ module heston_cos_forward #(
                         // 0.10387). Nothing caught it before because
                         // heston_bump_reference() never bumps K.
                         wp2 = ($signed(price) - $signed(adjx_32)) * $signed(div_result);
-                        adj_K <= wp2 >>> FL;
+                        adj_K <= rshr(wp2);
                         state <= S_FINISH;
                     end
                 end

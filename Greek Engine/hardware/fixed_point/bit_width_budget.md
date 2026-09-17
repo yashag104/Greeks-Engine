@@ -1,5 +1,13 @@
 # Fixed-Point Bit-Width Budget
 
+> **Superseded (Sept 2026).** The Heston engine now runs one uniform Q32.32
+> datapath (parameterized WL/FL), and this document's tape/BRAM sizing
+> describes a design the RTL does not use (the reverse sweep is computed
+> per COS term, with no stored tape). The measured precision, the
+> first-order error bound for the price and every Greek, and the list of
+> precision defects that were fixed are in **`docs/precision_bound.md`**.
+> The per-variable ranges below are kept as design background only.
+
 > **Implementation note:** the per-variable Q-formats below (e.g. Q(1,14,17)
 > for S, Q(1,1,30) for r) were the original design target, allocating
 > fractional bits per-variable to match each one's expected range. The

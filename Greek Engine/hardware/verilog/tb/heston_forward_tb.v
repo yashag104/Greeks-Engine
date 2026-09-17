@@ -1,99 +1,72 @@
 `timescale 1ns / 1ps
 //============================================================================
-// heston_cos_forward now computes the price and all Greeks together in one
-// forward + reverse-mode-AAD pass (see heston_char_func.v / heston_cos_
-// forward.v headers) — there's no separate tape-write interface to monitor
-// any more, so this testbench just exercises price + a couple of Greeks as
-// a quick (~400K cycle) sanity check; see tb/heston_greeks_tb.v for all 8.
+// Heston COS core in price-only mode (fwd_only=1: no reverse sweep, the
+// mode the bump-and-reprice baseline uses), self-checking; also reports the
+// forward-only cycle count, i.e. the cost of one "reprice".
+// Reference values: validation/reference/heston_reference.py cos_price /
+// cos_greeks (double precision, same COS algorithm: N=128, L=10 cumulant
+// range held fixed when differentiating). Tolerance 1e-6 * max(1, |ref|);
+// measured errors are ~1e-7 absolute (see docs/precision_bound.md).
 //============================================================================
 
 module heston_forward_tb;
+    localparam WL = 64;
+    localparam FL = 32;
 
-    // Parameters
-    localparam WL = 32;
-    localparam FL = 16;
+    reg clk = 0, rst = 1, start = 0;
+    always #5 clk = ~clk;
 
-    // Inputs
-    reg clk;
-    reg rst;
-    reg start;
-
-    // Model parameters
     reg signed [WL-1:0] S0, K, T, r, v0, kappa, theta, xi, rho;
     reg is_call;
-
-    // Outputs
     wire signed [WL-1:0] price;
-    wire signed [WL-1:0] adj_S0, adj_K, adj_T, adj_r, adj_v0, adj_kappa, adj_theta, adj_xi, adj_rho;
     wire done;
+    integer failures = 0, cycles = 0;
 
-    // Instantiate the Unit Under Test (UUT)
-    heston_cos_forward #(
-        .WL(WL), .FL(FL)
-    ) uut (
-        .clk(clk),
-        .rst(rst),
+    heston_cos_forward #(.WL(WL), .FL(FL)) uut (
+        .clk(clk), .rst(rst),
         .S0(S0), .K(K), .T(T), .r(r), .v0(v0),
         .kappa(kappa), .theta(theta), .xi(xi), .rho(rho),
-        .is_call(is_call),
-        .start(start),
-        .price(price),
-        .done(done),
-        .adj_S0(adj_S0), .adj_K(adj_K), .adj_T(adj_T), .adj_r(adj_r),
-        .adj_v0(adj_v0), .adj_kappa(adj_kappa), .adj_theta(adj_theta),
-        .adj_xi(adj_xi), .adj_rho(adj_rho)
+        .is_call(is_call), .start(start), .fwd_only(1'b1),
+        .price(price), .done(done),
+        .adj_S0(), .adj_K(), .adj_T(), .adj_r(), .adj_v0(),
+        .adj_kappa(), .adj_theta(), .adj_xi(), .adj_rho()
     );
 
-    // Clock generation
+    // |rtl - ref| <= tol * max(1, |ref|)
+    task check(input [8*12-1:0] name, input signed [WL-1:0] v, input real ref, input real tol);
+        real got, err, scale;
+        begin
+            got = v / 4294967296.0;
+            err = got - ref; if (err < 0) err = -err;
+            scale = (ref < 0 ? -ref : ref); if (scale < 1.0) scale = 1.0;
+            if (err > tol * scale) begin
+                $display("FAIL %s rtl=%.10f ref=%.10f err=%.3e", name, got, ref, err);
+                failures = failures + 1;
+            end else
+                $display("ok   %s rtl=%.10f ref=%.10f err=%.3e", name, got, ref, err);
+        end
+    endtask
+
     initial begin
-        clk = 0;
-        forever #5 clk = ~clk;
-    end
-
-    function real q16(input signed [WL-1:0] v);
-        q16 = v / 65536.0;
-    endfunction
-
-    // Test sequence
-    initial begin
-        // Initialize Inputs
-        rst = 1;
-        start = 0;
-
-        // Example Parameters in Q16 — matches
-        // hardware/matlab/heston_top_level.m's own defaults, and the
-        // reference price below was computed with
-        // hardware/matlab/heston_cos_forward_core.m's own chi_func/
-        // psi_func/eval_char formulas (N_TERMS=128, L=10 truncation).
-        S0    = 32'h0064_0000; // 100.0
-        K     = 32'h0064_0000; // 100.0
-        T     = 32'h0001_0000; // 1.0
-        r     = 32'h0000_0CCD; // 0.05
-        v0    = 32'h0000_0A3D; // 0.04
-        kappa = 32'h0001_8000; // 1.5
-        theta = 32'h0000_0A3D; // 0.04
-        xi    = 32'h0000_4CCC; // 0.3
-        rho   = 32'hFFFF_199A; // -0.9
+        S0    = 64'sd429496729600; // 100.0
+        K     = 64'sd429496729600; // 100.0
+        T     = 64'sd4294967296; // 1.0
+        r     = 64'sd214748365; // 0.05
+        v0    = 64'sd171798692; // 0.04
+        kappa = 64'sd6442450944; // 1.5
+        theta = 64'sd171798692; // 0.04
+        xi    = 64'sd1288490189; // 0.3
+        rho   = -64'sd3865470566; // -0.9
         is_call = 1;
-
-        // Wait for global reset
-        #100;
-        rst = 0;
-        #10;
-
-        $display("Starting Heston COS Forward + AAD Pass...");
-        start = 1;
-        #10;
-        start = 0;
-
-        wait(done);
-        #10;
-
-        $display("Pass Completed.");
-        $display("Calculated Price = %f (expect ~10.387139, N=128 COS reference)", q16(price));
-        $display("Delta (dV/dS0)   = %f (expect ~0.708162, bump-reference)", q16(adj_S0));
-        $display("Vega  (dV/dv0)   = %f (expect ~46.772442, bump-reference)", q16(adj_v0));
+        #100 rst = 0;
+        @(negedge clk) start = 1;
+        @(negedge clk) start = 0;
+        while (!done) begin @(posedge clk); cycles = cycles + 1; end
+        #1;
+        $display("price-only pass completed in %0d cycles", cycles);
+        check("price", price, 10.387139265110, 1e-6);
+        if (failures == 0) $display("PASS");
+        else               $display("FAIL");
         $finish;
     end
-
 endmodule

@@ -1,0 +1,4 @@
+# simulation / implementation build outputs
+Greek Engine/hardware/sim/build/
+Greek Engine/hardware/vivado/runs/
+__pycache__/

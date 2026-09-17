@@ -1,14 +1,20 @@
 `timescale 1ns / 1ps
 //============================================================================
-// Complex Square Root — sqrt(a + ib)
+// Complex Square Root — principal branch, sqrt(a_r + i*a_i)
 //============================================================================
-// Uses the formula:
-//   |z| = sqrt(a² + b²)
-//   Re[sqrt(z)] = sqrt((|z| + a) / 2)
-//   Im[sqrt(z)] = sign(b) * sqrt((|z| - a) / 2)
+//   |z| = 2^s * sqrt((a_r>>s)^2 + (a_i>>s)^2)   (s>0 only when the squares
+//                                                would overflow)
+//   w   = sqrt((|z| + |a_r|) / 2)
+//   a_r >= 0:  res = w + i * a_i/(2w)
+//   a_r <  0:  res = |a_i|/(2w) + i * sign(a_i)*w
 //
-// Requires: 2 real multiplications, 3 real square roots, additions.
-// Latency: ~3*WL cycles (3 sequential sqrt operations)
+// NOTE (previous version): res_i = sqrt((|z| - a_r)/2), which cancels
+// catastrophically when a_i is small relative to a_r (low COS frequencies:
+// |z| - a_r ~ a_i^2 / 2|z|), and |z|^2 was formed unscaled, overflowing
+// WL once |z| > 2^((WL-FL)/2 - 1) (short maturities / high vol-of-vol push
+// |u_k|^2 xi^2 past that).
+//
+// Latency: 2 fp_sqrt + 1 fp_div.
 //============================================================================
 
 module complex_sqrt #(
@@ -23,107 +29,107 @@ module complex_sqrt #(
     output reg               done
 );
 
-    // FSM
-    localparam S_IDLE      = 4'd0;
-    localparam S_MAG_SQ    = 4'd1;
-    localparam S_SQRT_MAG  = 4'd2;
-    localparam S_WAIT_MAG  = 4'd3;
-    localparam S_SQRT_RE   = 4'd4;
-    localparam S_WAIT_RE   = 4'd5;
-    localparam S_SQRT_IM   = 4'd6;
-    localparam S_WAIT_IM   = 4'd7;
-    localparam S_SIGN      = 4'd8;
-    localparam S_DONE      = 4'd9;
+    `include "fx_lib.vh"
 
-    reg [3:0] state;
 
-    reg signed [WL-1:0] magnitude;    // |z|
-    reg sign_b;                        // sign of imaginary part
-    reg [WL-1:0] sqrt_input;
-    reg sqrt_start;
-    wire [WL-1:0] sqrt_result;
-    wire sqrt_done;
+    localparam integer SQ_LIM = (WL + FL) / 2 - 2;
 
-    reg signed [2*WL-1:0] wide_prod;
-    reg signed [WL-1:0] re_arg, im_arg;
+    localparam S_IDLE = 3'd0, S_MAG = 3'd1, S_MAG_WAIT = 3'd2, S_W_WAIT = 3'd3,
+               S_DIV_WAIT = 3'd4, S_DONE = 3'd5;
 
-    // NOTE: hoisted out of the nested begin/end block in S_MAG_SQ below —
-    // declaring locals inside a nested unnamed begin/end block requires
-    // SystemVerilog; plain Verilog only allows declarations at the top of a
-    // module or named block.
+    reg [2:0] state;
+    reg signed [WL-1:0] ar, ai, w_val;
+    reg [WL-1:0]        abs_r, abs_i, big;
+    reg [7:0]           sh;
     reg signed [2*WL-1:0] p1, p2;
+    integer i, pos;
 
-    // Shared sqrt instance
+    reg           sqrt_start;
+    reg  [WL-1:0] sqrt_x;
+    wire [WL-1:0] sqrt_result;
+    wire          sqrt_done;
     fp_sqrt #(.WL(WL), .FL(FL)) sqrt_inst (
-        .clk(clk), .rst(rst),
-        .x(sqrt_input), .start(sqrt_start),
+        .clk(clk), .rst(rst), .x(sqrt_x), .start(sqrt_start),
         .result(sqrt_result), .done(sqrt_done)
+    );
+
+    reg           div_start;
+    reg  [WL-1:0] div_a, div_b;
+    wire [WL-1:0] div_result;
+    wire          div_ready;
+    fp_div #(.WL(WL), .FL(FL)) div_inst (
+        .clk(clk), .rst(rst), .a(div_a), .b(div_b), .start(div_start),
+        .result(div_result), .ready(div_ready), .divide_by_zero(), .overflow()
     );
 
     always @(posedge clk) begin
         if (rst) begin
             state <= S_IDLE;
             done  <= 1'b0;
+            sqrt_start <= 1'b0;
+            div_start  <= 1'b0;
         end else begin
             sqrt_start <= 1'b0;
-
+            div_start  <= 1'b0;
             case (state)
                 S_IDLE: begin
                     done <= 1'b0;
                     if (start) begin
-                        sign_b <= a_i[WL-1];
-                        state  <= S_MAG_SQ;
+                        ar <= a_r; ai <= a_i;
+                        abs_r <= a_r[WL-1] ? -a_r : a_r;
+                        abs_i <= a_i[WL-1] ? -a_i : a_i;
+                        state <= S_MAG;
                     end
                 end
 
-                S_MAG_SQ: begin
-                    // Compute a² + b²
-                    p1 = $signed(a_r) * $signed(a_r);
-                    p2 = $signed(a_i) * $signed(a_i);
-                    sqrt_input <= (p1 + p2) >>> FL; // Truncate back to WL
+                // scale so the squares cannot overflow: (a_r^2 + a_i^2) >> FL
+                // must fit WL-1 bits, i.e. |x >> sh| < 2^SQ_LIM
+                S_MAG: begin
+                    big = (abs_r > abs_i) ? abs_r : abs_i;
+                    pos = 0;
+                    for (i = 0; i < WL; i = i + 1)
+                        if (big[i]) pos = i;
+                    sh = (pos >= SQ_LIM) ? (pos - SQ_LIM + 1) : 0;
+                    p1 = $signed({1'b0, abs_r >> sh}) * $signed({1'b0, abs_r >> sh});
+                    p2 = $signed({1'b0, abs_i >> sh}) * $signed({1'b0, abs_i >> sh});
+                    sqrt_x <= rshr((p1 + p2));
                     sqrt_start <= 1'b1;
-                    state      <= S_WAIT_MAG;
+                    state <= S_MAG_WAIT;
                 end
 
-                S_WAIT_MAG: begin
+                S_MAG_WAIT: begin
                     if (sqrt_done) begin
-                        magnitude <= sqrt_result; // |z|
-                        // Compute (|z| + a) / 2
-                        re_arg <= ($signed(sqrt_result) + a_r) >>> 1;
-                        // Compute (|z| - a) / 2
-                        im_arg <= ($signed(sqrt_result) - a_r) >>> 1;
-                        state  <= S_SQRT_RE;
+                        // w = sqrt((|z| + |a_r|)/2)
+                        sqrt_x <= ((sqrt_result << sh) + abs_r) >> 1;
+                        sqrt_start <= 1'b1;
+                        state <= S_W_WAIT;
                     end
                 end
 
-                S_SQRT_RE: begin
-                    // sqrt((|z| + a) / 2)
-                    sqrt_input <= re_arg;
-                    sqrt_start <= 1'b1;
-                    state      <= S_WAIT_RE;
-                end
-
-                S_WAIT_RE: begin
+                S_W_WAIT: begin
                     if (sqrt_done) begin
-                        res_r <= sqrt_result;
-                        state <= S_SQRT_IM;
+                        w_val <= sqrt_result;
+                        if (sqrt_result == 0) begin
+                            res_r <= 0; res_i <= 0;
+                            state <= S_DONE;
+                        end else begin
+                            div_a <= ar[WL-1] ? abs_i : ai;   // a_i or |a_i|
+                            div_b <= sqrt_result << 1;
+                            div_start <= 1'b1;
+                            state <= S_DIV_WAIT;
+                        end
                     end
                 end
 
-                S_SQRT_IM: begin
-                    // sqrt((|z| - a) / 2)
-                    sqrt_input <= im_arg;
-                    sqrt_start <= 1'b1;
-                    state      <= S_WAIT_IM;
-                end
-
-                S_WAIT_IM: begin
-                    if (sqrt_done) begin
-                        // Apply sign of b to imaginary part
-                        if (sign_b)
-                            res_i <= -$signed(sqrt_result);
-                        else
-                            res_i <= sqrt_result;
+                S_DIV_WAIT: begin
+                    if (div_ready) begin
+                        if (!ar[WL-1]) begin
+                            res_r <= w_val;
+                            res_i <= div_result;
+                        end else begin
+                            res_r <= div_result;
+                            res_i <= ai[WL-1] ? -w_val : w_val;
+                        end
                         state <= S_DONE;
                     end
                 end
@@ -132,6 +138,8 @@ module complex_sqrt #(
                     done  <= 1'b1;
                     state <= S_IDLE;
                 end
+
+                default: state <= S_IDLE;
             endcase
         end
     end

@@ -1,12 +1,23 @@
 `timescale 1ns / 1ps
 //============================================================================
-// Complex Divider — (a_r + i*a_i) / (b_r + i*b_i)
+// Complex Division — (a_r + i*a_i) / (b_r + i*b_i)
 //============================================================================
-// Uses the conjugate method:
-//   (a + ib) / (c + id) = [(ac + bd) + i(bc - ad)] / (c² + d²)
+// Smith's algorithm (no |b|^2 is ever formed):
+//   if |b_r| >= |b_i|:  t = b_i/b_r,  den = b_r + b_i*t,
+//                       res = ((a_r + a_i*t) + i*(a_i - a_r*t)) / den
+//   else:               t = b_r/b_i,  den = b_i + b_r*t,
+//                       res = ((a_r*t + a_i) + i*(a_i*t - a_r)) / den
+// with the final "/den" done as one division 2^G/den followed by two
+// multiplies. G (up to WL-FL-2 guard bits) is chosen from den's leading one
+// so 2^G/den cannot overflow; without it the 1-ULP error of 1/den would be
+// multiplied by |a| (measured: 47 ULP for |a| ~ 50). Two fp_div calls, as
+// before.
 //
-// Requires: 4 real multiplications, 3 additions, 1 real division.
-// Latency: ~WL+10 cycles (dominated by the real fp_div)
+// NOTE (previous version): res = a*conj(b) / |b|^2, with a*conj(b) and
+// |b|^2 each truncated to FL bits before dividing. For |b| < 1 that throws
+// away ~2*log2(1/|b|) bits — e.g. num/xi^2 in heston_char_func divided by
+// |0.09|^2 = 0.0081 lost ~7 bits and was the dominant error in dV/dxi.
+// Squaring also overflows WL for |b| > 2^((WL-FL)/2 - 1).
 //============================================================================
 
 module complex_div #(
@@ -22,110 +33,122 @@ module complex_div #(
     output reg               done
 );
 
-    // FSM
-    localparam S_IDLE     = 3'd0;
-    localparam S_PRODUCTS = 3'd1;
-    localparam S_DIV_R    = 3'd2;
-    localparam S_WAIT_R   = 3'd3;
-    localparam S_DIV_I    = 3'd4;
-    localparam S_WAIT_I   = 3'd5;
-    localparam S_DONE     = 3'd6;
+    `include "fx_lib.vh"
+
+    localparam S_IDLE = 3'd0, S_T = 3'd1, S_T_WAIT = 3'd2, S_DEN = 3'd3,
+               S_INV_WAIT = 3'd4, S_OUT = 3'd5, S_DONE = 3'd6;
 
     reg [2:0] state;
+    reg signed [WL-1:0] ar, ai, br, bi, t_val, inv_den, nr, ni;
+    reg                 swap;   // |b_i| > |b_r|
+    reg signed [2*WL-1:0] w1, w2;
+    reg signed [WL-1:0]   den;
+    reg        [WL-1:0]   den_abs;
+    reg        [7:0]      guard;
+    integer               i, pos, g_try;
 
-    reg signed [2*WL-1:0] wide_prod;
-    reg signed [WL-1:0] num_r, num_i, denom;
-
-    // NOTE: hoisted out of the nested begin/end block in S_PRODUCTS below —
-    // declaring locals inside a nested unnamed begin/end block requires
-    // SystemVerilog; plain Verilog only allows declarations at the top of a
-    // module or named block.
-    reg signed [2*WL-1:0] p1, p2, p3, p4, p5, p6;
-
-    // Divider signals
-    reg [WL-1:0] div_a, div_b;
-    reg div_start;
+    reg           div_start;
+    reg  [WL-1:0] div_a, div_b;
     wire [WL-1:0] div_result;
-    wire div_ready, div_dbz, div_ovf;
+    wire          div_ready;
 
     fp_div #(.WL(WL), .FL(FL)) divider (
-        .clk(clk), .rst(rst),
-        .a(div_a), .b(div_b), .start(div_start),
-        .result(div_result), .ready(div_ready),
-        .divide_by_zero(div_dbz), .overflow(div_ovf)
+        .clk(clk), .rst(rst), .a(div_a), .b(div_b), .start(div_start),
+        .result(div_result), .ready(div_ready), .divide_by_zero(), .overflow()
     );
+
+    wire [WL-1:0] abs_br = b_r[WL-1] ? -b_r : b_r;
+    wire [WL-1:0] abs_bi = b_i[WL-1] ? -b_i : b_i;
 
     always @(posedge clk) begin
         if (rst) begin
             state <= S_IDLE;
             done  <= 1'b0;
+            div_start <= 1'b0;
         end else begin
             div_start <= 1'b0;
-
             case (state)
                 S_IDLE: begin
                     done <= 1'b0;
                     if (start) begin
-                        state <= S_PRODUCTS;
+                        ar <= a_r; ai <= a_i; br <= b_r; bi <= b_i;
+                        swap  <= (abs_bi > abs_br);
+                        state <= S_T;
                     end
                 end
 
-                S_PRODUCTS: begin
-                    // Compute numerators and denominator
-                    // num_r = a_r*b_r + a_i*b_i
-                    // num_i = a_i*b_r - a_r*b_i
-                    // denom = b_r*b_r + b_i*b_i
-                    
-                    // We compute sequentially using the wide multiply register
-                    // In a fully pipelined design, these would be parallel DSPs
-                    p1 = $signed(a_r) * $signed(b_r);
-                    p2 = $signed(a_i) * $signed(b_i);
-                    p3 = $signed(a_i) * $signed(b_r);
-                    p4 = $signed(a_r) * $signed(b_i);
-                    p5 = $signed(b_r) * $signed(b_r);
-                    p6 = $signed(b_i) * $signed(b_i);
-
-                    num_r <= (p1 + p2) >>> FL;
-                    num_i <= (p3 - p4) >>> FL;
-                    denom <= (p5 + p6) >>> FL;
-
-                    state <= S_DIV_R;
-                end
-
-                S_DIV_R: begin
-                    // Divide num_r / denom
-                    div_a     <= num_r;
-                    div_b     <= denom;
+                S_T: begin
+                    if (swap) begin
+                        div_a <= br; div_b <= bi;
+                    end else if (bi == 0) begin
+                        div_a <= 0;  div_b <= br;   // t = 0 exactly
+                    end else begin
+                        div_a <= bi; div_b <= br;
+                    end
                     div_start <= 1'b1;
-                    state     <= S_WAIT_R;
+                    state <= S_T_WAIT;
                 end
 
-                S_WAIT_R: begin
+                S_T_WAIT: begin
                     if (div_ready) begin
-                        res_r <= div_result;
-                        state <= S_DIV_I;
+                        t_val <= div_result;
+                        state <= S_DEN;
                     end
                 end
 
-                S_DIV_I: begin
-                    // Divide num_i / denom
-                    div_a     <= num_i;
-                    div_b     <= denom;
+                // den = b_big + b_small*t ; issue 2^G/den
+                S_DEN: begin
+                    if (swap) begin
+                        w1 = $signed(br) * $signed(t_val);
+                        den = bi + (rshr(w1));
+                        w1 = $signed(ar) * $signed(t_val);
+                        w2 = $signed(ai) * $signed(t_val);
+                        nr <= (rshr(w1)) + ai;
+                        ni <= (rshr(w2)) - ar;
+                    end else begin
+                        w1 = $signed(bi) * $signed(t_val);
+                        den = br + (rshr(w1));
+                        w1 = $signed(ai) * $signed(t_val);
+                        w2 = $signed(ar) * $signed(t_val);
+                        nr <= ar + (rshr(w1));
+                        ni <= ai - (rshr(w2));
+                    end
+                    // |2^G/den| < 2^(WL-FL-2)  <=  G <= pos(den) - FL + (WL-FL) - 3
+                    den_abs = den[WL-1] ? -den : den;
+                    pos = 0;
+                    for (i = 0; i < WL; i = i + 1)
+                        if (den_abs[i]) pos = i;
+                    g_try = pos - FL + (WL - FL) - 3;
+                    if (g_try > WL - FL - 2) g_try = WL - FL - 2;
+                    if (g_try < 0) g_try = 0;
+                    guard <= g_try;
+                    div_b <= den;
+                    div_a <= q60(C_ONE) <<< g_try;
                     div_start <= 1'b1;
-                    state     <= S_WAIT_I;
+                    state <= S_INV_WAIT;
                 end
 
-                S_WAIT_I: begin
+                S_INV_WAIT: begin
                     if (div_ready) begin
-                        res_i <= div_result;
-                        state <= S_DONE;
+                        inv_den <= div_result;
+                        state <= S_OUT;
                     end
+                end
+
+                S_OUT: begin
+                    w1 = $signed(nr) * $signed(inv_den);
+                    w2 = $signed(ni) * $signed(inv_den);
+                    res_r <= (w1 + ($signed({{(2*WL-1){1'b0}}, 1'b1}) <<< (FL + guard - 1))) >>> (FL + guard);
+                    res_i <= (w2 + ($signed({{(2*WL-1){1'b0}}, 1'b1}) <<< (FL + guard - 1))) >>> (FL + guard);
+                    state <= S_DONE;
                 end
 
                 S_DONE: begin
                     done  <= 1'b1;
                     state <= S_IDLE;
                 end
+
+                default: state <= S_IDLE;
             endcase
         end
     end

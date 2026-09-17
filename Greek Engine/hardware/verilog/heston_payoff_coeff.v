@@ -40,7 +40,9 @@ module heston_payoff_coeff #(
     output reg                done
 );
 
-    localparam signed [WL-1:0] ONE_C = (FL <= 16) ? (32'sd1 <<< FL) : (32'sd1 <<< 16) <<< (FL-16);
+    `include "fx_lib.vh"
+
+    wire signed [WL-1:0] ONE_C = q60(C_ONE);
 
     localparam S_IDLE     = 3'd0;
     localparam S_K0       = 3'd1;
@@ -87,7 +89,7 @@ module heston_payoff_coeff #(
                             // inv_denom = 1 / (1 + kp^2)
                             wp1 = $signed(u_k) * $signed(u_k);
                             fdiv_a <= ONE_C;
-                            fdiv_b <= ONE_C + (wp1 >>> FL);
+                            fdiv_b <= ONE_C + (rshr(wp1));
                             fdiv_start <= 1'b1;
                             state <= S_DIV_DEN_WAIT;
                         end
@@ -127,19 +129,19 @@ module heston_payoff_coeff #(
                             // chi = inv_denom * (exp_b*sign_k - cos_ua + kp*sin_ua)
                             wp1 = $signed(exp_b) * (k[0] ? -ONE_C : ONE_C);
                             wp2 = $signed(u_k) * $signed(sin_ua);
-                            wp3 = $signed(inv_denom) * (( (wp1>>>FL) - cos_ua + (wp2>>>FL) ));
-                            chi_v <= wp3 >>> FL;
+                            wp3 = $signed(inv_denom) * (( (rshr(wp1)) - cos_ua + (rshr(wp2)) ));
+                            chi_v <= rshr(wp3);
                             // psi = inv_kp * sin_ua
                             wp1 = $signed(fdiv_result) * $signed(sin_ua);
-                            psi_v <= wp1 >>> FL;
+                            psi_v <= rshr(wp1);
                         end else begin
                             // chi = inv_denom * (cos_ua - exp_a - kp*sin_ua)
                             wp2 = $signed(u_k) * $signed(sin_ua);
-                            wp3 = $signed(inv_denom) * ( cos_ua - $signed(exp_a) - (wp2>>>FL) );
-                            chi_v <= wp3 >>> FL;
+                            wp3 = $signed(inv_denom) * ( cos_ua - $signed(exp_a) - (rshr(wp2)) );
+                            chi_v <= rshr(wp3);
                             // psi = -inv_kp * sin_ua
                             wp1 = $signed(fdiv_result) * $signed(sin_ua);
-                            psi_v <= -(wp1 >>> FL);
+                            psi_v <= -(rshr(wp1));
                         end
 
                         state <= S_COMBINE;
@@ -152,7 +154,7 @@ module heston_payoff_coeff #(
                         wp1 = $signed(two_K_over_bma) * (chi_v - psi_v);
                     else
                         wp1 = $signed(two_K_over_bma) * (psi_v - chi_v);
-                    V_k  <= wp1 >>> FL;
+                    V_k  <= rshr(wp1);
                     done <= 1'b1;
                     state <= S_IDLE;
                 end

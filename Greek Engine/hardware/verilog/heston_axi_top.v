@@ -10,41 +10,37 @@
 //============================================================================
 
 module heston_axi_top #(
-    parameter WL = 32,
-    parameter FL = 16
+    parameter WL = 64,
+    parameter FL = 32
 ) (
     input  wire        aclk,
     input  wire        aresetn,
 
     // AXI4-Stream Slave (Input Parameters)
-    input  wire [319:0] s_axis_tdata, // 10 parameters * 32 bits = 320 bits
+    input  wire [10*WL-1:0] s_axis_tdata, // 10 parameters * WL bits
     input  wire        s_axis_tvalid,
     output wire        s_axis_tready,
     input  wire        s_axis_tlast,
 
     // AXI4-Stream Master (Output Results)
-    output wire [319:0] m_axis_tdata, // 10 results * 32 bits = 320 bits
+    output wire [10*WL-1:0] m_axis_tdata, // 10 results * WL bits
     output wire        m_axis_tvalid,
     input  wire        m_axis_tready,
     output wire        m_axis_tlast
 );
 
-    // Unpack input data. NOTE: is_call now occupies its own full 32-bit
-    // aligned lane ([319:288]) rather than a single stray bit at [288] —
-    // that matches this module's own documented "10 parameters * 32 bits
-    // = 320 bits" layout above, whereas the single-bit packing left bits
-    // [319:289] as unexplained padding and put is_call in a position no
-    // AXI master built to the documented layout would expect.
-    wire signed [WL-1:0] S0_w    = s_axis_tdata[31:0];
-    wire signed [WL-1:0] K_w     = s_axis_tdata[63:32];
-    wire signed [WL-1:0] T_w     = s_axis_tdata[95:64];
-    wire signed [WL-1:0] r_w     = s_axis_tdata[127:96];
-    wire signed [WL-1:0] v0_w    = s_axis_tdata[159:128];
-    wire signed [WL-1:0] kappa_w = s_axis_tdata[191:160];
-    wire signed [WL-1:0] theta_w = s_axis_tdata[223:192];
-    wire signed [WL-1:0] xi_w    = s_axis_tdata[255:224];
-    wire signed [WL-1:0] rho_w   = s_axis_tdata[287:256];
-    wire                 is_call_w = s_axis_tdata[288];
+    // Unpack input data: 10 WL-bit lanes, Q(WL-FL, FL); is_call is bit 0 of
+    // the 10th lane.
+    wire signed [WL-1:0] S0_w    = s_axis_tdata[WL-1:0];
+    wire signed [WL-1:0] K_w     = s_axis_tdata[2*WL-1:1*WL];
+    wire signed [WL-1:0] T_w     = s_axis_tdata[3*WL-1:2*WL];
+    wire signed [WL-1:0] r_w     = s_axis_tdata[4*WL-1:3*WL];
+    wire signed [WL-1:0] v0_w    = s_axis_tdata[5*WL-1:4*WL];
+    wire signed [WL-1:0] kappa_w = s_axis_tdata[6*WL-1:5*WL];
+    wire signed [WL-1:0] theta_w = s_axis_tdata[7*WL-1:6*WL];
+    wire signed [WL-1:0] xi_w    = s_axis_tdata[8*WL-1:7*WL];
+    wire signed [WL-1:0] rho_w   = s_axis_tdata[9*WL-1:8*WL];
+    wire                 is_call_w = s_axis_tdata[9*WL];
 
     // NOTE: latched into registers on the transfer edge (s_axis_tvalid &&
     // s_axis_tready), rather than wiring the engine straight off

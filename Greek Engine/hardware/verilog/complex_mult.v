@@ -22,6 +22,9 @@ module complex_mult #(
     output reg               valid_out
 );
 
+    `include "fx_lib.vh"
+
+
     // Pipeline stage 1: compute 4 partial products
     reg signed [2*WL-1:0] pp_rr, pp_ii, pp_ri, pp_ir;
     reg pipe1_valid;
@@ -50,8 +53,8 @@ module complex_mult #(
             valid_out <= pipe1_valid;
             if (pipe1_valid) begin
                 // Truncate from 2*WL bits back to WL, shifting by FL
-                res_r <= (pp_rr - pp_ii) >>> FL;
-                res_i <= (pp_ri + pp_ir) >>> FL;
+                res_r <= rshr((pp_rr - pp_ii));
+                res_i <= rshr((pp_ri + pp_ir));
             end
         end
     end

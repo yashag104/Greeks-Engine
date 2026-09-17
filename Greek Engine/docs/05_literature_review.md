@@ -7,7 +7,7 @@ The existing literature sits in two camps that have never been combined:
 | Camp | Key Papers | What They Do | What They Don't Do |
 |------|-----------|-------------|-------------------|
 | **AAD in software** | Capriotti (2011), Smoking Adjoints (Giles & Glasserman, 2006), Savickas (2014) | Efficient Greeks computation via AAD on CPUs/GPUs | Not on FPGAs — limited by CPU throughput |
-| **FPGA-accelerated finance** | Weiss et al. (2016), Klaisoongnoen et al. (2019), De Schryver et al. (2015) | Hardware-accelerated pricing and/or bump-and-reprice Greeks | Don't use AAD — multiply latency by $n$ for $n$ Greeks |
+| **FPGA-accelerated finance** | Klaisoongnoen et al. (HEART 2022; streaming follow-up, arXiv:2212.13977), De Schryver et al. (2015), Weiss et al. (unverified, see 2.5) | Hardware-accelerated pricing and/or bump-and-reprice Greeks | Don't use AAD — multiply latency by $n$ for $n$ Greeks |
 
 **Our novelty**: AAD's reverse-mode differentiation implemented as a pipelined hardware engine on FPGA. One backward pass computes ALL Greeks, in hardware.
 
@@ -55,28 +55,41 @@ The existing literature sits in two camps that have never been combined:
 
 ---
 
-### 2.5 Weiss et al. (2016) — "FPGA Pricing of Heston Model"
+### 2.5 Weiss et al. (2016) — "FPGA Pricing of Heston Model"  ⚠️ citation not verified
 
-**What it does**: Implements the Heston model pricing via COS method on an FPGA, using fixed-point arithmetic. Achieves significant speedup over CPU.
+> **Verify before citing.** A search (Sept 2026) did not locate a paper matching
+> this title/year. Find the actual publication (authors, venue, what it
+> implements) or remove this entry; do not use it as a benchmark number.
 
-**Key contribution**: Proves the COS method is implementable in fixed-point hardware with acceptable precision. Provides reference fixed-point bit-width choices.
-
-**Relevance to us**: Direct precursor — we use the same forward pricing core (Heston-COS) but add the AAD reverse pass on top. Their bit-width analysis informs our fixed-point budget. Their results are our primary benchmark comparison.
-
-**What they DON'T do**: Greeks. Their FPGA prices options but doesn't compute sensitivities. To get Greeks, you'd need to do bump-and-reprice — running their core $n+1$ times.
+**Claimed content (unverified)**: Heston pricing on FPGA, possibly via a Fourier
+method, in fixed point, pricing only (no Greeks).
 
 ---
 
-### 2.6 Klaisoongnoen et al. (2019) — "FPGA-based Greeks for Heston"
+### 2.6 Klaisoongnoen, Brown & Thomson Brown (2022) — "Low-power option Greeks: Efficiency-driven market risk analysis using FPGAs"
 
-**What it does**: Implements bump-and-reprice Greeks on FPGA for the Heston model. Achieves hardware-accelerated Greeks, but via the brute-force finite-difference approach.
+**Venue**: HEART 2022 (ACM), doi:10.1145/3535044.3535059; arXiv:2206.03719.
+Follow-up: "Fast and energy-efficient derivatives risk analysis: Streaming option
+Greeks on Xilinx and Intel FPGAs", arXiv:2212.13977.
 
-**Key contribution**: Demonstrates that FPGA Greeks for Heston are feasible. Provides latency and throughput benchmarks.
+> **Correction:** an earlier version of this document cited this work as
+> "Klaisoongnoen et al. (2019) — FPGA-based Greeks for Heston" and described it
+> as a Heston-COS bump-and-reprice engine. It is neither 2019 nor COS-based.
 
-**Relevance to us**: Our direct competitor/comparison point. They compute $n$ Greeks by running the forward pricer $n+1$ times. We compute all $n$ Greeks in a single backward pass (after one forward pass). Our expected advantage:
-- Latency: ~$2\times$ (forward + backward) vs. $(n+1)\times$ (their approach)
-- Throughput: higher, since pipeline resources are shared between forward and backward
-- Area: potentially larger (we store the tape), but amortized by fewer passes
+**What it does**: Ports the STAC-A2 market-risk benchmark — **Monte Carlo** Heston
+paths with Longstaff–Schwartz path reduction — to a Xilinx Alveo U280, with a
+focus on energy efficiency; the follow-up streams the Greeks workload on Xilinx
+and Intel FPGAs. Greeks come from finite differences (re-simulation), as STAC-A2
+specifies.
+
+**Relevance to us**: The closest FPGA work on Heston Greeks and the right
+reference for *energy-efficiency* framing. **Not** an apples-to-apples latency
+baseline: Monte Carlo + LSM (American-style, path-based) solves a different and
+far more expensive problem than European COS pricing, so a raw latency
+comparison would mostly measure COS vs Monte Carlo, not AAD vs bump. The fair
+AAD-vs-bump comparison is on the *same* pricing core (this project's
+`heston_bump_top.v` vs `heston_top_level.v`); cite Klaisoongnoen et al. for
+context and for energy-per-Greek methodology.
 
 ---
 
@@ -115,8 +128,8 @@ The existing literature sits in two camps that have never been combined:
 | Giles & Glasserman (2006) | General MC | Theory | Adjoint (theory) | Theoretical foundation |
 | Capriotti (2011) | IR derivatives | CPU | AAD (software) | Software precursor |
 | Geeraert et al. | XVA/CVA | CPU | AAD (software) | Motivation for scale |
-| Weiss et al. (2016) | Heston-COS | FPGA | None (pricing only) | Forward core reference |
-| Klaisoongnoen et al. (2019) | Heston | FPGA | Bump-and-reprice | Direct competitor |
+| Weiss et al. (2016) ⚠️ unverified | Heston (method unverified) | FPGA | None (pricing only) | Verify or drop |
+| Klaisoongnoen et al. (2022) | Heston Monte Carlo + LSM (STAC-A2) | FPGA (Alveo U280) | Finite differences | Closest FPGA Greeks work; energy framing, not a latency baseline |
 | 2024 Survey | Various | FPGA | Survey | Identifies our gap |
 | Feb 2026 paper | General | Theory/FPGA | AAD vs. FD analysis | Theoretical validation |
 | **This project** | **Heston-COS** | **FPGA** | **AAD (hardware)** | **Fills the gap** |

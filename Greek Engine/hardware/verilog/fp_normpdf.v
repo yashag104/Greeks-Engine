@@ -15,6 +15,9 @@ module fp_normpdf #(
     output reg               done
 );
 
+    `include "fx_lib.vh"
+
+
     // NOTE: $signed() requires an integer/vector argument, not a `real` — the
     // real-valued constant expression must be rounded to an integer with
     // $rtoi() first (real args to $signed produced an elaboration error).
@@ -24,9 +27,7 @@ module fp_normpdf #(
     // range for any real FL used in this design — and left-shift the rest
     // of the way when FL > 16 (exact: it just appends zero fractional
     // bits, not a further rounding step).
-    wire signed [WL-1:0] INV_SQRT2PI = (FL <= 16)
-        ? $signed( $rtoi(0.3989422804014327 * (2.0**FL)) )
-        : $signed( $rtoi(0.3989422804014327 * (2.0**16)) ) <<< (FL-16);
+    wire signed [WL-1:0] INV_SQRT2PI = q60(64'sh0662114CF50D943D);
 
     // FSM
     localparam S_IDLE    = 3'd0;
