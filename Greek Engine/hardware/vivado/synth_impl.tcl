@@ -43,9 +43,17 @@ if {[string match "heston_aad_*" $top] || [string match "heston_bump_z*" $top]} 
   foreach f $srcs { read_verilog "$vdir/$f" }
 }
 
+# Clock constraint read before synthesis so synth_design optimizes for timing.
+# AXI4-Stream wrappers are clocked by aclk, every other top by clk.
+set clk_port [expr {[string match "*_axi" $top] ? "aclk" : "clk"}]
+set xdc "$outdir/clock.xdc"
+set fp [open $xdc w]
+puts $fp "create_clock -name clk -period $clk_ns \[get_ports $clk_port\]"
+close $fp
+read_xdc -mode out_of_context $xdc
+
 synth_design -top $top -part $part -mode out_of_context \
              -include_dirs $vdir -flatten_hierarchy rebuilt
-create_clock -name clk -period $clk_ns [get_ports clk]
 write_checkpoint -force "$outdir/post_synth.dcp"
 report_utilization -file "$outdir/util_synth.rpt"
 
