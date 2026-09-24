@@ -15,7 +15,7 @@ on the same hardware.
 | `hardware/vivado/` | out-of-context implementation flow + report parser |
 | `software/` | Python AAD engine, Black-Scholes and Heston-COS models, tests |
 | `validation/` | double-precision references, precision model, sweeps, figures (`validation/figures/`) |
-| `docs/` | theory notes, `architecture.md` (hardware design + results), `precision_bound.md` (fixed-point analysis) |
+| `docs/` | theory notes, `course.html` (the whole project end to end: maths, architecture, every experiment, results, novelty, next steps), `architecture.md` (hardware design + results), `precision_bound.md` (fixed-point analysis) |
 
 ## Quick start
 
