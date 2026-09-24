@@ -2,3 +2,4 @@
 Greek Engine/hardware/sim/build/
 Greek Engine/hardware/vivado/runs/
 __pycache__/
+Greek Engine/hardware/gen/build/
