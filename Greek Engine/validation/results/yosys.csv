@@ -1,0 +1,5 @@
+design,lut,ff,srl,carry4,dsp,note
+heston_aad_z7 (full-range shifters),90648,32878,3050,6302,96,"xc7; before shift-range analysis"
+heston_aad_z7,59024,32731,3058,5915,96,"xc7; fully on-chip, 56-bit, 8 multipliers"
+heston_aad_z7h,45504,24856,2922,4965,96,"xc7; host setup; Zynq-7020 has 53200 LUT / 106400 FF / 220 DSP"
+heston_aad_zu,108330,59953,6409,0,512,"xcup (DSP48E2); fully on-chip, 64-bit, 32 multipliers; ZCU104 xczu7ev has 230400 LUT / 460800 FF / 1728 DSP"

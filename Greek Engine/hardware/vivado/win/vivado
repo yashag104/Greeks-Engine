@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Drive the Windows Vivado install from WSL as if it were a native `vivado`.
+#
+#   PATH="$PWD/win:$PATH" ./make_all.sh
+#
+# Vivado runs as a Windows process and cannot see /mnt/... paths. When the cwd
+# is on a Windows drive, WSL's interop gives cmd.exe the same directory, so the
+# relative paths in make_all.sh and synth_impl.tcl resolve identically on both
+# sides and nothing needs translating. From a native Linux path cmd.exe would
+# fall back to C:\Windows instead, hence the check below.
+#
+# Arguments are forwarded as separate argv entries rather than one command
+# string: WSL escapes embedded quotes when it builds the Windows command line,
+# so a quoted string arrives at cmd.exe with literal backslashes in it.
+#
+# Override the install location with VIVADO_WIN_BAT if it moves.
+set -u
+BAT=${VIVADO_WIN_BAT:-'C:\AMDDesignTools\2026.1\Vivado\bin\vivado.bat'}
+
+case "$PWD" in
+  /mnt/[a-z]/*) ;;
+  *) echo "vivado shim: cwd $PWD is not on a Windows drive; Vivado cannot reach it" >&2; exit 1 ;;
+esac
+
+# A Windows process launched from WSL inherits the WSL environment, not the
+# Windows user environment, so a XILINXD_LICENSE_FILE set through System
+# Properties is invisible here and Vivado reports "no valid license" anyway.
+# Fall back to reading it out of the registry when it is not set on this side.
+if [ -z "${XILINXD_LICENSE_FILE:-}" ]; then
+  for hive in "HKCU\\Environment" "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment"; do
+    v=$(reg.exe query "$hive" /v XILINXD_LICENSE_FILE 2>/dev/null \
+        | sed -n 's/.*XILINXD_LICENSE_FILE\s*REG_[A-Z_]*\s*//p' | tr -d '\r')
+    [ -n "$v" ] && export XILINXD_LICENSE_FILE="$v" && break
+  done
+fi
+export WSLENV="${WSLENV:+$WSLENV:}XILINXD_LICENSE_FILE"
+
+exec cmd.exe /c "$BAT" "$@"

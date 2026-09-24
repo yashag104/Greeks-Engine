@@ -1,0 +1,1943 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Greeks Engine Course</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root{
+  --ground:#F4F5F1; --surface:#FFFFFF; --sunk:#EAECE6; --ink:#17201C; --muted:#56625B; --rule:#D5D9D1;
+  --accent:#2C5B87; --accent-soft:#E1EAF3; --warn:#A8501E; --warn-soft:#F6E6DA; --ok:#2E7147; --ok-soft:#E0EEE4;
+  --bar:#7C9CBC; --bar-hi:#2C5B87;
+  --f-disp:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#101513; --surface:#161D1A; --sunk:#1D2622; --ink:#E4EAE6; --muted:#97A39C; --rule:#2B3631;
+    --accent:#86B5E0; --accent-soft:#1B2A38; --warn:#E89262; --warn-soft:#33221A; --ok:#7CC697; --ok-soft:#18291F;
+    --bar:#3F5E7C; --bar-hi:#86B5E0;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#101513; --surface:#161D1A; --sunk:#1D2622; --ink:#E4EAE6; --muted:#97A39C; --rule:#2B3631;
+  --accent:#86B5E0; --accent-soft:#1B2A38; --warn:#E89262; --warn-soft:#33221A; --ok:#7CC697; --ok-soft:#18291F;
+  --bar:#3F5E7C; --bar-hi:#86B5E0;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font:15.5px/1.62 var(--f-body);padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:230px minmax(0,1fr);gap:48px}
+@media (max-width:900px){.wrap{grid-template-columns:minmax(0,1fr);gap:0}nav.toc{display:none}}
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);align-self:start;padding-top:40px;font-size:13px;max-height:100vh;overflow-y:auto}
+nav.toc p{font:600 11px/1 var(--f-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+nav.toc p:first-child{margin-top:0}
+nav.toc a{display:block;color:var(--muted);text-decoration:none;padding:3px 0 3px 10px;border-left:2px solid var(--rule)}
+nav.toc a:hover,nav.toc a:focus-visible{color:var(--accent);border-left-color:var(--accent);outline:none}
+main{min-width:0;padding-top:40px}
+header.top{border-bottom:1px solid var(--rule);padding-bottom:24px;margin-bottom:8px}
+.eyebrow{font:600 12px/1 var(--f-mono);color:var(--accent);letter-spacing:.04em}
+h1{font:700 clamp(30px,5vw,44px)/1.08 var(--f-disp);margin:10px 0 12px;text-wrap:balance;letter-spacing:-.01em}
+.lede{color:var(--muted);max-width:70ch;margin:0}
+h2{font:600 27px/1.2 var(--f-disp);margin:60px 0 14px;text-wrap:balance;scroll-margin-top:16px;padding-top:14px;border-top:1px solid var(--rule)}
+h2 .n{font:500 13px/1 var(--f-mono);color:var(--accent);margin-right:10px;vertical-align:4px}
+h3{font:600 19px/1.3 var(--f-disp);margin:32px 0 8px;letter-spacing:.005em;scroll-margin-top:16px}
+h4{font:600 13px/1.2 var(--f-disp);letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:22px 0 6px}
+p,li{max-width:72ch}
+ul,ol{padding-left:1.25em}
+li{margin:5px 0}
+code,.mono{font-family:var(--f-mono);font-size:.88em}
+code{background:var(--sunk);padding:1px 5px;border-radius:3px}
+a{color:var(--accent)}
+.part{font:600 11px/1 var(--f-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:64px 0 -40px;padding:10px 0;border-bottom:2px solid var(--accent)}
+.chip{display:inline-block;font:600 11px/1 var(--f-mono);padding:4px 7px;border-radius:3px;letter-spacing:.03em;white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.gap{background:var(--warn-soft);color:var(--warn)}
+.chip.risk{background:var(--accent-soft);color:var(--accent)}
+.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+tr:last-child td{border-bottom:0}
+th{font:600 12px/1.3 var(--f-disp);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);background:var(--sunk)}
+td.num{font-family:var(--f-mono);font-size:13px;white-space:nowrap}
+.eq{font-family:var(--f-mono);font-size:13.5px;background:var(--surface);border:1px solid var(--rule);border-left:3px solid var(--accent);padding:12px 14px;border-radius:4px;overflow-x:auto;white-space:pre;margin:12px 0;line-height:1.55}
+.callout{border-left:3px solid var(--warn);background:var(--warn-soft);padding:12px 16px;border-radius:0 4px 4px 0;margin:16px 0}
+.callout p{margin:0 0 8px}.callout p:last-child{margin:0}
+.callout strong{color:var(--warn)}
+.note{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 4px 4px 0;margin:16px 0}
+.note p{margin:0 0 8px}.note p:last-child{margin:0}
+figure{margin:18px 0;background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:16px}
+figure .sv{overflow-x:auto}
+figcaption{font-size:13px;color:var(--muted);margin-top:10px;max-width:78ch}
+svg text{font-family:var(--f-mono);fill:var(--muted)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin:16px 0}
+.two > div{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:14px 16px}
+.two h4{margin:0 0 6px}
+.two p{margin:0}
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:18px 20px;margin:18px 0}
+.card > h3{margin-top:0}
+.card dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:8px 18px;margin:12px 0 0}
+.card dt{font:600 11px/1.5 var(--f-disp);letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.card dd{margin:0;max-width:70ch}
+.kbd{font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.lead-in{font-size:16.5px;color:var(--ink);max-width:70ch}
+hr{border:0;border-top:1px solid var(--rule);margin:28px 0}
+@media (prefers-reduced-motion:no-preference){nav.toc a{transition:color .15s,border-color .15s}}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+<nav class="toc" aria-label="Contents">
+  <p>Orientation</p>
+  <a href="#map">0. Map of the whole thing</a>
+  <p>I — The finance</p>
+  <a href="#opts">1. Options and Greeks</a>
+  <a href="#heston">2. The Heston model</a>
+  <p>II — The numerics</p>
+  <a href="#cos">3. The COS method</a>
+  <a href="#aad">4. AAD from scratch</a>
+  <p>III — The hardware</p>
+  <a href="#fixed">5. Fixed-point arithmetic</a>
+  <a href="#gen1">6. Generation 1, and why it failed</a>
+  <a href="#gen2">7. The generator</a>
+  <a href="#prims">8. Divider-free arithmetic</a>
+  <a href="#complex">9. Complex primitives</a>
+  <a href="#sched">10. Modulo scheduling</a>
+  <a href="#ranges">11. Shift ranges</a>
+  <a href="#host">12. The host split</a>
+  <p>IV — Precision</p>
+  <a href="#bound">13. The error bound</a>
+  <p>V — Experiments</p>
+  <a href="#experiments">14. Every experiment</a>
+  <p>VI — The paper</p>
+  <a href="#results">15. Results table</a>
+  <a href="#novelty">16. Novelty, from basics</a>
+  <a href="#next">17. What is next</a>
+  <a href="#risks">18. Honest weaknesses</a>
+</nav>
+
+<main>
+<header class="top">
+  <div class="eyebrow">GREEKS ENGINE / FULL COURSE</div>
+  <h1>Option Greeks in one hardware pass</h1>
+  <p class="lede">Everything in this project, from what an option is to why a modulo reservation table
+  is the reason all nine Greeks cost 1.04 pricings. Written as a course: each section assumes only
+  the ones before it. The last sections are the paper.</p>
+</header>
+
+<h2 id="map"><span class="n">00</span>Map of the whole thing</h2>
+
+<p class="lead-in">Before any detail, here is the entire project in one paragraph, so every later
+section has somewhere to attach.</p>
+
+<p>A bank holds a portfolio of options. To manage its risk it needs, continuously, not just the
+<em>price</em> of each option but the <em>derivatives of that price</em> with respect to every model
+parameter — the <strong>Greeks</strong>. Under the Heston stochastic-volatility model there is no
+closed-form price, so the price is computed by a numerical method (we use the Fourier-cosine, or
+<strong>COS</strong>, method). The standard way to get Greeks from a numerical pricer is
+<strong>bump-and-reprice</strong>: nudge each parameter, price again, take a difference. For
+<em>n</em> Greeks that costs <em>n</em>+1 pricings and it is numerically poor. The better way is
+<strong>reverse-mode algorithmic differentiation (AAD)</strong>, which gets all <em>n</em> Greeks from
+<em>one</em> backward sweep over the pricing computation. AAD is standard in software. Nobody had
+built it as a hardware datapath. That is what this project is: a generator that takes the Heston-COS
+price <em>and its adjoint sweep</em> as a single operation graph and emits a fixed-point,
+resource-shared, modulo-scheduled Verilog datapath that produces the price and nine sensitivities in
+4,731 clock cycles on a Zynq-7020-sized design — where bump-and-reprice on the identical hardware
+takes 86,803.</p>
+
+<div class="two">
+  <div><h4>The product</h4><p>A parameterised Verilog generator plus the RTL it emits, verified
+  bit-exact against a golden model, with a per-Greek error bound.</p></div>
+  <div><h4>The headline</h4><p>All 9 Greeks for 1.04 pricings of extra work. In software, AAD
+  typically costs 3–5× a pricing.</p></div>
+  <div><h4>The honest gap</h4><p>Everything is RTL simulation and Yosys estimates. No Vivado
+  place-and-route has run yet, so there is no Fmax, no timing closure, no power, no bitstream.</p></div>
+</div>
+
+<h3>The five things that had to be true at once</h3>
+
+<p>It is worth naming these early, because almost every design decision later is one of them being
+forced:</p>
+
+<ol>
+  <li><strong>The computation graph must be known at design time.</strong> Hardware cannot
+  conveniently record a runtime tape. This is why the COS method was chosen over Monte Carlo — COS
+  has a fixed term count and no data-dependent branching.</li>
+  <li><strong>There must be no dividers.</strong> Division and square root in fixed point are
+  bit-serial and slow; in generation 1 they were 80&nbsp;% of the latency. Everything must be
+  reducible to multiplies.</li>
+  <li><strong>Arithmetic must be shared.</strong> A 56×56 multiplier costs real DSP slices. Inferring
+  one per multiply operation put generation 1 at 159 multipliers, far past the 220 DSPs on a
+  Zynq-7020.</li>
+  <li><strong>Fixed-point error must be bounded, not just measured.</strong> Adjoints accumulate
+  through hundreds of operations; a paper needs a statement stronger than "we tried 21 cases".</li>
+  <li><strong>The comparison must be fair.</strong> Beating a CPU proves nothing. The baseline has to
+  be bump-and-reprice on <em>the same pricer, same word length, same arithmetic</em>.</li>
+</ol>
+
+<h3>How the repository maps onto this document</h3>
+
+<div class="tbl"><table>
+<thead><tr><th>Section</th><th>Where it lives in the repo</th></tr></thead>
+<tbody>
+<tr><td>Finance and numerics (1–4)</td><td class="num">docs/01–05_*.md, software/</td></tr>
+<tr><td>Generator and RTL (7–12)</td><td class="num">hardware/gen/, hardware/verilog/gen/</td></tr>
+<tr><td>Generation 1 (6)</td><td class="num">hardware/verilog/*.v</td></tr>
+<tr><td>Error bound (13)</td><td class="num">docs/precision_bound.md, validation/precision/</td></tr>
+<tr><td>Experiments (14)</td><td class="num">verify_all.sh, validation/</td></tr>
+<tr><td>Implementation flow (17)</td><td class="num">hardware/vivado/</td></tr>
+</tbody></table></div>
+
+<p class="part">Part I — The finance</p>
+
+<h2 id="opts"><span class="n">01</span>Options, and why anyone wants derivatives of a price</h2>
+
+<p>A <strong>European call option</strong> on a stock gives its holder the right, but not the
+obligation, to buy one share at a fixed <strong>strike</strong> price <em>K</em> at a fixed future
+date <em>T</em>. If the share is worth <em>S<sub>T</sub></em> at that date, the holder exercises only
+when it pays:</p>
+
+<div class="eq">payoff_call = max(S_T − K, 0)        payoff_put = max(K − S_T, 0)</div>
+
+<p>The option's value today is the expected payoff, discounted, under a probability measure in which
+the stock drifts at the risk-free rate <em>r</em> (the <em>risk-neutral</em> measure):</p>
+
+<div class="eq">V = e^(−rT) · E_Q[ payoff(S_T) ]</div>
+
+<h3>1.1 Black-Scholes, in one line of reasoning</h3>
+
+<p>If the stock follows geometric Brownian motion with <em>constant</em> volatility σ,</p>
+
+<div class="eq">dS_t = r S_t dt + σ S_t dW_t</div>
+
+<p>then this SDE has an explicit solution, <em>S<sub>T</sub></em> is log-normal, and the expectation
+above can be done in closed form. That gives the Black-Scholes formula:</p>
+
+<div class="eq">V_call = S_0 N(d1) − K e^(−rT) N(d2)
+
+d1 = [ ln(S_0/K) + (r + σ²/2) T ] / (σ √T)
+d2 = d1 − σ √T</div>
+
+<p>where <em>N</em> is the standard normal CDF. Two facts matter for this project: the formula exists,
+and it is <em>differentiable in closed form</em>. That makes Black-Scholes the perfect first test
+case — you can check an AAD engine against exact answers.</p>
+
+<h3>1.2 The Greeks: what they are and why a desk needs them</h3>
+
+<p>A Greek is a partial derivative of the option value with respect to one input. They are not
+academic curiosities; they are the instructions for hedging.</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Greek</th><th>Definition</th><th>What it tells a trader</th></tr></thead>
+<tbody>
+<tr><td>Delta</td><td class="num">∂V/∂S</td><td>How many shares to hold to be immune to a small move in the stock. This is <em>the</em> hedge ratio.</td></tr>
+<tr><td>Vega</td><td class="num">∂V/∂σ or ∂V/∂v₀</td><td>Exposure to volatility itself changing. Cannot be hedged with stock — needs other options.</td></tr>
+<tr><td>Rho</td><td class="num">∂V/∂r</td><td>Exposure to interest rates.</td></tr>
+<tr><td>Theta</td><td class="num">∂V/∂T</td><td>Time decay: what the position loses simply by a day passing.</td></tr>
+<tr><td>Gamma</td><td class="num">∂²V/∂S²</td><td>How fast Delta itself moves — how often the hedge must be rebalanced.</td></tr>
+</tbody></table></div>
+
+<p>The economic point: a desk that is <em>delta-hedged</em> holds −∂V/∂S shares against each option,
+so that small stock moves cancel. Its remaining risk is in the other Greeks. Recomputing all of them,
+for a whole book, repeatedly through the trading day, is the computation that actually consumes
+bank compute.</p>
+
+<div class="note"><p><strong>Why this becomes a hardware problem.</strong> One option's Greeks are
+cheap. A book of hundreds of thousands of positions, revalued under hundreds of market scenarios, is
+not. The cost scales as (positions) × (scenarios) × (Greeks per position) × (cost of one pricing).
+AAD attacks the third factor, taking it from <em>n</em> to ~1. Hardware attacks the fourth. This
+project does both at once.</p></div>
+
+<h2 id="heston"><span class="n">02</span>The Heston model: why the closed form disappears</h2>
+
+<p>Black-Scholes assumes σ is a constant. Every property of real option markets says otherwise:</p>
+
+<ul>
+<li><strong>The volatility smile.</strong> Back out the implied σ from traded prices at different
+strikes and you get a curve, not a flat line. If BS were right it would be flat.</li>
+<li><strong>Volatility clusters.</strong> Turbulent days follow turbulent days.</li>
+<li><strong>Fat tails.</strong> Crashes happen far more often than a log-normal allows.</li>
+<li><strong>The leverage effect.</strong> When price falls, volatility rises.</li>
+</ul>
+
+<p>Heston (1993) makes the variance itself a stochastic process — specifically a Cox-Ingersoll-Ross
+(CIR) square-root process — correlated with the stock:</p>
+
+<div class="eq">dS_t = r S_t dt + √(v_t) S_t dW_t^S
+dv_t = κ(θ − v_t) dt + ξ √(v_t) dW_t^v
+dW^S · dW^v = ρ dt</div>
+
+<div class="tbl"><table>
+<thead><tr><th>Param</th><th>Name</th><th>Role</th><th>Typical</th></tr></thead>
+<tbody>
+<tr><td class="num">v₀</td><td>initial variance</td><td>where volatility is today</td><td class="num">0.01–0.09</td></tr>
+<tr><td class="num">κ</td><td>mean-reversion speed</td><td>how fast v is pulled back to θ</td><td class="num">0.5–5</td></tr>
+<tr><td class="num">θ</td><td>long-run variance</td><td>the level it is pulled toward</td><td class="num">0.01–0.09</td></tr>
+<tr><td class="num">ξ</td><td>vol-of-vol</td><td>how noisy the variance process is</td><td class="num">0.1–1.0</td></tr>
+<tr><td class="num">ρ</td><td>correlation</td><td>the leverage effect; negative in equities</td><td class="num">−0.9…−0.3</td></tr>
+</tbody></table></div>
+
+<p>The drift term κ(θ − v<sub>t</sub>) is what produces mean reversion: it is negative when
+v&nbsp;&gt;&nbsp;θ and positive when v&nbsp;&lt;&nbsp;θ. Negative ρ produces the skew, because a
+falling stock now comes with rising volatility. The <strong>Feller condition</strong> 2κθ &gt; ξ²
+keeps v strictly positive; many calibrated real-world parameter sets violate it, which is one reason
+numerical robustness matters.</p>
+
+<h3>2.1 Why there is no formula, and what replaces it</h3>
+
+<p>Two things break. First, <em>S<sub>T</sub></em> has no explicit solution, because you cannot
+integrate √(v<sub>t</sub>) without knowing the whole path of v. Second, the joint law of
+(S<sub>T</sub>, v<sub>T</sub>) is not a standard distribution.</p>
+
+<p>What Heston <em>did</em> find in closed form is the <strong>characteristic function</strong> of
+the log price — the Fourier transform of its density:</p>
+
+<div class="eq">φ(u) = E[ e^(i u ln S_T) ] = exp( C(u,T) + D(u,T)·v₀ + i u ln S₀ )
+
+d(u) = √( (ρ ξ u i − κ)² + ξ²(u i + u²) )
+g(u) = (κ − ρ ξ u i − d) / (κ − ρ ξ u i + d)
+
+C(u,T) = r u i T + (κθ/ξ²)[ (κ − ρξui − d)T − 2 ln( (1 − g e^(−dT)) / (1 − g) ) ]
+D(u,T) = ((κ − ρξui − d)/ξ²) · (1 − e^(−dT)) / (1 − g e^(−dT))</div>
+
+<p>Read that as an algorithm, not a formula — it is a fixed sequence of complex arithmetic:
+one complex square root, two complex divisions, one complex exponential, one complex logarithm,
+and a handful of complex multiplies. <strong>That sequence is the thing we build in silicon.</strong>
+Everything from section 8 onward is about performing exactly these operations without dividers and
+with shared multipliers.</p>
+
+<div class="callout"><p><strong>Consequence for Greeks.</strong> No closed-form price means no
+closed-form Greeks. Under Heston there are at least 7 parameter sensitivities (plus Delta and strike
+sensitivity), against Black-Scholes' 5 — so the <em>n</em> in "bump-and-reprice costs <em>n</em>+1
+pricings" gets worse exactly where pricing also got harder. This is the pressure that makes AAD
+worth building.</p></div>
+
+<p>Our engine emits <strong>ten outputs</strong>: the price plus nine sensitivities —
+<span class="mono">delta (∂V/∂S₀), strike_sens (∂V/∂K), theta_greek (∂V/∂T), rho_greek (∂V/∂r),
+vega (∂V/∂v₀), kappa_sens, theta_sens, xi_sens, rho_corr (∂V/∂ρ)</span>.</p>
+
+<p class="part">Part II — The numerics</p>
+
+<h2 id="cos"><span class="n">03</span>The COS method: turning an integral into a fixed sum</h2>
+
+<p class="lead-in">This section is the closest analogue to "why radix-<em>N</em> FFT gives you a
+butterfly diagram". The COS method is a <em>restructuring</em> of Fourier inversion that replaces an
+oscillatory infinite integral with a short, fixed-length, exponentially-convergent sum of
+independent terms. That restructuring is what makes a hardware datapath possible at all.</p>
+
+<h3>3.1 The problem it solves</h3>
+
+<p>We have φ(u) and want the price. The textbook route is direct Fourier inversion:</p>
+
+<div class="eq">V_call = S₀ − ½ K e^(−rT) + (K e^(−rT)/π) ∫₀^∞ Re[ e^(−iu ln K) φ(u) / (iu) ] du</div>
+
+<p>This is bad for hardware in three separate ways: the integrand oscillates (so quadrature needs
+many points and adapts), the upper limit is infinite (so the point count is data-dependent), and the
+1/(iu) has a singularity at the origin. All three break the "fixed computation known at design time"
+requirement.</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Method</th><th>Cost</th><th>Why not / why</th></tr></thead>
+<tbody>
+<tr><td>Direct quadrature (Carr-Madan)</td><td class="num">adaptive</td><td>Oscillatory integrand, data-dependent point count.</td></tr>
+<tr><td>FFT over strikes</td><td class="num">O(N log N)</td><td>Gives a whole grid of strikes at once — wasteful when you want one strike, and the butterfly network is a large fixed interconnect.</td></tr>
+<tr><td><strong>COS</strong> (Fang &amp; Oosterlee, 2008)</td><td class="num">O(N), N ≈ 128</td><td>Exponential convergence, fixed N, no RNG, every term independent. <strong>Chosen.</strong></td></tr>
+</tbody></table></div>
+
+<h3>3.2 The derivation, in four moves</h3>
+
+<p><strong>Move 1 — truncate.</strong> The density of the log-price has effectively finite support.
+Pick an interval [a,b] that contains essentially all the mass. Now we are on a finite domain, where
+Fourier <em>series</em> apply instead of Fourier <em>transforms</em>.</p>
+
+<p><strong>Move 2 — expand in cosines.</strong> On [a,b], any well-behaved density has a cosine
+series:</p>
+
+<div class="eq">f(y) ≈ Σ'_{k=0}^{N−1}  A_k · cos( kπ (y − a)/(b − a) )
+
+A_k = (2/(b−a)) ∫_a^b f(y) cos( kπ (y−a)/(b−a) ) dy      (Σ' halves the k = 0 term)</div>
+
+<p><strong>Move 3 — recognise the characteristic function.</strong> This is the trick. Write the
+cosine as the real part of a complex exponential, and the integral for A<sub>k</sub> becomes exactly
+a characteristic-function evaluation:</p>
+
+<div class="eq">A_k ≈ (2/(b−a)) · Re[ φ( kπ/(b−a) ) · exp( −i kπa/(b−a) ) ]</div>
+
+<p>We never touch the density <em>f</em>. We go straight from φ, which Heston gave us in closed form,
+to the series coefficients. <strong>Define u<sub>k</sub> = kπ/(b−a)</strong> — the frequency grid.</p>
+
+<p><strong>Move 4 — integrate against the payoff analytically.</strong> The price is the inner
+product of the density with the payoff. Since the density is now a cosine series, and the payoff is
+<span class="mono">max(e^y − 1, 0)</span>, that inner product can be done <em>by hand, once, forever</em>.
+Its coefficients V<sub>k</sub> have a closed form. The price collapses to a sum of products:</p>
+
+<div class="eq">V = e^(−rT) · Σ'_{k=0}^{N−1}  Re[ φ(u_k) · e^(−i u_k a) ] · V_k</div>
+
+<p>That is the COS method. An integral became a 128-term sum of independent products, each of which
+requires one characteristic-function evaluation.</p>
+
+<h3>3.3 The payoff coefficients</h3>
+
+<p>For a call, with the payoff nonzero on [0,b]:</p>
+
+<div class="eq">V_k = (2/(b−a)) · K · [ χ_k(0,b) − ψ_k(0,b) ]
+
+χ_k(c,d) = 1/(1 + u_k²) · [ e^d cos(u_k(d−a)) − e^c cos(u_k(c−a))
+                          + u_k ( e^d sin(u_k(d−a)) − e^c sin(u_k(c−a)) ) ]
+
+ψ_k(c,d) = (b−a)/(kπ) · [ sin(u_k(d−a)) − sin(u_k(c−a)) ],   ψ_0 = d − c</div>
+
+<p>For a put, V<sub>k</sub> = (2/(b−a))·K·[ψ<sub>k</sub>(a,0) − χ<sub>k</sub>(a,0)]. Note the two
+structural facts the hardware exploits: χ needs a reciprocal of (1+u<sub>k</sub>²), and ψ needs 1/k.
+Both become ROM lookups or Newton reciprocals later; neither needs a divider.</p>
+
+<h3>3.4 The truncation range</h3>
+
+<p>[a,b] comes from the cumulants of the log-price. The implementation
+(<span class="mono">hardware/gen/heston.py</span>, <span class="mono">build_setup</span>) uses:</p>
+
+<div class="eq">x   = ln(S₀/K)                          (log-moneyness)
+c1  = x + (r − θ/2)T + ((1 − e^(−κT))/(2κ))·(θ − v₀)
+c2  = max( v₀T + (θ/2)T , 2^(−FL) )
+a   = c1 − 10√c2 ,   b = c1 + 10√c2</div>
+
+<p>The factor 10 is the standard <em>L</em> ≈ 10 safety multiplier; in RTL it is formed as
+<span class="mono">(√c2 &lt;&lt; 3) + (√c2 &lt;&lt; 1)</span> — two shifts and an add, no multiplier.
+The <span class="mono">max(·, 2^−FL)</span> guards against a degenerate zero range in fixed point.</p>
+
+<div class="callout"><p><strong>A convention we inherit and must state in the paper.</strong> [a,b]
+depends on the parameters, but it is held <em>fixed</em> when differentiating — we do not propagate
+∂a/∂θ etc. This is the standard COS convention and the software reference does the same, so the
+comparison is self-consistent. It is a known approximation, not an oversight.</p></div>
+
+<h3>3.5 Why this shape is what hardware wants</h3>
+
+<ol>
+<li><strong>N is fixed at design time</strong> (N = 128). Fixed loop trip count → a schedule can be
+computed offline.</li>
+<li><strong>No branching.</strong> Call vs put is a mux on already-computed values, not a different
+code path.</li>
+<li><strong>No random numbers.</strong> Deterministic and bit-reproducible.</li>
+<li><strong>Terms are independent.</strong> Term <em>k</em> does not depend on term <em>k</em>−1.
+This is what allows software pipelining (section 10) — you can start term <em>k</em>+1 before term
+<em>k</em> finishes.</li>
+<li><strong>Everything that does not depend on k can be hoisted</strong> out of the loop into a
+once-per-evaluation setup — the truncation range, 1/K, π/(b−a), e^a, e^b, ρξ, ξ², κ², 1/ξ², κθ/ξ².</li>
+</ol>
+
+<p>Point 4 is the one that ends up mattering most, and point 5 is what makes the host-split variant
+of section 12 possible.</p>
+
+<h2 id="aad"><span class="n">04</span>AAD from scratch: why one backward pass gives every Greek</h2>
+
+<p class="lead-in">This is the intellectual core of the project. If you understand only one section,
+make it this one.</p>
+
+<h3>4.1 The three ways to get a derivative</h3>
+
+<div class="tbl"><table>
+<thead><tr><th>Method</th><th>Cost for <em>n</em> inputs</th><th>Accuracy</th></tr></thead>
+<tbody>
+<tr><td>Finite differences (bump-and-reprice)</td><td class="num">n + 1 pricings</td><td>Approximate — truncation <em>and</em> cancellation error, needs a tuned step <em>h</em></td></tr>
+<tr><td>Forward-mode AD</td><td class="num">n passes</td><td>Exact to machine precision</td></tr>
+<tr><td><strong>Reverse-mode AD (AAD)</strong></td><td class="num"><strong>1 pass, all n</strong></td><td>Exact to machine precision</td></tr>
+</tbody></table></div>
+
+<p>Finite differences are worth dismissing properly, because they are the baseline we beat. Take
+a central difference:</p>
+
+<div class="eq">∂V/∂p ≈ ( V(p + h) − V(p − h) ) / 2h
+
+truncation error   ~ h²·V'''/6          (falls as h → 0)
+cancellation error ~ ε_machine · |V| / h  (RISES as h → 0)</div>
+
+<p>Two errors pulling opposite ways means there is an optimal <em>h</em>, it depends on the
+parameter and the machine precision, and you cannot know it in advance. In fixed point with
+ε = 2<sup>−32</sup>, the optimum lands around h ≈ 10<sup>−2</sup>…10<sup>−4</sup> and the best
+achievable error is ~10<sup>−7</sup>…10<sup>−5</sup>. We measure exactly this in experiment E7.</p>
+
+<h3>4.2 The chain rule as a graph</h3>
+
+<p>Any numerical program is a sequence of elementary operations, so it is a directed acyclic graph:
+inputs at the leaves, one output at the root. Take a toy example:</p>
+
+<div class="eq">f(x,y) = x·y + sin(x)        at x = 2, y = 3
+
+v1 = x · y      = 6
+v2 = sin(x)     = 0.9093
+v3 = v1 + v2    = 6.9093  = f</div>
+
+<p>The chain rule says the total derivative is a product of Jacobians along every path from input to
+output. The <em>only</em> freedom is the order you multiply them in — and since matrix
+multiplication is associative but not commutative in cost, that order changes the arithmetic
+dramatically.</p>
+
+<h3>4.3 Forward mode: push derivatives from the inputs</h3>
+
+<p>Carry ẋ = ∂(·)/∂x alongside each value. Seed ẋ = 1, ẏ = 0:</p>
+
+<div class="eq">v̇1 = ẋ·y + x·ẏ = 1·3 + 2·0 = 3
+v̇2 = cos(x)·ẋ = cos(2) = −0.4161
+v̇3 = v̇1 + v̇2 = 2.5839      →  ∂f/∂x = 2.5839  ✓ (check: y + cos x = 3 − 0.4161)</div>
+
+<p>Correct — but that pass gave us <em>one</em> derivative. To also get ∂f/∂y you re-run with
+ẏ = 1. For <em>n</em> inputs, <em>n</em> passes. Forward mode's cost scales with the number of
+<strong>inputs</strong>.</p>
+
+<h3>4.4 Reverse mode: pull derivatives back from the output</h3>
+
+<p>Define the <strong>adjoint</strong> of every intermediate variable:</p>
+
+<div class="eq">v̄_i  ≡  ∂f / ∂v_i      "how much does the final output move if v_i moves?"</div>
+
+<p>Seed the output adjoint v̄<sub>3</sub> = 1 (the output's derivative with respect to itself), then
+walk the graph <em>backwards</em>. At each operation, push the adjoint to that operation's inputs,
+multiplying by the local partial derivative:</p>
+
+<div class="eq">v3 = v1 + v2   →   v̄1 += v̄3·1 = 1          v̄2 += v̄3·1 = 1
+v2 = sin(x)    →   x̄  += v̄2·cos(x) = −0.4161
+v1 = x·y       →   x̄  += v̄1·y = 3            ȳ  += v̄1·x = 2
+
+x̄ = −0.4161 + 3 = 2.5839 = ∂f/∂x   ✓
+ȳ = 2                     = ∂f/∂y   ✓</div>
+
+<p><strong>One backward walk produced every partial derivative simultaneously.</strong> Reverse
+mode's cost scales with the number of <strong>outputs</strong>, not inputs — and we have exactly one
+output (the price) and nine inputs we care about. That asymmetry is the entire reason this project
+exists.</p>
+
+<div class="note"><p><strong>The rule of thumb.</strong> Forward mode when outputs ≫ inputs. Reverse
+mode when inputs ≫ outputs. Option pricing is the extreme case of the latter: one price, many risk
+factors. Giles &amp; Glasserman's "Smoking Adjoints" (2006) made this argument for Monte Carlo; we
+make it for a deterministic Fourier pricer, in hardware.</p></div>
+
+<h3>4.5 Local partials you need</h3>
+
+<div class="tbl"><table>
+<thead><tr><th>v =</th><th>∂v/∂a</th><th>∂v/∂b</th><th>Adjoint rule</th></tr></thead>
+<tbody>
+<tr><td class="num">a + b</td><td class="num">1</td><td class="num">1</td><td class="num">ā += v̄ ; b̄ += v̄</td></tr>
+<tr><td class="num">a − b</td><td class="num">1</td><td class="num">−1</td><td class="num">ā += v̄ ; b̄ −= v̄</td></tr>
+<tr><td class="num">a · b</td><td class="num">b</td><td class="num">a</td><td class="num">ā += v̄·b ; b̄ += v̄·a</td></tr>
+<tr><td class="num">a / b</td><td class="num">1/b</td><td class="num">−a/b²</td><td class="num">ā += v̄/b ; b̄ −= v̄·v/b</td></tr>
+<tr><td class="num">exp(a)</td><td class="num">exp(a) = v</td><td>—</td><td class="num">ā += v̄·v</td></tr>
+<tr><td class="num">ln(a)</td><td class="num">1/a</td><td>—</td><td class="num">ā += v̄/a</td></tr>
+<tr><td class="num">√a</td><td class="num">1/(2√a)</td><td>—</td><td class="num">ā += v̄/(2v)</td></tr>
+<tr><td class="num">sin(a)</td><td class="num">cos(a)</td><td>—</td><td class="num">ā += v̄·cos a</td></tr>
+</tbody></table></div>
+
+<p>Look at the right-hand column carefully. <strong>Every adjoint rule reuses a quantity the forward
+pass already computed</strong> — <span class="mono">1/b</span> for division,
+<span class="mono">v</span> itself for exp and sqrt. In software that is a minor optimisation. In our
+hardware, where a complex reciprocal costs about ten multiplier slots, it is the difference between
+fitting on a Zynq-7020 and not. Section 9.4 returns to this.</p>
+
+<h3>4.6 Complex adjoints</h3>
+
+<p>The characteristic function is complex, but the price is real, so we need the convention for
+pushing a real-valued output's adjoint back through complex arithmetic. For a holomorphic
+<em>w = f(z)</em>, treating the adjoint as a cotangent vector gives:</p>
+
+<div class="eq">z̄ += conj( ∂w/∂z ) · w̄
+
+so for w = z1·z2 :   z̄1 += conj(z2)·w̄       ("cmul with a conjugate")
+   for w = z1/z2 :   z̄1 += w̄/conj(z2) ,  z̄2 −= conj(w/z2)·w̄</div>
+
+<p>This is exactly what the code does — <span class="mono">P.cmul(g, P.conj(g, dratio), aD)</span>
+and <span class="mono">P.cdiv_inv(g, a_Dratio, P.conj_inv(g, inv_omge))</span> in
+<span class="mono">heston.py</span>. Note <span class="mono">conj_inv</span>: the conjugate of an
+already-computed reciprocal is free (negate the imaginary part), so the reverse pass gets its
+division for the cost of a complex multiply.</p>
+
+<h3>4.7 The tape — and why we delete it</h3>
+
+<p>Software AAD implements the backward walk with a <strong>tape</strong> (a Wengert list): during
+the forward pass, every operation appends a record of its type, its input indices, and its local
+partials. The backward pass then replays that list in reverse. This is what
+<span class="mono">software/aad_engine/</span> does, via operator overloading, and what generation 1
+of the hardware did with a BRAM.</p>
+
+<div class="eq">idx | var        | op    | inputs | local partials
+----+------------+-------+--------+----------------
+ 0  | x = 2      | INPUT | —      | —
+ 1  | y = 3      | INPUT | —      | —
+ 2  | v1 = 6     | MUL   | [0,1]  | [3, 2]
+ 3  | v2 = 0.909 | SIN   | [0]    | [−0.416]
+ 4  | v3 = 6.909 | ADD   | [2,3]  | [1, 1]</div>
+
+<p>A tape is the right answer when the graph is discovered at runtime. <strong>Our graph is not.</strong>
+The COS method's operation sequence is identical for every input — same 128 terms, same operations,
+same order, with call/put resolved by a mux rather than a branch. So the tape is the same every time,
+which means it does not need to exist at runtime at all: it can be unrolled symbolically when the
+hardware is generated, and become wires and registers.</p>
+
+<div class="note"><p><strong>This is novelty point 1, stated early because everything downstream
+depends on it.</strong> We do not build a tape machine in hardware. We fuse the forward computation
+and its adjoint sweep into one static dataflow graph at generation time, then schedule that fused
+graph onto shared arithmetic units. There is no tape memory, no replay engine, no backward
+sequencing — the "reverse pass" is just more nodes in the same graph.</p></div>
+
+<h3>4.8 What this costs, in principle</h3>
+
+<p>The classical result is that reverse-mode AD costs a small constant times the forward
+evaluation — typically 3–5× in software, because of tape write traffic and the reread on the
+backward sweep. Our measured figure is <strong>1.04×</strong> (4,731 cycles for price + 9 Greeks vs
+4,565 for price alone, Zynq-7020 config). Section 10 explains why: with no tape traffic, the extra
+adjoint multiplies simply occupy multiplier slots that the forward pass was leaving idle.</p>
+
+<p class="part">Part III — The hardware</p>
+
+<h2 id="fixed"><span class="n">05</span>Fixed-point arithmetic: the number system everything runs in</h2>
+
+<p>FPGAs can do floating point, but at a large cost in DSPs and latency. Fixed point is an integer
+with an implied binary point, so a multiply is an integer multiply and an add is an integer add.</p>
+
+<div class="eq">Q(I.F):  I integer bits (including sign) + F fractional bits,  WL = I + F
+
+value  =  stored_integer · 2^(−F)
+ULP    =  2^(−F)                      (unit in the last place — the resolution)</div>
+
+<p>Two formats are used in this project:</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Config</th><th>WL</th><th>FL</th><th>Used by</th><th>Why</th></tr></thead>
+<tbody>
+<tr><td class="num">z7 / z7h</td><td class="num">56</td><td class="num">28</td><td>Zynq-7020 targets</td><td>Narrowest word that keeps Greeks below ~1e-4 relative; smaller words shrink LUT and DSP count.</td></tr>
+<tr><td class="num">zu</td><td class="num">64</td><td class="num">32</td><td>UltraScale+ target, gen-1 engine</td><td>Full precision reference; Q32.32.</td></tr>
+</tbody></table></div>
+
+<h3>5.1 Why 28 integer bits are needed</h3>
+
+<p>Not for the price — for the intermediates. The two magnitude peaks are
+<span class="mono">|u_k|²ξ²</span> inside the complex square root, which reaches 10<sup>4</sup>–10<sup>5</sup>
+at N = 128 for short maturities, and the payoff coefficients <span class="mono">|V_k|</span>, which
+reach ~10<sup>3</sup>. Accumulators get 8 extra integer bits.</p>
+
+<h3>5.2 Rounding is not a detail</h3>
+
+<p>A fixed-point product of two Q(I.F) numbers is Q(2I.2F); you must shift right by F to get back to
+Q(I.F). The obvious <span class="mono">&gt;&gt;&gt; FL</span> is a <em>floor</em>, which biases every
+single product by −0.5 ULP. Over 128 terms, amplified by V<sub>k</sub> ~ 300, generation 1 measured
+a <strong>−6.8e-7 absolute bias in the price</strong> from this alone. The fix is round-to-nearest
+everywhere:</p>
+
+<div class="eq">rshift_round(v, s) = (v + (1 &lt;&lt; (s−1))) &gt;&gt; s     for s &gt; 0
+                     v &lt;&lt; (−s)                        otherwise</div>
+
+<p>This is <span class="mono">ir.rshift_round</span>, and it is applied at every rounding point in
+both the emulator and the RTL — which is why they can be bit-identical.</p>
+
+<h3>5.3 The defects that had to be found first</h3>
+
+<p>Generation 1's precision work (<span class="mono">docs/precision_bound.md</span> §2) catalogues
+eleven arithmetic defects fixed before any accuracy claim was meaningful. They are worth knowing
+because they are the traps anyone reimplementing this will hit:</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Defect</th><th>Symptom</th><th>Fix</th></tr></thead>
+<tbody>
+<tr><td>Constants built as <span class="mono">$rtoi(c·2^16) &lt;&lt;&lt; (FL−16)</span></td><td>Only 16 fractional bits of every constant. φ(0) = 0.999977 instead of 1.</td><td>Q4.60 literals, rounded per module</td></tr>
+<tr><td><span class="mono">fp_exp</span> used ⌊x/ln2⌋ not round</td><td>8.5e-5 relative (365,774 ULP)</td><td>Round; Tang's method</td></tr>
+<tr><td><span class="mono">fp_log</span> 5-term series on |t| ≤ 0.414</td><td>5.2e-4 (2.2M ULP)</td><td>Table + Taylor on |t| ≤ 1/33</td></tr>
+<tr><td>CORDIC with 16-bit π reducing angles to ~200 rad</td><td>580 ULP</td><td>Q60 constants, 6 guard bits</td></tr>
+<tr><td>Outer COS loop left at Q16.16</td><td><strong>price 0.80&nbsp;% high</strong></td><td>Single Q32.32 datapath</td></tr>
+<tr><td><span class="mono">complex_div</span> formed |b|² unscaled</td><td>Divides by ξ⁴ = 0.0081; ∂V/∂ξ error 1.9e-6</td><td>Pre-scale then invert</td></tr>
+<tr><td>Reverse sweep adjoints only a few hundred ULP at high k</td><td>∂V/∂ρ error 2.7e-5</td><td>Per-term adjoint normalisation (§5.4)</td></tr>
+<tr><td>Floor rounding on every product</td><td>−6.8e-7 price bias</td><td>Round-to-nearest</td></tr>
+</tbody></table></div>
+
+<h3>5.4 Adjoint normalisation — a trick worth understanding</h3>
+
+<p>At high <em>k</em>, |φ(u<sub>k</sub>)| decays to ~10<sup>−5</sup>. The adjoints seeded from that
+term are therefore only a few hundred ULPs — they have lost almost all their significant bits — and
+they then get multiplied by u<sub>k</sub> ~ 10². The result is a large relative error in a small
+number, which nonetheless contributes to the sum.</p>
+
+<p>The fix uses a property of the reverse sweep: <strong>it is linear in the seed</strong>. So run it
+on seed·2<sup>s</sup> for a per-term shift <em>s</em> chosen to put the seed back in full precision,
+then shift the results back by 2<sup>−s</sup> at the end. Because both shifts are exact powers of
+two, nothing is lost. In the code this is <span class="mono">g.adj_shift(wn_r, wn_i, fl)</span>
+producing <span class="mono">sh</span>, and the final
+<span class="mono">g.scale(node, nsh, fl)</span> with <span class="mono">nsh = −sh</span>.</p>
+
+<h2 id="gen1"><span class="n">06</span>Generation 1: what we built first, and why it was not enough</h2>
+
+<p class="lead-in">The repository contains two complete hardware architectures. Understanding why the
+first one failed is the cleanest way to understand why the second one looks the way it does.</p>
+
+<h3>6.1 What it was</h3>
+
+<p><span class="mono">hardware/verilog/heston_*.v</span> is a hand-written finite state machine — about
+fifty states (<span class="mono">S_X_DIV</span>, <span class="mono">S_X_LOG</span>,
+<span class="mono">S_CORDIC_WAIT</span>, …) driving a library of arithmetic modules one operation at a
+time. For Black-Scholes there is also a genuine tape design:
+<span class="mono">bs_forward_core.v</span> writes 25 tape entries (value, two parent indices, two
+local partials) into a memory, and <span class="mono">bs_reverse_pass.v</span> sweeps it backwards
+generically. It works, and it is verified.</p>
+
+<h3>6.2 The three things that killed it</h3>
+
+<div class="two">
+  <div><h4>Area</h4><p>Every <span class="mono">*</span> inside every state inferred its own
+  multiplier. Yosys counts <strong>159</strong> 64×64 multipliers in
+  <span class="mono">heston_top_level</span> — roughly ten DSP48 slices each, against the 220 a
+  Zynq-7020 has in total. It was time-multiplexed in <em>control</em> but not in
+  <em>datapath</em>.</p></div>
+  <div><h4>Latency</h4><p>28 bit-serial divisions per COS term, each taking WL+FL cycles. These were
+  <strong>80&nbsp;%</strong> of the 433,779-cycle evaluation.</p></div>
+  <div><h4>No overlap</h4><p>Terms ran strictly one after another. Term <em>k</em>+1 did not start
+  until term <em>k</em> finished, even though they are completely independent.</p></div>
+</div>
+
+<div class="tbl"><table>
+<thead><tr><th>Generation 1, Q32.32</th><th>Cycles</th></tr></thead>
+<tbody>
+<tr><td>Price only</td><td class="num">200,562</td></tr>
+<tr><td>AAD: price + 9 sensitivities</td><td class="num">433,779 (2.16× a pricing)</td></tr>
+<tr><td>Bump-and-reprice, 19 pricings</td><td class="num">3,811,647 (8.8× AAD)</td></tr>
+</tbody></table></div>
+
+<h3>6.3 What it nonetheless proved</h3>
+
+<p>Generation 1 is not discarded work, and it still ships in the repository and the test suite. It
+established three things the second generation relies on:</p>
+
+<ol>
+<li><strong>The mathematics is right.</strong> Its Greeks match double precision to 3.0e-7 (price) and
+5.4e-5 (worst Greek) over the 21-case grid.</li>
+<li><strong>AAD beats bump-and-reprice on accuracy in fixed point</strong>, measured on identical
+hardware (experiment E7). That result is architecture-independent.</li>
+<li><strong>The error-bound method works</strong> (section 13), and was developed against this
+engine.</li>
+</ol>
+
+<p>It also gives the paper an honest "naive hardware AAD" datapoint: 433,779 cycles. Generation 2 is
+92× faster than that on the same board class, and 271× faster in the 64-bit configuration.</p>
+
+<h2 id="gen2"><span class="n">07</span>The generator: one description, five artifacts</h2>
+
+<p>Generation 2 is not hand-written RTL. It is a Python program that takes the Heston-COS price
+<em>and</em> its adjoint sweep as a single operation graph, and emits everything else:</p>
+
+<div class="eq">heston.py  (the datapath as an operation graph: setup, term, finish)
+   │
+   ├── emulate()      bit-accurate fixed-point golden model
+   ├── eval_float()   the same algorithm in double precision
+   ├── error_bound()  first-order bound for the price and every Greek
+   ├── ranges.py      measured shift ranges → narrow barrel shifters + range_err
+   └── sched.py       modulo schedule: M shared multipliers, CORDIC units
+          └── rtlgen.py   synthesizable Verilog
+                 ├── gen_tb.py   self-checking testbench (bit-exact vs emulate)
+                 ├── wrappers.py AXI4-Stream wrapper, bump-and-reprice baseline
+                 └── host.py     host-side setup/finish for host-split designs</div>
+
+<h3>7.1 Why a generator rather than RTL</h3>
+
+<p>Four reasons, in increasing order of importance:</p>
+
+<ol>
+<li><strong>The golden model cannot drift.</strong> The emulator and the RTL are produced from the
+same graph, so "bit-exact against the reference" is a property that can be checked at
+<em>every register on every cycle</em> — 1,254 to 1,993 individual checks per design — rather than
+just at the outputs.</li>
+<li><strong>The error bound is computed on the same graph</strong> that becomes hardware, not on a
+separate model of it.</li>
+<li><strong>Design-space exploration is a loop.</strong> Word length, fractional length, multiplier
+count, CORDIC count and style, and host-split are all parameters. The cycles-vs-multipliers table in
+section 14 is one script, twelve configurations.</li>
+<li><strong>A fused forward+reverse graph is not writable by hand.</strong> The reverse sweep of the
+Heston characteristic function is ~250 multiplies of conjugates and reused reciprocals. Deriving and
+scheduling that manually, in fixed point, correctly, is not realistic.</li>
+</ol>
+
+<h3>7.2 The IR</h3>
+
+<p>The graph is a list of nodes, each with an operation, arguments, a fractional format, and a part
+(<span class="mono">setup</span>, <span class="mono">term</span> or <span class="mono">finish</span>).
+Only three operation classes consume shared resources:</p>
+
+<div class="eq">RESOURCE_OPS = { "mul": MUL, "crot": CROT, "cvec": CVEC }
+FREE_OPS     = { "const", "in", "pick", "shl" }   # shl by a constant is wiring</div>
+
+<p>Everything else — add, sub, mux, compare, ROM lookup, variable shift — is "glue" and gets
+dedicated logic. This split is the whole basis of the cost model: <strong>the currency of the design
+is the multiplier slot and the CORDIC slot</strong>, and the scheduler's job is to spend that currency
+well.</p>
+
+<p>After construction, <span class="mono">ir.simplify</span> runs constant folding and common
+sub-expression elimination over the fused graph. This is where reciprocal reuse across the
+forward/reverse boundary (section 9.4) actually gets found — it is not hand-written, it falls out of
+CSE on a graph where the forward and reverse passes are present simultaneously.</p>
+
+<h2 id="prims"><span class="n">08</span>Divider-free arithmetic: turning latency into multiplier slots</h2>
+
+<p class="lead-in">This is the section that most resembles "why we use a radix-<em>N</em> decomposition
+to get a butterfly". The governing idea: <strong>every transcendental function is rewritten so that
+its entire cost is a countable number of multiplications</strong>, because multiplications are the
+one resource the scheduler can share. Nothing here is new mathematics; the contribution is choosing
+the forms whose cost is expressible in a single currency, and then accounting for it exactly.</p>
+
+<h3>8.1 The transformation, stated once</h3>
+
+<div class="eq">BEFORE (generation 1)              AFTER (generation 2)
+─────────────────────              ────────────────────
+divider:  dedicated area,          Newton iteration:  6 shared multiplier uses
+          WL+FL cycles serial      
+sqrt:     bit-serial, dedicated    Newton on 1/√x:    9 shared multiplier uses
+exp/log:  dedicated modules        table + Taylor:    7 / 6 shared multiplier uses
+──────────────────────────────────────────────────────────────────────
+28 divisions/term = 80% of latency  →  0 divisions; 251 multiplies/term</div>
+
+<p>The reason this is a win is not that Newton is cheaper in isolation. It is that
+<strong>a multiplier use is schedulable and a divider is not</strong>. Once everything is measured in
+multiplier uses, one resource-constrained scheduler can trade all of it off against one number
+<em>M</em> — how many multipliers you are willing to pay for. That is what makes the design-space
+curve in section 14 exist.</p>
+
+<h3>8.2 Reciprocal: Newton-Raphson on a normalised mantissa</h3>
+
+<p>To compute 1/x, apply Newton's method to the root of <em>f(y) = 1/y − x</em>:</p>
+
+<div class="eq">y_{n+1} = y_n − f(y_n)/f'(y_n) = y_n + y_n(1 − x·y_n) = y_n(2 − x·y_n)
+
+error:  1 − x·y_{n+1} = (1 − x·y_n)²        ← QUADRATIC convergence
+        correct bits DOUBLE each iteration</div>
+
+<p>Quadratic convergence is the whole point: an 8-bit seed becomes 16, then 32, then 64 correct bits
+in three iterations. But Newton only converges in a neighbourhood, so first normalise:</p>
+
+<div class="eq">x  = ±m · 2^e     with m ∈ [1,2)            (norm_e finds e; scale produces m)
+1/x = ±(1/m) · 2^(−e)                       (exponent handled separately, exactly)
+
+y₀ = ROM_recip_seed[ top 8 bits of m ]      256 entries: 1/(1 + (i+0.5)/256)
+repeat 3×:  t = m·y ;  y = y + y·(1 − t)    ← 2 multiplies per iteration
+</div>
+
+<p><strong>Cost: 6 multiplier uses.</strong> The exponent path (<span class="mono">norm_e</span>,
+<span class="mono">scale</span>, sign mux) is glue. Note the code writes the iteration as
+<span class="mono">y + y·(1 − t)</span> rather than <span class="mono">y·(2 − t)</span> — algebraically
+identical, but it keeps the small correction term in its own product, which is better conditioned in
+fixed point.</p>
+
+<h3>8.3 Inverse square root, and square root for free</h3>
+
+<p>Apply the same idea to <em>f(y) = 1/y² − x</em>:</p>
+
+<div class="eq">y_{n+1} = y_n (3 − x·y_n²) / 2          ← also quadratic
+
+normalise with an EVEN exponent so m ∈ [1,4), halving the exponent is exact:
+  y₀ = ROM_rsqrt_seed[ idx(m, 8, span4) ]   256 entries at 1/64 resolution
+  repeat 3×:  y2 = y·y ; my2 = m·y2 ; y = y·(3 − my2) · 2^(−1)   ← 3 multiplies
+
+  1/√x  = y · 2^(−e/2)                       COST: 9 multiplies
+  √x    = x · (1/√x)                         COST: 9 + 1 = 10 multiplies</div>
+
+<p>Getting √x as <em>x</em>·(1/√x) rather than by a separate algorithm is the standard trick, and it
+is exactly why the inverse square root is the primitive rather than the square root.</p>
+
+<h3>8.4 Exponential: Tang's method</h3>
+
+<p>Range-reduce so the polynomial only has to be accurate on a tiny interval:</p>
+
+<div class="eq">n = round( 32x / ln2 )                       ← 1 multiply, result is an integer
+r = x − n·(ln2/32)                           ← 1 multiply ; |r| ≤ ln2/64 ≈ 0.0108
+
+exp(x) = 2^(n≫5) · 2^((n&31)/32) · P(r)
+
+  2^((n&31)/32)  ← ROM "exp2", 32 entries
+  P(r) = Σ r^i/i! , degree 4 (degree 5 if FL > 36), by Horner  ← 4 multiplies
+  final scaling by 2^(n≫5)                                     ← exact shift</div>
+
+<p>Why degree 4 suffices: on |r| ≤ ln2/64 the first neglected term is
+r⁵/120 ≈ 1.2×10<sup>−12</sup>, which is below one ULP at FL = 28 and FL = 32. The 32-entry table is
+what buys that — it splits the exponent's fractional part off so the polynomial argument is
+1/64 of a decade rather than a full one. <strong>Cost: 1 + 1 + 4 + 1 = 7 multiplies.</strong></p>
+
+<h3>8.5 Logarithm: table plus Taylor</h3>
+
+<div class="eq">x = m · 2^e , m ∈ [1,2)
+j = top 6 bits of m ;  c_j = 1 + (2j+1)/128          ← 64-entry table
+t = m · (1/c_j) − 1                                  ← |t| ≤ 1/129
+ln(1+t) = t·(1 − t/2 + t²/3 − t³/4 + …)              ← degree 4, Horner
+ln(x) = e·ln2 + ln(c_j) + ln(1+t)</div>
+
+<p>The 64-entry table shrinks |t| from ≤ 0.5 (a bare mantissa) to ≤ 1/129, which is what lets a
+degree-4 series reach sub-ULP. Generation 1's bug was exactly this: a 5-term series on |t| ≤ 0.414,
+giving 5.2e-4 relative error. <strong>Cost: 6 multiplies</strong> (1 for m·(1/c<sub>j</sub>),
+4 Horner, 1 for e·ln2).</p>
+
+<h3>8.6 Sine and cosine: CORDIC</h3>
+
+<p>CORDIC computes a rotation using only shifts and adds. Start with a vector and rotate it by a
+sequence of fixed angles arctan(2<sup>−i</sup>), each applied in one direction or the other:</p>
+
+<div class="eq">x_{i+1} = x_i − σ_i · y_i · 2^(−i)
+y_{i+1} = y_i + σ_i · x_i · 2^(−i)       σ_i = ±1 chosen to drive the residual angle to 0
+z_{i+1} = z_i − σ_i · arctan(2^(−i))
+
+after n iterations:  (x,y) → K·(cos z₀, sin z₀) ,  K = Π √(1 + 2^(−2i)) ≈ 1.6468</div>
+
+<p>Each iteration is a shift and an add — no multiplier at all. The gain <em>K</em> is a known
+constant, folded into the initial value or corrected afterwards. Two modes are used:</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Mode</th><th>Drives</th><th>Produces</th><th>Used for</th></tr></thead>
+<tbody>
+<tr><td><strong>Rotation</strong> (CROT)</td><td class="num">z → 0</td><td class="num">cos z, sin z</td><td>cos/sin of the COS-method angles; complex exp</td></tr>
+<tr><td><strong>Vectoring</strong> (CVEC)</td><td class="num">y → 0</td><td class="num">K·|z|, arg z</td><td>complex sqrt and complex log — magnitude <em>without squaring</em></td></tr>
+</tbody></table></div>
+
+<p>Before rotation the angle must be reduced into CORDIC's convergence range. The COS method's angles
+u<sub>k</sub>·a reach ~200 radians, so:</p>
+
+<div class="eq">n  = round( z / 2π )        ← 1 multiply
+zr = z − n·2π               ← 1 multiply, then CORDIC
+COST: 2 multiplies + 1 CORDIC rotation</div>
+
+<p>Latency is <span class="mono">FL + 4</span> cycles (a load/fold cycle, FL+2 iterations, an output
+rounding cycle) — so 32 cycles at FL = 28. Remember that number; section 10.3 turns on it.</p>
+
+<h3>8.7 The cost table, which is the real output of this section</h3>
+
+<div class="tbl"><table>
+<thead><tr><th>Function</th><th>Implementation</th><th>Multiplier uses</th><th>CORDIC uses</th></tr></thead>
+<tbody>
+<tr><td class="num">1/x</td><td>normalise, 8-bit ROM seed, 3 Newton steps</td><td class="num">6</td><td class="num">—</td></tr>
+<tr><td class="num">1/√x</td><td>even-normalise, ROM seed, 3 Newton steps</td><td class="num">9</td><td class="num">—</td></tr>
+<tr><td class="num">√x</td><td>x · (1/√x)</td><td class="num">10</td><td class="num">—</td></tr>
+<tr><td class="num">e^x</td><td>Tang: 2^(n/32) table + degree-4 Taylor</td><td class="num">7</td><td class="num">—</td></tr>
+<tr><td class="num">ln x</td><td>64-entry table + degree-4 Taylor</td><td class="num">6</td><td class="num">—</td></tr>
+<tr><td class="num">cos, sin</td><td>2π reduction + CORDIC rotation</td><td class="num">2</td><td class="num">1 rotation</td></tr>
+<tr><td class="num">1/b (complex)</td><td>pre-scale, |b|², real reciprocal</td><td class="num">~10</td><td class="num">—</td></tr>
+<tr><td class="num">√z, ln z (complex)</td><td>CORDIC vectoring for |z| and arg</td><td class="num">see §9</td><td class="num">1 vectoring</td></tr>
+</tbody></table></div>
+
+<p>Summed over one COS term, forward pass plus reverse sweep plus adjoint normalisation:</p>
+
+<div class="eq">ONE COS TERM = 251 multiplies
+             +   3 CORDIC rotations
+             +   2 CORDIC vectorings
+             + ~380 add / shift / mux / ROM operations (dedicated glue)</div>
+
+<p>Those four numbers are the entire input to the scheduler. Everything about the architecture's
+performance follows from them.</p>
+
+<h2 id="complex"><span class="n">09</span>Complex primitives: where fixed point actually bites</h2>
+
+<p>The characteristic function is complex, and naive complex arithmetic loses precision in ways that
+do not show up until you look at a specific Greek. Each of these is a fix for a measured defect.</p>
+
+<h3>9.1 Complex reciprocal — pre-scale before squaring</h3>
+
+<p>The textbook form is 1/b = conj(b)/|b|². The trap: forming |b|² = b<sub>r</sub>² + b<sub>i</sub>²
+<em>squares the magnitude</em>, so if |b| is small you lose 2·log₂(1/|b|) bits before you have done
+anything. In Heston the denominator involves ξ², so |b|² involves ξ⁴ = 0.0081 for ξ = 0.3 — about
+7 bits gone. Measured effect on generation 1: ∂V/∂ξ wrong by 1.9e-6 relative.</p>
+
+<p>The fix is to normalise first so the squaring cannot lose anything:</p>
+
+<div class="eq">p  = norm_e( max(|b_r|, |b_i|) ) + 1           → max(|b_r|,|b_i|)·2^(−p) ∈ [0.5, 1)
+br = b_r · 2^(−p) ,  bi = b_i · 2^(−p)
+n2 = br² + bi²                                 ∈ [0.25, 2)   ← no bits lost, no overflow
+(y, e) = recip(n2)
+1/b = ( br·y , −bi·y ) · 2^(e − p)</div>
+
+<p><strong>Cost: 2 (squares) + 6 (reciprocal) + 2 (final products) = ~10 multiplies.</strong> The
+exponent bookkeeping is all glue.</p>
+
+<h3>9.2 Complex square root — via CORDIC vectoring, not squaring</h3>
+
+<p>The principal square root of <em>z</em> is normally written with |z| = √(z<sub>r</sub>² + z<sub>i</sub>²),
+which has the same squaring problem <em>and</em> overflows at short maturity / high ξ, where
+|u<sub>k</sub>|²ξ² reaches 10⁵. CORDIC vectoring gives |z| directly, with no squaring at all:</p>
+
+<div class="eq">|z| from CORDIC vectoring (one CVEC use)
+w  = √( (|z| + |z_r|) / 2 )            ← via rsqrt: 9 multiplies + 1
+other = z_i / (2w) = z_i · (1/√yv) · 2^(e−1)   ← REUSES the same rsqrt result, 1 multiply
+
+if z_r ≥ 0:   √z = ( w , other )
+else:         √z = ( |other| , ±w )    sign from sign(z_i)</div>
+
+<p>Two things to notice. First, the <span class="mono">z_i/(2w)</span> form avoids the catastrophic
+cancellation of the textbook <span class="mono">Im = √((|z| − Re)/2)</span> at low frequency. Second,
+the division by 2w is <em>not</em> a division — it reuses the inverse square root already computed
+for <em>w</em>, shifted by one bit. That is the pattern this whole project runs on.</p>
+
+<h3>9.3 Complex logarithm</h3>
+
+<div class="eq">(K·|z|, arg z) ← one CORDIC vectoring
+ln z = ( ln(K|z|) − ln K , arg z )     ← ln K is a compile-time constant, folded in</div>
+
+<p>The CORDIC gain <em>K</em> is absorbed as a subtracted constant inside the logarithm, so it costs
+nothing. Cost: 1 CVEC + 6 multiplies (the real log).</p>
+
+<h3>9.4 Reciprocal reuse — the structural win</h3>
+
+<p class="lead-in">This is the point where section 4.5's observation ("every adjoint rule reuses a
+forward quantity") turns into silicon.</p>
+
+<p>The forward characteristic function computes several complex divisions. Its adjoint sweep needs
+the reciprocals of the same denominators — because ∂(a/b)/∂a = 1/b and ∂(a/b)/∂b = −a/b². Since
+forward and reverse are nodes in <em>one</em> graph, common sub-expression elimination finds this
+automatically. Each denominator is inverted exactly once and used by both passes:</p>
+
+<div class="eq">1/den        forward: g = num/den        reverse: a_num, a_den
+g/den        reverse only (the −a/b² term)
+1/omg        forward: ratio = omge/omg    reverse: a_omge, a_omg
+ratio/omg    reverse only
+1/omge       forward: dratio = ome/omge   reverse: a_ome, a_omge
+dratio/omge  reverse only
+1/ratio = omg/omge   ← not a new reciprocal at all: a multiply of two existing ones</div>
+
+<p>That last line is the neatest one. The reverse sweep of <span class="mono">log(ratio)</span> needs
+1/ratio. Rather than a fourth complex reciprocal (~10 multiplies), it is formed as
+omg · (1/omge) — a complex multiply, 4 multiplies. And conjugates, which the complex adjoint rules
+need everywhere, are free: <span class="mono">conj_inv</span> just negates the imaginary part of an
+already-computed reciprocal.</p>
+
+<div class="note"><p><strong>Why this is a hardware result and not a software one.</strong> In
+software, recomputing a reciprocal costs one division instruction and you would not think about it.
+Here a complex reciprocal is ~10 of the 251 multiplier slots in a term, and the term's slot budget is
+what sets II, which sets the entire latency. Fusing the graphs before scheduling is what makes the
+saving visible to the tool at all.</p></div>
+
+<h3>9.5 Hoisting: the setup / term / finish split</h3>
+
+<p>Anything not depending on <em>k</em> is computed once per evaluation, not 128 times:</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Part</th><th>Runs</th><th>Contents</th></tr></thead>
+<tbody>
+<tr><td class="num">setup</td><td>once</td><td>1/K, x = ln(S₀/K), c1, c2, a, b, π/(b−a), 2K/(b−a), (b−a)/π, e^a, e^b, ρξ, ξ², κ², 1/ξ², κθ/ξ², rT</td></tr>
+<tr><td class="num">term</td><td>128×</td><td>V<sub>k</sub>, φ(u<sub>k</sub>), the reverse sweep, adjoint normalisation, accumulate 9 sums</td></tr>
+<tr><td class="num">finish</td><td>once</td><td>discount e^(−rT), the r/T discount chain-rule terms, ∂V/∂S₀ and ∂V/∂K</td></tr>
+</tbody></table></div>
+
+<p>The last two outputs deserve a note, because they are chain-rule bookkeeping rather than adjoints
+that come out of the sweep directly:</p>
+
+<div class="eq">theta_greek = disc·acc_T + (−r·disc)·acc_price      (T appears in the discount too)
+rho_greek   = disc·acc_r + (−T·disc)·acc_price      (so does r)
+delta       = (disc·acc_x) / S₀                     (x = ln(S₀/K), so ∂x/∂S₀ = 1/S₀)
+strike_sens = (price − disc·acc_x) / K              (K enters through x AND through V_k ∝ K)</div>
+
+<h2 id="sched"><span class="n">10</span>Modulo scheduling: why all nine Greeks cost 1.04 pricings</h2>
+
+<p class="lead-in">Sections 8 and 9 reduced one COS term to a fixed bill: 251 multiplies, 3 CORDIC
+rotations, 2 CORDIC vectorings. This section spends that bill. It is the architectural heart of the
+project.</p>
+
+<h3>10.1 The problem</h3>
+
+<p>We have 128 independent terms and a fixed, small number of arithmetic units — say <em>M</em> = 8
+multipliers. Running terms one after another wastes units whenever a term is waiting on a long
+dependency (a CORDIC takes 32 cycles, during which its multiplies have nothing to do). Running them
+fully in parallel would need 128× the hardware. The answer is the classic one from VLIW compilers and
+high-level synthesis: <strong>software pipelining via modulo scheduling</strong>.</p>
+
+<h3>10.2 The construction</h3>
+
+<p>Choose an <strong>initiation interval</strong> II. Term <em>k</em> starts at cycle
+<em>S</em>&nbsp;+&nbsp;<em>k</em>·II. A term takes <em>L</em> cycles to complete, so ⌈L/II⌉ terms are
+in flight at once, and in steady state every unit repeats its behaviour with period II:</p>
+
+<div class="eq">term k uses unit u at phase (t − S) mod II
+
+⇒ the binding is a MODULO RESERVATION TABLE of width II:
+  for each unit, a set of phases it is busy in.
+  A new operation may be placed at phase p on unit u only if p is free.</div>
+
+<div class="eq">cycles_per_evaluation = length(setup) + (N_terms − 1)·II + length(term) + length(finish)
+
+  z7h (host split, II = 32, L = 506, N = 128):   0 + 127·32 + 506 + 0  =  4,572
+  z7  (fully on-chip, II = 32):                                           4,731
+  zu  (II = 8):                                                           1,599</div>
+
+<figure>
+<div class="sv">
+<svg viewBox="0 0 760 250" width="100%" height="250" role="img" aria-label="Modulo schedule: overlapping COS terms at initiation interval II">
+  <text x="0" y="14" font-size="11">term k</text>
+  <text x="0" y="44" font-size="11">term k+1</text>
+  <text x="0" y="74" font-size="11">term k+2</text>
+  <text x="0" y="104" font-size="11">term k+3</text>
+  <rect x="70"  y="4"  width="360" height="18" rx="3" fill="#7C9CBC" opacity=".55"/>
+  <rect x="150" y="34" width="360" height="18" rx="3" fill="#7C9CBC" opacity=".55"/>
+  <rect x="230" y="64" width="360" height="18" rx="3" fill="#7C9CBC" opacity=".55"/>
+  <rect x="310" y="94" width="360" height="18" rx="3" fill="#7C9CBC" opacity=".55"/>
+  <line x1="70"  y1="0" x2="70"  y2="130" stroke="#2C5B87" stroke-width="1" stroke-dasharray="3 3"/>
+  <line x1="150" y1="0" x2="150" y2="130" stroke="#2C5B87" stroke-width="1" stroke-dasharray="3 3"/>
+  <line x1="230" y1="0" x2="230" y2="130" stroke="#2C5B87" stroke-width="1" stroke-dasharray="3 3"/>
+  <line x1="310" y1="0" x2="310" y2="130" stroke="#2C5B87" stroke-width="1" stroke-dasharray="3 3"/>
+  <line x1="70" y1="140" x2="150" y2="140" stroke="#2C5B87" stroke-width="1.5"/>
+  <text x="95" y="155" font-size="11" fill="#2C5B87">II</text>
+  <line x1="70" y1="170" x2="430" y2="170" stroke="#56625B" stroke-width="1.5"/>
+  <text x="235" y="185" font-size="11">L = term length (506 cycles)</text>
+  <text x="70" y="215" font-size="11">steady state: ceil(L / II) terms in flight; every unit repeats with period II</text>
+  <text x="70" y="235" font-size="11">z7: L = 506, II = 32  ->  16 terms overlapping at once</text>
+</svg>
+</div>
+<figcaption>Software pipelining. The terms are independent, so term <em>k</em>+1 can start II cycles
+after term <em>k</em> rather than waiting L cycles. Throughput becomes one term per II cycles
+regardless of how long a single term takes.</figcaption>
+</figure>
+
+<h3>10.3 What sets II — and the coincidence that shapes the Zynq design</h3>
+
+<p>II cannot be smaller than the resource lower bound: for each unit class, total operations of that
+class divided by the number of units, times how long each occupies its unit.</p>
+
+<div class="eq">II ≥ max over classes of  ceil( uses(class) · busy_span(class) / units(class) )
+
+busy_span = 1                  for a pipelined unit (accepts a new op every cycle)
+busy_span = latency            for an iterative unit (blocked until it finishes)</div>
+
+<p>Now work it out for the two shipped configurations. At FL = 28 an iterative CORDIC has latency
+FL + 4 = 32, so it blocks its unit for 32 cycles.</p>
+
+<div class="eq">z7 (56-bit, M = 8, 3 CROT, 2 CVEC, ITERATIVE CORDIC):
+  multipliers: ceil(251 · 1 / 8)   = 32
+  rotations:   ceil(3 · 32 / 3)    = 32
+  vectorings:  ceil(2 · 32 / 2)    = 32
+                                  ──── II = 32   ← all three classes balanced
+
+zu (64-bit, M = 32, 1 CROT, 1 CVEC, PIPELINED CORDIC):
+  multipliers: ceil(251 · 1 / 32)  = 8
+  rotations:   ceil(3 · 1 / 1)     = 3
+  vectorings:  ceil(2 · 1 / 1)     = 2
+                                  ──── II = 8    ← set by multipliers alone</div>
+
+<p>The z7 numbers are not a coincidence — 3 rotation units and 2 vectoring units were chosen
+<em>because</em> that is what balances 8 multipliers at FL = 28. Adding a ninth multiplier would not
+help: II would still be 32, pinned by the CORDICs. The measured table in section 14 confirms exactly
+this — going from 8 to 16 multipliers on the z7 config moves the cycle count only from 4,731 to
+4,619, a 2&nbsp;% gain for double the multipliers.</p>
+
+<h3>10.4 Why the Greeks are nearly free</h3>
+
+<p>Here is the payoff, and the answer to "how can nine derivatives cost 4&nbsp;% extra":</p>
+
+<div class="tbl"><table>
+<thead><tr><th>z7 config (56-bit, 8 multipliers)</th><th>Cycles</th><th>vs price-only</th></tr></thead>
+<tbody>
+<tr><td>Price only (<span class="mono">z7_pricer</span>)</td><td class="num">4,565</td><td class="num">1.00×</td></tr>
+<tr><td><strong>Price + 9 Greeks (AAD)</strong></td><td class="num">4,731</td><td class="num"><strong>1.04×</strong></td></tr>
+<tr><td>Price + 9 Greeks (bump-and-reprice, 19 pricings)</td><td class="num">86,803</td><td class="num">19.0×</td></tr>
+</tbody></table></div>
+
+<p>The mechanism: on the z7 configuration II is pinned at 32 <em>by the CORDIC units</em>, not by the
+multipliers. The forward pass alone needs only ⌈(price-only multiplies)/8⌉ cycles of multiplier time,
+which is less than 32. So there are idle multiplier slots in every 32-cycle window. The reverse
+sweep's extra multiplies drop into those slots and cost <strong>no additional II</strong>. The
+residual 4&nbsp;% is the longer term length <em>L</em> (the sweep extends the dependency chain), which
+only contributes once, not 128 times.</p>
+
+<div class="note"><p><strong>This is novelty point 2.</strong> The classical AAD cost result is
+"reverse mode costs a small constant × the forward pass", typically 3–5× in software because of tape
+traffic. In a modulo-scheduled hardware datapath with no tape, the adjoint sweep is close to free
+whenever the forward pass is <em>latency-bound rather than throughput-bound</em> — which is exactly
+what an iterative CORDIC makes it. Measured: 1.04×.</p>
+<p>Note the honest form of the claim: on the zu configuration (II set by multipliers, pipelined
+CORDICs) the ratio is 1,599 / 1,023 = 1.56×, because there the multipliers <em>are</em> the
+bottleneck and the extra adjoint multiplies do cost II. Both numbers go in the paper.</p></div>
+
+<h3>10.5 Storage</h3>
+
+<p>With 16 terms in flight, a value produced by term <em>k</em> and consumed later must survive until
+its consumer runs — while terms <em>k</em>+1…<em>k</em>+15 are producing their own copies. The model:</p>
+
+<div class="eq">a glue node owns its output register, which holds for II cycles
+a shared unit's output is valid for one cycle, captured into a register if used later
+a value alive for longer than II needs a CHAIN of ceil((life+1)/II) registers</div>
+
+<p>This register chaining is the dominant flip-flop cost, and it is the biggest remaining
+optimisation: register sharing across values is <em>not</em> implemented, so every long-lived value
+has its own chain. Yosys maps many of these to SRLs (2,922 in the z7h design), which is why the
+utilisation figure must be quoted including SRLs.</p>
+
+<h2 id="ranges"><span class="n">11</span>Shift-range analysis: 90.6K LUT down to 59.0K</h2>
+
+<p>Because reciprocals and square roots return a mantissa plus a separate exponent, the datapath is
+full of <em>data-dependent</em> shifts — <span class="mono">scale</span> nodes and multiplies with a
+variable exponent. A general barrel shifter over a 2·WL-bit word with a 16-bit shift amount is
+enormous, and there are hundreds of them. They were the single largest LUT cost.</p>
+
+<p>The observation: those shift amounts do not actually take many values. So measure them.</p>
+
+<div class="eq">sh = (fixed part from the formats) − e        ← only e is data-dependent
+
+for 150 random parameter sets drawn from the verified DOMAIN:
+    run the bit-accurate emulator, record min and max of sh at every variable node
+widen by MARGIN = 3 on each side
+build each barrel shifter to cover ONLY that range
+shifts past the word width are clamped, which is exact
+raise a sticky range_err if any shift ever falls outside its built range</div>
+
+<div class="tbl"><table>
+<thead><tr><th>Design</th><th>LUT</th><th>FF</th><th>DSP</th></tr></thead>
+<tbody>
+<tr><td><span class="mono">heston_aad_z7</span>, full-range shifters</td><td class="num">90,648</td><td class="num">32,878</td><td class="num">96</td></tr>
+<tr><td><span class="mono">heston_aad_z7</span>, measured-range shifters</td><td class="num">59,024</td><td class="num">32,731</td><td class="num">96</td></tr>
+</tbody></table></div>
+
+<p><strong>A 35&nbsp;% LUT reduction with no change to the arithmetic.</strong> The flip-flop and DSP
+counts are unchanged, which confirms the saving is entirely in shifter logic.</p>
+
+<div class="callout"><p><strong>The safety argument, which the paper must state carefully.</strong>
+This optimisation is only sound because of <span class="mono">range_err</span>. The design is correct
+for inputs in the verified domain — S₀ = 100, K ∈ [60,150], T ∈ [0.1,3], r ∈ [0,0.1],
+v₀,θ ∈ [0.005,0.25], κ ∈ [0.2,6], ξ ∈ [0.1,1], ρ ∈ [−0.95,0.6] — and for anything outside it, it
+<em>reports</em> rather than silently returning a wrong number. The sticky output is verified to stay
+0 in-domain and to fire for T = 0.01 (experiment E10). A hardware pricer that silently mis-computes
+out of domain would be unusable in risk; one that flags is not.</p></div>
+
+<h2 id="host"><span class="n">12</span>The host split: how the design fits a Zynq-7020</h2>
+
+<p>The fully on-chip 56-bit design is 59,024 LUT. A Zynq-7020 has 53,200. It does not fit.</p>
+
+<p>But a Zynq is not a bare FPGA — it is an FPGA next to two ARM Cortex-A9 cores on the same die.
+And the setup and finish parts run <em>once per evaluation</em>, against the term loop's 128
+iterations. They are a large share of the area and a negligible share of the work. So move them to
+the ARM:</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Design</th><th>LUT</th><th>+SRL</th><th>FF</th><th>DSP</th><th>Zynq-7020 fit</th></tr></thead>
+<tbody>
+<tr><td><span class="mono">heston_aad_z7</span> (on-chip)</td><td class="num">59,024</td><td class="num">3,058</td><td class="num">32,731</td><td class="num">96</td><td>no, ~11&nbsp;% over</td></tr>
+<tr><td><strong><span class="mono">heston_aad_z7h</span></strong> (host split)</td><td class="num">45,504</td><td class="num">2,922</td><td class="num">24,856</td><td class="num">96</td><td><strong>yes: 91&nbsp;% LUT incl. SRL, 23&nbsp;% FF, 44&nbsp;% DSP</strong></td></tr>
+</tbody></table></div>
+
+<p>The FPGA then exposes 19 extra input ports <span class="mono">hs_*</span> carrying the
+pre-computed constants, and outputs the nine undiscounted sums <span class="mono">sum_*</span>
+instead of finished Greeks. <span class="mono">hardware/gen/host.py</span> is the bit-exact
+specification of both host steps, and <span class="mono">heston_aad_z7h_host.json</span> documents
+what each port holds and in what format — including irregular ones like
+<span class="mono">hs_260</span> at 53 fractional bits and <span class="mono">hs_261</span> at 0.</p>
+
+<p>The correctness requirement is strict and is tested: <strong>host setup + FPGA loop + host finish
+must be bit-identical to the fully on-chip design</strong> (experiment E11). It is.</p>
+
+<p class="part">Part IV — Precision</p>
+
+<h2 id="bound"><span class="n">13</span>The error bound: AAD used twice</h2>
+
+<p class="lead-in">Most FPGA-finance papers validate fixed point by running many cases and quoting the
+worst observed error. That is an observation, not a guarantee, and it says nothing about inputs you
+did not try. This section derives a <em>bound</em>, per Greek, per parameter set — and the machinery
+that computes it is the same reverse-mode AD the hardware implements.</p>
+
+<h3>13.1 The setup</h3>
+
+<p>Model each RTL operation <em>i</em> as producing its exact value perturbed by a bounded error:</p>
+
+<div class="eq">operation i produces   v_i + e_i      with  |e_i| ≤ ε_i · 2^(−FL)</div>
+
+<p>The ε<sub>i</sub> are derived in each primitive's header from its algorithm — how many rounding
+points, what the polynomial truncation contributes, how the CORDIC gain behaves:</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Primitive</th><th>ε (ULP)</th></tr></thead>
+<tbody>
+<tr><td>rounded multiply, divide, sqrt, right shift, constant</td><td class="num">0.5</td></tr>
+<tr><td><span class="mono">fp_exp(x)</span></td><td class="num">3.2·e^x + 0.5</td></tr>
+<tr><td><span class="mono">fp_log</span></td><td class="num">2.7</td></tr>
+<tr><td>CORDIC cos/sin</td><td class="num">3.0</td></tr>
+<tr><td>CORDIC atan2</td><td class="num">1 + 1/|z|</td></tr>
+</tbody></table></div>
+
+<h3>13.2 The bound</h3>
+
+<p>To first order, an output <em>Y</em> moves by the sum of each error times that error's sensitivity:</p>
+
+<div class="eq">|Y_rtl − Y_exact|  ≤  2^(−FL) · Σ_i |∂Y/∂v_i| · ε_i               (worst case)
+
+σ_Y                ≈  2^(−FL) · sqrt( Σ_i (|∂Y/∂v_i|·ε_i)² / 3 )   (typical: independent uniform)
+
+"bits lost" for Y  =  log₂( Σ_i |∂Y/∂v_i| · ε_i )</div>
+
+<p>The worst case assumes every rounding error lands at its maximum and in the most damaging
+direction simultaneously — which never happens. The σ estimate treats them as independent uniform
+variables (hence the /3, the variance of a uniform on [−1,1]) and is what actually predicts the
+measured error.</p>
+
+<h3>13.3 The point: where the sensitivities come from</h3>
+
+<p>The bound needs ∂Y/∂v<sub>i</sub> — the sensitivity of each output to a perturbation at
+<em>every internal node</em>. There are thousands of nodes and ten outputs. Computing these by finite
+differences would be hopeless. But this is precisely the problem reverse-mode AD solves:</p>
+
+<div class="eq">ONE reverse-mode sweep over the error-model graph, seeded at output Y,
+gives ∂Y/∂v_i for EVERY node i simultaneously.</div>
+
+<p>And because the model graph <em>includes the RTL's own reverse sweep as ordinary operations</em>,
+the same machinery bounds each Greek, not just the price. So AAD appears twice in this project, at
+two different levels:</p>
+
+<div class="two">
+  <div><h4>AAD as the product</h4><p>Reverse-mode differentiation of the Heston-COS pricer, in fixed
+  point, in hardware — this is what the chip computes.</p></div>
+  <div><h4>AAD as the method</h4><p>Reverse-mode differentiation of the <em>error model of that
+  hardware</em>, in Python — this is how we certify what the chip computes, per Greek, in 0.1 s per
+  parameter set.</p></div>
+</div>
+
+<p><span class="mono">validation/precision/heston_rtl_model.py</span> models the RTL operation by
+operation, with the same operation order, the same branch decisions (Smith swap, guard bits, adjoint
+normalisation shift, payoff parity) and the same rounding points as the Verilog.</p>
+
+<h3>13.4 Scope — stated explicitly, because a bound with unstated scope is worthless</h3>
+
+<ul>
+<li><strong>First order.</strong> Products of errors are O(2<sup>−2FL</sup>); at FL ≥ 20 all bounds
+are ≪ 1 so these are negligible.</li>
+<li><strong>Input quantisation excluded.</strong> Inputs are taken as the Q-format values actually
+applied. At Q32.32 representing r = 0.05 adds ~1e-8 to rho·Δr.</li>
+<li><strong>Overflow excluded.</strong> Range is checked separately (section 11).</li>
+<li><strong>Hardware error only.</strong> The bound covers the RTL relative to the double-precision
+COS algorithm it implements. COS <em>truncation</em> error — the method's own error against the true
+Heston price — is a separate series, reported separately.</li>
+</ul>
+
+<h3>13.5 The result</h3>
+
+<p>Base case (S₀ = K = 100, T = 1, r = 5&nbsp;%, v₀ = θ = 0.04, κ = 1.5, ξ = 0.3, ρ = −0.9), Q32.32:</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Output</th><th>RTL error</th><th>1σ estimate</th><th>Worst-case bound</th><th>Bits lost</th></tr></thead>
+<tbody>
+<tr><td>price</td><td class="num">3.3e-7</td><td class="num">3.5e-7</td><td class="num">5.2e-6</td><td class="num">14.5</td></tr>
+<tr><td>∂V/∂S₀</td><td class="num">6.2e-10</td><td class="num">7.3e-9</td><td class="num">1.4e-7</td><td class="num">9.2</td></tr>
+<tr><td>∂V/∂K</td><td class="num">3.0e-9</td><td class="num">7.3e-9</td><td class="num">1.7e-7</td><td class="num">9.5</td></tr>
+<tr><td>∂V/∂T</td><td class="num">5.0e-8</td><td class="num">7.0e-8</td><td class="num">2.0e-6</td><td class="num">13.1</td></tr>
+<tr><td>∂V/∂r</td><td class="num">3.4e-7</td><td class="num">6.0e-7</td><td class="num">1.6e-5</td><td class="num">16.1</td></tr>
+<tr><td>∂V/∂v₀</td><td class="num">8.3e-7</td><td class="num">8.3e-7</td><td class="num">2.1e-5</td><td class="num">16.4</td></tr>
+<tr><td>∂V/∂κ</td><td class="num">9.7e-8</td><td class="num">1.3e-7</td><td class="num">2.0e-6</td><td class="num">13.1</td></tr>
+<tr><td>∂V/∂θ</td><td class="num">3.4e-7</td><td class="num">3.8e-6</td><td class="num">5.2e-5</td><td class="num">17.8</td></tr>
+<tr><td>∂V/∂ξ</td><td class="num">4.5e-8</td><td class="num">1.0e-6</td><td class="num">1.5e-5</td><td class="num">16.0</td></tr>
+<tr><td>∂V/∂ρ</td><td class="num">8.0e-8</td><td class="num">7.0e-8</td><td class="num">1.9e-6</td><td class="num">13.0</td></tr>
+</tbody></table></div>
+
+<p>Two things to read off. The bound <strong>holds</strong> in every row. And the 1σ estimate
+<strong>predicts</strong> the measured error, usually within a factor of a few — which is the real
+evidence that the error model is right, because a bound that is merely loose could be right for the
+wrong reasons.</p>
+
+<p>Over the 21-case grid: <strong>measured error / bound ≤ 0.21 for all 210 (case, output)
+pairs.</strong> For the generated generation-2 datapaths the corresponding ratio is ≤ 0.115.</p>
+
+<div class="note"><p><strong>The sentence for the paper.</strong> At Q32.32 the first-order bound
+shows at most 16.5 bits lost on the price over the test grid (14.5 at the base point: bound 5.2e-6,
+measured 3.3e-7) and at most 21 bits on any Greek, leaving ≥ 11 correct fractional bits. The bound is
+computed per parameter set in 0.1 s by the same adjoint machinery the hardware implements.</p></div>
+
+<p class="part">Part V — Experiments</p>
+
+<h2 id="experiments"><span class="n">14</span>Every experiment, and why each one exists</h2>
+
+<p class="lead-in">Each experiment below is stated as a question, a method, a result, and what it
+buys. Thirteen of them run in <span class="mono">./verify_all.sh</span> (21 named checks, ~3 minutes);
+the rest are sweeps in <span class="mono">validation/</span>. One is not yet run, and is marked
+accordingly.</p>
+
+<div class="card">
+<h3>E1 — Are the arithmetic primitives correct to sub-ULP?</h3>
+<dl>
+<dt>Question</dt><dd>Does each divider-free primitive (§8) actually achieve near-exact results, or has
+replacing dividers with Newton iterations cost accuracy?</dd>
+<dt>Method</dt><dd><span class="mono">hardware/sim/unit/check_real_primitives.py</span> and
+<span class="mono">check_complex_primitives.py</span>: 60 random inputs each against double precision,
+at Q32.32.</dd>
+<dt>Result</dt><dd>Worst error in ULP — exp 0.61, log 1.48, CORDIC rotation 0.92, CORDIC vectoring
+0.78, real divide 0.5, complex divide 1.7 (0.6 relative), complex sqrt 0.6, complex log 3.7, complex
+exp 1.1. Gate: real ≤ 2.5 ULP, complex ≤ 4 ULP. <span class="chip ok">PASS</span></dd>
+<dt>Why it matters</dt><dd>These ULP figures are the empirical justification for the ε<sub>i</sub>
+values fed into the error bound (§13.1). Without this the bound rests on assumption.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E2 — Does the generated RTL match the golden model exactly?</h3>
+<dl>
+<dt>Question</dt><dd>Not "is the output close" but "is every register, at the cycle it becomes valid,
+bit-identical to the emulator".</dd>
+<dt>Method</dt><dd><span class="mono">gen_tb.py</span> emits a self-checking testbench that probes
+every setup and finish register, and every register of terms 0–2 at its valid cycle —
+<strong>1,254 to 1,993 checks per design</strong> — plus all ten outputs for three parameter sets.
+Run for five designs: z7, zu, z7h, and both price-only pricers.</dd>
+<dt>Result</dt><dd>Bit-exact, all five designs. <span class="chip ok">PASS</span> Also checked
+bit-exact on 48-bit/4-multiplier, 64-bit/16-multiplier and 60-bit/64-multiplier configurations
+outside the scripted suite.</dd>
+<dt>Why it matters</dt><dd>This is what makes every later claim transferable. Because the RTL is
+bit-identical to the emulator, any property proved about the emulator — accuracy, error bound, shift
+ranges — is a property of the hardware, not an approximation of it.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E3 — Is the schedule model right?</h3>
+<dl>
+<dt>Question</dt><dd>The cycle counts in the paper come from a formula (§10.2). Does the actual RTL
+take exactly that many cycles?</dd>
+<dt>Method</dt><dd>Compare measured simulation cycles against predicted cycles, for every
+configuration generated.</dd>
+<dt>Result</dt><dd>Measured = predicted, every configuration. <span class="chip ok">PASS</span></dd>
+<dt>Why it matters</dt><dd>It licenses quoting cycle counts for configurations from the formula rather
+than simulating all of them — which is what makes the 12-point design-space table (E8) affordable.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E4 — How accurate is the hardware against double precision?</h3>
+<dl>
+<dt>Question</dt><dd>Over a realistic parameter grid, how wrong is the fixed-point answer?</dd>
+<dt>Method</dt><dd>21 parameter sets (S₀ = 100, K 80–120, T 0.1–2, ξ 0.2–1, ρ −0.9…0.5, calls and
+puts — the Fang &amp; Oosterlee 2008 test set) against a double-precision reference.</dd>
+<dt>Result</dt><dd>Generated designs, worst relative error over the grid:</dd>
+</dl>
+<div class="tbl"><table>
+<thead><tr><th>Output</th><th>z7 (56-bit)</th><th>zu (64-bit)</th></tr></thead>
+<tbody>
+<tr><td>price</td><td class="num">6.1e-7</td><td class="num">5.9e-8</td></tr>
+<tr><td>delta</td><td class="num">1.3e-7</td><td class="num">1.9e-8</td></tr>
+<tr><td>strike_sens</td><td class="num">1.4e-7</td><td class="num">1.9e-8</td></tr>
+<tr><td>theta_greek</td><td class="num">9.5e-7</td><td class="num">2.3e-8</td></tr>
+<tr><td>rho_greek</td><td class="num">1.4e-7</td><td class="num">2.2e-8</td></tr>
+<tr><td>vega</td><td class="num">1.3e-6</td><td class="num">2.1e-8</td></tr>
+<tr><td><strong>kappa_sens</strong></td><td class="num"><strong>6.4e-5</strong></td><td class="num"><strong>6.0e-6</strong></td></tr>
+<tr><td>theta_sens</td><td class="num">2.0e-6</td><td class="num">1.0e-7</td></tr>
+<tr><td>xi_sens</td><td class="num">1.9e-5</td><td class="num">1.1e-6</td></tr>
+<tr><td>rho_corr</td><td class="num">2.4e-5</td><td class="num">1.2e-6</td></tr>
+</tbody></table></div>
+<dl>
+<dt>Why it matters</dt><dd>This is the headline accuracy claim. The worst cases (κ, ξ, ρ
+sensitivities) are worst because those values are themselves small at short maturity — relative error
+on a small number. The 8× improvement from 56-bit to 64-bit is the expected 2<sup>−FL</sup> scaling,
+confirming the error is quantisation and not a defect.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E5 — Does the error bound hold, and is it tight?</h3>
+<dl>
+<dt>Question</dt><dd>A bound that is never violated but 10<sup>6</sup>× too loose is useless.</dd>
+<dt>Method</dt><dd>Compute measured error / bound for all (case, output) pairs.</dd>
+<dt>Result</dt><dd>Generation 1, Q32.32: ratio ≤ <strong>0.21</strong> across all 210 pairs.
+Generated designs: ≤ <strong>0.115</strong>. Never violated; within one order of magnitude.
+<span class="chip ok">PASS</span> Figure: <span class="mono">fig3_bound_tightness</span>.</dd>
+<dt>Why it matters</dt><dd>Converts the accuracy claim from "we measured 21 cases" into "we have a
+per-Greek certificate, and here is the evidence it is not vacuous".</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E6 — Does error scale with fractional bits as predicted?</h3>
+<dl>
+<dt>Question</dt><dd>If the error model is right, error should fall as 2<sup>−FL</sup>.</dd>
+<dt>Method</dt><dd>Sweep FL = 16…40 with 32 integer bits, three parameter sets.</dd>
+<dt>Result</dt><dd>Error falls as 2<sup>−FL</sup>; measured points sit on or below the 1σ line and
+always below the bound. Figure: <span class="mono">fig4_precision_vs_fl</span>.
+<span class="chip ok">PASS</span></dd>
+<dt>Why it matters</dt><dd>It is the strongest available evidence that the residual error is pure
+quantisation. It is also the design tool that picked FL = 28 for the Zynq target, and the fallback
+path (48-bit words, ~1e-5 relative) if the 7020 does not fit.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E7 — Is AAD actually more accurate than bump-and-reprice?</h3>
+<dl>
+<dt>Question</dt><dd>The speed argument for AAD is obvious. The accuracy argument needs proof, on
+identical hardware, with the bump size tuned in the baseline's favour.</dd>
+<dt>Method</dt><dd><span class="mono">heston_bump_top.v</span> uses the <em>same</em> pricing core in
+price-only mode — 19 pricings, central differences, same word length — with the relative bump size
+<em>h</em> swept from 1e-8 to 1e-1.</dd>
+<dt>Result</dt><dd>Base case, Q32.32:</dd>
+</dl>
+<div class="tbl"><table>
+<thead><tr><th>Output</th><th>AAD error</th><th>Best bump error</th><th>at h</th><th>Worst bump error</th></tr></thead>
+<tbody>
+<tr><td>delta</td><td class="num">9.04e-10</td><td class="num">4.99e-07</td><td class="num">1e-4</td><td class="num">2.14e-02</td></tr>
+<tr><td>strike_sens</td><td class="num">4.78e-09</td><td class="num">3.29e-06</td><td class="num">1e-3</td><td class="num">1.17e-02</td></tr>
+<tr><td>theta_greek</td><td class="num">8.49e-09</td><td class="num">4.75e-06</td><td class="num">1e-2</td><td class="num">8.83e-01</td></tr>
+<tr><td>rho_greek</td><td class="num">5.52e-09</td><td class="num">1.18e-06</td><td class="num">1e-2</td><td class="num">1.73e-01</td></tr>
+<tr><td>vega</td><td class="num">1.73e-08</td><td class="num">4.62e-06</td><td class="num">1e-2</td><td class="num">6.96e+00</td></tr>
+<tr><td>kappa_sens</td><td class="num">1.57e-06</td><td class="num">8.87e-06</td><td class="num">1e-2</td><td class="num">3.96e+01</td></tr>
+<tr><td>theta_sens</td><td class="num">8.45e-09</td><td class="num">8.80e-07</td><td class="num">1e-2</td><td class="num">5.40e+00</td></tr>
+<tr><td>xi_sens</td><td class="num">3.75e-08</td><td class="num">8.50e-06</td><td class="num">1e-2</td><td class="num">1.24e+01</td></tr>
+<tr><td>rho_corr</td><td class="num">6.85e-07</td><td class="num">5.50e-05</td><td class="num">1e-2</td><td class="num">1.41e+01</td></tr>
+</tbody></table></div>
+<dl>
+<dt>Result, stated</dt><dd>Against the best <em>h</em> chosen <strong>in hindsight, per Greek</strong>,
+AAD is more accurate by <strong>5.6× (∂V/∂κ) to 690× (∂V/∂K), median ~220×</strong> — with no bump
+size to tune. At a single shared <em>h</em>, the gap is much larger. The worst-bump column shows what
+a badly chosen <em>h</em> costs: relative errors above 1. Figures:
+<span class="mono">fig1_bump_vs_aad_error</span>, <span class="mono">fig10_gen_bump_vs_aad</span>.</dd>
+<dt>Why it matters</dt><dd>This is the cleanest experiment in the project. Same core, same format,
+same test case; the only variable is the differentiation method, and the baseline is handed an
+advantage it could not have in practice. In double precision bump-and-reprice reaches ~1e-9 at its
+optimum, so this gap is specifically a <em>fixed-point</em> phenomenon: the cancellation term
+ULP/<em>h</em> pushes the optimum up to h ≈ 1e-2…1e-4 and the floor up with it.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E8 — How does latency trade against multiplier count?</h3>
+<dl>
+<dt>Question</dt><dd>How many multipliers should the design have? This is <em>the</em> architectural
+knob, and the answer is not "as many as fit".</dd>
+<dt>Method</dt><dd>Generate and schedule 12 configurations across both word lengths, sweeping
+<em>M</em> from 1 to 128. Cycle counts from the verified schedule model (E3).</dd>
+</dl>
+<div class="tbl"><table>
+<thead><tr><th>Config</th><th>Mults</th><th>II</th><th>AAD</th><th>Price only</th><th>Bump</th><th>Bump/AAD</th></tr></thead>
+<tbody>
+<tr><td>z7 (56/28)</td><td class="num">2</td><td class="num">126</td><td class="num">16,754</td><td class="num">8,724</td><td class="num">165,824</td><td class="num">9.9</td></tr>
+<tr><td>z7 (56/28)</td><td class="num">4</td><td class="num">63</td><td class="num">8,693</td><td class="num">4,610</td><td class="num">87,658</td><td class="num">10.1</td></tr>
+<tr><td><strong>z7 (56/28)</strong></td><td class="num"><strong>8</strong></td><td class="num"><strong>32</strong></td><td class="num"><strong>4,731</strong></td><td class="num">4,565</td><td class="num">86,803</td><td class="num"><strong>18.4</strong></td></tr>
+<tr><td>z7 (56/28)</td><td class="num">16</td><td class="num">32</td><td class="num">4,619</td><td class="num">4,560</td><td class="num">86,708</td><td class="num">18.8</td></tr>
+<tr><td>zu (64/32)</td><td class="num">1</td><td class="num">251</td><td class="num">32,936</td><td class="num">16,777</td><td class="num">318,831</td><td class="num">9.7</td></tr>
+<tr><td>zu (64/32)</td><td class="num">4</td><td class="num">63</td><td class="num">8,701</td><td class="num">4,633</td><td class="num">88,095</td><td class="num">10.1</td></tr>
+<tr><td>zu (64/32)</td><td class="num">8</td><td class="num">32</td><td class="num">4,704</td><td class="num">2,570</td><td class="num">48,898</td><td class="num">10.4</td></tr>
+<tr><td>zu (64/32)</td><td class="num">16</td><td class="num">16</td><td class="num">2,612</td><td class="num">1,537</td><td class="num">29,271</td><td class="num">11.2</td></tr>
+<tr><td><strong>zu (64/32)</strong></td><td class="num"><strong>32</strong></td><td class="num"><strong>8</strong></td><td class="num"><strong>1,599</strong></td><td class="num">1,023</td><td class="num">19,505</td><td class="num"><strong>12.2</strong></td></tr>
+<tr><td>zu (64/32)</td><td class="num">64</td><td class="num">4</td><td class="num">1,071</td><td class="num">885</td><td class="num">16,883</td><td class="num">15.8</td></tr>
+<tr><td>zu (64/32)</td><td class="num">128</td><td class="num">3</td><td class="num">940</td><td class="num">885</td><td class="num">16,883</td><td class="num">18.0</td></tr>
+</tbody></table></div>
+<dl>
+<dt>What to read</dt><dd>Three regimes. Below 8 multipliers, cycles halve as multipliers double —
+throughput-bound, II set by the multiplier count. At 8 multipliers on the z7 config, II hits 32 and
+<strong>stops</strong>: the iterative CORDICs are now the binding constraint, so 16 multipliers buy
+2&nbsp;% (4,731 → 4,619). Past 64 on the zu config, returns collapse again as the dependency chain,
+not the resources, dominates. Figures: <span class="mono">fig8_architecture_cycles</span>,
+<span class="mono">fig9_cycles_vs_mults</span>.</dd>
+<dt>Why it matters</dt><dd>It is the evidence for the design choices, and it makes the
+"Greeks are nearly free" claim precise: look at the AAD vs price-only columns. On the z7 row at
+M = 8 they are 4,731 vs 4,565 (1.04×). On the zu row at M = 32 they are 1,599 vs 1,023 (1.56×). The
+ratio depends on whether multipliers or CORDICs bind — and the paper must say so.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E9 — Does it fit a real FPGA?</h3>
+<dl>
+<dt>Question</dt><dd>Generation 1 failed on area. Does generation 2 fit?</dd>
+<dt>Method</dt><dd>Yosys <span class="mono">synth_xilinx</span> coarse synthesis, generic mapping.</dd>
+</dl>
+<div class="tbl"><table>
+<thead><tr><th>Design</th><th>Target</th><th>LUT</th><th>+SRL</th><th>FF</th><th>DSP</th><th>Fits?</th></tr></thead>
+<tbody>
+<tr><td><span class="mono">heston_aad_z7</span>, full-range shifters</td><td>xc7</td><td class="num">90,648</td><td class="num">3,050</td><td class="num">32,878</td><td class="num">96</td><td>no</td></tr>
+<tr><td><span class="mono">heston_aad_z7</span>, measured ranges</td><td>xc7</td><td class="num">59,024</td><td class="num">3,058</td><td class="num">32,731</td><td class="num">96</td><td>no, ~11&nbsp;% over</td></tr>
+<tr><td><strong><span class="mono">heston_aad_z7h</span></strong> (host split)</td><td>xc7</td><td class="num">45,504</td><td class="num">2,922</td><td class="num">24,856</td><td class="num">96 / 220</td><td><strong>yes: 91&nbsp;% LUT, 23&nbsp;% FF, 44&nbsp;% DSP</strong></td></tr>
+<tr><td><strong><span class="mono">heston_aad_zu</span></strong> (64-bit, 32 mult)</td><td>xcup</td><td class="num">108,330</td><td class="num">6,409</td><td class="num">59,953</td><td class="num">512</td><td><strong>ZCU104: 50&nbsp;% LUT, 30&nbsp;% DSP</strong></td></tr>
+</tbody></table></div>
+<dl>
+<dt>Status</dt><dd><span class="chip risk">ESTIMATE ONLY</span> These are Yosys numbers with generic
+mapping. Vivado usually maps LUTs more tightly, but 91&nbsp;% including SRL is tight enough that the
+conclusion is not safe until place-and-route runs. See E13.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E10 — Does the design detect out-of-domain inputs?</h3>
+<dl>
+<dt>Question</dt><dd>The narrow shifters (§11) are only sound if violations are reported.</dd>
+<dt>Method</dt><dd>Run in-domain cases and check <span class="mono">range_err</span> stays 0; run
+T = 0.01 (outside the verified T ∈ [0.1,3]) and check it fires.</dd>
+<dt>Result</dt><dd>Stays 0 in-domain, raised for T = 0.01, both configurations.
+<span class="chip ok">PASS</span></dd>
+<dt>Why it matters</dt><dd>It is what makes a 35&nbsp;% LUT saving defensible rather than a silent
+correctness hazard. It also propagates: the AXI wrapper exposes it on
+<span class="mono">m_axis_tuser</span>.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E11 — Is the host split bit-identical to the on-chip design?</h3>
+<dl>
+<dt>Question</dt><dd>The Zynq-7020 result depends entirely on the split being exact, not approximate.</dd>
+<dt>Method</dt><dd><span class="mono">python host.py</span>: compute the 19
+<span class="mono">hs_*</span> constants in fixed point on the host, run the FPGA loop, apply the host
+finish, and compare every output to the fully on-chip emulation.</dd>
+<dt>Result</dt><dd>host setup + FPGA sums + host finish == on-chip outputs, exactly.
+<span class="chip ok">PASS</span></dd>
+<dt>Why it matters</dt><dd>Without this, the headline area number (45,504 LUT, fits a 7020) describes
+a design that computes something slightly different from the one all the accuracy numbers were
+measured on. With it, every accuracy result transfers unchanged.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E12 — Do the system interfaces work?</h3>
+<dl>
+<dt>Question</dt><dd>Can the core be driven as a streaming accelerator?</dd>
+<dt>Method</dt><dd>AXI4-Stream wrappers for all three designs: bit-exact round trip, backpressure
+(<span class="mono">tready</span> deassertion mid-transfer), and return to idle. Plus the
+bump-and-reprice wrappers checked bit-exact against 19 emulated pricings.</dd>
+<dt>Result</dt><dd>All pass. <span class="chip ok">PASS</span></dd>
+<dt>Caveat</dt><dd><span class="chip gap">NOT BOARD-READY</span> The streams are very wide —
+<span class="mono">s_axis_tdata</span> is 1,624 bits on the host-split design, 560 on z7, 640 on zu.
+No Zynq PS–PL port is that wide, so a real system needs a serialiser or a register-file interface in
+front. This is simulation-level verification of the protocol, not of a board interface.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E13 — What are Fmax, timing closure, power and energy?</h3>
+<dl>
+<dt>Question</dt><dd>Every latency result so far is in <em>clock cycles</em>. Seconds, joules and
+throughput need a real implementation run.</dd>
+<dt>Method</dt><dd><span class="mono">hardware/vivado/make_all.sh</span> drives
+<span class="mono">synth_impl.tcl</span>: out-of-context synthesis, place, phys-opt, route, then
+utilisation / timing / power reports, parsed into
+<span class="mono">validation/results/vivado.csv</span>. Out-of-context because the cores have ~1,300
+parallel I/O bits, more than any package has pins.</dd>
+<dt>Result</dt><dd><span class="chip gap">NOT RUN</span> Blocked. Vivado ML <strong>Enterprise</strong>
+2026.1 is installed with no licence configured, so the tool refuses to launch. A WSL→Windows shim
+(<span class="mono">hardware/vivado/win/vivado</span>) is in place and verified, so the run is one
+command once a licence exists. See §17.</dd>
+<dt>Why it matters</dt><dd>It is the single largest gap in the paper. Latency in seconds = cycles /
+Fmax; energy per evaluation = power × latency. Without it, <span class="mono">fig6_resources</span>
+and <span class="mono">fig7_energy_latency</span> cannot be produced and the area claim in E9 stays an
+estimate.</dd>
+</dl>
+</div>
+
+<h3>14.1 Experiments that exist but are not in the harness</h3>
+
+<p>Worth knowing so nobody assumes they are covered:</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Artifact</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td><span class="mono">software/tests/</span> (pytest: toy AAD, BS Greeks, Heston Greeks, bump)</td><td>Runs separately, not in <span class="mono">verify_all.sh</span></td></tr>
+<tr><td><span class="mono">hardware/matlab/</span> — MATLAB fixed-point prototype</td><td>Frozen pre-generator prototype; not exercised</td></tr>
+<tr><td><span class="mono">hardware/testbench/tb_heston_pipeline.m</span></td><td>Byte-identical duplicate of the file in <span class="mono">hardware/matlab/</span></td></tr>
+<tr><td><span class="mono">hardware/cpp/heston_cos_aad.cpp</span></td><td>Referenced by nothing in the repository</td></tr>
+<tr><td>Black-Scholes RTL core</td><td>Still Q16.16; price error ~5e-4 because S ≈ 100 × 1 ULP</td></tr>
+</tbody></table></div>
+
+<p>If the algorithm in <span class="mono">hardware/gen/heston.py</span> changes, nothing will tell you
+the MATLAB and C++ trees have drifted.</p>
+
+<p class="part">Part VI — The paper</p>
+
+<h2 id="results"><span class="n">15</span>Every result, and which are safe to publish</h2>
+
+<h3>15.1 Latency — confirmed</h3>
+
+<div class="tbl"><table>
+<thead><tr><th>Design</th><th>Price + 9 Greeks</th><th>Bump, same hardware</th><th>Bump / AAD</th><th>AAD / price-only</th></tr></thead>
+<tbody>
+<tr><td>Generation 1, FSM (64-bit)</td><td class="num">433,779</td><td class="num">3,811,647</td><td class="num">8.8×</td><td class="num">2.16×</td></tr>
+<tr><td><strong>Generated, Zynq-7020 config</strong></td><td class="num"><strong>4,731</strong></td><td class="num">86,803</td><td class="num"><strong>18.3×</strong></td><td class="num"><strong>1.04×</strong></td></tr>
+<tr><td>Generated, host split (loop only)</td><td class="num">4,572</td><td>—</td><td>—</td><td>—</td></tr>
+<tr><td><strong>Generated, 64-bit, 32 mult</strong></td><td class="num"><strong>1,599</strong></td><td class="num">19,505</td><td class="num"><strong>12.2×</strong></td><td class="num">1.56×</td></tr>
+</tbody></table></div>
+
+<p>Derived claims: generation 2 is <strong>92×</strong> fewer cycles than generation 1 on the
+Zynq-class config and <strong>271×</strong> in the 64-bit config.</p>
+
+<h3>15.2 Accuracy — confirmed</h3>
+
+<div class="tbl"><table>
+<thead><tr><th>Design</th><th>Price</th><th>Worst Greek</th><th>max error / bound</th></tr></thead>
+<tbody>
+<tr><td>Zynq-7020 config (56-bit)</td><td class="num">6.1e-7</td><td class="num">≤ 6.4e-5</td><td class="num">0.115</td></tr>
+<tr><td>64-bit config</td><td class="num">5.9e-8</td><td class="num">≤ 6.0e-6</td><td class="num">0.115</td></tr>
+<tr><td>Generation 1 FSM (64-bit)</td><td class="num">3.0e-7</td><td class="num">≤ 5.4e-5</td><td class="num">0.21</td></tr>
+</tbody></table></div>
+
+<p>Plus: AAD more accurate than best-hindsight-<em>h</em> bump-and-reprice by 5.6×–690×, median ~220×
+(§14/E7). At Q32.32, ≤ 16.5 bits lost on the price and ≤ 21 on any Greek, leaving ≥ 11 correct
+fractional bits.</p>
+
+<h3>15.3 Area — estimate only</h3>
+
+<p>The E9 table. <span class="chip risk">Yosys estimates.</span> The paper must either label them as
+such or replace them with Vivado numbers.</p>
+
+<h3>15.4 Not yet obtained</h3>
+
+<div class="tbl"><table>
+<thead><tr><th>Result</th><th>Needed for</th><th>Blocked on</th></tr></thead>
+<tbody>
+<tr><td>Fmax, WNS, timing closure</td><td>Latency in seconds; throughput</td><td>Vivado licence</td></tr>
+<tr><td>Power (vectorless, then SAIF)</td><td>Energy per Greek set; <span class="mono">fig7</span></td><td>Vivado licence</td></tr>
+<tr><td>Vivado LUT/FF/DSP</td><td>Replacing the E9 estimates; <span class="mono">fig6</span></td><td>Vivado licence</td></tr>
+<tr><td>Bitstream, on-board measurement</td><td>A "running on hardware" claim</td><td>Everything in §17.3</td></tr>
+<tr><td>Comparison to published FPGA-finance numbers</td><td>Positioning</td><td>Fmax; and verifying the Weiss citation</td></tr>
+</tbody></table></div>
+
+<h2 id="novelty"><span class="n">16</span>Novelty, explained from basics</h2>
+
+<p class="lead-in">Each claim below is written in four parts: <strong>the background</strong> (what a
+reader already knows), <strong>the claim</strong> (what is new), <strong>why it is not obvious</strong>
+(the reason someone competent had not already done it), and <strong>the evidence</strong> (which
+experiment supports it). A novelty claim without all four is just an assertion.</p>
+
+<div class="card">
+<h3>N1 — The adjoint sweep becomes a static datapath, with no tape</h3>
+<dl>
+<dt>Background</dt><dd>Reverse-mode AD is implemented with a <em>tape</em>: the forward pass records
+every operation and its local partials into a growing list, and the backward pass replays that list
+in reverse. Every AAD library works this way, because in general a program's execution path depends
+on its inputs, so the graph is only known at runtime.</dd>
+<dt>The claim</dt><dd>For a Fourier-cosine pricer the graph is <em>input-independent</em> — same 128
+terms, same operations, same order, call versus put resolved by a multiplexer rather than a branch.
+So the tape does not need to exist at runtime. We unroll the adjoint sweep symbolically at generation
+time and fuse it into the forward graph, producing a single static dataflow graph that is then
+scheduled onto shared arithmetic. There is no tape memory, no write port, no replay sequencer, and no
+backward control flow in the hardware at all.</dd>
+<dt>Why it is not obvious</dt><dd>Two reasons. First, the obvious hardware route is to build the
+software architecture in silicon — which is what generation 1 of this project did for Black-Scholes
+(<span class="mono">bs_forward_core.v</span> writes 25 tape entries to a memory;
+<span class="mono">bs_reverse_pass.v</span> sweeps them). It works, and it is slow, because a tape
+serialises exactly the thing hardware is good at parallelising. Second, the property that makes
+elimination possible is a property of the <em>numerical method</em>, not of AAD: it only holds because
+COS was chosen over Monte Carlo, whose graph genuinely does depend on the random path. The novelty is
+in noticing that the pricing-method choice and the differentiation-implementation choice are
+coupled.</dd>
+<dt>Evidence</dt><dd>E2 — the generated RTL is bit-exact against the emulator at every register, for
+five designs, with no tape anywhere in the netlist. E8 — 4,731 cycles versus generation 1's tape-ish
+FSM at 433,779.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>N2 — Nine Greeks for 1.04 pricings, because the adjoint fills idle slots</h3>
+<dl>
+<dt>Background</dt><dd>The standard AAD cost result is that reverse mode costs a small constant times
+the forward pass — in practice 3–5× in software, dominated by tape write and re-read traffic.
+Bump-and-reprice costs <em>n</em>+1 pricings.</dd>
+<dt>The claim</dt><dd>In a modulo-scheduled hardware datapath the adjoint sweep can be close to free.
+Measured on the Zynq-7020 configuration: 4,565 cycles for the price alone, 4,731 for the price plus
+nine sensitivities — <strong>1.04×</strong>.</dd>
+<dt>Why it is not obvious</dt><dd>It is not a property of AAD; it is a property of the
+<em>scheduling</em>. On that configuration the initiation interval is pinned at 32 by the iterative
+CORDIC units, not by the multipliers (§10.3). The forward pass therefore leaves multiplier slots
+empty in every 32-cycle window, and the adjoint sweep's extra multiplies drop into them without
+increasing II. The only residual cost is a longer term length, which is paid once rather than 128
+times. Getting this requires scheduling forward and reverse <em>together</em> as one graph — schedule
+them as two phases and the slots are not there to fill.</dd>
+<dt>Evidence</dt><dd>E8, the AAD versus price-only columns. And the honest counterpart in the same
+table: on the 64-bit configuration, where multipliers <em>are</em> the binding resource, the ratio is
+1.56×. Both belong in the paper; the claim is conditional and we state the condition.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>N3 — Fusing the graphs makes the reverse pass reuse the forward pass's reciprocals</h3>
+<dl>
+<dt>Background</dt><dd>Every adjoint rule reuses a forward quantity: ∂(a/b)/∂a = 1/b, ∂(a/b)/∂b =
+−a/b², ∂exp(a)/∂a = exp(a). In software this is a footnote.</dd>
+<dt>The claim</dt><dd>In a divider-free design a complex reciprocal costs about ten of the 251
+multiplier slots in a term, and the term's slot budget is what sets II, which sets the entire
+latency. Because forward and reverse are nodes in one graph, ordinary common-subexpression
+elimination finds this reuse automatically: each denominator is inverted exactly once and serves both
+passes — 1/den, g/den, 1/omg, ratio/omg, 1/omge, dratio/omge. And 1/ratio is not a fourth reciprocal
+at all, but omg·(1/omge): a complex multiply, four slots instead of ten.</dd>
+<dt>Why it is not obvious</dt><dd>The saving is invisible unless three choices are made first: no
+dividers (so reciprocals are expensive in the shared currency), fused graphs (so CSE can see across
+the forward/reverse boundary), and resource-constrained scheduling (so slot count maps to latency).
+Any one of them missing and this is a micro-optimisation rather than an architectural result.</dd>
+<dt>Evidence</dt><dd>The per-term bill of 251 multiplies (§8.7), which is what II is computed from,
+and the schedule verification in E3.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>N4 — A per-Greek error bound, computed by the same machinery the hardware implements</h3>
+<dl>
+<dt>Background</dt><dd>FPGA-finance papers typically validate fixed point empirically: run a set of
+cases, report the worst error. That is an observation about the cases you ran.</dd>
+<dt>The claim</dt><dd>Model each RTL operation as producing v<sub>i</sub> + e<sub>i</sub> with
+|e<sub>i</sub>| ≤ ε<sub>i</sub>·2<sup>−FL</sup>. Then to first order every output satisfies
+|Y − Y<sub>exact</sub>| ≤ 2<sup>−FL</sup>·Σ|∂Y/∂v<sub>i</sub>|·ε<sub>i</sub>. The sensitivities
+∂Y/∂v<sub>i</sub> for every internal node come from <em>one reverse-mode sweep over the error-model
+graph</em>. Because that graph includes the RTL's own reverse sweep as ordinary operations, the same
+bound covers each Greek, not just the price — and it is computed per parameter set in 0.1 s.</dd>
+<dt>Why it is not obvious</dt><dd>This is AAD applied one level up: the product is reverse-mode
+differentiation of a pricer; the validation method is reverse-mode differentiation of the error model
+of the hardware that does it. The reason it is affordable is exactly the reason AAD is affordable in
+the first place — thousands of internal nodes, one output, so reverse mode gets all the sensitivities
+in one sweep. Nobody would attempt this bound with finite differences.</dd>
+<dt>Evidence</dt><dd>E5 — measured error / bound ≤ 0.21 over all 210 (case, output) pairs for
+generation 1 and ≤ 0.115 for the generated designs. E6 — the 1σ form of the same expression predicts
+the measured error across FL = 16…40, which is what shows the model is right rather than merely
+conservative.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>N5 — Every transcendental reduced to shared-multiplier uses</h3>
+<dl>
+<dt>Background</dt><dd>Fixed-point hardware normally implements division, square root, exp and log as
+dedicated modules — often bit-serial, always occupying their own area.</dd>
+<dt>The claim</dt><dd>Rewrite all of them so their cost is a countable number of multiplications:
+reciprocal and inverse square root as Newton-Raphson on a normalised mantissa with an 8-bit ROM seed
+(quadratic convergence, 8→16→32→64 bits in three iterations); exp by Tang's method; log by a 64-entry
+table plus a degree-4 series; sin/cos by CORDIC (shifts and adds only). The result is a per-term bill
+of exactly 251 multiplies, 3 CORDIC rotations, 2 CORDIC vectorings.</dd>
+<dt>Why it is not obvious</dt><dd>None of these algorithms is new — that is not the claim. The claim
+is that expressing <em>everything</em> in a single currency is what makes one resource-constrained
+scheduler able to trade the whole design against one number, <em>M</em>. A divider cannot be
+scheduled against a multiplier; six multiplier uses can. That translation is what turns a fixed
+architecture into a design-space curve, and it is why the Zynq-7020 fit could be found at all.</dd>
+<dt>Evidence</dt><dd>E1 — every primitive within 0.5–3.7 ULP. Generation 1 comparison: 28 bit-serial
+divisions per term were 80&nbsp;% of a 433,779-cycle latency; generation 2 has zero divisions.
+E8 — the whole design-space curve exists <em>because</em> of this reduction.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>N6 — One description, five artifacts</h3>
+<dl>
+<dt>Background</dt><dd>A hardware project normally has a reference model, RTL, a testbench, and an
+error analysis as four separate pieces of work that can silently disagree.</dd>
+<dt>The claim</dt><dd>The operation graph is written once and produces the bit-accurate emulator, the
+double-precision evaluation, the first-order error bound, the measured shift ranges, and the
+synthesisable Verilog. They cannot drift.</dd>
+<dt>Why it matters more than it sounds</dt><dd>It changes what "verified" can mean. Because the RTL
+and the golden model come from one source, the testbench can check every register at the cycle it
+becomes valid — 1,254 to 1,993 checks per design — rather than comparing ten outputs. And every
+property proved about the emulator is thereby a property of the hardware.</dd>
+<dt>Evidence</dt><dd>E2, plus the <span class="mono">verify_all.sh</span> check that the committed
+<span class="mono">hardware/verilog/gen/*.v</span> is byte-identical to fresh generator output.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>N7 — The baseline is bump-and-reprice on the same hardware</h3>
+<dl>
+<dt>Background</dt><dd>It is easy, and common, to compare an FPGA implementation against a software
+baseline and report a large factor. Such comparisons mostly measure the platform gap.</dd>
+<dt>The claim</dt><dd>Our baseline is 19 pricings with central differences on the <em>same generated
+pricer</em>, same word length, same arithmetic, same scheduler — <span class="mono">heston_bump_z7</span>
+and <span class="mono">heston_bump_zu</span>, themselves verified bit-exact against 19 emulated
+pricings. The only variable between the two arms is the differentiation method.</dd>
+<dt>Why it matters</dt><dd>It makes both results defensible: 18.3× fewer cycles, <em>and</em> more
+accurate than the best bump size chosen in hindsight per Greek. The accuracy comparison in
+particular would be meaningless across platforms, because the cancellation term ULP/<em>h</em> is a
+property of the number format.</dd>
+<dt>Evidence</dt><dd>E7 and E8.</dd>
+</dl>
+</div>
+
+<div class="callout"><p><strong>The one claim to be careful with.</strong> "First hardware
+implementation of AAD for option Greeks" rests on a literature search, and
+<span class="mono">docs/05_literature_review.md</span> flags the Weiss et al. (2016) FPGA-Heston
+citation as <em>not verified</em> — a September 2026 search did not locate a matching paper. Before
+the paper claims priority, that citation must be resolved, and the search repeated for recent
+preprints. The technically safer formulation is a claim about <em>what</em> was built —
+"a statically scheduled, tape-free hardware datapath for reverse-mode AAD, with a per-Greek error
+bound" — which is defensible on its own terms regardless of who was first.</p></div>
+
+<h2 id="next"><span class="n">17</span>What has to happen next</h2>
+
+<h3>17.1 The immediate blocker</h3>
+
+<p>Vivado ML <strong>Enterprise</strong> 2026.1 is installed at
+<span class="mono">C:\AMDDesignTools\2026.1\Vivado</span>, and Enterprise is licence-gated. No licence
+exists on the machine: no <span class="mono">.lic</span> file, and
+<span class="mono">XILINXD_LICENSE_FILE</span> is unset in both the user and system registry hives.
+The tool refuses to launch before reading any Verilog.</p>
+
+<ol>
+<li>Generate the free <strong>Vivado ML Standard</strong> licence from the AMD licensing site, signed
+in with the account the tool was installed under. Standard covers <span class="mono">xc7z020</span>,
+which is the target that matters.</li>
+<li>Save it (e.g. <span class="mono">C:\Users\hp\.Xilinx\Xilinx.lic</span>) and set
+<span class="mono">XILINXD_LICENSE_FILE</span> to that path.</li>
+<li>Optionally also generate a 30-day <strong>Enterprise evaluation</strong>:
+<span class="mono">xczu7ev</span> (ZCU104) is not in the free Standard device set, so the 64-bit
+design's implementation needs it.</li>
+</ol>
+
+<p>The WSL→Windows plumbing is already done and verified:
+<span class="mono">hardware/vivado/win/vivado</span> forwards arguments to the Windows
+<span class="mono">vivado.bat</span> and reads <span class="mono">XILINXD_LICENSE_FILE</span> out of
+the registry when it is not set on the Linux side (a Windows process launched from WSL inherits the
+WSL environment, not the Windows one, so this would otherwise fail with the same licence error). Then:</p>
+
+<div class="eq">cd "Greek Engine/hardware/vivado"
+PATH="$PWD/win:$PATH" PARTS="xc7z020clg400-1" TOPS="heston_aad_z7h" CLK_NS=10.0 ./make_all.sh
+python parse_reports.py                  # -> validation/results/vivado.csv
+python ../../validation/make_figures.py  # adds fig6_resources, fig7_energy_latency</div>
+
+<h3>17.2 Then, in order</h3>
+
+<ol>
+<li><strong>Run <span class="mono">heston_aad_z7h</span> on <span class="mono">xc7z020clg400-1</span>
+at 10 ns.</strong> This is the highest-information action in the project: it either confirms the
+fits-a-7020 claim or kills it, and it produces the first real Fmax.</li>
+<li><strong>Parse and plot.</strong> <span class="mono">fig6</span> and <span class="mono">fig7</span>
+are already wired and waiting on <span class="mono">vivado.csv</span>.</li>
+<li><strong>Branch on the outcome.</strong> If placement fails or timing misses, the documented
+fallbacks are sharing storage registers into SRLs, or dropping to 48-bit words (relative error ~1e-5,
+<span class="mono">check_accuracy.py 24</span>).</li>
+<li><strong>Run the rest of the matrix</strong> — z7, zu, and the generation-1 tops — for the
+comparison table.</li>
+</ol>
+
+<h3>17.3 Board bring-up, once implementation is green</h3>
+
+<p>These are genuinely missing engineering, not just unrun scripts:</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Step</th><th>What is missing today</th></tr></thead>
+<tbody>
+<tr><td>Pick a board, write its XDC</td><td>Zero <span class="mono">.xdc</span> files exist; the only constraint is a one-line <span class="mono">create_clock</span> generated at run time</td></tr>
+<tr><td>Narrow the AXI stream</td><td><span class="mono">s_axis_tdata</span> is 1,624 bits; Zynq PS–PL ports are 32/64-bit. Needs a gearbox or an AXI4-Lite register file</td></tr>
+<tr><td>Build the block design</td><td>No <span class="mono">create_bd</span>, no PS instance, no DMA, no clock wizard, no XSA export anywhere in the repo</td></tr>
+<tr><td>Port <span class="mono">host.py</span> to C</td><td>Only a Python bit-exact spec exists. The ARM needs a C implementation, re-verified bit-exact — note the irregular formats (<span class="mono">hs_260</span> at 53 fractional bits)</td></tr>
+<tr><td>In-context implementation, bitstream</td><td><span class="mono">write_bitstream</span> appears nowhere; the current flow is out-of-context only and cannot produce one</td></tr>
+<tr><td>On-board validation</td><td>No plan yet for checking board outputs against the emulator</td></tr>
+<tr><td>Activity-based power</td><td>Current flow reports vectorless power at the 12.5&nbsp;% default toggle rate; a SAIF flow is documented but not set up</td></tr>
+</tbody></table></div>
+
+<h3>17.4 Paper-side work</h3>
+
+<ul>
+<li>Resolve the Weiss et al. citation (§16 callout) and repeat the priority search.</li>
+<li>Decide whether to move the Black-Scholes core from Q16.16 to the parameterised library, or to cut
+it from the paper.</li>
+<li>State explicitly which power number is quoted (vectorless or SAIF-based).</li>
+<li>Either refresh or remove the stale MATLAB and C++ trees, so reviewers reading the repository do
+not find three disagreeing implementations.</li>
+</ul>
+
+<h2 id="risks"><span class="n">18</span>Honest weaknesses</h2>
+
+<p class="lead-in">Written down deliberately. A reviewer will find these; it is better that the paper
+finds them first.</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Weakness</th><th>Status</th><th>Mitigation</th></tr></thead>
+<tbody>
+<tr><td>No Vivado results — no Fmax, timing closure, power or energy</td><td><span class="chip gap">OPEN</span></td><td>§17.1; one command once licensed</td></tr>
+<tr><td>Area figures are Yosys estimates; 91&nbsp;% LUT is uncomfortably tight</td><td><span class="chip gap">OPEN</span></td><td>Fallbacks documented: SRL sharing, 48-bit words</td></tr>
+<tr><td>Nothing has run on a board; OOC flow cannot make a bitstream</td><td><span class="chip gap">OPEN</span></td><td>§17.3</td></tr>
+<tr><td>Verified input domain is bounded; outside it <span class="mono">range_err</span> fires</td><td><span class="chip risk">BY DESIGN</span></td><td>Must be stated as a limitation, not hidden</td></tr>
+<tr><td>Truncation range [a,b] held fixed when differentiating</td><td><span class="chip risk">CONVENTION</span></td><td>Standard COS practice; the software reference does the same</td></tr>
+<tr><td>Register sharing across values not implemented</td><td><span class="chip gap">OPEN</span></td><td>Largest remaining FF/LUT saving</td></tr>
+<tr><td>"First in hardware" rests on an unverified citation</td><td><span class="chip gap">OPEN</span></td><td>Resolve, or reframe around what was built</td></tr>
+<tr><td>The 1.04× Greeks claim is configuration-dependent (1.56× on zu)</td><td><span class="chip risk">STATE IT</span></td><td>Report both, with the II analysis that explains why</td></tr>
+<tr><td>Black-Scholes core still Q16.16, price error ~5e-4</td><td><span class="chip gap">OPEN</span></td><td>Port to the parameterised library, or drop from the paper</td></tr>
+<tr><td>MATLAB and C++ trees are stale and unexercised</td><td><span class="chip gap">OPEN</span></td><td>Refresh or remove</td></tr>
+</tbody></table></div>
+
+<hr>
+
+<p class="kbd">Sources: docs/01–05_*.md, docs/architecture.md, docs/precision_bound.md,
+hardware/gen/{heston,prims,sched,ranges,ir,rtlgen}.py, hardware/gen/README.md,
+validation/figures/tables.md, verify_all.sh. Reproduce everything with
+<span class="mono">./verify_all.sh</span>, then
+<span class="mono">python validation/run_gen_sweeps.py &amp;&amp; python validation/make_figures.py</span>.</p>
+
+</main>
+</div>
+</body>
+</html>
