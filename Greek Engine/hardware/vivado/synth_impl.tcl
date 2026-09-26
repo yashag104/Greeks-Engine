@@ -62,6 +62,10 @@ report_utilization -file "$outdir/util_synth.rpt"
 
 opt_design
 place_design
+# Checkpoint after placement: routing a congested design can take longer than
+# synthesis and placement together, and if it dies there is no reason to redo
+# them. Resume with:  open_checkpoint post_place.dcp ; route_design
+write_checkpoint -force "$outdir/post_place.dcp"
 phys_opt_design
 route_design
 write_checkpoint -force "$outdir/post_route.dcp"
