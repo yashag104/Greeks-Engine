@@ -1532,11 +1532,20 @@ ratio depends on whether multipliers or CORDICs bind — and the paper must say 
 <tr><td><span class="mono">heston_aad_z7</span>, measured ranges</td><td>xc7</td><td class="num">59,024</td><td class="num">3,058</td><td class="num">32,731</td><td class="num">96</td><td>no, ~11&nbsp;% over</td></tr>
 <tr><td><strong><span class="mono">heston_aad_z7h</span></strong> (host split)</td><td>xc7</td><td class="num">45,504</td><td class="num">2,922</td><td class="num">24,856</td><td class="num">96 / 220</td><td><strong>yes: 91&nbsp;% LUT, 23&nbsp;% FF, 44&nbsp;% DSP</strong></td></tr>
 <tr><td><strong><span class="mono">heston_aad_zu</span></strong> (64-bit, 32 mult)</td><td>xcup</td><td class="num">108,330</td><td class="num">6,409</td><td class="num">59,953</td><td class="num">512</td><td><strong>ZCU104: 50&nbsp;% LUT, 30&nbsp;% DSP</strong></td></tr>
+<tr><td><strong><span class="mono">heston_aad_z7h</span> &mdash; Vivado 2025.2, post-synthesis</strong></td><td>xc7z020clg400-1</td><td class="num">34,957</td><td class="num">2,781</td><td class="num">27,255</td><td class="num">72 / 220</td><td><strong>yes, comfortably: 70.9&nbsp;% LUT, 25.6&nbsp;% FF, 32.7&nbsp;% DSP</strong></td></tr>
 </tbody></table></div>
 <dl>
-<dt>Status</dt><dd><span class="chip risk">ESTIMATE ONLY</span> These are Yosys numbers with generic
-mapping. Vivado usually maps LUTs more tightly, but 91&nbsp;% including SRL is tight enough that the
-conclusion is not safe until place-and-route runs. See E13.</dd>
+<dt>Vivado result</dt><dd><span class="chip ok">MEASURED</span> Vivado 2025.2 post-synthesis on
+<span class="mono">xc7z020clg400-1</span>: <strong>37,738 LUT total (70.9&nbsp;%)</strong> of which
+2,781 are shift-register LUTs, <strong>27,255 FF (25.6&nbsp;%)</strong>,
+<strong>72 DSP48E1 (32.7&nbsp;%)</strong>, 4 BRAM tiles (2.9&nbsp;%).</dd>
+<dt>What changed</dt><dd>Yosys was pessimistic by a wide margin: <strong>71&nbsp;% LUT, not
+91&nbsp;%</strong>, and 72 DSPs rather than 96. The Zynq-7020 fit is comfortable rather than
+marginal, and the documented fallbacks &mdash; SRL sharing, or dropping to 48-bit words &mdash; are
+<em>not</em> needed. This also leaves headroom for the AXI4-Lite interface and block design on top.
+The generic-mapping estimate was useful for ranking designs against each other, but it should not be
+quoted as an area result now that a real one exists.</dd>
+<dt>Caveat</dt><dd>Post-synthesis. Routed utilisation, WNS and power are E13.</dd>
 </dl>
 </div>
 
@@ -1577,10 +1586,20 @@ measured on. With it, every accuracy result transfers unchanged.</dd>
 (<span class="mono">tready</span> deassertion mid-transfer), and return to idle. Plus the
 bump-and-reprice wrappers checked bit-exact against 19 emulated pricings.</dd>
 <dt>Result</dt><dd>All pass. <span class="chip ok">PASS</span></dd>
-<dt>Caveat</dt><dd><span class="chip gap">NOT BOARD-READY</span> The streams are very wide —
-<span class="mono">s_axis_tdata</span> is 1,624 bits on the host-split design, 560 on z7, 640 on zu.
-No Zynq PS–PL port is that wide, so a real system needs a serialiser or a register-file interface in
-front. This is simulation-level verification of the protocol, not of a board interface.</dd>
+<dt>Board interface</dt><dd><span class="chip ok">RESOLVED</span> The streams are very wide —
+<span class="mono">s_axis_tdata</span> is 1,624 bits on the host-split design, 560 on z7, 640 on zu —
+and no Zynq PS–PL port is that wide, so the stream wrapper alone left the core unreachable from a
+board. <span class="mono">wrappers.py lite</span> now generates an <strong>AXI4-Lite register
+file</strong>: 56 input words, write <span class="mono">CTRL</span> bit 0 to start, poll
+<span class="mono">STAT</span> bit 0 for done, read 9 outputs from 0x200. ~75 register accesses per
+evaluation, irrelevant against a 4,572-cycle datapath, and no DMA or driver needed. Its testbench
+drives the AXI4-Lite protocol directly and all 9 outputs come back bit-exact; it also checks
+<span class="mono">bresp</span>/<span class="mono">rresp</span>, register readback, and the
+busy/done/range_err sequencing. A register map is emitted as
+<span class="mono">&lt;name&gt;_lite_regs.json</span> so host software is written against the map
+rather than hardcoded offsets.</dd>
+<dt>Still simulation</dt><dd>This is protocol verification, not a board measurement. The board test
+itself is E14.</dd>
 </dl>
 </div>
 
@@ -1594,14 +1613,64 @@ throughput need a real implementation run.</dd>
 utilisation / timing / power reports, parsed into
 <span class="mono">validation/results/vivado.csv</span>. Out-of-context because the cores have ~1,300
 parallel I/O bits, more than any package has pins.</dd>
-<dt>Result</dt><dd><span class="chip gap">NOT RUN</span> Blocked. Vivado ML <strong>Enterprise</strong>
-2026.1 is installed with no licence configured, so the tool refuses to launch. A WSL→Windows shim
-(<span class="mono">hardware/vivado/win/vivado</span>) is in place and verified, so the run is one
-command once a licence exists. See §17.</dd>
+<dt>Result</dt><dd><span class="chip ok">SYNTHESIS DONE</span>
+<span class="chip gap">ROUTING PENDING</span> Synthesis completes and the post-synthesis numbers are
+in E9. A routed design &mdash; and therefore WNS, Fmax and power &mdash; does not exist yet.</dd>
+<dt>Three obstacles, in the order they appeared</dt><dd>
+<strong>1. Licence.</strong> Vivado ML <em>Enterprise</em> 2026.1 was installed with no licence, so
+the tool refused to launch at all. Resolved by reinstalling as <strong>ML Standard 2025.2</strong>
+(now on <span class="mono">D:\2025.2\Vivado</span>), which is free and covers
+<span class="mono">xc7z020</span>. Enterprise is still needed for <span class="mono">xczu7ev</span>.
+<br><strong>2. A latent bug in the flow script.</strong>
+<span class="mono">read_verilog</span>, <span class="mono">read_xdc</span> and
+<span class="mono">synth_design -include_dirs</span> each take a Tcl <em>list</em>, so a bare path
+string is split on whitespace. The repository lives under <span class="mono">Greek Engine</span>, so
+every one of them tore the path in two: <span class="mono">File
+'C:/Users/hp/Greeks-Engine/Greek' does not exist</span>. Latent since the flow was written, because
+nothing had ever actually invoked Vivado. Fixed by wrapping all seven call sites in
+<span class="mono">[list ...]</span>.
+<br><strong>3. The runs keep being killed.</strong> Two attempts died mid-flow with no
+<span class="mono">ERROR</span> line, no "Exiting Vivado", and no crash dump &mdash; a kill
+signature, not a tool error. One reached routing (31 min, node overlaps converging 36,717 →
+15,912 → 6,192) before dying; the next died in synthesis at 10 min. The machine has 16&nbsp;GB
+shared with WSL and other work, and routing peaked at 2.5&nbsp;GB and climbing, so memory pressure is
+the likely cause &mdash; but that is inference, not evidence.</dd>
+<dt>Mitigations added</dt><dd>The flow now writes <span class="mono">post_place.dcp</span>, so a
+router that dies no longer discards 20 minutes of good placement.
+<span class="mono">impl_from_dcp.tcl</span> resumes from whichever checkpoint exists, and
+<span class="mono">run_native.bat</span> runs the whole flow straight from Windows with neither WSL
+nor an agent harness in the loop.</dd>
 <dt>Why it matters</dt><dd>It is the single largest gap in the paper. Latency in seconds = cycles /
-Fmax; energy per evaluation = power × latency. Without it, <span class="mono">fig6_resources</span>
-and <span class="mono">fig7_energy_latency</span> cannot be produced and the area claim in E9 stays an
-estimate.</dd>
+Fmax; energy per evaluation = power × latency. Without a routed design,
+<span class="mono">fig6_resources</span> and <span class="mono">fig7_energy_latency</span> cannot be
+produced, and every latency result stays in cycles rather than seconds.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E14 — Does it compute the right answer on real silicon?</h3>
+<dl>
+<dt>Question</dt><dd>Every result so far is simulation or static analysis. Does the fabricated device
+produce the same bits?</dd>
+<dt>Method</dt><dd>Target: <strong>ZedBoard, <span class="mono">xc7z020clg484-1</span></strong>.
+<span class="mono">hardware/vivado/zedboard/bd_jtag.tcl</span> builds a deliberately minimal design
+&mdash; <span class="mono">jtag_axi → smartconnect → engine</span>, with <em>no</em> Zynq PS at all,
+so no DDR, no MIO, no board file, no Vitis, no boot image and no ARM code. Vivado drives AXI
+transactions down the JTAG cable, so the only thing under test is the datapath.
+<span class="mono">board_vectors.py</span> emits the same case the simulation testbench checks as
+sourceable Tcl (56 input words, 9 expected outputs), and
+<span class="mono">run_jtag.tcl</span> programs the device, replays it, polls done, and compares
+every output bit-exact against the emulator.</dd>
+<dt>Result</dt><dd><span class="chip gap">NOT RUN</span> Waits on a routed design (E13) &mdash;
+building a bitstream before WNS is known would mean debugging a board and a timing violation at the
+same time.</dd>
+<dt>Design note</dt><dd>The 19 host-setup constants are computed on the PC, not the ARM. The
+Zynq-7000 PS is 32-bit ARMv7 with no <span class="mono">__int128</span>, and these are 56-bit values
+whose products need 112 bits, so a C port needs a hand-written 64×64→128 multiply. Phase 2
+(<span class="mono">bd_lite.tcl</span>, PS over <span class="mono">M_AXI_GP0</span>, exports an XSA)
+moves setup and finish onto the ARM once the datapath itself is proven.</dd>
+<dt>Why it matters</dt><dd>It is the difference between "verified in simulation" and "measured on
+hardware", which is the claim a reviewer will look for.</dd>
 </dl>
 </div>
 
@@ -1654,20 +1723,35 @@ Zynq-class config and <strong>271×</strong> in the 64-bit config.</p>
 (§14/E7). At Q32.32, ≤ 16.5 bits lost on the price and ≤ 21 on any Greek, leaving ≥ 11 correct
 fractional bits.</p>
 
-<h3>15.3 Area — estimate only</h3>
+<h3>15.3 Area — measured (post-synthesis)</h3>
 
-<p>The E9 table. <span class="chip risk">Yosys estimates.</span> The paper must either label them as
-such or replace them with Vivado numbers.</p>
+<p><span class="chip ok">CONFIRMED</span> Vivado 2025.2, <span class="mono">xc7z020clg400-1</span>,
+<span class="mono">heston_aad_z7h</span>, out of context:</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Resource</th><th>Used</th><th>Available</th><th>Util.</th><th>Yosys had estimated</th></tr></thead>
+<tbody>
+<tr><td>LUT (incl. SRL)</td><td class="num">37,738</td><td class="num">53,200</td><td class="num"><strong>70.9&nbsp;%</strong></td><td class="num">48,426 (91&nbsp;%)</td></tr>
+<tr><td>of which shift-register LUTs</td><td class="num">2,781</td><td class="num">17,400</td><td class="num">16.0&nbsp;%</td><td class="num">2,922</td></tr>
+<tr><td>Flip-flops</td><td class="num">27,255</td><td class="num">106,400</td><td class="num">25.6&nbsp;%</td><td class="num">24,856</td></tr>
+<tr><td>DSP48E1</td><td class="num">72</td><td class="num">220</td><td class="num">32.7&nbsp;%</td><td class="num">96</td></tr>
+<tr><td>BRAM tiles</td><td class="num">4</td><td class="num">140</td><td class="num">2.9&nbsp;%</td><td>—</td></tr>
+</tbody></table></div>
+
+<p>The headline correction: the Zynq-7020 fit is <strong>comfortable, not marginal</strong>. Every
+earlier statement built on the 91&nbsp;% figure — including the whole "if Vivado disagrees, fall back
+to 48-bit words" discussion — was resting on a generic-mapping estimate that overstated LUTs by
+28&nbsp;% and DSPs by a third. Routed utilisation may differ slightly; that is E13.</p>
 
 <h3>15.4 Not yet obtained</h3>
 
 <div class="tbl"><table>
 <thead><tr><th>Result</th><th>Needed for</th><th>Blocked on</th></tr></thead>
 <tbody>
-<tr><td>Fmax, WNS, timing closure</td><td>Latency in seconds; throughput</td><td>Vivado licence</td></tr>
-<tr><td>Power (vectorless, then SAIF)</td><td>Energy per Greek set; <span class="mono">fig7</span></td><td>Vivado licence</td></tr>
-<tr><td>Vivado LUT/FF/DSP</td><td>Replacing the E9 estimates; <span class="mono">fig6</span></td><td>Vivado licence</td></tr>
-<tr><td>Bitstream, on-board measurement</td><td>A "running on hardware" claim</td><td>Everything in §17.3</td></tr>
+<tr><td>Fmax, WNS, timing closure</td><td>Latency in seconds; throughput</td><td>A completed route (E13)</td></tr>
+<tr><td>Power (vectorless, then SAIF)</td><td>Energy per Greek set; <span class="mono">fig7</span></td><td>A completed route (E13)</td></tr>
+<tr><td>Routed LUT/FF/DSP</td><td><span class="mono">fig6</span>; post-synthesis numbers are in §15.3</td><td>A completed route (E13)</td></tr>
+<tr><td>Bitstream, on-board measurement</td><td>A "running on hardware" claim</td><td>WNS first, then E14</td></tr>
 <tr><td>Comparison to published FPGA-finance numbers</td><td>Positioning</td><td>Fmax; and verifying the Weiss citation</td></tr>
 </tbody></table></div>
 
@@ -1837,24 +1921,22 @@ bound" — which is defensible on its own terms regardless of who was first.</p>
 
 <h2 id="next"><span class="n">17</span>What has to happen next</h2>
 
-<h3>17.1 The immediate blocker</h3>
+<h3>17.1 Finish the route</h3>
 
-<p>Vivado ML <strong>Enterprise</strong> 2026.1 is installed at
-<span class="mono">C:\AMDDesignTools\2026.1\Vivado</span>, and Enterprise is licence-gated. No licence
-exists on the machine: no <span class="mono">.lic</span> file, and
-<span class="mono">XILINXD_LICENSE_FILE</span> is unset in both the user and system registry hives.
-The tool refuses to launch before reading any Verilog.</p>
+<p>The licence obstacle is gone: the toolchain is now <strong>Vivado ML Standard 2025.2</strong> at
+<span class="mono">D:\2025.2\Vivado</span>, which is free and covers
+<span class="mono">xc7z020</span>. (<span class="mono">xczu7ev</span> for the 64-bit design still
+needs Enterprise, or a 30-day evaluation.) Synthesis completes; what remains is a route that
+survives to the end — see E13 for the three obstacles and what was done about each.</p>
 
-<ol>
-<li>Generate the free <strong>Vivado ML Standard</strong> licence from the AMD licensing site, signed
-in with the account the tool was installed under. Standard covers <span class="mono">xc7z020</span>,
-which is the target that matters.</li>
-<li>Save it (e.g. <span class="mono">C:\Users\hp\.Xilinx\Xilinx.lic</span>) and set
-<span class="mono">XILINXD_LICENSE_FILE</span> to that path.</li>
-<li>Optionally also generate a 30-day <strong>Enterprise evaluation</strong>:
-<span class="mono">xczu7ev</span> (ZCU104) is not in the free Standard device set, so the 64-bit
-design's implementation needs it.</li>
-</ol>
+<p>The most reliable way to run it is natively, with neither WSL nor an agent harness in the
+loop:</p>
+
+<div class="eq">cd "C:\Users\hp\Greeks-Engine\Greek Engine\hardware\vivado"
+run_native.bat        :: resumes from post_synth.dcp / post_place.dcp if present</div>
+
+<p>Close other Vivado instances and memory-heavy applications first. Routing this design peaked at
+2.5&nbsp;GB and rising on a 16&nbsp;GB machine shared with WSL.</p>
 
 <p>The WSL→Windows plumbing is already done and verified:
 <span class="mono">hardware/vivado/win/vivado</span> forwards arguments to the Windows
@@ -1889,13 +1971,14 @@ comparison table.</li>
 <div class="tbl"><table>
 <thead><tr><th>Step</th><th>What is missing today</th></tr></thead>
 <tbody>
-<tr><td>Pick a board, write its XDC</td><td>Zero <span class="mono">.xdc</span> files exist; the only constraint is a one-line <span class="mono">create_clock</span> generated at run time</td></tr>
-<tr><td>Narrow the AXI stream</td><td><span class="mono">s_axis_tdata</span> is 1,624 bits; Zynq PS–PL ports are 32/64-bit. Needs a gearbox or an AXI4-Lite register file</td></tr>
-<tr><td>Build the block design</td><td>No <span class="mono">create_bd</span>, no PS instance, no DMA, no clock wizard, no XSA export anywhere in the repo</td></tr>
-<tr><td>Port <span class="mono">host.py</span> to C</td><td>Only a Python bit-exact spec exists. The ARM needs a C implementation, re-verified bit-exact — note the irregular formats (<span class="mono">hs_260</span> at 53 fractional bits)</td></tr>
-<tr><td>In-context implementation, bitstream</td><td><span class="mono">write_bitstream</span> appears nowhere; the current flow is out-of-context only and cannot produce one</td></tr>
-<tr><td>On-board validation</td><td>No plan yet for checking board outputs against the emulator</td></tr>
-<tr><td>Activity-based power</td><td>Current flow reports vectorless power at the 12.5&nbsp;% default toggle rate; a SAIF flow is documented but not set up</td></tr>
+<tr><td>Pick a board, write its XDC</td><td><span class="chip ok">DONE</span> ZedBoard, <span class="mono">xc7z020clg484-1</span>. <span class="mono">zedboard/jtag.xdc</span> pins the one signal the JTAG design needs (100&nbsp;MHz oscillator on Y9). A PS-only design needs almost no XDC, since the PS pins are fixed by the package</td></tr>
+<tr><td>Narrow the AXI stream</td><td><span class="chip ok">DONE</span> <span class="mono">wrappers.py lite</span> generates an AXI4-Lite register file; verified bit-exact (E12)</td></tr>
+<tr><td>Build the block design</td><td><span class="chip ok">DONE</span> <span class="mono">zedboard/bd_jtag.tcl</span> (no PS, for first bring-up) and <span class="mono">bd_lite.tcl</span> (PS over <span class="mono">M_AXI_GP0</span>, exports an XSA). Both scripted, not clicked</td></tr>
+<tr><td>Board file</td><td><span class="chip gap">TODO</span> Vivado 2025.2 ships none. <span class="mono">bd_lite.tcl</span> checks and says how to install it (Tools → Vivado Store → Boards → ZedBoard). <span class="mono">bd_jtag.tcl</span> does not need one</td></tr>
+<tr><td>Port <span class="mono">host.py</span> to C</td><td><span class="chip risk">DEFERRED</span> Not needed for phase 1: <span class="mono">board_vectors.py</span> computes the constants on the PC. Phase 2 needs it — and a hand-written 64×64→128 multiply, since the Zynq-7000 PS is 32-bit ARMv7 with no <span class="mono">__int128</span></td></tr>
+<tr><td>In-context implementation, bitstream</td><td><span class="chip ok">DONE</span> Both block-design scripts run <span class="mono">launch_runs impl_1 -to_step write_bitstream</span></td></tr>
+<tr><td>On-board validation</td><td><span class="chip ok">DONE</span> <span class="mono">zedboard/run_jtag.tcl</span> programs the device, replays a generated vector and compares all 9 outputs bit-exact against the emulator (E14)</td></tr>
+<tr><td>Activity-based power</td><td><span class="chip gap">TODO</span> Current flow reports vectorless power at the 12.5&nbsp;% default toggle rate; a SAIF flow is documented but not set up</td></tr>
 </tbody></table></div>
 
 <h3>17.4 Paper-side work</h3>
@@ -1917,9 +2000,10 @@ finds them first.</p>
 <div class="tbl"><table>
 <thead><tr><th>Weakness</th><th>Status</th><th>Mitigation</th></tr></thead>
 <tbody>
-<tr><td>No Vivado results — no Fmax, timing closure, power or energy</td><td><span class="chip gap">OPEN</span></td><td>§17.1; one command once licensed</td></tr>
-<tr><td>Area figures are Yosys estimates; 91&nbsp;% LUT is uncomfortably tight</td><td><span class="chip gap">OPEN</span></td><td>Fallbacks documented: SRL sharing, 48-bit words</td></tr>
-<tr><td>Nothing has run on a board; OOC flow cannot make a bitstream</td><td><span class="chip gap">OPEN</span></td><td>§17.3</td></tr>
+<tr><td>No Fmax, timing closure, power or energy — no route has completed</td><td><span class="chip gap">OPEN</span></td><td>§17.1, E13; synthesis works, routing keeps being killed</td></tr>
+<tr><td>Area was quoted from Yosys estimates that overstated LUTs by 28&nbsp;% and DSPs by a third</td><td><span class="chip ok">FIXED</span></td><td>Measured: 70.9&nbsp;% LUT, 32.7&nbsp;% DSP (§15.3). Fallbacks not needed</td></tr>
+<tr><td>Nothing has run on a board</td><td><span class="chip gap">OPEN</span></td><td>Scripts all exist (§17.3, E14); waits on a routed design</td></tr>
+<tr><td>Routing reports congestion even at 71&nbsp;% LUT</td><td><span class="chip risk">WATCH</span></td><td>Observed once, mid-route. Wide buses and barrel shifters. May bound Fmax; unverified until a route completes</td></tr>
 <tr><td>Verified input domain is bounded; outside it <span class="mono">range_err</span> fires</td><td><span class="chip risk">BY DESIGN</span></td><td>Must be stated as a limitation, not hidden</td></tr>
 <tr><td>Truncation range [a,b] held fixed when differentiating</td><td><span class="chip risk">CONVENTION</span></td><td>Standard COS practice; the software reference does the same</td></tr>
 <tr><td>Register sharing across values not implemented</td><td><span class="chip gap">OPEN</span></td><td>Largest remaining FF/LUT saving</td></tr>
