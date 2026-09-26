@@ -1,0 +1,115 @@
+# ============================================================================
+# Program the ZedBoard and run one evaluation over JTAG, checking every output
+# against the emulator. No PS software involved.
+#
+#   cd "Greek Engine/hardware/vivado/zedboard"
+#   PATH="../win:$PATH" vivado -mode batch -nojournal -log run_jtag.log \
+#        -source run_jtag.tcl -tclargs [<base_addr_hex>] [<bitfile>]
+#
+# <base_addr_hex> defaults to the address bd_jtag.tcl printed (0x44A00000 is
+# what assign_bd_address usually picks for a single jtag_axi slave). If the
+# reads all come back 0xffffffff or the script reports a decode error, this is
+# the first thing to check -- bd_jtag.tcl prints "engine base address = ...".
+#
+# Prerequisites: board powered, JTAG (USB) connected, JP7-JP11 set to JTAG
+# boot, and bd_jtag.tcl already run to produce the bitstream.
+# ============================================================================
+set here [file dirname [file normalize [info script]]]
+set base [expr {[llength $argv] > 0 ? [lindex $argv 0] : 0x44A00000}]
+set bit  [expr {[llength $argv] > 1 ? [lindex $argv 1] \
+                : "$here/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper.bit"}]
+set vec  "$here/../../gen/build/heston_aad_z7h_lite_vector.tcl"
+
+foreach f [list $bit $vec] {
+  if {![file exists $f]} { puts "ERROR: missing $f"; exit 1 }
+}
+source $vec
+puts "INFO: base 0x[format %08x $base] ; [llength $VEC_WRITES] input words ; [llength $VEC_EXPECT] outputs"
+
+proc axi_w {off data} {
+  global base axi
+  create_hw_axi_txn -quiet _w $axi -address [format %08x [expr {$base + $off}]] \
+                    -data [format %08x $data] -type write -len 1
+  run_hw_axi -quiet _w
+  delete_hw_axi_txn [get_hw_axi_txns _w]
+}
+proc axi_r {off} {
+  global base axi
+  create_hw_axi_txn -quiet _r $axi -address [format %08x [expr {$base + $off}]] -type read -len 1
+  run_hw_axi -quiet _r
+  set v [get_property DATA [get_hw_axi_txns _r]]
+  delete_hw_axi_txn [get_hw_axi_txns _r]
+  return [expr {0x$v}]
+}
+
+# ---- connect and program ---------------------------------------------------
+open_hw_manager
+connect_hw_server -quiet
+open_hw_target
+set dev [lindex [get_hw_devices] 0]
+current_hw_device $dev
+puts "INFO: device [get_property PART $dev]"
+set_property PROGRAM.FILE $bit $dev
+program_hw_devices $dev
+refresh_hw_device -quiet $dev
+
+set axis [get_hw_axis -quiet]
+if {[llength $axis] == 0} {
+  puts "ERROR: no JTAG-to-AXI master found after programming."
+  puts "       The bitstream in $bit does not contain jtag_axi, or programming failed."
+  exit 1
+}
+set axi [lindex $axis 0]
+reset_hw_axi -quiet $axi
+
+# ---- drive one evaluation --------------------------------------------------
+set errors 0
+foreach w $VEC_WRITES { axi_w [lindex $w 0] [lindex $w 1] }
+
+# readback check on the first word, to catch a wrong base address early
+set first [lindex $VEC_WRITES 0]
+set rb [axi_r [lindex $first 0]]
+if {$rb != [lindex $first 1]} {
+  puts "FAIL: readback 0x[format %08x $rb] != written 0x[format %08x [lindex $first 1]]"
+  puts "      Wrong base address, or the design is not responding. Stopping."
+  exit 1
+}
+puts "INFO: readback ok, wrote [llength $VEC_WRITES] words"
+
+if {[expr {[axi_r $VEC_STAT] & 1}] != 0} { puts "FAIL: done set before start"; incr errors }
+axi_w $VEC_CTRL 1
+
+set st 0
+for {set i 0} {$i < 1000} {incr i} {
+  set st [axi_r $VEC_STAT]
+  if {$st & 1} break
+}
+if {!($st & 1)} { puts "FAIL: done never asserted (STAT=0x[format %08x $st])"; exit 1 }
+puts "INFO: done after [expr {$i + 1}] status polls"
+if {$st & 2} { puts "FAIL: range_err set for an in-domain case"; incr errors }
+
+# ---- read back and compare -------------------------------------------------
+set sign [expr {1 << ($VEC_WL - 1)}]
+set mod  [expr {1 << $VEC_WL}]
+foreach e $VEC_EXPECT {
+  set name [lindex $e 0]
+  set off  [lindex $e 1]
+  set want [lindex $e 2]
+  set lo [axi_r $off]
+  set hi [axi_r [expr {$off + 4}]]
+  set raw [expr {(($hi & ((1 << ($VEC_WL - 32)) - 1)) << 32) | $lo}]
+  if {$raw >= $sign} { set raw [expr {$raw - $mod}] }
+  if {$raw != $want} {
+    puts [format "FAIL %-12s got %d want %d (diff %d)" $name $raw $want [expr {$raw - $want}]]
+    incr errors
+  } else {
+    puts [format "  ok %-12s %d  (%.10f)" $name $raw [expr {double($raw) / (1 << $VEC_FL)}]]
+  }
+}
+
+if {$errors == 0} {
+  puts "PASS: ZedBoard outputs bit-exact vs the emulator, [llength $VEC_EXPECT] outputs"
+} else {
+  puts "FAIL: $errors mismatch(es)"
+}
+close_hw_manager
