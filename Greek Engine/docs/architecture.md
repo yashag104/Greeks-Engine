@@ -125,17 +125,43 @@ to 1e-1, AAD is more accurate than the best h for every Greek
 | **`heston_aad_z7h`** (host setup) | xc7 | **45,504** | 2,922 | 24,856 | 96 / 220 | **yes: 91 % LUT incl. SRL, 23 % FF, 44 % DSP** |
 | **`heston_aad_zu`** (64-bit, 32 multipliers) | xcup | **108,330** | 6,409 | 59,953 | 512 DSP48E2 | **ZCU104: 50 % LUT, 30 % DSP**; ZCU102: yes; ZU3EG: no |
 
-The Zynq-7020 target is the host-setup variant. Its 91 % LUT utilization is tight:
-if Vivado disagrees, the next steps are sharing storage registers (SRLs), or 48-bit
-words (relative error ~1e-5; `check_accuracy.py 24`).
+### 4.4 Area (Vivado 2025.2, post-synthesis, out of context)
 
-Yosys numbers are estimates. Vivado usually maps LUTs more tightly, and Fmax,
-timing closure and power need Vivado (`hardware/vivado/make_all.sh`).
+`heston_aad_z7h` on xc7z020clg400-1:
+
+| resource | used | available | util. | Yosys had estimated |
+|---|---|---|---|---|
+| LUT (incl. SRL) | **37,738** | 53,200 | **70.9 %** | 48,426 (91 %) |
+| of which shift-register LUTs | 2,781 | 17,400 | 16.0 % | 2,922 |
+| FF | 27,255 | 106,400 | 25.6 % | 24,856 |
+| DSP48E1 | **72** | 220 | **32.7 %** | 96 |
+| BRAM tile | 4 | 140 | 2.9 % | — |
+
+Yosys' generic mapping overstated LUTs by 28 % and DSPs by a third. The Zynq-7020 fit
+is comfortable rather than marginal, and the fallbacks previously recommended here —
+sharing storage registers into SRLs, or 48-bit words (`check_accuracy.py 24`) — are
+not needed. Use the Yosys figures only to rank configurations against each other, not
+as an area result.
+
+Routed utilization, Fmax, timing closure and power still need a completed route (§5).
 
 ## 5. Limitations and open items
 
-- **No Vivado results yet**: Fmax, timing closure, power and energy are open.
-  Latency in seconds = cycles / Fmax.
+- **No routed design yet**: Fmax, timing closure, power and energy are open.
+  Latency in seconds = cycles / Fmax. Synthesis completes (§4.4); routing has not yet
+  survived to the end. Three obstacles so far: Vivado ML Enterprise refused to launch
+  without a licence (resolved by moving to ML Standard 2025.2); `read_verilog`,
+  `read_xdc` and `-include_dirs` take Tcl *lists*, so the space in the repository path
+  tore every filename in two (fixed by wrapping in `[list ...]`); and two runs were
+  killed mid-flow with no error message, most likely memory pressure. The flow now
+  checkpoints after placement, `impl_from_dcp.tcl` resumes from a checkpoint, and
+  `run_native.bat` runs the flow outside WSL.
+- **Nothing has run on a board yet.** The AXI4-Stream wrappers are up to 1,624 bits
+  wide, which no Zynq PS-PL port can carry; `wrappers.py lite` now generates an
+  AXI4-Lite register file instead (bit-exact, in `verify_all.sh`), and
+  `hardware/vivado/zedboard/` holds a JTAG-to-AXI bring-up design, a PS design, and a
+  scripted board test that compares every output bit-exact against the emulator. All
+  of it waits on a routed design.
 - **Verified input domain**: S0 = 100, K ∈ [60, 150], T ∈ [0.1, 3],
   r ∈ [0, 0.1], v0, θ ∈ [0.005, 0.25], κ ∈ [0.2, 6], ξ ∈ [0.1, 1], ρ ∈ [−0.95, 0.6].
   Outside it, `range_err` reports rather than silently returning wrong values.
