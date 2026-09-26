@@ -24,23 +24,26 @@ set part   [lindex $argv 1]
 set clk_ns [lindex $argv 2]
 set outdir [lindex $argv 3]
 
+# Paths are wrapped in [list ...] wherever a Vivado command takes a file LIST
+# (read_verilog, read_xdc, -include_dirs): a bare string is split on whitespace,
+# so a repository path containing a space is silently torn in two.
 set here   [file dirname [file normalize [info script]]]
 set vdir   [file normalize "$here/../verilog"]
 file mkdir $outdir
 
 if {[string match "heston_aad_*" $top] || [string match "heston_bump_z*" $top]} {
   # generated shared-multiplier designs (hardware/gen): self-contained files
-  read_verilog "$vdir/gen/$top.v"
-  if {[string match "heston_bump_z7" $top]} { read_verilog "$vdir/gen/z7_pricer.v" }
-  if {[string match "heston_bump_zu" $top]} { read_verilog "$vdir/gen/zu_pricer.v" }
-  if {[string match "*_axi" $top]} { read_verilog "$vdir/gen/[string range $top 0 end-4].v" }
+  read_verilog [list "$vdir/gen/$top.v"]
+  if {[string match "heston_bump_z7" $top]} { read_verilog [list "$vdir/gen/z7_pricer.v"] }
+  if {[string match "heston_bump_zu" $top]} { read_verilog [list "$vdir/gen/zu_pricer.v"] }
+  if {[string match "*_axi" $top]} { read_verilog [list "$vdir/gen/[string range $top 0 end-4].v"] }
 } else {
   set srcs {
     heston_top_level.v heston_bump_top.v heston_cos_forward.v heston_char_func.v
     heston_payoff_coeff.v complex_div.v complex_exp.v complex_log.v complex_mult.v
     complex_sqrt.v cordic.v fp_div.v fp_exp.v fp_log.v fp_sqrt.v
   }
-  foreach f $srcs { read_verilog "$vdir/$f" }
+  foreach f $srcs { read_verilog [list "$vdir/$f"] }
 }
 
 # Clock constraint read before synthesis so synth_design optimizes for timing.
@@ -50,10 +53,10 @@ set xdc "$outdir/clock.xdc"
 set fp [open $xdc w]
 puts $fp "create_clock -name clk -period $clk_ns \[get_ports $clk_port\]"
 close $fp
-read_xdc -mode out_of_context $xdc
+read_xdc -mode out_of_context [list $xdc]
 
 synth_design -top $top -part $part -mode out_of_context \
-             -include_dirs $vdir -flatten_hierarchy rebuilt
+             -include_dirs [list $vdir] -flatten_hierarchy rebuilt
 write_checkpoint -force "$outdir/post_synth.dcp"
 report_utilization -file "$outdir/util_synth.rpt"
 
