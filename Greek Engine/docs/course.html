@@ -153,8 +153,8 @@ takes 86,803.</p>
   bit-exact against a golden model, with a per-Greek error bound.</p></div>
   <div><h4>The headline</h4><p>All 9 Greeks for 1.04 pricings of extra work. In software, AAD
   typically costs 3–5× a pricing.</p></div>
-  <div><h4>The honest gap</h4><p>Everything is RTL simulation and Yosys estimates. No Vivado
-  place-and-route has run yet, so there is no Fmax, no timing closure, no power, no bitstream.</p></div>
+  <div><h4>The honest gap</h4><p>The design routes on a Zynq-7020 but misses 100&nbsp;MHz by
+  2.6&nbsp;ns (Fmax &asymp; 79&nbsp;MHz). Power is vectorless, and nothing has run on a board yet.</p></div>
 </div>
 
 <h3>The five things that had to be true at once</h3>
@@ -1613,9 +1613,15 @@ throughput need a real implementation run.</dd>
 utilisation / timing / power reports, parsed into
 <span class="mono">validation/results/vivado.csv</span>. Out-of-context because the cores have ~1,300
 parallel I/O bits, more than any package has pins.</dd>
-<dt>Result</dt><dd><span class="chip ok">SYNTHESIS DONE</span>
-<span class="chip gap">ROUTING PENDING</span> Synthesis completes and the post-synthesis numbers are
-in E9. A routed design &mdash; and therefore WNS, Fmax and power &mdash; does not exist yet.</dd>
+<dt>Result</dt><dd><span class="chip ok">ROUTED</span>
+<span class="chip gap">TIMING NOT MET AT 100&nbsp;MHz</span> <span class="mono">heston_aad_z7h</span> on
+<span class="mono">xc7z020clg400-1</span>, 10&nbsp;ns target: 36,499 LUT (68.6&nbsp;%), 28,559 FF,
+72 DSP, 4 BRAM. WNS <strong>&minus;2.639&nbsp;ns</strong> (8,172 of 64,408 endpoints fail; hold met),
+so <strong>Fmax &asymp; 79.1&nbsp;MHz</strong>. The critical path is 12.31&nbsp;ns, 29 logic levels of
+which 21 are CARRY4 &mdash; a 64-bit carry chain from <span class="mono">t_reg</span> into
+<span class="mono">cr2_inst/z_reg[63]</span>. At 79.1&nbsp;MHz one AAD evaluation (433,779 cycles)
+takes <strong>5.48&nbsp;ms</strong>. Vectorless power at the 100&nbsp;MHz constraint is 0.258&nbsp;W
+(0.153 dynamic, 0.105 static), so energy per evaluation is at most 1.41&nbsp;mJ.</dd>
 <dt>Three obstacles, in the order they appeared</dt><dd>
 <strong>1. Licence.</strong> Vivado ML <em>Enterprise</em> 2026.1 was installed with no licence, so
 the tool refused to launch at all. Resolved by reinstalling as <strong>ML Standard 2025.2</strong>
@@ -1640,10 +1646,9 @@ router that dies no longer discards 20 minutes of good placement.
 <span class="mono">impl_from_dcp.tcl</span> resumes from whichever checkpoint exists, and
 <span class="mono">run_native.bat</span> runs the whole flow straight from Windows with neither WSL
 nor an agent harness in the loop.</dd>
-<dt>Why it matters</dt><dd>It is the single largest gap in the paper. Latency in seconds = cycles /
-Fmax; energy per evaluation = power × latency. Without a routed design,
-<span class="mono">fig6_resources</span> and <span class="mono">fig7_energy_latency</span> cannot be
-produced, and every latency result stays in cycles rather than seconds.</dd>
+<dt>Why it matters</dt><dd>Latency in seconds = cycles / Fmax; energy per evaluation = power ×
+latency. These are now available at the measured Fmax. Closing 100&nbsp;MHz means pipelining the
+carry chains; otherwise quote the design at 79&nbsp;MHz.</dd>
 </dl>
 </div>
 
@@ -1661,9 +1666,10 @@ transactions down the JTAG cable, so the only thing under test is the datapath.
 sourceable Tcl (56 input words, 9 expected outputs), and
 <span class="mono">run_jtag.tcl</span> programs the device, replays it, polls done, and compares
 every output bit-exact against the emulator.</dd>
-<dt>Result</dt><dd><span class="chip gap">NOT RUN</span> Waits on a routed design (E13) &mdash;
-building a bitstream before WNS is known would mean debugging a board and a timing violation at the
-same time.</dd>
+<dt>Result</dt><dd><span class="chip gap">NOT RUN</span> The first <span class="mono">bd_jtag.tcl</span>
+build stopped before implementation on the same Tcl list-splitting bug as E13, this time in
+<span class="mono">add_files</span>; fixed. The board designs now clock the engine at 70&nbsp;MHz,
+below the measured 79&nbsp;MHz Fmax, so a bitstream is not debugged alongside a timing violation.</dd>
 <dt>Design note</dt><dd>The 19 host-setup constants are computed on the PC, not the ARM. The
 Zynq-7000 PS is 32-bit ARMv7 with no <span class="mono">__int128</span>, and these are 56-bit values
 whose products need 112 bits, so a C port needs a hand-written 64×64→128 multiply. Phase 2
@@ -1748,10 +1754,9 @@ to 48-bit words" discussion — was resting on a generic-mapping estimate that o
 <div class="tbl"><table>
 <thead><tr><th>Result</th><th>Needed for</th><th>Blocked on</th></tr></thead>
 <tbody>
-<tr><td>Fmax, WNS, timing closure</td><td>Latency in seconds; throughput</td><td>A completed route (E13)</td></tr>
-<tr><td>Power (vectorless, then SAIF)</td><td>Energy per Greek set; <span class="mono">fig7</span></td><td>A completed route (E13)</td></tr>
-<tr><td>Routed LUT/FF/DSP</td><td><span class="mono">fig6</span>; post-synthesis numbers are in §15.3</td><td>A completed route (E13)</td></tr>
-<tr><td>Bitstream, on-board measurement</td><td>A "running on hardware" claim</td><td>WNS first, then E14</td></tr>
+<tr><td>Timing closure at 100&nbsp;MHz</td><td>Quoting 100&nbsp;MHz rather than 79&nbsp;MHz</td><td>Pipelining the 64-bit carry chains (E13)</td></tr>
+<tr><td>Power from simulated activity (SAIF)</td><td>A defensible energy number; <span class="mono">fig7</span></td><td>A SAIF flow; vectorless is in E13</td></tr>
+<tr><td>Bitstream, on-board measurement</td><td>A "running on hardware" claim</td><td>Running <span class="mono">bd_jtag.tcl</span>, then E14</td></tr>
 <tr><td>Comparison to published FPGA-finance numbers</td><td>Positioning</td><td>Fmax; and verifying the Weiss citation</td></tr>
 </tbody></table></div>
 
@@ -1921,13 +1926,14 @@ bound" — which is defensible on its own terms regardless of who was first.</p>
 
 <h2 id="next"><span class="n">17</span>What has to happen next</h2>
 
-<h3>17.1 Finish the route</h3>
+<h3>17.1 The route (done) and how to rerun it</h3>
 
 <p>The licence obstacle is gone: the toolchain is now <strong>Vivado ML Standard 2025.2</strong> at
 <span class="mono">D:\2025.2\Vivado</span>, which is free and covers
 <span class="mono">xc7z020</span>. (<span class="mono">xczu7ev</span> for the 64-bit design still
-needs Enterprise, or a 30-day evaluation.) Synthesis completes; what remains is a route that
-survives to the end — see E13 for the three obstacles and what was done about each.</p>
+needs Enterprise, or a 30-day evaluation.) <span class="mono">heston_aad_z7h</span> has been routed
+on <span class="mono">xc7z020clg400-1</span>; results are in E13. See E13 also for the three obstacles
+on the way and what was done about each.</p>
 
 <p>The most reliable way to run it is natively, with neither WSL nor an agent harness in the
 loop:</p>
@@ -1952,19 +1958,20 @@ python ../../validation/make_figures.py  # adds fig6_resources, fig7_energy_late
 <h3>17.2 Then, in order</h3>
 
 <ol>
-<li><strong>Run <span class="mono">heston_aad_z7h</span> on <span class="mono">xc7z020clg400-1</span>
-at 10 ns.</strong> This is the highest-information action in the project: it either confirms the
-fits-a-7020 claim or kills it, and it produces the first real Fmax.</li>
+<li><strong>Build and test the ZedBoard JTAG design</strong>
+(<span class="mono">zedboard\run_board.bat build</span>, then <span class="mono">test</span>). The route
+confirmed the fits-a-7020 claim (Fmax &asymp; 79&nbsp;MHz); running on silicon is now the
+highest-information action.</li>
 <li><strong>Parse and plot.</strong> <span class="mono">fig6</span> and <span class="mono">fig7</span>
 are already wired and waiting on <span class="mono">vivado.csv</span>.</li>
-<li><strong>Branch on the outcome.</strong> If placement fails or timing misses, the documented
-fallbacks are sharing storage registers into SRLs, or dropping to 48-bit words (relative error ~1e-5,
-<span class="mono">check_accuracy.py 24</span>).</li>
+<li><strong>Decide on 100&nbsp;MHz.</strong> Placement fits; timing misses by 2.6&nbsp;ns on 64-bit
+carry chains. Either pipeline them, or quote the design at 79&nbsp;MHz. Dropping to 48-bit words
+(relative error ~1e-5, <span class="mono">check_accuracy.py 24</span>) would also shorten the chains.</li>
 <li><strong>Run the rest of the matrix</strong> — z7, zu, and the generation-1 tops — for the
 comparison table.</li>
 </ol>
 
-<h3>17.3 Board bring-up, once implementation is green</h3>
+<h3>17.3 Board bring-up</h3>
 
 <p>These are genuinely missing engineering, not just unrun scripts:</p>
 
@@ -2000,10 +2007,10 @@ finds them first.</p>
 <div class="tbl"><table>
 <thead><tr><th>Weakness</th><th>Status</th><th>Mitigation</th></tr></thead>
 <tbody>
-<tr><td>No Fmax, timing closure, power or energy — no route has completed</td><td><span class="chip gap">OPEN</span></td><td>§17.1, E13; synthesis works, routing keeps being killed</td></tr>
+<tr><td>Timing misses 100&nbsp;MHz by 2.6&nbsp;ns; Fmax &asymp; 79&nbsp;MHz</td><td><span class="chip gap">OPEN</span></td><td>E13. Pipeline the 64-bit carry chains, or quote 79&nbsp;MHz. Board designs run at 70&nbsp;MHz</td></tr>
 <tr><td>Area was quoted from Yosys estimates that overstated LUTs by 28&nbsp;% and DSPs by a third</td><td><span class="chip ok">FIXED</span></td><td>Measured: 70.9&nbsp;% LUT, 32.7&nbsp;% DSP (§15.3). Fallbacks not needed</td></tr>
-<tr><td>Nothing has run on a board</td><td><span class="chip gap">OPEN</span></td><td>Scripts all exist (§17.3, E14); waits on a routed design</td></tr>
-<tr><td>Routing reports congestion even at 71&nbsp;% LUT</td><td><span class="chip risk">WATCH</span></td><td>Observed once, mid-route. Wide buses and barrel shifters. May bound Fmax; unverified until a route completes</td></tr>
+<tr><td>Nothing has run on a board</td><td><span class="chip gap">OPEN</span></td><td>Scripts all exist and the route is done (§17.3, E14); build the JTAG bitstream next</td></tr>
+<tr><td>Routing reports congestion even at 71&nbsp;% LUT</td><td><span class="chip risk">WATCH</span></td><td>Observed once, mid-route. The completed route's critical path is 60&nbsp;% routing delay (7.37 of 12.31&nbsp;ns), consistent with it</td></tr>
 <tr><td>Verified input domain is bounded; outside it <span class="mono">range_err</span> fires</td><td><span class="chip risk">BY DESIGN</span></td><td>Must be stated as a limitation, not hidden</td></tr>
 <tr><td>Truncation range [a,b] held fixed when differentiating</td><td><span class="chip risk">CONVENTION</span></td><td>Standard COS practice; the software reference does the same</td></tr>
 <tr><td>Register sharing across values not implemented</td><td><span class="chip gap">OPEN</span></td><td>Largest remaining FF/LUT saving</td></tr>
