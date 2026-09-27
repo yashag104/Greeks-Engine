@@ -3,7 +3,7 @@
 #
 #   cd "Greek Engine/hardware/vivado/zedboard"
 #   PATH="../win:$PATH" vivado -mode batch -nojournal -log bd_jtag.log \
-#        -source bd_jtag.tcl
+#        -source bd_jtag.tcl [-tclargs <clk_mhz>]
 #
 # Block design: jtag_axi master -> smartconnect -> engine (AXI4-Lite).
 # No Zynq PS, no DDR, no MIO, no board file, no Vitis, no boot image. Vivado
@@ -15,7 +15,11 @@
 # self-contained system; do that once this passes.
 # ============================================================================
 set part     xc7z020clg484-1
-set clk_mhz  100
+# 70 MHz, not 100: the routed engine alone fails 100 MHz by 2.639 ns (critical
+# path 12.64 ns, a 64-bit carry chain into cr2_inst), i.e. Fmax ~79 MHz. 70 MHz
+# (14.29 ns) leaves ~1.6 ns for the different package and the added IP. For
+# bring-up only bit-exactness matters, and a rebuild costs hours.
+set clk_mhz  [expr {[llength $argv] > 0 ? [lindex $argv 0] : 70}]
 set core     heston_aad_z7h
 set wrapper  ${core}_lite
 set bd_name  heston_jtag
@@ -74,13 +78,19 @@ assign_bd_address
 validate_bd_design
 save_bd_design
 
-set base [get_property OFFSET [get_bd_addr_segs -of_objects [get_bd_intf_pins engine/s_axi]]]
+# The OFFSET lives on the segment in the master's address space; the engine's
+# own s_axi segment has none, which is why this used to print an empty string.
+set base [get_property OFFSET [lindex [get_bd_addr_segs -of_objects [get_bd_addr_spaces jtag_axi_0/Data]] 0]]
+if {$base eq ""} { puts "ERROR: could not read the engine base address"; exit 1 }
 puts "RESULT: engine base address = $base"
+# run_jtag.tcl reads this, so the address can't drift from the bitstream
+set fp [open "$here/base_addr.txt" w]; puts $fp $base; close $fp
 
-add_files -fileset constrs_1 -norecurse "$here/jtag.xdc"
+# File arguments go through [list ...]: a bare string is split on whitespace,
+# and this repository lives under "Greek Engine".
+add_files -fileset constrs_1 -norecurse [list "$here/jtag.xdc"]
 
-make_wrapper -files [get_files "$proj/heston_jtag.srcs/sources_1/bd/$bd_name/$bd_name.bd"] -top
-add_files -norecurse "$proj/heston_jtag.gen/sources_1/bd/$bd_name/hdl/${bd_name}_wrapper.v"
+add_files -norecurse [list [make_wrapper -files [get_files $bd_name.bd] -top]]
 set_property top ${bd_name}_wrapper [current_fileset]
 update_compile_order -fileset sources_1
 
@@ -93,5 +103,10 @@ if {[get_property PROGRESS [get_runs impl_1]] != "100%"} {
 open_run impl_1
 report_utilization    -file "$here/util_jtag.rpt"
 report_timing_summary -file "$here/timing_jtag.rpt"
-puts "RESULT: WNS = [get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]] ns at ${clk_mhz} MHz"
+set wns [get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]]
+puts "RESULT: WNS = $wns ns at ${clk_mhz} MHz"
+if {$wns < 0} {
+  puts "WARNING: timing FAILED. Board results from this bitstream can be wrong in ways"
+  puts "         that look like datapath bugs. Rebuild with a lower clock: -tclargs 60"
+}
 puts "RESULT: bitstream at $proj/heston_jtag.runs/impl_1/${bd_name}_wrapper.bit"

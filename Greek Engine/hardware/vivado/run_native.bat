@@ -16,10 +16,10 @@ if not exist "%VIVADO%" (
 
 if exist "%OUT%\post_synth.dcp" (
   echo Resuming implementation from checkpoint...
-  "%VIVADO%" -mode batch -nojournal -log "%OUT%\impl.log" -source impl_from_dcp.tcl -tclargs "%OUT%" 10.0
+  call "%VIVADO%" -mode batch -nojournal -log "%OUT%\impl.log" -source impl_from_dcp.tcl -tclargs "%OUT%" 10.0
 ) else (
   echo Running full synthesis + implementation...
-  "%VIVADO%" -mode batch -nojournal -log "%OUT%\vivado.log" -source synth_impl.tcl -tclargs heston_aad_z7h xc7z020clg400-1 10.0 "%OUT%"
+  call "%VIVADO%" -mode batch -nojournal -log "%OUT%\vivado.log" -source synth_impl.tcl -tclargs heston_aad_z7h xc7z020clg400-1 10.0 "%OUT%"
 )
 
 echo.
