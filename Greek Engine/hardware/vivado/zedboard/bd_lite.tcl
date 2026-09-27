@@ -3,7 +3,7 @@
 #
 #   cd "Greek Engine/hardware/vivado/zedboard"
 #   PATH="../win:$PATH" vivado -mode batch -nojournal -log bd_lite.log \
-#        -source bd_lite.tcl
+#        -source bd_lite.tcl [-tclargs <clk_mhz>]
 #
 # Produces:
 #   proj/heston_zed.runs/impl_1/heston_bd_wrapper.bit
@@ -22,7 +22,10 @@
 # is error-prone; this script refuses rather than guessing.
 # ============================================================================
 set part       xc7z020clg484-1
-set clk_mhz    100
+# 70 MHz, not 100: the routed engine fails 100 MHz by 2.639 ns (Fmax ~79 MHz);
+# see bd_jtag.tcl. The PS derives FCLK0 by integer division, so the frequency
+# it actually delivers is printed below and is the one timing is closed at.
+set clk_mhz    [expr {[llength $argv] > 0 ? [lindex $argv 0] : 70}]
 set core       heston_aad_z7h
 set wrapper    ${core}_lite
 set bd_name    heston_bd
@@ -61,6 +64,7 @@ set_property -dict [list \
   CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ $clk_mhz \
   CONFIG.PCW_EN_CLK0_PORT {1} \
 ] $ps
+puts "INFO: FCLK0 requested ${clk_mhz} MHz, actual [get_property CONFIG.PCW_ACT_FPGA0_PERIPHERAL_FREQMHZ $ps] MHz"
 
 # Our engine as an RTL module. Vivado infers the AXI4-Lite slave from the
 # s_axi_* port names and associates it with aclk/aresetn.
@@ -89,11 +93,14 @@ assign_bd_address
 validate_bd_design
 save_bd_design
 
-puts "INFO: engine base address: [get_property OFFSET [get_bd_addr_segs -of_objects [get_bd_intf_pins engine/s_axi]]]"
+# OFFSET lives on the segment in the master's address space, not on s_axi
+set base [get_property OFFSET [lindex [get_bd_addr_segs -of_objects [get_bd_addr_spaces ps7/Data]] 0]]
+puts "RESULT: engine base address = $base"
+set fp [open "$here/base_addr_ps.txt" w]; puts $fp $base; close $fp
 
 # ---- implement -------------------------------------------------------------
-make_wrapper -files [get_files "$proj/heston_zed.srcs/sources_1/bd/$bd_name/$bd_name.bd"] -top
-add_files -norecurse "$proj/heston_zed.gen/sources_1/bd/$bd_name/hdl/${bd_name}_wrapper.v"
+# [list ...]: a bare path string is split at the space in "Greek Engine"
+add_files -norecurse [list [make_wrapper -files [get_files $bd_name.bd] -top]]
 set_property top ${bd_name}_wrapper [current_fileset]
 update_compile_order -fileset sources_1
 
@@ -110,6 +117,7 @@ report_timing_summary -file "$here/timing_zed.rpt"
 report_power          -file "$here/power_zed.rpt"
 set wns [get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]]
 puts "RESULT: WNS = $wns ns at ${clk_mhz} MHz"
+if {$wns < 0} { puts "WARNING: timing FAILED; rebuild with a lower clock (-tclargs 60)" }
 
 write_hw_platform -fixed -include_bit -force -file "$here/heston_zed.xsa"
 puts "RESULT: bitstream + XSA written"

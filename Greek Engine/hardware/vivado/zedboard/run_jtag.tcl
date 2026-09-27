@@ -6,16 +6,21 @@
 #   PATH="../win:$PATH" vivado -mode batch -nojournal -log run_jtag.log \
 #        -source run_jtag.tcl -tclargs [<base_addr_hex>] [<bitfile>]
 #
-# <base_addr_hex> defaults to the address bd_jtag.tcl printed (0x44A00000 is
-# what assign_bd_address usually picks for a single jtag_axi slave). If the
-# reads all come back 0xffffffff or the script reports a decode error, this is
-# the first thing to check -- bd_jtag.tcl prints "engine base address = ...".
+# <base_addr_hex> defaults to what bd_jtag.tcl wrote to base_addr.txt (the
+# 2025.2 build assigned 0x00000000). If the reads all come back 0xffffffff or
+# the script reports a decode error, this is the first thing to check.
 #
 # Prerequisites: board powered, JTAG (USB) connected, JP7-JP11 set to JTAG
 # boot, and bd_jtag.tcl already run to produce the bitstream.
 # ============================================================================
 set here [file dirname [file normalize [info script]]]
-set base [expr {[llength $argv] > 0 ? [lindex $argv 0] : 0x44A00000}]
+if {[llength $argv] > 0} {
+  set base [lindex $argv 0]
+} elseif {[file exists "$here/base_addr.txt"]} {
+  set fp [open "$here/base_addr.txt"]; set base [string trim [read $fp]]; close $fp
+} else {
+  puts "ERROR: no base address given and no base_addr.txt; run bd_jtag.tcl first"; exit 1
+}
 set bit  [expr {[llength $argv] > 1 ? [lindex $argv 1] \
                 : "$here/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper.bit"}]
 set vec  "$here/../../gen/build/heston_aad_z7h_lite_vector.tcl"
