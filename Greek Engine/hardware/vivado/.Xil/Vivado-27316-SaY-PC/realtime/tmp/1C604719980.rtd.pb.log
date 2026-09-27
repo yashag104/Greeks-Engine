@@ -1,0 +1,4 @@
+xilinx rtfpga
+rt::do_reinfer_area_combined 1
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v573_reg[20] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v573_reg[20] )

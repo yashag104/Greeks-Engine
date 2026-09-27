@@ -1,0 +1,59 @@
+xilinx rtfpga
+rt::do_reinfer_area_combined 1
+WARNING: [Synth 8-3936] Found unconnected internal register 'v866_s8_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3180]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v866_s7_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3179]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v866_s6_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3178]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v866_s5_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3177]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v866_s4_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3176]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v866_s3_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3175]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v866_s2_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3174]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v866_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3173]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v866_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2333]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v834_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1467]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v833_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2311]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v402_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2117]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v350_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2082]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v844_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1483]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v528_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1303]
+INFO: [Synth 8-3886] merging instance 'v833_reg[15]' (FDE) to 'v833_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v833_reg[14]' (FDE) to 'v833_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v833_reg[13]' (FDE) to 'v833_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v833_reg[12]' (FDE) to 'v833_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v833_reg[11]' (FDE) to 'v833_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v833_reg[10]' (FDE) to 'v833_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v833_reg[9]' (FDE) to 'v833_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v833_reg[8]' (FDE) to 'v833_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v528_reg[15]' (FDE) to 'v528_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v528_reg[7]' (FDE) to 'v528_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v528_reg[8]' (FDE) to 'v528_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v528_reg[9]' (FDE) to 'v528_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v528_reg[10]' (FDE) to 'v528_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v528_reg[11]' (FDE) to 'v528_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v528_reg[12]' (FDE) to 'v528_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v528_reg[13]' (FDE) to 'v528_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v402_reg[15]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v402_reg[14]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v402_reg[13]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v402_reg[12]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v402_reg[11]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v402_reg[10]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v402_reg[9]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v402_reg[8]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v350_reg[15]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v350_reg[14]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v350_reg[13]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v350_reg[12]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v350_reg[11]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v350_reg[10]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v350_reg[9]' (FDE) to 'v350_reg[8]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v350_reg[8] )
+INFO: [Synth 8-3886] merging instance 'v844_reg[7]' (FDE) to 'v844_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v844_reg[8]' (FDE) to 'v844_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v844_reg[9]' (FDE) to 'v844_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v844_reg[10]' (FDE) to 'v844_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v844_reg[11]' (FDE) to 'v844_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v844_reg[12]' (FDE) to 'v844_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v844_reg[13]' (FDE) to 'v844_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v844_reg[14]' (FDE) to 'v844_reg[15]'
+INFO: [Synth 8-3886] merging instance 'v831_reg[6]' (FDE) to 'v831_reg[5]'
+INFO: [Synth 8-3886] merging instance 'v527_reg[5]' (FDE) to 'v527_reg[6]'
