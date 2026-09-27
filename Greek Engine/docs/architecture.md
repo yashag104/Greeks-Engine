@@ -143,25 +143,47 @@ sharing storage registers into SRLs, or 48-bit words (`check_accuracy.py 24`) �
 not needed. Use the Yosys figures only to rank configurations against each other, not
 as an area result.
 
-Routed utilization, Fmax, timing closure and power still need a completed route (§5).
+### 4.5 Routed (Vivado 2025.2, xc7z020clg400-1, 10 ns target, out of context)
+
+| resource | routed | available | % |
+|---|---|---|---|
+| LUT | 36,499 | 53,200 | 68.6 % |
+| of which shift-register LUTs | 1,401 | 17,400 | 8.1 % |
+| FF | 28,559 | 106,400 | 26.8 % |
+| DSP48E1 | 72 | 220 | 32.7 % |
+| BRAM tile | 4 | 140 | 2.9 % |
+
+| timing / power | value |
+|---|---|
+| WNS at 100 MHz | **−2.639 ns** (8,172 of 64,408 endpoints fail); WHS +0.037 ns |
+| Critical path | 12.31 ns, 29 levels (21 CARRY4), `t_reg[16]` → `cr2_inst/z_reg[63]` |
+| Fmax | ≈ 79.1 MHz (1 / (10 + 2.639) ns) |
+| AAD latency | 433,779 cycles / 79.1 MHz ≈ **5.48 ms** |
+| Power (vectorless, 12.5 % toggle, at the 100 MHz constraint) | 0.258 W (0.153 dynamic + 0.105 static) |
+| Energy per evaluation | ≤ 1.41 mJ (0.258 W × 5.48 ms; an upper bound, since power was estimated at 100 MHz) |
+
+The design fits and routes but does not close at 100 MHz. The failing paths are 64-bit
+carry chains; pipelining them, or running at ≤ 79 MHz, are the options. The ZedBoard
+bring-up designs run the engine at 70 MHz for margin.
 
 ## 5. Limitations and open items
 
-- **No routed design yet**: Fmax, timing closure, power and energy are open.
-  Latency in seconds = cycles / Fmax. Synthesis completes (§4.4); routing has not yet
-  survived to the end. Three obstacles so far: Vivado ML Enterprise refused to launch
-  without a licence (resolved by moving to ML Standard 2025.2); `read_verilog`,
-  `read_xdc` and `-include_dirs` take Tcl *lists*, so the space in the repository path
-  tore every filename in two (fixed by wrapping in `[list ...]`); and two runs were
-  killed mid-flow with no error message, most likely memory pressure. The flow now
+- **Timing does not close at 100 MHz** (§4.5): WNS −2.639 ns, Fmax ≈ 79 MHz. Routing
+  was reached after three obstacles: Vivado ML Enterprise refused to launch without a
+  licence (resolved by moving to ML Standard 2025.2); `read_verilog`, `read_xdc` and
+  `-include_dirs` take Tcl *lists*, so the space in the repository path tore every
+  filename in two (fixed by wrapping in `[list ...]`); and two runs were killed
+  mid-flow with no error message, most likely memory pressure (the flow now
   checkpoints after placement, `impl_from_dcp.tcl` resumes from a checkpoint, and
-  `run_native.bat` runs the flow outside WSL.
+  `run_native.bat` runs the flow outside WSL). Power is vectorless; activity-based
+  (SAIF) power is still open.
 - **Nothing has run on a board yet.** The AXI4-Stream wrappers are up to 1,624 bits
   wide, which no Zynq PS-PL port can carry; `wrappers.py lite` now generates an
   AXI4-Lite register file instead (bit-exact, in `verify_all.sh`), and
   `hardware/vivado/zedboard/` holds a JTAG-to-AXI bring-up design, a PS design, and a
-  scripted board test that compares every output bit-exact against the emulator. All
-  of it waits on a routed design.
+  scripted board test that compares every output bit-exact against the emulator. The
+  first JTAG build stopped on the same Tcl list-splitting bug in `add_files`, now
+  fixed; the bitstream has not been built yet.
 - **Verified input domain**: S0 = 100, K ∈ [60, 150], T ∈ [0.1, 3],
   r ∈ [0, 0.1], v0, θ ∈ [0.005, 0.25], κ ∈ [0.2, 6], ξ ∈ [0.1, 1], ρ ∈ [−0.95, 0.6].
   Outside it, `range_err` reports rather than silently returning wrong values.
