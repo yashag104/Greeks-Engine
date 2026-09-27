@@ -1,0 +1,154 @@
+xilinx rtfpga
+rt::do_reinfer_area_combined 1
+WARNING: [Synth 8-3936] Found unconnected internal register 'v572_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1329]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v604_s5_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3058]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v604_s4_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3057]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v604_s3_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3056]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v604_s2_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3055]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v604_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3054]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v604_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2223]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v571_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2201]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v390_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1198]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v422_s8_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2949]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v422_s7_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2948]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v422_s6_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2947]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v422_s5_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2946]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v422_s4_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2945]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v422_s3_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2944]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v422_s2_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2943]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v422_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2942]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v422_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2128]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v389_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2106]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v287_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2046]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v304_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2826]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v285_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1119]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v893_s5_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1535]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v893_s4_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3186]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v893_s3_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1525]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v893_s2_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:3184]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v370_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2883]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v370_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2089]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v367_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2881]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v367_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2088]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v893_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1510]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v893_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1515]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v400_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1214]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v582_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1345]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v348_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1167]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v366_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2087]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v453_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2139]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v456_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1248]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v516_s5_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2998]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v516_s4_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2997]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v516_s3_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2996]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v516_s2_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2995]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v516_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2994]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v516_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2176]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v484_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1266]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v483_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:2154]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v494_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_aad_z7h.v:1282]
+INFO: [Synth 8-3886] merging instance 'v347_reg[55]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[54]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[53]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[52]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[51]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[50]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[49]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[48]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[47]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[46]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[45]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[44]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[43]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[42]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[41]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[40]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[39]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[38]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[37]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[36]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[35]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[34]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[33]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[32]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[31]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[30]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[29]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[28]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[27]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[26]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[25]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[24]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[23]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[22]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[21]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[20]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[19]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[18]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[17]' (FDE) to 'v347_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[16]' (FDE) to 'v347_reg[15]'
+INFO: [Synth 8-3886] merging instance 'v366_reg[15]' (FDE) to 'v366_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v571_reg[15]' (FDE) to 'v571_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v571_reg[14]' (FDE) to 'v571_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v571_reg[13]' (FDE) to 'v571_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v571_reg[12]' (FDE) to 'v571_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v571_reg[11]' (FDE) to 'v571_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v571_reg[10]' (FDE) to 'v571_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v571_reg[9]' (FDE) to 'v571_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v571_reg[8]' (FDE) to 'v571_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v483_reg[15]' (FDE) to 'v483_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v483_reg[14]' (FDE) to 'v483_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v483_reg[13]' (FDE) to 'v483_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v483_reg[12]' (FDE) to 'v483_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v483_reg[11]' (FDE) to 'v483_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v483_reg[10]' (FDE) to 'v483_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v483_reg[9]' (FDE) to 'v483_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v483_reg[8]' (FDE) to 'v483_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v389_reg[15]' (FDE) to 'v389_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v389_reg[14]' (FDE) to 'v389_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v389_reg[13]' (FDE) to 'v389_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v389_reg[12]' (FDE) to 'v389_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v389_reg[11]' (FDE) to 'v389_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v389_reg[10]' (FDE) to 'v389_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v389_reg[9]' (FDE) to 'v389_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v389_reg[8]' (FDE) to 'v389_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[15]' (FDE) to 'v347_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v366_reg[14]' (FDE) to 'v366_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[14]' (FDE) to 'v347_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v366_reg[13]' (FDE) to 'v366_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[13]' (FDE) to 'v347_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v366_reg[12]' (FDE) to 'v366_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[12]' (FDE) to 'v347_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v366_reg[11]' (FDE) to 'v366_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[11]' (FDE) to 'v347_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v366_reg[10]' (FDE) to 'v366_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[10]' (FDE) to 'v347_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v366_reg[9]' (FDE) to 'v366_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[9]' (FDE) to 'v347_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v366_reg[8]' (FDE) to 'v366_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[8]' (FDE) to 'v347_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v366_reg[7]' (FDE) to 'v366_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v347_reg[7]' (FDE) to 'v347_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v366_reg[6]' (FDE) to 'v366_reg[5]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v347_reg[0] )
+INFO: [Synth 8-3886] merging instance 'v453_reg[15]' (FDE) to 'v453_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v453_reg[14]' (FDE) to 'v453_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v453_reg[13]' (FDE) to 'v453_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v453_reg[12]' (FDE) to 'v453_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v453_reg[11]' (FDE) to 'v453_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v453_reg[10]' (FDE) to 'v453_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v453_reg[9]' (FDE) to 'v453_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v453_reg[8]' (FDE) to 'v453_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v453_reg[7]' (FDE) to 'v453_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v453_reg[6]' (FDE) to 'v453_reg[5]'
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v453_reg[5] )
+INFO: [Synth 8-3886] merging instance 'v285_reg[15]' (FDE) to 'v285_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v304_s1_reg[15]' (FDE) to 'v304_s1_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v285_reg[7]' (FDE) to 'v285_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v304_s1_reg[7]' (FDE) to 'v304_s1_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v285_reg[8]' (FDE) to 'v285_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v304_s1_reg[8]' (FDE) to 'v304_s1_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v285_reg[9]' (FDE) to 'v285_reg[10]'
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v287_reg[8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v348_reg[0] )
