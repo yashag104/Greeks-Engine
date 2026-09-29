@@ -1,155 +1,172 @@
-# Literature Review — Positioning the Greeks Engine Project
+# Literature Review: Positioning the Greeks Engine
 
-## 1. The Gap This Project Fills
+Rewritten 29 September 2026 after a full novelty check. Every entry below was
+opened and checked; `docs/novelty_assessment.md` records what was searched, what
+each source contains, and six corrections to the previous version of this file.
 
-The existing literature sits in two camps that have never been combined:
+## 1. The gap
 
-| Camp | Key Papers | What They Do | What They Don't Do |
-|------|-----------|-------------|-------------------|
-| **AAD in software** | Capriotti (2011), Smoking Adjoints (Giles & Glasserman, 2006), Savickas (2014) | Efficient Greeks computation via AAD on CPUs/GPUs | Not on FPGAs — limited by CPU throughput |
-| **FPGA-accelerated finance** | Klaisoongnoen et al. (HEART 2022; streaming follow-up, arXiv:2212.13977), De Schryver et al. (2015), Weiss et al. (unverified, see 2.5) | Hardware-accelerated pricing and/or bump-and-reprice Greeks | Don't use AAD — multiply latency by $n$ for $n$ Greeks |
+Three bodies of work exist, and no published work was found that joins them:
 
-**Our novelty**: AAD's reverse-mode differentiation implemented as a pipelined hardware engine on FPGA. One backward pass computes ALL Greeks, in hardware.
+| Area | Representative work | What it lacks for this project |
+|---|---|---|
+| **AAD for Greeks, in software** | Giles & Glasserman 2006; Capriotti 2011; Savine 2018; Capriotti & Giles 2024 (review) | Runs on CPUs and GPUs; no FPGA or custom datapath |
+| **Greeks and Heston pricing on FPGAs** | Klaisoongnoen et al. 2022; AMD Vitis Quantitative Finance Library; De Schryver et al. 2011 | Greeks by re-running the pricer, or no stated method; no adjoints; no COS method |
+| **AD for hardware precision analysis** | Linnainmaa 1976; Gaffar et al. 2002 | Analyses a design's rounding; does not build a datapath that computes adjoints |
 
----
+**This project:** adjoint AD for option Greeks as a statically scheduled
+fixed-point FPGA datapath, for a COS (Fourier-cosine) Heston pricer, with a
+per-Greek error bound, verified bit-exact on a Zynq-7020. To our knowledge it is
+the first FPGA implementation of AAD for option Greeks and the first FPGA
+implementation of the COS method. The individual techniques are established; the
+contribution is their combination, realised and measured.
 
-## 2. Paper-by-Paper Review
+## 2. AAD for Greeks (software)
 
-### 2.1 "Smoking Adjoints" — Giles & Glasserman (2006)
+**Giles & Glasserman, "Smoking adjoints: fast Monte Carlo Greeks", Risk, 2006.**
+Adjoint pathwise sensitivities in Monte Carlo: all Greeks at a small constant
+multiple of one pricing. The theoretical case for AAD over bumping.
 
-**What it does**: Foundational paper connecting the adjoint (reverse-mode) approach to computing Greeks in Monte Carlo simulations. Shows that pathwise sensitivities computed via adjoint methods achieve the same accuracy as forward-mode but at $O(1)$ cost per path (independent of the number of Greeks).
+**Capriotti, "Fast Greeks by algorithmic differentiation", Journal of
+Computational Finance 14(3):3–35, 2011.** AD applied to the pathwise Monte Carlo
+method, giving Greeks at machine precision. The standard software reference; the
+3–5× cost of software AAD that this project compares against.
 
-**Key contribution**: Proved that adjoint methods are optimal for computing Greeks when the number of risk factors exceeds the number of output prices — which is virtually always the case in practice.
+**Savickas et al., "Super fast Greeks: an application to counterparty valuation
+adjustments", 2014.** AAD for XVA, where the number of sensitivities is large.
 
-**Relevance to us**: Theoretical foundation for why AAD is the right approach. Our work extends this from software Monte Carlo to a deterministic (COS-based) hardware pipeline.
+**Geeraert, Lehalle, Pearlmutter, Pironneau, Reghai, "Mini-symposium on automatic
+differentiation and its applications in the financial industry", arXiv:1703.02311,
+2017.** Overview of AAD use cases in finance.
 
----
+**Savine, "Modern Computational Finance: AAD and Parallel Simulations", Wiley,
+2018.** Production AAD (tape, memory management, parallel simulation) from Danske
+Bank practice. The reference for how software AAD records and replays a tape,
+which this design removes.
 
-### 2.2 Capriotti (2011) — "Fast Greeks by Algorithmic Differentiation"
+**Capriotti & Giles, "15 Years of Adjoint Algorithmic Differentiation in
+Finance", 2024.** The field's review. It mentions FPGAs once, as an environment
+pricing code may run in, and cites no FPGA or hardware AAD implementation and no
+COS or Fourier AAD.
 
-**What it does**: Demonstrates AAD applied to the full pricing pipeline of interest rate derivatives, achieving speedups of 10-100x over bump-and-reprice in software.
+**Capriotti, US patent 9,058,449 (Credit Suisse; priority 2007, granted 2015).**
+A "simulating machine" of adjoint payout and adjoint sample units for Monte Carlo
+Greeks, described as hardware and software components with processors and memory.
+No FPGA, ASIC or circuits; no Fourier methods. Cite it, and do not phrase the
+contribution as an adjoint-computing apparatus in general.
 
-**Key contribution**: Showed that AAD's constant overhead factor (typically 3-5x the cost of one pricing) is far better than the $O(n)$ factor for bump-and-reprice when $n$ is large.
+**Cui, del Baño Rollin, Germano, "Full and fast calibration of the Heston
+stochastic volatility model", EJOR 263(2), 2017.** An analytic gradient of the
+Heston Fourier price with respect to the model parameters, about 10× faster than a
+numerical gradient. The expected reviewer question ("why AAD, when the Heston
+gradient is known?") is answered in `novelty_assessment.md` §6.
 
-**Relevance to us**: This paper's software implementation is what we're translating to hardware. Our tape schema is directly inspired by the operation-by-operation recording approach Capriotti describes.
+**Gremse et al., "GPU-accelerated adjoint algorithmic differentiation", Computer
+Physics Communications, 2016.** AAD on GPUs (general purpose). Hardware-accelerated
+AAD exists on GPUs; the claim here is specifically FPGA and a static datapath.
 
----
+**Arsaguet & Bilokon, "Derivatives sensitivities computation under Heston model on
+GPU", arXiv:2309.10477, 2023.** Heston Greeks by Monte Carlo on GPU.
 
-### 2.3 Geeraert et al. — AAD for XVA and CVA
+## 3. Greeks and Heston pricing on FPGAs
 
-**What it does**: Applies AAD to XVA (credit/funding/margin valuation adjustments), where the number of sensitivities can be in the thousands. Shows that AAD makes otherwise intractable risk calculations feasible.
+**Klaisoongnoen, Brown, Thomson Brown, "Low-power option Greeks: efficiency-driven
+market risk analysis using FPGAs", HEART 2022 (doi:10.1145/3535044.3535059,
+arXiv:2206.03719); and "Fast and energy-efficient derivatives risk analysis:
+streaming option Greeks on Xilinx and Intel FPGAs", H2RC 2022
+(arXiv:2212.13977).** The STAC-A2 workload (Heston Monte Carlo with
+Longstaff–Schwartz, multi-asset, early exercise) on Alveo U280 and Intel FPGAs,
+focused on energy efficiency, with numerical precision explored by measurement.
+Neither paper mentions adjoints or AD. The closest FPGA Greeks work, and the right
+reference for energy-per-Greek methodology; not a latency baseline, since Monte
+Carlo with early exercise is a different and far costlier problem than European
+COS pricing.
 
-**Key contribution**: Demonstrates the practical scalability of AAD — the more Greeks you need, the bigger the advantage over alternatives.
+**Klaisoongnoen et al., "Evaluating Versal AI Engines for option price discovery
+in market risk analysis", FPGA 2024 (arXiv:2402.12111).** The same group on
+Versal AI Engines.
 
-**Relevance to us**: Motivates the hardware acceleration angle — if AAD is already the best software approach but still bottlenecks on throughput, hardware acceleration is the logical next step.
+**AMD/Xilinx Vitis Quantitative Finance Library.** `MCEuropeanHestonGreeksEngine`
+computes Heston Greeks by central finite differences, re-running the Monte Carlo
+engine once per bumped parameter (read from the source). `hcfEngine` prices the
+Heston closed form by trapezoidal Fourier integration in float or double, price
+only. The industrial baseline: FPGA Heston Greeks exist, by bumping.
 
----
+**De Schryver et al., "An energy efficient FPGA accelerator for Monte Carlo option
+pricing with the Heston model", ReConFig 2011; De Schryver (ed.), "FPGA Based
+Accelerators for Financial Applications", Springer, 2015.** Heston Monte Carlo
+pricing on FPGA, and the standard book on the area.
 
-### 2.4 Danske Bank / CompatibL Slides — Production AAD Systems
+**Tse, Thomas, Luk, "Design exploration of quadrature methods in option pricing"
+(and related work on reduced precision).** Quadrature pricing on FPGA and GPU; the
+nearest FPGA relative of Fourier pricing.
 
-**What it does**: Industry presentations showing AAD deployed in production risk engines at scale. Demonstrates real-world speedups and implementation patterns.
+**Pham, Aung, Kumar, "Automatic framework to generate reconfigurable accelerators
+for option pricing applications", ReConFig 2016.** A generator of FPGA pricing
+accelerators across models. No Greeks, adjoints or Fourier methods. Relevant to the
+"generator" part of this project, which should therefore be presented as a
+contribution of the tool, not as new in itself.
 
-**Key contribution**: Validates that AAD is not just academic — it's used in production. But even in production, throughput is limited by CPU speed.
+**Diamantopoulos, Polig, Ringlein, Purandare, Weiss, Hagleitner, Lantz, Abel,
+"Acceleration-as-a-µService: a cloud-native Monte-Carlo option pricing engine on
+CPUs, GPUs and disaggregated FPGAs", IEEE CLOUD 2021.** Pricing only. (The earlier
+"Weiss et al. 2016" entry referred to no real paper; this is the only matching
+author in the field.)
 
-**Relevance to us**: Our FPGA implementation addresses the throughput bottleneck these production systems face.
+**O Mahony, Hanzon, Popovici, "The role of FPGAs in modern option pricing
+techniques: a survey", Electronics 13(16):3186, 2024.** 99 studies. Its text never
+mentions automatic differentiation, adjoints, Fourier, FFT or COS methods, and it
+cites one Greeks paper (Klaisoongnoen). It does not name AAD on FPGA as an open
+problem; its silence supports the gap.
 
----
+## 4. Fourier and COS pricing on accelerators
 
-### 2.5 Weiss et al. (2016) — "FPGA Pricing of Heston Model"  ⚠️ citation not verified
+**Fang & Oosterlee, "A novel pricing method for European options based on
+Fourier-cosine series expansions", SIAM J. Sci. Comput., 2008.** The COS method.
 
-> **Verify before citing.** A search (Sept 2026) did not locate a paper matching
-> this title/year. Find the actual publication (authors, venue, what it
-> implements) or remove this entry; do not use it as a benchmark number.
+**Zhang & Oosterlee, "Option pricing with COS method on graphics processing
+units", IEEE IPDPS workshops, 2009.** COS pricing on GPU, price only. No FPGA
+implementation of the COS method was found.
 
-**Claimed content (unverified)**: Heston pricing on FPGA, possibly via a Fourier
-method, in fixed point, pricing only (no Greeks).
+## 5. AD and precision analysis
 
----
+**Linnainmaa, "Taylor expansion of the accumulated rounding error", BIT 16:146–160,
+1976 (master's thesis 1970).** Reverse-mode differentiation was introduced to
+compute how local rounding errors accumulate. The error bound in this project
+(`docs/precision_bound.md`) is this method applied to a fixed-point AAD datapath.
 
-### 2.6 Klaisoongnoen, Brown & Thomson Brown (2022) — "Low-power option Greeks: Efficiency-driven market risk analysis using FPGAs"
+**Gaffar, Mencer, Luk, Cheung, Shirazi, "Floating-point bitwidth analysis via
+automatic differentiation", FPT 2002; and "Unifying bit-width optimisation for
+fixed-point and floating-point designs", FCCM 2004.** AD-based sensitivity analysis
+to choose FPGA word lengths. The closest hardware prior art for the error bound;
+this project's addition is bounding the Greeks produced by a datapath that itself
+performs the adjoint, validated against bit-exact RTL.
 
-**Venue**: HEART 2022 (ACM), doi:10.1145/3535044.3535059; arXiv:2206.03719.
-Follow-up: "Fast and energy-efficient derivatives risk analysis: Streaming option
-Greeks on Xilinx and Intel FPGAs", arXiv:2212.13977.
+## 6. Hardware reverse mode outside finance
 
-> **Correction:** an earlier version of this document cited this work as
-> "Klaisoongnoen et al. (2019) — FPGA-based Greeks for Heston" and described it
-> as a Heston-COS bump-and-reprice engine. It is neither 2019 nor COS-based.
+Every neural-network training accelerator executes backpropagation, the reverse
+mode of AD, on a fixed graph with no tape. The paper must acknowledge this and
+cite a representative FPGA training accelerator. What differs here is the graph (a
+fixed-point, complex-valued, transcendental-heavy pricing computation), the
+guaranteed per-output error bound, and the workload's alternative
+(bump-and-reprice).
 
-**What it does**: Ports the STAC-A2 market-risk benchmark — **Monte Carlo** Heston
-paths with Longstaff–Schwartz path reduction — to a Xilinx Alveo U280, with a
-focus on energy efficiency; the follow-up streams the Greeks workload on Xilinx
-and Intel FPGAs. Greeks come from finite differences (re-simulation), as STAC-A2
-specifies.
+## 7. Positioning
 
-**Relevance to us**: The closest FPGA work on Heston Greeks and the right
-reference for *energy-efficiency* framing. **Not** an apples-to-apples latency
-baseline: Monte Carlo + LSM (American-style, path-based) solves a different and
-far more expensive problem than European COS pricing, so a raw latency
-comparison would mostly measure COS vs Monte Carlo, not AAD vs bump. The fair
-AAD-vs-bump comparison is on the *same* pricing core (this project's
-`heston_bump_top.v` vs `heston_top_level.v`); cite Klaisoongnoen et al. for
-context and for energy-per-Greek methodology.
+| Work | Model / method | Platform | Greeks by |
+|---|---|---|---|
+| Giles & Glasserman 2006; Capriotti 2011 | Monte Carlo | CPU | Adjoint / AD |
+| Gremse et al. 2016 | General | GPU | AAD |
+| Cui et al. 2017 | Heston, Fourier | CPU | Hand-derived analytic gradient |
+| Klaisoongnoen et al. 2022 | Heston Monte Carlo + LSM (STAC-A2) | FPGA | Not adjoint (method not stated) |
+| AMD Vitis library | Heston Monte Carlo; Heston Fourier (price only) | FPGA | Finite differences |
+| Zhang & Oosterlee 2009 | COS | GPU | None (price only) |
+| Gaffar et al. 2002 | DFT, FIR (precision analysis) | FPGA | AD for bit widths |
+| **This project** | **Heston, COS** | **FPGA (Zynq-7020, on silicon)** | **AAD, static datapath, per-Greek bound** |
 
----
+## 8. Venues
 
-### 2.7 De Schryver et al. (2015) — "FPGA Acceleration of Monte Carlo"
-
-**What it does**: Surveys FPGA acceleration techniques for Monte Carlo simulation in finance, including random number generation, path generation, and payoff evaluation.
-
-**Relevance to us**: Background context. Our COS-based approach avoids Monte Carlo entirely, which sidesteps the RNG hardware problem but limits us to models with known characteristic functions.
-
----
-
-### 2.8 The 2024 FPGA Survey — "FPGA Acceleration in Computational Finance"
-
-**What it does**: Comprehensive survey of FPGA applications in finance, covering pricing, risk, and Greeks computation. Identifies open problems and future directions.
-
-**Key observation**: The survey identifies AAD on FPGA as an **open research direction** — it's mentioned as a potential future approach but no existing implementation is cited.
-
-**Relevance to us**: Directly positions our work as filling a gap identified by the community.
-
----
-
-### 2.9 February 2026 Paper — "AAD vs. Finite Differences on FPGA"
-
-**What it does**: Theoretical comparison of AAD and finite-difference (bump-and-reprice) approaches for FPGA implementation. Analyzes computational complexity, memory requirements, and expected speedups.
-
-**Key contribution**: Provides the theoretical framework for why AAD should be more efficient than bump-and-reprice on FPGA, along with estimates of expected hardware resource usage.
-
-**Relevance to us**: Our work is the **empirical validation** of this paper's theoretical predictions.
-
----
-
-## 3. Positioning Matrix
-
-| Paper | Pricing Model | Platform | Greeks Method | Our Relationship |
-|-------|--------------|----------|---------------|-----------------|
-| Giles & Glasserman (2006) | General MC | Theory | Adjoint (theory) | Theoretical foundation |
-| Capriotti (2011) | IR derivatives | CPU | AAD (software) | Software precursor |
-| Geeraert et al. | XVA/CVA | CPU | AAD (software) | Motivation for scale |
-| Weiss et al. (2016) ⚠️ unverified | Heston (method unverified) | FPGA | None (pricing only) | Verify or drop |
-| Klaisoongnoen et al. (2022) | Heston Monte Carlo + LSM (STAC-A2) | FPGA (Alveo U280) | Finite differences | Closest FPGA Greeks work; energy framing, not a latency baseline |
-| 2024 Survey | Various | FPGA | Survey | Identifies our gap |
-| Feb 2026 paper | General | Theory/FPGA | AAD vs. FD analysis | Theoretical validation |
-| **This project** | **Heston-COS** | **FPGA** | **AAD (hardware)** | **Fills the gap** |
-
----
-
-## 4. Our Specific Contribution
-
-> First hardware implementation of Algorithmic Adjoint Differentiation for option Greeks computation. Using the Heston stochastic volatility model with COS method pricing, we implement a pipelined AAD engine that computes all Greeks in a single backward pass, achieving $O(1)$ scaling with the number of Greeks versus $O(n)$ for existing FPGA-based bump-and-reprice approaches.
-
-### What makes this publishable:
-1. **Novel combination**: AAD + FPGA has never been done
-2. **Clear advantage**: $O(1)$ vs $O(n)$ Greeks scaling
-3. **Practical model**: Heston is industry-standard
-4. **Rigorous validation**: fixed-point error analysis + head-to-head comparison
-5. **Identified gap**: Community has explicitly flagged this as missing work
-
-### Appropriate venues:
-- **H2RC** (Workshop on Heterogeneous High-performance Reconfigurable Computing)
-- **ReConFig** (International Conference on Reconfigurable Computing)
-- **HEART** (International Symposium on Highly Efficient Accelerators and Reconfigurable Technologies)
-- **IEEE TCAD** / **IEEE TVLSI** (journals, if results are strong)
-- **Risk.net** / **Wilmott** (if targeting finance practitioners)
+FPGA-focused: FPT, FPL, FCCM, the ACM/SIGDA FPGA symposium, ReConFig, HEART, and
+the H2RC workshop (where the closest FPGA Greeks work appeared). Journals: IEEE
+TVLSI, ACM TRETS. Finance-practitioner outlets (Journal of Computational Finance)
+only with a CPU comparison.

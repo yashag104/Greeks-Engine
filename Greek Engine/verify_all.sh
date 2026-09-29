@@ -76,8 +76,8 @@ ZU="--wl 64 --fl 32 --mults 32 --crot 1 --cvec 1 --pipe-cordic"
 ( "$PY" gen_tb.py $ZU --price-only --name zu_pricer > "$LOG/gen_zu_price.log" 2>&1 ) &
 ( "$PY" gen_tb.py $Z7 --host-setup --name heston_aad_z7h > "$LOG/gen_z7h.log" 2>&1 ) &
 wait
-record "generated AAD, Zynq-7020 config: bit-exact, 4731 cycles" "$LOG/gen_z7.log" "PASS: RTL matches"
-record "generated AAD, 64-bit config: bit-exact, 1599 cycles" "$LOG/gen_zu.log" "PASS: RTL matches"
+record "generated AAD, Zynq-7020 config: bit-exact, 4733 cycles" "$LOG/gen_z7.log" "PASS: RTL matches"
+record "generated AAD, 64-bit config: bit-exact, 1593 cycles" "$LOG/gen_zu.log" "PASS: RTL matches"
 record "generated price-only pricer, Zynq-7020 config" "$LOG/gen_z7_price.log" "PASS: RTL matches"
 record "generated price-only pricer, 64-bit config" "$LOG/gen_zu_price.log" "PASS: RTL matches"
 record "generated AAD loop, host setup (Zynq-7020): bit-exact" "$LOG/gen_z7h.log" "PASS: RTL matches"
@@ -88,18 +88,20 @@ record "range_err raised for out-of-domain input (64-bit)" "$LOG/gen_zu.log" "co
 ( "$PY" wrappers.py bump $Z7 --name z7 > "$LOG/bump_z7.log" 2>&1 ) &
 ( "$PY" wrappers.py bump $ZU --name zu > "$LOG/bump_zu.log" 2>&1 ) &
 ( "$PY" wrappers.py axi  $Z7 --host-setup --name heston_aad_z7h > "$LOG/axi_z7h.log" 2>&1 ) &
+( "$PY" wrappers.py lite $Z7 --host-setup --name heston_aad_z7h > "$LOG/lite_z7h.log" 2>&1 ) &
 ( "$PY" host.py > "$LOG/host.log" 2>&1 ) &
 wait
 record "generated AXI4-Stream wrapper, Zynq-7020 config" "$LOG/axi_z7.log" "PASS: AXI4-Stream"
 record "generated AXI4-Stream wrapper, 64-bit config" "$LOG/axi_zu.log" "PASS: AXI4-Stream"
 record "generated AXI4-Stream wrapper, host-setup Zynq-7020" "$LOG/axi_z7h.log" "PASS: AXI4-Stream"
+record "generated AXI4-Lite register file, host-setup Zynq-7020" "$LOG/lite_z7h.log" "PASS: AXI4-Lite"
 record "host setup + FPGA loop + host finish == on-chip design" "$LOG/host.log" "^PASS"
 record "bump-and-reprice on generated pricer, Zynq-7020" "$LOG/bump_z7.log" "PASS: bump-and-reprice"
 record "bump-and-reprice on generated pricer, 64-bit" "$LOG/bump_zu.log" "PASS: bump-and-reprice"
 
 echo "== 4. committed generated RTL == generator output"
 ok=1
-for f in heston_aad_z7 heston_aad_zu heston_aad_z7h z7_pricer zu_pricer heston_aad_z7_axi heston_aad_zu_axi heston_aad_z7h_axi heston_bump_z7 heston_bump_zu; do
+for f in heston_aad_z7 heston_aad_zu heston_aad_z7h z7_pricer zu_pricer heston_aad_z7_axi heston_aad_zu_axi heston_aad_z7h_axi heston_aad_z7h_lite heston_bump_z7 heston_bump_zu; do
   cmp -s "build/$f.v" "$V/gen/$f.v" || { echo "  differs: $f.v"; ok=0; }
 done
 [ $ok = 1 ] && echo PASS > "$LOG/gen_cmp.chk" || echo FAIL > "$LOG/gen_cmp.chk"

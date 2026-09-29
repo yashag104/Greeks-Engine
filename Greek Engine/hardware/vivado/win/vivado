@@ -15,7 +15,7 @@
 #
 # Override the install location with VIVADO_WIN_BAT if it moves.
 set -u
-BAT=${VIVADO_WIN_BAT:-'C:\AMDDesignTools\2026.1\Vivado\bin\vivado.bat'}
+BAT=${VIVADO_WIN_BAT:-'D:\2025.2\Vivado\bin\vivado.bat'}
 
 case "$PWD" in
   /mnt/[a-z]/*) ;;

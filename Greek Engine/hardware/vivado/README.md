@@ -24,7 +24,8 @@ For activity-based power, simulate the post-route netlist or RTL in xsim with
 put the core behind `heston_axi_top` in a Zynq block design and read PMBus/INA
 rails while it runs.
 
-**Expect the Zynq-7020 run to fail placement on DSPs.** A Yosys coarse synthesis
-of the current RTL counts 159 multiplier cells in `heston_top_level` and 110 in
-`heston_bump_top`, mostly 64x64, each ~10 DSP48 slices. The FSMs share
-control but not multipliers. See `docs/precision_bound.md` §6.
+**Measured on xc7z020clg400-1 (2025.2):** `heston_aad_z7h` routes at 68.6 % LUT and
+72 DSP (32.7 %), but misses 100 MHz by 2.639 ns (Fmax ~79 MHz). The earlier Yosys
+estimate that it would fail placement on DSPs was wrong. See `docs/architecture.md` §4.5.
+
+**ZedBoard:** `zedboard/run_board.bat build`, then `test`. It clocks the engine at 70 MHz.

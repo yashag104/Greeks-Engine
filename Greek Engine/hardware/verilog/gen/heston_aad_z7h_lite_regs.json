@@ -1,0 +1,224 @@
+{
+ "CTRL": {
+  "dir": "in",
+  "offset": 256,
+  "width": 32,
+  "words": 1
+ },
+ "K": {
+  "dir": "in",
+  "offset": 8,
+  "width": 56,
+  "words": 2
+ },
+ "S0": {
+  "dir": "in",
+  "offset": 0,
+  "width": 56,
+  "words": 2
+ },
+ "STAT": {
+  "dir": "out",
+  "offset": 260,
+  "width": 32,
+  "words": 1
+ },
+ "T": {
+  "dir": "in",
+  "offset": 16,
+  "width": 56,
+  "words": 2
+ },
+ "hs_122": {
+  "dir": "in",
+  "offset": 84,
+  "width": 56,
+  "words": 2
+ },
+ "hs_152": {
+  "dir": "in",
+  "offset": 92,
+  "width": 56,
+  "words": 2
+ },
+ "hs_153": {
+  "dir": "in",
+  "offset": 100,
+  "width": 56,
+  "words": 2
+ },
+ "hs_179": {
+  "dir": "in",
+  "offset": 108,
+  "width": 56,
+  "words": 2
+ },
+ "hs_182": {
+  "dir": "in",
+  "offset": 116,
+  "width": 56,
+  "words": 2
+ },
+ "hs_184": {
+  "dir": "in",
+  "offset": 124,
+  "width": 56,
+  "words": 2
+ },
+ "hs_209": {
+  "dir": "in",
+  "offset": 132,
+  "width": 56,
+  "words": 2
+ },
+ "hs_210": {
+  "dir": "in",
+  "offset": 140,
+  "width": 56,
+  "words": 2
+ },
+ "hs_211": {
+  "dir": "in",
+  "offset": 148,
+  "width": 56,
+  "words": 2
+ },
+ "hs_212": {
+  "dir": "in",
+  "offset": 156,
+  "width": 56,
+  "words": 2
+ },
+ "hs_234": {
+  "dir": "in",
+  "offset": 164,
+  "width": 56,
+  "words": 2
+ },
+ "hs_235": {
+  "dir": "in",
+  "offset": 172,
+  "width": 56,
+  "words": 2
+ },
+ "hs_237": {
+  "dir": "in",
+  "offset": 180,
+  "width": 56,
+  "words": 2
+ },
+ "hs_238": {
+  "dir": "in",
+  "offset": 188,
+  "width": 56,
+  "words": 2
+ },
+ "hs_239": {
+  "dir": "in",
+  "offset": 196,
+  "width": 56,
+  "words": 2
+ },
+ "hs_60": {
+  "dir": "in",
+  "offset": 76,
+  "width": 56,
+  "words": 2
+ },
+ "is_call": {
+  "dir": "in",
+  "offset": 72,
+  "width": 1,
+  "words": 1
+ },
+ "kappa": {
+  "dir": "in",
+  "offset": 40,
+  "width": 56,
+  "words": 2
+ },
+ "r": {
+  "dir": "in",
+  "offset": 24,
+  "width": 56,
+  "words": 2
+ },
+ "rho": {
+  "dir": "in",
+  "offset": 64,
+  "width": 56,
+  "words": 2
+ },
+ "sum_T": {
+  "dir": "out",
+  "offset": 520,
+  "width": 56,
+  "words": 2
+ },
+ "sum_kappa": {
+  "dir": "out",
+  "offset": 544,
+  "width": 56,
+  "words": 2
+ },
+ "sum_price": {
+  "dir": "out",
+  "offset": 512,
+  "width": 56,
+  "words": 2
+ },
+ "sum_r": {
+  "dir": "out",
+  "offset": 528,
+  "width": 56,
+  "words": 2
+ },
+ "sum_rho": {
+  "dir": "out",
+  "offset": 568,
+  "width": 56,
+  "words": 2
+ },
+ "sum_theta": {
+  "dir": "out",
+  "offset": 552,
+  "width": 56,
+  "words": 2
+ },
+ "sum_v0": {
+  "dir": "out",
+  "offset": 536,
+  "width": 56,
+  "words": 2
+ },
+ "sum_x": {
+  "dir": "out",
+  "offset": 576,
+  "width": 56,
+  "words": 2
+ },
+ "sum_xi": {
+  "dir": "out",
+  "offset": 560,
+  "width": 56,
+  "words": 2
+ },
+ "theta": {
+  "dir": "in",
+  "offset": 48,
+  "width": 56,
+  "words": 2
+ },
+ "v0": {
+  "dir": "in",
+  "offset": 32,
+  "width": 56,
+  "words": 2
+ },
+ "xi": {
+  "dir": "in",
+  "offset": 56,
+  "width": 56,
+  "words": 2
+ }
+}

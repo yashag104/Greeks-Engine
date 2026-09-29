@@ -141,20 +141,20 @@ closed-form price, so the price is computed by a numerical method (we use the Fo
 <strong>bump-and-reprice</strong>: nudge each parameter, price again, take a difference. For
 <em>n</em> Greeks that costs <em>n</em>+1 pricings and it is numerically poor. The better way is
 <strong>reverse-mode algorithmic differentiation (AAD)</strong>, which gets all <em>n</em> Greeks from
-<em>one</em> backward sweep over the pricing computation. AAD is standard in software. Nobody had
-built it as a hardware datapath. That is what this project is: a generator that takes the Heston-COS
+<em>one</em> backward sweep over the pricing computation. AAD is standard in software; to our knowledge it had
+not been built as an FPGA datapath for option Greeks (checked in <span class="mono">docs/novelty_assessment.md</span>). That is what this project is: a generator that takes the Heston-COS
 price <em>and its adjoint sweep</em> as a single operation graph and emits a fixed-point,
 resource-shared, modulo-scheduled Verilog datapath that produces the price and nine sensitivities in
-4,731 clock cycles on a Zynq-7020-sized design — where bump-and-reprice on the identical hardware
-takes 86,803.</p>
+4,733 clock cycles on a Zynq-7020-sized design — where bump-and-reprice on the identical hardware
+takes 86,860.</p>
 
 <div class="two">
   <div><h4>The product</h4><p>A parameterised Verilog generator plus the RTL it emits, verified
   bit-exact against a golden model, with a per-Greek error bound.</p></div>
   <div><h4>The headline</h4><p>All 9 Greeks for 1.04 pricings of extra work. In software, AAD
   typically costs 3–5× a pricing.</p></div>
-  <div><h4>The honest gap</h4><p>Everything is RTL simulation and Yosys estimates. No Vivado
-  place-and-route has run yet, so there is no Fmax, no timing closure, no power, no bitstream.</p></div>
+  <div><h4>The honest gap</h4><p>The design routes on a Zynq-7020 but misses 100&nbsp;MHz by
+  2.6&nbsp;ns (Fmax &asymp; 79&nbsp;MHz). Power is vectorless. On a ZedBoard, 50 cases are bit-exact on silicon.</p></div>
 </div>
 
 <h3>The five things that had to be true at once</h3>
@@ -584,8 +584,8 @@ sequencing — the "reverse pass" is just more nodes in the same graph.</p></div
 
 <p>The classical result is that reverse-mode AD costs a small constant times the forward
 evaluation — typically 3–5× in software, because of tape write traffic and the reread on the
-backward sweep. Our measured figure is <strong>1.04×</strong> (4,731 cycles for price + 9 Greeks vs
-4,565 for price alone, Zynq-7020 config). Section 10 explains why: with no tape traffic, the extra
+backward sweep. Our measured figure is <strong>1.04×</strong> (4,733 cycles for price + 9 Greeks vs
+4,568 for price alone, Zynq-7020 config). Section 10 explains why: with no tape traffic, the extra
 adjoint multiplies simply occupy multiplier slots that the forward pass was leaving idle.</p>
 
 <p class="part">Part III — The hardware</p>
@@ -789,7 +789,7 @@ divider:  dedicated area,          Newton iteration:  6 shared multiplier uses
 sqrt:     bit-serial, dedicated    Newton on 1/√x:    9 shared multiplier uses
 exp/log:  dedicated modules        table + Taylor:    7 / 6 shared multiplier uses
 ──────────────────────────────────────────────────────────────────────
-28 divisions/term = 80% of latency  →  0 divisions; 251 multiplies/term</div>
+28 divisions/term = 80% of latency  →  0 divisions; 250 multiplies/term</div>
 
 <p>The reason this is a win is not that Newton is cheaper in isolation. It is that
 <strong>a multiplier use is schedulable and a divider is not</strong>. Once everything is measured in
@@ -917,7 +917,7 @@ rounding cycle) — so 32 cycles at FL = 28. Remember that number; section 10.3 
 
 <p>Summed over one COS term, forward pass plus reverse sweep plus adjoint normalisation:</p>
 
-<div class="eq">ONE COS TERM = 251 multiplies
+<div class="eq">ONE COS TERM = 250 multiplies
              +   3 CORDIC rotations
              +   2 CORDIC vectorings
              + ~380 add / shift / mux / ROM operations (dedicated glue)</div>
@@ -1000,7 +1000,7 @@ already-computed reciprocal.</p>
 
 <div class="note"><p><strong>Why this is a hardware result and not a software one.</strong> In
 software, recomputing a reciprocal costs one division instruction and you would not think about it.
-Here a complex reciprocal is ~10 of the 251 multiplier slots in a term, and the term's slot budget is
+Here a complex reciprocal is ~10 of the 250 multiplier slots in a term, and the term's slot budget is
 what sets II, which sets the entire latency. Fusing the graphs before scheduling is what makes the
 saving visible to the tool at all.</p></div>
 
@@ -1026,7 +1026,7 @@ strike_sens = (price − disc·acc_x) / K              (K enters through x AND t
 
 <h2 id="sched"><span class="n">10</span>Modulo scheduling: why all nine Greeks cost 1.04 pricings</h2>
 
-<p class="lead-in">Sections 8 and 9 reduced one COS term to a fixed bill: 251 multiplies, 3 CORDIC
+<p class="lead-in">Sections 8 and 9 reduced one COS term to a fixed bill: 250 multiplies, 3 CORDIC
 rotations, 2 CORDIC vectorings. This section spends that bill. It is the architectural heart of the
 project.</p>
 
@@ -1053,8 +1053,8 @@ in flight at once, and in steady state every unit repeats its behaviour with per
 <div class="eq">cycles_per_evaluation = length(setup) + (N_terms − 1)·II + length(term) + length(finish)
 
   z7h (host split, II = 32, L = 506, N = 128):   0 + 127·32 + 506 + 0  =  4,572
-  z7  (fully on-chip, II = 32):                                           4,731
-  zu  (II = 8):                                                           1,599</div>
+  z7  (fully on-chip, II = 32):                                           4,733
+  zu  (II = 8):                                                           1,593</div>
 
 <figure>
 <div class="sv">
@@ -1098,13 +1098,13 @@ busy_span = latency            for an iterative unit (blocked until it finishes)
 FL + 4 = 32, so it blocks its unit for 32 cycles.</p>
 
 <div class="eq">z7 (56-bit, M = 8, 3 CROT, 2 CVEC, ITERATIVE CORDIC):
-  multipliers: ceil(251 · 1 / 8)   = 32
+  multipliers: ceil(250 · 1 / 8)   = 32
   rotations:   ceil(3 · 32 / 3)    = 32
   vectorings:  ceil(2 · 32 / 2)    = 32
                                   ──── II = 32   ← all three classes balanced
 
 zu (64-bit, M = 32, 1 CROT, 1 CVEC, PIPELINED CORDIC):
-  multipliers: ceil(251 · 1 / 32)  = 8
+  multipliers: ceil(250 · 1 / 32)  = 8
   rotations:   ceil(3 · 1 / 1)     = 3
   vectorings:  ceil(2 · 1 / 1)     = 2
                                   ──── II = 8    ← set by multipliers alone</div>
@@ -1112,8 +1112,8 @@ zu (64-bit, M = 32, 1 CROT, 1 CVEC, PIPELINED CORDIC):
 <p>The z7 numbers are not a coincidence — 3 rotation units and 2 vectoring units were chosen
 <em>because</em> that is what balances 8 multipliers at FL = 28. Adding a ninth multiplier would not
 help: II would still be 32, pinned by the CORDICs. The measured table in section 14 confirms exactly
-this — going from 8 to 16 multipliers on the z7 config moves the cycle count only from 4,731 to
-4,619, a 2&nbsp;% gain for double the multipliers.</p>
+this — going from 8 to 16 multipliers on the z7 config moves the cycle count only from 4,733 to
+4,621, a 2&nbsp;% gain for double the multipliers.</p>
 
 <h3>10.4 Why the Greeks are nearly free</h3>
 
@@ -1122,9 +1122,9 @@ this — going from 8 to 16 multipliers on the z7 config moves the cycle count o
 <div class="tbl"><table>
 <thead><tr><th>z7 config (56-bit, 8 multipliers)</th><th>Cycles</th><th>vs price-only</th></tr></thead>
 <tbody>
-<tr><td>Price only (<span class="mono">z7_pricer</span>)</td><td class="num">4,565</td><td class="num">1.00×</td></tr>
-<tr><td><strong>Price + 9 Greeks (AAD)</strong></td><td class="num">4,731</td><td class="num"><strong>1.04×</strong></td></tr>
-<tr><td>Price + 9 Greeks (bump-and-reprice, 19 pricings)</td><td class="num">86,803</td><td class="num">19.0×</td></tr>
+<tr><td>Price only (<span class="mono">z7_pricer</span>)</td><td class="num">4,568</td><td class="num">1.00×</td></tr>
+<tr><td><strong>Price + 9 Greeks (AAD)</strong></td><td class="num">4,733</td><td class="num"><strong>1.04×</strong></td></tr>
+<tr><td>Price + 9 Greeks (bump-and-reprice, 19 pricings)</td><td class="num">86,860</td><td class="num">19.0×</td></tr>
 </tbody></table></div>
 
 <p>The mechanism: on the z7 configuration II is pinned at 32 <em>by the CORDIC units</em>, not by the
@@ -1140,7 +1140,7 @@ traffic. In a modulo-scheduled hardware datapath with no tape, the adjoint sweep
 whenever the forward pass is <em>latency-bound rather than throughput-bound</em> — which is exactly
 what an iterative CORDIC makes it. Measured: 1.04×.</p>
 <p>Note the honest form of the claim: on the zu configuration (II set by multipliers, pipelined
-CORDICs) the ratio is 1,599 / 1,023 = 1.56×, because there the multipliers <em>are</em> the
+CORDICs) the ratio is 1,593 / 1,026 = 1.55×, because there the multipliers <em>are</em> the
 bottleneck and the extra adjoint multiplies do cost II. Both numbers go in the paper.</p></div>
 
 <h3>10.5 Storage</h3>
@@ -1325,7 +1325,7 @@ evidence that the error model is right, because a bound that is merely loose cou
 wrong reasons.</p>
 
 <p>Over the 21-case grid: <strong>measured error / bound ≤ 0.21 for all 210 (case, output)
-pairs.</strong> For the generated generation-2 datapaths the corresponding ratio is ≤ 0.115.</p>
+pairs.</strong> For the generated generation-2 datapaths the corresponding ratio is ≤ 0.103.</p>
 
 <div class="note"><p><strong>The sentence for the paper.</strong> At Q32.32 the first-order bound
 shows at most 16.5 bits lost on the price over the test grid (14.5 at the base point: bound 5.2e-6,
@@ -1399,16 +1399,16 @@ puts — the Fang &amp; Oosterlee 2008 test set) against a double-precision refe
 <div class="tbl"><table>
 <thead><tr><th>Output</th><th>z7 (56-bit)</th><th>zu (64-bit)</th></tr></thead>
 <tbody>
-<tr><td>price</td><td class="num">6.1e-7</td><td class="num">5.9e-8</td></tr>
-<tr><td>delta</td><td class="num">1.3e-7</td><td class="num">1.9e-8</td></tr>
-<tr><td>strike_sens</td><td class="num">1.4e-7</td><td class="num">1.9e-8</td></tr>
-<tr><td>theta_greek</td><td class="num">9.5e-7</td><td class="num">2.3e-8</td></tr>
-<tr><td>rho_greek</td><td class="num">1.4e-7</td><td class="num">2.2e-8</td></tr>
-<tr><td>vega</td><td class="num">1.3e-6</td><td class="num">2.1e-8</td></tr>
-<tr><td><strong>kappa_sens</strong></td><td class="num"><strong>6.4e-5</strong></td><td class="num"><strong>6.0e-6</strong></td></tr>
-<tr><td>theta_sens</td><td class="num">2.0e-6</td><td class="num">1.0e-7</td></tr>
-<tr><td>xi_sens</td><td class="num">1.9e-5</td><td class="num">1.1e-6</td></tr>
-<tr><td>rho_corr</td><td class="num">2.4e-5</td><td class="num">1.2e-6</td></tr>
+<tr><td>price</td><td class="num">6.1e-7</td><td class="num">2.8e-8</td></tr>
+<tr><td>delta</td><td class="num">2.0e-7</td><td class="num">6.9e-9</td></tr>
+<tr><td>strike_sens</td><td class="num">2.5e-7</td><td class="num">6.6e-9</td></tr>
+<tr><td>theta_greek</td><td class="num">3.1e-7</td><td class="num">6.0e-9</td></tr>
+<tr><td>rho_greek</td><td class="num">2.4e-7</td><td class="num">8.9e-9</td></tr>
+<tr><td>vega</td><td class="num">6.2e-7</td><td class="num">2.0e-8</td></tr>
+<tr><td>kappa_sens</td><td class="num">7.8e-6</td><td class="num">4.1e-7</td></tr>
+<tr><td>theta_sens</td><td class="num">7.9e-7</td><td class="num">3.4e-8</td></tr>
+<tr><td>xi_sens</td><td class="num">2.7e-6</td><td class="num">2.2e-7</td></tr>
+<tr><td><strong>rho_corr</strong></td><td class="num"><strong>1.2e-5</strong></td><td class="num"><strong>7.4e-7</strong></td></tr>
 </tbody></table></div>
 <dl>
 <dt>Why it matters</dt><dd>This is the headline accuracy claim. The worst cases (κ, ξ, ρ
@@ -1424,7 +1424,7 @@ confirming the error is quantisation and not a defect.</dd>
 <dt>Question</dt><dd>A bound that is never violated but 10<sup>6</sup>× too loose is useless.</dd>
 <dt>Method</dt><dd>Compute measured error / bound for all (case, output) pairs.</dd>
 <dt>Result</dt><dd>Generation 1, Q32.32: ratio ≤ <strong>0.21</strong> across all 210 pairs.
-Generated designs: ≤ <strong>0.115</strong>. Never violated; within one order of magnitude.
+Generated designs: ≤ <strong>0.103</strong>. Never violated; within one order of magnitude.
 <span class="chip ok">PASS</span> Figure: <span class="mono">fig3_bound_tightness</span>.</dd>
 <dt>Why it matters</dt><dd>Converts the accuracy claim from "we measured 21 cases" into "we have a
 per-Greek certificate, and here is the evidence it is not vacuous".</dd>
@@ -1493,28 +1493,28 @@ knob, and the answer is not "as many as fit".</dd>
 <div class="tbl"><table>
 <thead><tr><th>Config</th><th>Mults</th><th>II</th><th>AAD</th><th>Price only</th><th>Bump</th><th>Bump/AAD</th></tr></thead>
 <tbody>
-<tr><td>z7 (56/28)</td><td class="num">2</td><td class="num">126</td><td class="num">16,754</td><td class="num">8,724</td><td class="num">165,824</td><td class="num">9.9</td></tr>
-<tr><td>z7 (56/28)</td><td class="num">4</td><td class="num">63</td><td class="num">8,693</td><td class="num">4,610</td><td class="num">87,658</td><td class="num">10.1</td></tr>
-<tr><td><strong>z7 (56/28)</strong></td><td class="num"><strong>8</strong></td><td class="num"><strong>32</strong></td><td class="num"><strong>4,731</strong></td><td class="num">4,565</td><td class="num">86,803</td><td class="num"><strong>18.4</strong></td></tr>
-<tr><td>z7 (56/28)</td><td class="num">16</td><td class="num">32</td><td class="num">4,619</td><td class="num">4,560</td><td class="num">86,708</td><td class="num">18.8</td></tr>
-<tr><td>zu (64/32)</td><td class="num">1</td><td class="num">251</td><td class="num">32,936</td><td class="num">16,777</td><td class="num">318,831</td><td class="num">9.7</td></tr>
-<tr><td>zu (64/32)</td><td class="num">4</td><td class="num">63</td><td class="num">8,701</td><td class="num">4,633</td><td class="num">88,095</td><td class="num">10.1</td></tr>
-<tr><td>zu (64/32)</td><td class="num">8</td><td class="num">32</td><td class="num">4,704</td><td class="num">2,570</td><td class="num">48,898</td><td class="num">10.4</td></tr>
-<tr><td>zu (64/32)</td><td class="num">16</td><td class="num">16</td><td class="num">2,612</td><td class="num">1,537</td><td class="num">29,271</td><td class="num">11.2</td></tr>
-<tr><td><strong>zu (64/32)</strong></td><td class="num"><strong>32</strong></td><td class="num"><strong>8</strong></td><td class="num"><strong>1,599</strong></td><td class="num">1,023</td><td class="num">19,505</td><td class="num"><strong>12.2</strong></td></tr>
-<tr><td>zu (64/32)</td><td class="num">64</td><td class="num">4</td><td class="num">1,071</td><td class="num">885</td><td class="num">16,883</td><td class="num">15.8</td></tr>
-<tr><td>zu (64/32)</td><td class="num">128</td><td class="num">3</td><td class="num">940</td><td class="num">885</td><td class="num">16,883</td><td class="num">18.0</td></tr>
+<tr><td>z7 (56/28)</td><td class="num">2</td><td class="num">125</td><td class="num">16,754</td><td class="num">8,700</td><td class="num">165,368</td><td class="num">9.9</td></tr>
+<tr><td>z7 (56/28)</td><td class="num">4</td><td class="num">63</td><td class="num">8,694</td><td class="num">4,613</td><td class="num">87,715</td><td class="num">10.1</td></tr>
+<tr><td><strong>z7 (56/28)</strong></td><td class="num"><strong>8</strong></td><td class="num"><strong>32</strong></td><td class="num"><strong>4,733</strong></td><td class="num">4,568</td><td class="num">86,860</td><td class="num"><strong>18.4</strong></td></tr>
+<tr><td>z7 (56/28)</td><td class="num">16</td><td class="num">32</td><td class="num">4,621</td><td class="num">4,563</td><td class="num">86,765</td><td class="num">18.8</td></tr>
+<tr><td>zu (64/32)</td><td class="num">1</td><td class="num">250</td><td class="num">32,530</td><td class="num">16,773</td><td class="num">318,755</td><td class="num">9.8</td></tr>
+<tr><td>zu (64/32)</td><td class="num">4</td><td class="num">63</td><td class="num">8,700</td><td class="num">4,636</td><td class="num">88,152</td><td class="num">10.1</td></tr>
+<tr><td>zu (64/32)</td><td class="num">8</td><td class="num">32</td><td class="num">4,709</td><td class="num">2,573</td><td class="num">48,955</td><td class="num">10.4</td></tr>
+<tr><td>zu (64/32)</td><td class="num">16</td><td class="num">16</td><td class="num">2,614</td><td class="num">1,540</td><td class="num">29,328</td><td class="num">11.2</td></tr>
+<tr><td><strong>zu (64/32)</strong></td><td class="num"><strong>32</strong></td><td class="num"><strong>8</strong></td><td class="num"><strong>1,593</strong></td><td class="num">1,026</td><td class="num">19,562</td><td class="num"><strong>12.3</strong></td></tr>
+<tr><td>zu (64/32)</td><td class="num">64</td><td class="num">4</td><td class="num">1,073</td><td class="num">888</td><td class="num">16,940</td><td class="num">15.8</td></tr>
+<tr><td>zu (64/32)</td><td class="num">128</td><td class="num">3</td><td class="num">942</td><td class="num">888</td><td class="num">16,940</td><td class="num">18.0</td></tr>
 </tbody></table></div>
 <dl>
 <dt>What to read</dt><dd>Three regimes. Below 8 multipliers, cycles halve as multipliers double —
 throughput-bound, II set by the multiplier count. At 8 multipliers on the z7 config, II hits 32 and
 <strong>stops</strong>: the iterative CORDICs are now the binding constraint, so 16 multipliers buy
-2&nbsp;% (4,731 → 4,619). Past 64 on the zu config, returns collapse again as the dependency chain,
+2&nbsp;% (4,733 → 4,621). Past 64 on the zu config, returns collapse again as the dependency chain,
 not the resources, dominates. Figures: <span class="mono">fig8_architecture_cycles</span>,
 <span class="mono">fig9_cycles_vs_mults</span>.</dd>
 <dt>Why it matters</dt><dd>It is the evidence for the design choices, and it makes the
 "Greeks are nearly free" claim precise: look at the AAD vs price-only columns. On the z7 row at
-M = 8 they are 4,731 vs 4,565 (1.04×). On the zu row at M = 32 they are 1,599 vs 1,023 (1.56×). The
+M = 8 they are 4,733 vs 4,568 (1.04×). On the zu row at M = 32 they are 1,593 vs 1,026 (1.55×). The
 ratio depends on whether multipliers or CORDICs bind — and the paper must say so.</dd>
 </dl>
 </div>
@@ -1532,11 +1532,20 @@ ratio depends on whether multipliers or CORDICs bind — and the paper must say 
 <tr><td><span class="mono">heston_aad_z7</span>, measured ranges</td><td>xc7</td><td class="num">59,024</td><td class="num">3,058</td><td class="num">32,731</td><td class="num">96</td><td>no, ~11&nbsp;% over</td></tr>
 <tr><td><strong><span class="mono">heston_aad_z7h</span></strong> (host split)</td><td>xc7</td><td class="num">45,504</td><td class="num">2,922</td><td class="num">24,856</td><td class="num">96 / 220</td><td><strong>yes: 91&nbsp;% LUT, 23&nbsp;% FF, 44&nbsp;% DSP</strong></td></tr>
 <tr><td><strong><span class="mono">heston_aad_zu</span></strong> (64-bit, 32 mult)</td><td>xcup</td><td class="num">108,330</td><td class="num">6,409</td><td class="num">59,953</td><td class="num">512</td><td><strong>ZCU104: 50&nbsp;% LUT, 30&nbsp;% DSP</strong></td></tr>
+<tr><td><strong><span class="mono">heston_aad_z7h</span> &mdash; Vivado 2025.2, post-synthesis</strong></td><td>xc7z020clg400-1</td><td class="num">34,957</td><td class="num">2,781</td><td class="num">27,255</td><td class="num">72 / 220</td><td><strong>yes, comfortably: 70.9&nbsp;% LUT, 25.6&nbsp;% FF, 32.7&nbsp;% DSP</strong></td></tr>
 </tbody></table></div>
 <dl>
-<dt>Status</dt><dd><span class="chip risk">ESTIMATE ONLY</span> These are Yosys numbers with generic
-mapping. Vivado usually maps LUTs more tightly, but 91&nbsp;% including SRL is tight enough that the
-conclusion is not safe until place-and-route runs. See E13.</dd>
+<dt>Vivado result</dt><dd><span class="chip ok">MEASURED</span> Vivado 2025.2 post-synthesis on
+<span class="mono">xc7z020clg400-1</span>: <strong>37,738 LUT total (70.9&nbsp;%)</strong> of which
+2,781 are shift-register LUTs, <strong>27,255 FF (25.6&nbsp;%)</strong>,
+<strong>72 DSP48E1 (32.7&nbsp;%)</strong>, 4 BRAM tiles (2.9&nbsp;%).</dd>
+<dt>What changed</dt><dd>Yosys was pessimistic by a wide margin: <strong>71&nbsp;% LUT, not
+91&nbsp;%</strong>, and 72 DSPs rather than 96. The Zynq-7020 fit is comfortable rather than
+marginal, and the documented fallbacks &mdash; SRL sharing, or dropping to 48-bit words &mdash; are
+<em>not</em> needed. This also leaves headroom for the AXI4-Lite interface and block design on top.
+The generic-mapping estimate was useful for ranking designs against each other, but it should not be
+quoted as an area result now that a real one exists.</dd>
+<dt>Caveat</dt><dd>Post-synthesis. Routed utilisation, WNS and power are E13.</dd>
 </dl>
 </div>
 
@@ -1577,10 +1586,20 @@ measured on. With it, every accuracy result transfers unchanged.</dd>
 (<span class="mono">tready</span> deassertion mid-transfer), and return to idle. Plus the
 bump-and-reprice wrappers checked bit-exact against 19 emulated pricings.</dd>
 <dt>Result</dt><dd>All pass. <span class="chip ok">PASS</span></dd>
-<dt>Caveat</dt><dd><span class="chip gap">NOT BOARD-READY</span> The streams are very wide —
-<span class="mono">s_axis_tdata</span> is 1,624 bits on the host-split design, 560 on z7, 640 on zu.
-No Zynq PS–PL port is that wide, so a real system needs a serialiser or a register-file interface in
-front. This is simulation-level verification of the protocol, not of a board interface.</dd>
+<dt>Board interface</dt><dd><span class="chip ok">RESOLVED</span> The streams are very wide —
+<span class="mono">s_axis_tdata</span> is 1,456 bits on the host-split design, 560 on z7, 640 on zu —
+and no Zynq PS–PL port is that wide, so the stream wrapper alone left the core unreachable from a
+board. <span class="mono">wrappers.py lite</span> now generates an <strong>AXI4-Lite register
+file</strong>: 51 input words, write <span class="mono">CTRL</span> bit 0 to start, poll
+<span class="mono">STAT</span> bit 0 for done, read 9 outputs from 0x200. ~70 register accesses per
+evaluation, irrelevant against a 4,572-cycle datapath, and no DMA or driver needed. Its testbench
+drives the AXI4-Lite protocol directly and all 9 outputs come back bit-exact; it also checks
+<span class="mono">bresp</span>/<span class="mono">rresp</span>, register readback, and the
+busy/done/range_err sequencing. A register map is emitted as
+<span class="mono">&lt;name&gt;_lite_regs.json</span> so host software is written against the map
+rather than hardcoded offsets.</dd>
+<dt>Still simulation</dt><dd>This is protocol verification, not a board measurement. The board test
+itself is E14.</dd>
 </dl>
 </div>
 
@@ -1594,14 +1613,81 @@ throughput need a real implementation run.</dd>
 utilisation / timing / power reports, parsed into
 <span class="mono">validation/results/vivado.csv</span>. Out-of-context because the cores have ~1,300
 parallel I/O bits, more than any package has pins.</dd>
-<dt>Result</dt><dd><span class="chip gap">NOT RUN</span> Blocked. Vivado ML <strong>Enterprise</strong>
-2026.1 is installed with no licence configured, so the tool refuses to launch. A WSL→Windows shim
-(<span class="mono">hardware/vivado/win/vivado</span>) is in place and verified, so the run is one
-command once a licence exists. See §17.</dd>
-<dt>Why it matters</dt><dd>It is the single largest gap in the paper. Latency in seconds = cycles /
-Fmax; energy per evaluation = power × latency. Without it, <span class="mono">fig6_resources</span>
-and <span class="mono">fig7_energy_latency</span> cannot be produced and the area claim in E9 stays an
-estimate.</dd>
+<dt>Result</dt><dd><span class="chip ok">ROUTED</span>
+<span class="chip gap">TIMING NOT MET AT 100&nbsp;MHz</span> <span class="mono">heston_aad_z7h</span> on
+<span class="mono">xc7z020clg400-1</span>, 10&nbsp;ns target: 36,499 LUT (68.6&nbsp;%), 28,559 FF,
+72 DSP, 4 BRAM. WNS <strong>&minus;2.639&nbsp;ns</strong> (8,172 of 64,408 endpoints fail; hold met),
+so <strong>Fmax &asymp; 79.1&nbsp;MHz</strong>. The critical path is 12.31&nbsp;ns, 29 logic levels of
+which 21 are CARRY4 &mdash; a 64-bit carry chain from <span class="mono">t_reg</span> into
+<span class="mono">cr2_inst/z_reg[63]</span>. At 79.1&nbsp;MHz one AAD evaluation of the host-setup design (4,572 FPGA cycles; setup and finish run
+on the host) takes <strong>57.8&nbsp;&micro;s</strong>. Vectorless power at the 100&nbsp;MHz constraint is 0.258&nbsp;W
+(0.153 dynamic, 0.105 static), so energy per evaluation is at most 14.9&nbsp;&micro;J.</dd>
+<dt>Three obstacles, in the order they appeared</dt><dd>
+<strong>1. Licence.</strong> Vivado ML <em>Enterprise</em> 2026.1 was installed with no licence, so
+the tool refused to launch at all. Resolved by reinstalling as <strong>ML Standard 2025.2</strong>
+(now on <span class="mono">D:\2025.2\Vivado</span>), which is free and covers
+<span class="mono">xc7z020</span>. Enterprise is still needed for <span class="mono">xczu7ev</span>.
+<br><strong>2. A latent bug in the flow script.</strong>
+<span class="mono">read_verilog</span>, <span class="mono">read_xdc</span> and
+<span class="mono">synth_design -include_dirs</span> each take a Tcl <em>list</em>, so a bare path
+string is split on whitespace. The repository lives under <span class="mono">Greek Engine</span>, so
+every one of them tore the path in two: <span class="mono">File
+'C:/Users/hp/Greeks-Engine/Greek' does not exist</span>. Latent since the flow was written, because
+nothing had ever actually invoked Vivado. Fixed by wrapping all seven call sites in
+<span class="mono">[list ...]</span>.
+<br><strong>3. The runs keep being killed.</strong> Two attempts died mid-flow with no
+<span class="mono">ERROR</span> line, no "Exiting Vivado", and no crash dump &mdash; a kill
+signature, not a tool error. One reached routing (31 min, node overlaps converging 36,717 →
+15,912 → 6,192) before dying; the next died in synthesis at 10 min. The machine has 16&nbsp;GB
+shared with WSL and other work, and routing peaked at 2.5&nbsp;GB and climbing, so memory pressure is
+the likely cause &mdash; but that is inference, not evidence.</dd>
+<dt>Mitigations added</dt><dd>The flow now writes <span class="mono">post_place.dcp</span>, so a
+router that dies no longer discards 20 minutes of good placement.
+<span class="mono">impl_from_dcp.tcl</span> resumes from whichever checkpoint exists, and
+<span class="mono">run_native.bat</span> runs the whole flow straight from Windows with neither WSL
+nor an agent harness in the loop.</dd>
+<dt>Why it matters</dt><dd>Latency in seconds = cycles / Fmax; energy per evaluation = power ×
+latency. These are now available at the measured Fmax. Closing 100&nbsp;MHz means pipelining the
+carry chains; otherwise quote the design at 79&nbsp;MHz.</dd>
+</dl>
+</div>
+
+<div class="card">
+<h3>E14 — Does it compute the right answer on real silicon?</h3>
+<dl>
+<dt>Question</dt><dd>Every result so far is simulation or static analysis. Does the fabricated device
+produce the same bits?</dd>
+<dt>Method</dt><dd>Target: <strong>ZedBoard, <span class="mono">xc7z020clg484-1</span></strong>.
+<span class="mono">hardware/vivado/zedboard/bd_jtag.tcl</span> builds a deliberately minimal design
+&mdash; <span class="mono">jtag_axi → smartconnect → engine</span>, with <em>no</em> Zynq PS at all,
+so no DDR, no MIO, no board file, no Vitis, no boot image and no ARM code. Vivado drives AXI
+transactions down the JTAG cable, so the only thing under test is the datapath.
+<span class="mono">board_vectors.py</span> emits the same case the simulation testbench checks as
+sourceable Tcl (56 input words for the bitstream that ran, 51 after put-call parity; 9 expected outputs), and
+<span class="mono">run_jtag.tcl</span> programs the device, replays it, polls done, and compares
+every output bit-exact against the emulator.</dd>
+<dt>Result</dt><dd><span class="chip ok">PASS, 50/50 CASES BIT-EXACT</span> 2026-09-29, ZedBoard, engine at
+70&nbsp;MHz (in-context WNS +0.404&nbsp;ns, so about 72&nbsp;MHz; 38,358 LUT, 72 DSP). All 56 input
+words written and read back, done on the first status poll, and every one of the 9 outputs identical
+to the emulator bit for bit. Log: <span class="mono">validation/results/board_zedboard_2026-09-29.log</span>.
+Two earlier attempts in that log failed on bugs in the test script, not the hardware (a stale
+<span class="mono">argv</span> taken as the base address; AXI read data parsed as signed).
+<strong>Sweep:</strong> 50 cases back to back with no reset (2 fixed, 48 random over the verified
+domain from a seed the shifter ranges were not fitted on; 22 calls, 28 puts). 450/450 sums bit-exact,
+<span class="mono">range_err</span> never set, 56.9&nbsp;s in all, nearly all of it JTAG traffic
+against 68&nbsp;&micro;s of compute per case. After the host finish step, all 500 outputs equal the
+emulator's and the worst sits at 0.268 of its error bound
+(<span class="mono">validation/board_report.py</span>, <span class="mono">results/board_sweep_*</span>).
+<span class="chip gap">RE-RUN</span> These runs used the bitstream built before calls were priced through
+put-call parity. The regenerated design has a different register map (16 host constants, not 19),
+so it needs a new bitstream and a repeat of the sweep.</dd>
+<dt>Design note</dt><dd>The 16 host-setup constants (19 before put-call parity) are computed on the PC, not the ARM. The
+Zynq-7000 PS is 32-bit ARMv7 with no <span class="mono">__int128</span>, and these are 56-bit values
+whose products need 112 bits, so a C port needs a hand-written 64×64→128 multiply. Phase 2
+(<span class="mono">bd_lite.tcl</span>, PS over <span class="mono">M_AXI_GP0</span>, exports an XSA)
+moves setup and finish onto the ARM once the datapath itself is proven.</dd>
+<dt>Why it matters</dt><dd>It is the difference between "verified in simulation" and "measured on
+hardware", which is the claim a reviewer will look for.</dd>
 </dl>
 </div>
 
@@ -1632,21 +1718,21 @@ the MATLAB and C++ trees have drifted.</p>
 <thead><tr><th>Design</th><th>Price + 9 Greeks</th><th>Bump, same hardware</th><th>Bump / AAD</th><th>AAD / price-only</th></tr></thead>
 <tbody>
 <tr><td>Generation 1, FSM (64-bit)</td><td class="num">433,779</td><td class="num">3,811,647</td><td class="num">8.8×</td><td class="num">2.16×</td></tr>
-<tr><td><strong>Generated, Zynq-7020 config</strong></td><td class="num"><strong>4,731</strong></td><td class="num">86,803</td><td class="num"><strong>18.3×</strong></td><td class="num"><strong>1.04×</strong></td></tr>
+<tr><td><strong>Generated, Zynq-7020 config</strong></td><td class="num"><strong>4,733</strong></td><td class="num">86,860</td><td class="num"><strong>18.4×</strong></td><td class="num"><strong>1.04×</strong></td></tr>
 <tr><td>Generated, host split (loop only)</td><td class="num">4,572</td><td>—</td><td>—</td><td>—</td></tr>
-<tr><td><strong>Generated, 64-bit, 32 mult</strong></td><td class="num"><strong>1,599</strong></td><td class="num">19,505</td><td class="num"><strong>12.2×</strong></td><td class="num">1.56×</td></tr>
+<tr><td><strong>Generated, 64-bit, 32 mult</strong></td><td class="num"><strong>1,593</strong></td><td class="num">19,562</td><td class="num"><strong>12.3×</strong></td><td class="num">1.55×</td></tr>
 </tbody></table></div>
 
 <p>Derived claims: generation 2 is <strong>92×</strong> fewer cycles than generation 1 on the
-Zynq-class config and <strong>271×</strong> in the 64-bit config.</p>
+Zynq-class config and <strong>272×</strong> in the 64-bit config.</p>
 
 <h3>15.2 Accuracy — confirmed</h3>
 
 <div class="tbl"><table>
 <thead><tr><th>Design</th><th>Price</th><th>Worst Greek</th><th>max error / bound</th></tr></thead>
 <tbody>
-<tr><td>Zynq-7020 config (56-bit)</td><td class="num">6.1e-7</td><td class="num">≤ 6.4e-5</td><td class="num">0.115</td></tr>
-<tr><td>64-bit config</td><td class="num">5.9e-8</td><td class="num">≤ 6.0e-6</td><td class="num">0.115</td></tr>
+<tr><td>Zynq-7020 config (56-bit)</td><td class="num">6.1e-7</td><td class="num">≤ 1.2e-5</td><td class="num">0.103</td></tr>
+<tr><td>64-bit config</td><td class="num">2.8e-8</td><td class="num">≤ 7.4e-7</td><td class="num">0.099</td></tr>
 <tr><td>Generation 1 FSM (64-bit)</td><td class="num">3.0e-7</td><td class="num">≤ 5.4e-5</td><td class="num">0.21</td></tr>
 </tbody></table></div>
 
@@ -1654,20 +1740,34 @@ Zynq-class config and <strong>271×</strong> in the 64-bit config.</p>
 (§14/E7). At Q32.32, ≤ 16.5 bits lost on the price and ≤ 21 on any Greek, leaving ≥ 11 correct
 fractional bits.</p>
 
-<h3>15.3 Area — estimate only</h3>
+<h3>15.3 Area — measured (post-synthesis)</h3>
 
-<p>The E9 table. <span class="chip risk">Yosys estimates.</span> The paper must either label them as
-such or replace them with Vivado numbers.</p>
+<p><span class="chip ok">CONFIRMED</span> Vivado 2025.2, <span class="mono">xc7z020clg400-1</span>,
+<span class="mono">heston_aad_z7h</span>, out of context:</p>
+
+<div class="tbl"><table>
+<thead><tr><th>Resource</th><th>Used</th><th>Available</th><th>Util.</th><th>Yosys had estimated</th></tr></thead>
+<tbody>
+<tr><td>LUT (incl. SRL)</td><td class="num">37,738</td><td class="num">53,200</td><td class="num"><strong>70.9&nbsp;%</strong></td><td class="num">48,426 (91&nbsp;%)</td></tr>
+<tr><td>of which shift-register LUTs</td><td class="num">2,781</td><td class="num">17,400</td><td class="num">16.0&nbsp;%</td><td class="num">2,922</td></tr>
+<tr><td>Flip-flops</td><td class="num">27,255</td><td class="num">106,400</td><td class="num">25.6&nbsp;%</td><td class="num">24,856</td></tr>
+<tr><td>DSP48E1</td><td class="num">72</td><td class="num">220</td><td class="num">32.7&nbsp;%</td><td class="num">96</td></tr>
+<tr><td>BRAM tiles</td><td class="num">4</td><td class="num">140</td><td class="num">2.9&nbsp;%</td><td>—</td></tr>
+</tbody></table></div>
+
+<p>The headline correction: the Zynq-7020 fit is <strong>comfortable, not marginal</strong>. Every
+earlier statement built on the 91&nbsp;% figure — including the whole "if Vivado disagrees, fall back
+to 48-bit words" discussion — was resting on a generic-mapping estimate that overstated LUTs by
+28&nbsp;% and DSPs by a third. Routed utilisation may differ slightly; that is E13.</p>
 
 <h3>15.4 Not yet obtained</h3>
 
 <div class="tbl"><table>
 <thead><tr><th>Result</th><th>Needed for</th><th>Blocked on</th></tr></thead>
 <tbody>
-<tr><td>Fmax, WNS, timing closure</td><td>Latency in seconds; throughput</td><td>Vivado licence</td></tr>
-<tr><td>Power (vectorless, then SAIF)</td><td>Energy per Greek set; <span class="mono">fig7</span></td><td>Vivado licence</td></tr>
-<tr><td>Vivado LUT/FF/DSP</td><td>Replacing the E9 estimates; <span class="mono">fig6</span></td><td>Vivado licence</td></tr>
-<tr><td>Bitstream, on-board measurement</td><td>A "running on hardware" claim</td><td>Everything in §17.3</td></tr>
+<tr><td>Timing closure at 100&nbsp;MHz</td><td>Quoting 100&nbsp;MHz rather than 79&nbsp;MHz</td><td>Pipelining the 64-bit carry chains (E13)</td></tr>
+<tr><td>Power from simulated activity (SAIF)</td><td>A defensible energy number; <span class="mono">fig7</span></td><td>A SAIF flow; vectorless is in E13</td></tr>
+<tr><td>Host steps on the ARM (C port), PS design</td><td>A self-contained system with no PC in the loop</td><td>A C port of <span class="mono">host.py</span>, then <span class="mono">bd_lite.tcl</span></td></tr>
 <tr><td>Comparison to published FPGA-finance numbers</td><td>Positioning</td><td>Fmax; and verifying the Weiss citation</td></tr>
 </tbody></table></div>
 
@@ -1700,8 +1800,12 @@ elimination possible is a property of the <em>numerical method</em>, not of AAD:
 COS was chosen over Monte Carlo, whose graph genuinely does depend on the random path. The novelty is
 in noticing that the pricing-method choice and the differentiation-implementation choice are
 coupled.</dd>
+<dt>Prior art</dt><dd>A static adjoint of a fixed graph is not new in itself: source-transformation AD
+tools emit tape-free adjoints for straight-line code, and neural-network training hardware runs a fixed
+backward graph. The contribution is seeing that the COS pricer has such a graph, and compiling its adjoint
+into a scheduled fixed-point datapath; claim that, not the technique.</dd>
 <dt>Evidence</dt><dd>E2 — the generated RTL is bit-exact against the emulator at every register, for
-five designs, with no tape anywhere in the netlist. E8 — 4,731 cycles versus generation 1's tape-ish
+five designs, with no tape anywhere in the netlist. E8 — 4,733 cycles versus generation 1's tape-ish
 FSM at 433,779.</dd>
 </dl>
 </div>
@@ -1713,7 +1817,7 @@ FSM at 433,779.</dd>
 the forward pass — in practice 3–5× in software, dominated by tape write and re-read traffic.
 Bump-and-reprice costs <em>n</em>+1 pricings.</dd>
 <dt>The claim</dt><dd>In a modulo-scheduled hardware datapath the adjoint sweep can be close to free.
-Measured on the Zynq-7020 configuration: 4,565 cycles for the price alone, 4,731 for the price plus
+Measured on the Zynq-7020 configuration: 4,568 cycles for the price alone, 4,733 for the price plus
 nine sensitivities — <strong>1.04×</strong>.</dd>
 <dt>Why it is not obvious</dt><dd>It is not a property of AAD; it is a property of the
 <em>scheduling</em>. On that configuration the initiation interval is pinned at 32 by the iterative
@@ -1724,7 +1828,7 @@ times. Getting this requires scheduling forward and reverse <em>together</em> as
 them as two phases and the slots are not there to fill.</dd>
 <dt>Evidence</dt><dd>E8, the AAD versus price-only columns. And the honest counterpart in the same
 table: on the 64-bit configuration, where multipliers <em>are</em> the binding resource, the ratio is
-1.56×. Both belong in the paper; the claim is conditional and we state the condition.</dd>
+1.55×. Both belong in the paper; the claim is conditional and we state the condition.</dd>
 </dl>
 </div>
 
@@ -1733,7 +1837,7 @@ table: on the 64-bit configuration, where multipliers <em>are</em> the binding r
 <dl>
 <dt>Background</dt><dd>Every adjoint rule reuses a forward quantity: ∂(a/b)/∂a = 1/b, ∂(a/b)/∂b =
 −a/b², ∂exp(a)/∂a = exp(a). In software this is a footnote.</dd>
-<dt>The claim</dt><dd>In a divider-free design a complex reciprocal costs about ten of the 251
+<dt>The claim</dt><dd>In a divider-free design a complex reciprocal costs about ten of the 250
 multiplier slots in a term, and the term's slot budget is what sets II, which sets the entire
 latency. Because forward and reverse are nodes in one graph, ordinary common-subexpression
 elimination finds this reuse automatically: each denominator is inverted exactly once and serves both
@@ -1743,7 +1847,7 @@ at all, but omg·(1/omge): a complex multiply, four slots instead of ten.</dd>
 dividers (so reciprocals are expensive in the shared currency), fused graphs (so CSE can see across
 the forward/reverse boundary), and resource-constrained scheduling (so slot count maps to latency).
 Any one of them missing and this is a micro-optimisation rather than an architectural result.</dd>
-<dt>Evidence</dt><dd>The per-term bill of 251 multiplies (§8.7), which is what II is computed from,
+<dt>Evidence</dt><dd>The per-term bill of 250 multiplies (§8.7), which is what II is computed from,
 and the schedule verification in E3.</dd>
 </dl>
 </div>
@@ -1764,8 +1868,12 @@ differentiation of a pricer; the validation method is reverse-mode differentiati
 of the hardware that does it. The reason it is affordable is exactly the reason AAD is affordable in
 the first place — thousands of internal nodes, one output, so reverse mode gets all the sensitivities
 in one sweep. Nobody would attempt this bound with finite differences.</dd>
+<dt>Prior art</dt><dd>The method is old, and the paper must say so: reverse mode was introduced by Linnainmaa
+(BIT, 1976) precisely to expand accumulated rounding error, and Gaffar, Mencer, Luk et al. (FPT 2002) used AD
+to choose FPGA bit widths. What is new is the application: bounding every Greek of a datapath that itself
+performs the adjoint, validated against bit-exact RTL.</dd>
 <dt>Evidence</dt><dd>E5 — measured error / bound ≤ 0.21 over all 210 (case, output) pairs for
-generation 1 and ≤ 0.115 for the generated designs. E6 — the 1σ form of the same expression predicts
+generation 1 and ≤ 0.103 for the generated designs. E6 — the 1σ form of the same expression predicts
 the measured error across FL = 16…40, which is what shows the model is right rather than merely
 conservative.</dd>
 </dl>
@@ -1780,7 +1888,7 @@ dedicated modules — often bit-serial, always occupying their own area.</dd>
 reciprocal and inverse square root as Newton-Raphson on a normalised mantissa with an 8-bit ROM seed
 (quadratic convergence, 8→16→32→64 bits in three iterations); exp by Tang's method; log by a 64-entry
 table plus a degree-4 series; sin/cos by CORDIC (shifts and adds only). The result is a per-term bill
-of exactly 251 multiplies, 3 CORDIC rotations, 2 CORDIC vectorings.</dd>
+of exactly 250 multiplies, 3 CORDIC rotations, 2 CORDIC vectorings.</dd>
 <dt>Why it is not obvious</dt><dd>None of these algorithms is new — that is not the claim. The claim
 is that expressing <em>everything</em> in a single currency is what makes one resource-constrained
 scheduler able to trade the whole design against one number, <em>M</em>. A divider cannot be
@@ -1818,7 +1926,7 @@ baseline and report a large factor. Such comparisons mostly measure the platform
 pricer</em>, same word length, same arithmetic, same scheduler — <span class="mono">heston_bump_z7</span>
 and <span class="mono">heston_bump_zu</span>, themselves verified bit-exact against 19 emulated
 pricings. The only variable between the two arms is the differentiation method.</dd>
-<dt>Why it matters</dt><dd>It makes both results defensible: 18.3× fewer cycles, <em>and</em> more
+<dt>Why it matters</dt><dd>It makes both results defensible: 18.4× fewer cycles, <em>and</em> more
 accurate than the best bump size chosen in hindsight per Greek. The accuracy comparison in
 particular would be meaningless across platforms, because the cancellation term ULP/<em>h</em> is a
 property of the number format.</dd>
@@ -1826,35 +1934,36 @@ property of the number format.</dd>
 </dl>
 </div>
 
-<div class="callout"><p><strong>The one claim to be careful with.</strong> "First hardware
-implementation of AAD for option Greeks" rests on a literature search, and
-<span class="mono">docs/05_literature_review.md</span> flags the Weiss et al. (2016) FPGA-Heston
-citation as <em>not verified</em> — a September 2026 search did not locate a matching paper. Before
-the paper claims priority, that citation must be resolved, and the search repeated for recent
-preprints. The technically safer formulation is a claim about <em>what</em> was built —
-"a statically scheduled, tape-free hardware datapath for reverse-mode AAD, with a per-Greek error
-bound" — which is defensible on its own terms regardless of who was first.</p></div>
+<div class="callout"><p><strong>The priority claim, after checking.</strong> A full literature check
+(September 2026, <span class="mono">docs/novelty_assessment.md</span>) found no published FPGA or custom-datapath
+implementation of AAD for option Greeks, and no FPGA implementation of the COS method. It covered the 2024
+survey of 99 FPGA option-pricing studies (which never mentions differentiation or Fourier methods), the 2024
+review of AAD in finance by Capriotti and Giles (which cites no hardware AAD), AMD's Vitis finance library
+(Heston Greeks by finite differences) and the FPGA Greeks papers of Klaisoongnoen et al. (no adjoints). The
+"Weiss et al. 2016" citation matched no real paper and has been removed. Say "to our knowledge, the first FPGA
+implementation of AAD for option Greeks". Do not say "first hardware reverse-mode AD": every neural-network
+training accelerator runs backpropagation. And cite Capriotti's patent on an adjoint Greeks "simulating
+machine" (software on general-purpose computers).</p></div>
 
 <h2 id="next"><span class="n">17</span>What has to happen next</h2>
 
-<h3>17.1 The immediate blocker</h3>
+<h3>17.1 The route (done) and how to rerun it</h3>
 
-<p>Vivado ML <strong>Enterprise</strong> 2026.1 is installed at
-<span class="mono">C:\AMDDesignTools\2026.1\Vivado</span>, and Enterprise is licence-gated. No licence
-exists on the machine: no <span class="mono">.lic</span> file, and
-<span class="mono">XILINXD_LICENSE_FILE</span> is unset in both the user and system registry hives.
-The tool refuses to launch before reading any Verilog.</p>
+<p>The licence obstacle is gone: the toolchain is now <strong>Vivado ML Standard 2025.2</strong> at
+<span class="mono">D:\2025.2\Vivado</span>, which is free and covers
+<span class="mono">xc7z020</span>. (<span class="mono">xczu7ev</span> for the 64-bit design still
+needs Enterprise, or a 30-day evaluation.) <span class="mono">heston_aad_z7h</span> has been routed
+on <span class="mono">xc7z020clg400-1</span>; results are in E13. See E13 also for the three obstacles
+on the way and what was done about each.</p>
 
-<ol>
-<li>Generate the free <strong>Vivado ML Standard</strong> licence from the AMD licensing site, signed
-in with the account the tool was installed under. Standard covers <span class="mono">xc7z020</span>,
-which is the target that matters.</li>
-<li>Save it (e.g. <span class="mono">C:\Users\hp\.Xilinx\Xilinx.lic</span>) and set
-<span class="mono">XILINXD_LICENSE_FILE</span> to that path.</li>
-<li>Optionally also generate a 30-day <strong>Enterprise evaluation</strong>:
-<span class="mono">xczu7ev</span> (ZCU104) is not in the free Standard device set, so the 64-bit
-design's implementation needs it.</li>
-</ol>
+<p>The most reliable way to run it is natively, with neither WSL nor an agent harness in the
+loop:</p>
+
+<div class="eq">cd "C:\Users\hp\Greeks-Engine\Greek Engine\hardware\vivado"
+run_native.bat        :: resumes from post_synth.dcp / post_place.dcp if present</div>
+
+<p>Close other Vivado instances and memory-heavy applications first. Routing this design peaked at
+2.5&nbsp;GB and rising on a 16&nbsp;GB machine shared with WSL.</p>
 
 <p>The WSL→Windows plumbing is already done and verified:
 <span class="mono">hardware/vivado/win/vivado</span> forwards arguments to the Windows
@@ -1870,32 +1979,34 @@ python ../../validation/make_figures.py  # adds fig6_resources, fig7_energy_late
 <h3>17.2 Then, in order</h3>
 
 <ol>
-<li><strong>Run <span class="mono">heston_aad_z7h</span> on <span class="mono">xc7z020clg400-1</span>
-at 10 ns.</strong> This is the highest-information action in the project: it either confirms the
-fits-a-7020 claim or kills it, and it produces the first real Fmax.</li>
+<li><strong>Build and test the ZedBoard JTAG design</strong>
+(<span class="mono">zedboard\run_board.bat build</span>, then <span class="mono">test</span>). The route
+confirmed the fits-a-7020 claim (Fmax &asymp; 79&nbsp;MHz); running on silicon is now the
+highest-information action.</li>
 <li><strong>Parse and plot.</strong> <span class="mono">fig6</span> and <span class="mono">fig7</span>
 are already wired and waiting on <span class="mono">vivado.csv</span>.</li>
-<li><strong>Branch on the outcome.</strong> If placement fails or timing misses, the documented
-fallbacks are sharing storage registers into SRLs, or dropping to 48-bit words (relative error ~1e-5,
-<span class="mono">check_accuracy.py 24</span>).</li>
+<li><strong>Decide on 100&nbsp;MHz.</strong> Placement fits; timing misses by 2.6&nbsp;ns on 64-bit
+carry chains. Either pipeline them, or quote the design at 79&nbsp;MHz. Dropping to 48-bit words
+(relative error ~1e-5, <span class="mono">check_accuracy.py 24</span>) would also shorten the chains.</li>
 <li><strong>Run the rest of the matrix</strong> — z7, zu, and the generation-1 tops — for the
 comparison table.</li>
 </ol>
 
-<h3>17.3 Board bring-up, once implementation is green</h3>
+<h3>17.3 Board bring-up</h3>
 
 <p>These are genuinely missing engineering, not just unrun scripts:</p>
 
 <div class="tbl"><table>
 <thead><tr><th>Step</th><th>What is missing today</th></tr></thead>
 <tbody>
-<tr><td>Pick a board, write its XDC</td><td>Zero <span class="mono">.xdc</span> files exist; the only constraint is a one-line <span class="mono">create_clock</span> generated at run time</td></tr>
-<tr><td>Narrow the AXI stream</td><td><span class="mono">s_axis_tdata</span> is 1,624 bits; Zynq PS–PL ports are 32/64-bit. Needs a gearbox or an AXI4-Lite register file</td></tr>
-<tr><td>Build the block design</td><td>No <span class="mono">create_bd</span>, no PS instance, no DMA, no clock wizard, no XSA export anywhere in the repo</td></tr>
-<tr><td>Port <span class="mono">host.py</span> to C</td><td>Only a Python bit-exact spec exists. The ARM needs a C implementation, re-verified bit-exact — note the irregular formats (<span class="mono">hs_260</span> at 53 fractional bits)</td></tr>
-<tr><td>In-context implementation, bitstream</td><td><span class="mono">write_bitstream</span> appears nowhere; the current flow is out-of-context only and cannot produce one</td></tr>
-<tr><td>On-board validation</td><td>No plan yet for checking board outputs against the emulator</td></tr>
-<tr><td>Activity-based power</td><td>Current flow reports vectorless power at the 12.5&nbsp;% default toggle rate; a SAIF flow is documented but not set up</td></tr>
+<tr><td>Pick a board, write its XDC</td><td><span class="chip ok">DONE</span> ZedBoard, <span class="mono">xc7z020clg484-1</span>. <span class="mono">zedboard/jtag.xdc</span> pins the one signal the JTAG design needs (100&nbsp;MHz oscillator on Y9). A PS-only design needs almost no XDC, since the PS pins are fixed by the package</td></tr>
+<tr><td>Narrow the AXI stream</td><td><span class="chip ok">DONE</span> <span class="mono">wrappers.py lite</span> generates an AXI4-Lite register file; verified bit-exact (E12)</td></tr>
+<tr><td>Build the block design</td><td><span class="chip ok">DONE</span> <span class="mono">zedboard/bd_jtag.tcl</span> (no PS, for first bring-up) and <span class="mono">bd_lite.tcl</span> (PS over <span class="mono">M_AXI_GP0</span>, exports an XSA). Both scripted, not clicked</td></tr>
+<tr><td>Board file</td><td><span class="chip gap">TODO</span> Vivado 2025.2 ships none. <span class="mono">bd_lite.tcl</span> checks and says how to install it (Tools → Vivado Store → Boards → ZedBoard). <span class="mono">bd_jtag.tcl</span> does not need one</td></tr>
+<tr><td>Port <span class="mono">host.py</span> to C</td><td><span class="chip risk">DEFERRED</span> Not needed for phase 1: <span class="mono">board_vectors.py</span> computes the constants on the PC. Phase 2 needs it — and a hand-written 64×64→128 multiply, since the Zynq-7000 PS is 32-bit ARMv7 with no <span class="mono">__int128</span></td></tr>
+<tr><td>In-context implementation, bitstream</td><td><span class="chip ok">DONE</span> Both block-design scripts run <span class="mono">launch_runs impl_1 -to_step write_bitstream</span></td></tr>
+<tr><td>On-board validation</td><td><span class="chip ok">DONE</span> <span class="mono">zedboard/run_jtag.tcl</span> programs the device, replays a generated vector and compares all 9 outputs bit-exact against the emulator (E14)</td></tr>
+<tr><td>Activity-based power</td><td><span class="chip gap">TODO</span> Current flow reports vectorless power at the 12.5&nbsp;% default toggle rate; a SAIF flow is documented but not set up</td></tr>
 </tbody></table></div>
 
 <h3>17.4 Paper-side work</h3>
@@ -1917,14 +2028,15 @@ finds them first.</p>
 <div class="tbl"><table>
 <thead><tr><th>Weakness</th><th>Status</th><th>Mitigation</th></tr></thead>
 <tbody>
-<tr><td>No Vivado results — no Fmax, timing closure, power or energy</td><td><span class="chip gap">OPEN</span></td><td>§17.1; one command once licensed</td></tr>
-<tr><td>Area figures are Yosys estimates; 91&nbsp;% LUT is uncomfortably tight</td><td><span class="chip gap">OPEN</span></td><td>Fallbacks documented: SRL sharing, 48-bit words</td></tr>
-<tr><td>Nothing has run on a board; OOC flow cannot make a bitstream</td><td><span class="chip gap">OPEN</span></td><td>§17.3</td></tr>
+<tr><td>Timing misses 100&nbsp;MHz by 2.6&nbsp;ns; Fmax &asymp; 79&nbsp;MHz</td><td><span class="chip gap">OPEN</span></td><td>E13. Pipeline the 64-bit carry chains, or quote 79&nbsp;MHz. Board designs run at 70&nbsp;MHz</td></tr>
+<tr><td>Area was quoted from Yosys estimates that overstated LUTs by 28&nbsp;% and DSPs by a third</td><td><span class="chip ok">FIXED</span></td><td>Measured: 70.9&nbsp;% LUT, 32.7&nbsp;% DSP (§15.3). Fallbacks not needed</td></tr>
+<tr><td>Correctness on silicon</td><td><span class="chip ok">DONE</span></td><td>50 cases over the verified domain bit-exact on a ZedBoard (E14). Still a sample, not exhaustive: the claim is bit-exact agreement with an emulator whose accuracy is bounded</td></tr>
+<tr><td>Routing reports congestion even at 71&nbsp;% LUT</td><td><span class="chip risk">WATCH</span></td><td>Observed once, mid-route. The completed route's critical path is 60&nbsp;% routing delay (7.37 of 12.31&nbsp;ns), consistent with it</td></tr>
 <tr><td>Verified input domain is bounded; outside it <span class="mono">range_err</span> fires</td><td><span class="chip risk">BY DESIGN</span></td><td>Must be stated as a limitation, not hidden</td></tr>
 <tr><td>Truncation range [a,b] held fixed when differentiating</td><td><span class="chip risk">CONVENTION</span></td><td>Standard COS practice; the software reference does the same</td></tr>
 <tr><td>Register sharing across values not implemented</td><td><span class="chip gap">OPEN</span></td><td>Largest remaining FF/LUT saving</td></tr>
 <tr><td>"First in hardware" rests on an unverified citation</td><td><span class="chip gap">OPEN</span></td><td>Resolve, or reframe around what was built</td></tr>
-<tr><td>The 1.04× Greeks claim is configuration-dependent (1.56× on zu)</td><td><span class="chip risk">STATE IT</span></td><td>Report both, with the II analysis that explains why</td></tr>
+<tr><td>The 1.04× Greeks claim is configuration-dependent (1.55× on zu)</td><td><span class="chip risk">STATE IT</span></td><td>Report both, with the II analysis that explains why</td></tr>
 <tr><td>Black-Scholes core still Q16.16, price error ~5e-4</td><td><span class="chip gap">OPEN</span></td><td>Port to the parameterised library, or drop from the paper</td></tr>
 <tr><td>MATLAB and C++ trees are stale and unexercised</td><td><span class="chip gap">OPEN</span></td><td>Refresh or remove</td></tr>
 </tbody></table></div>

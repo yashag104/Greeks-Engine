@@ -44,7 +44,7 @@ The same graph gives:
 1/den, g/den, 1/omg, ratio/omg, 1/omge, dratio/omge, 1/ratio = omg/omge.
 Everything independent of u_k is hoisted into a once-per-evaluation setup.
 
-**One COS term** (forward + reverse sweep, adjoint normalization) costs 251
+**One COS term** (forward + reverse sweep, adjoint normalization) costs 250
 multiplies, 3 CORDIC rotations, 2 CORDIC vectorings, and ~380 add/shift/mux
 operations.
 
@@ -92,9 +92,9 @@ Beyond the scripted suite, the generator was also checked bit-exact on
 | design | AAD: price + 9 sensitivities | bump-and-reprice, same hardware | bump / AAD |
 |---|---|---|---|
 | FSM engine (64-bit) | 433,779 | 3,811,647 | 8.8× |
-| generated, Zynq-7020 config (56-bit, 8 multipliers) | **4,731** (92× fewer than FSM) | 86,803 | **18.3×** |
+| generated, Zynq-7020 config (56-bit, 8 multipliers) | **4,733** (92× fewer than FSM) | 86,860 | **18.4×** |
 | generated, host setup (56-bit, 8 multipliers) | 4,572 (loop only) | — | — |
-| generated, 64-bit, 32 multipliers | **1,599** (271× fewer) | 19,505 | **12.2×** |
+| generated, 64-bit, 32 multipliers | **1,593** (272× fewer) | 19,562 | **12.3×** |
 
 On the Zynq-7020 configuration, all 9 Greeks cost 1.04 pricings. The iterative
 CORDIC units set the pace per term, so the reverse sweep's extra multiplies use
@@ -106,10 +106,10 @@ multiplier slots that a price-only design leaves idle.
 Worst relative error over the 21-case grid (S0 = 100, K 80–120, T 0.1–2,
 ξ 0.2–1, ρ −0.9…0.5, calls and puts):
 
-| design | price | Greeks (worst: ∂V/∂κ, ∂V/∂ρ) | max error / bound |
+| design | price | Greeks (worst: ∂V/∂ρ, ∂V/∂κ) | max error / bound |
 |---|---|---|---|
-| Zynq-7020 config (56-bit) | 6.1e-7 | ≤ 6.4e-5 | 0.115 |
-| 64-bit config | 5.9e-8 | ≤ 6.0e-6 | 0.115 |
+| Zynq-7020 config (56-bit) | 6.1e-7 | ≤ 1.2e-5 | 0.103 |
+| 64-bit config | 2.8e-8 | ≤ 7.4e-7 | 0.099 |
 | FSM engine (64-bit) | 3.0e-7 | ≤ 5.4e-5 | 0.21 |
 
 Against bump-and-reprice on the same pricer and word length, sweeping h from 1e-8
@@ -125,17 +125,83 @@ to 1e-1, AAD is more accurate than the best h for every Greek
 | **`heston_aad_z7h`** (host setup) | xc7 | **45,504** | 2,922 | 24,856 | 96 / 220 | **yes: 91 % LUT incl. SRL, 23 % FF, 44 % DSP** |
 | **`heston_aad_zu`** (64-bit, 32 multipliers) | xcup | **108,330** | 6,409 | 59,953 | 512 DSP48E2 | **ZCU104: 50 % LUT, 30 % DSP**; ZCU102: yes; ZU3EG: no |
 
-The Zynq-7020 target is the host-setup variant. Its 91 % LUT utilization is tight:
-if Vivado disagrees, the next steps are sharing storage registers (SRLs), or 48-bit
-words (relative error ~1e-5; `check_accuracy.py 24`).
+### 4.4 Area (Vivado 2025.2, post-synthesis, out of context)
 
-Yosys numbers are estimates. Vivado usually maps LUTs more tightly, and Fmax,
-timing closure and power need Vivado (`hardware/vivado/make_all.sh`).
+`heston_aad_z7h` on xc7z020clg400-1:
+
+| resource | used | available | util. | Yosys had estimated |
+|---|---|---|---|---|
+| LUT (incl. SRL) | **37,738** | 53,200 | **70.9 %** | 48,426 (91 %) |
+| of which shift-register LUTs | 2,781 | 17,400 | 16.0 % | 2,922 |
+| FF | 27,255 | 106,400 | 25.6 % | 24,856 |
+| DSP48E1 | **72** | 220 | **32.7 %** | 96 |
+| BRAM tile | 4 | 140 | 2.9 % | — |
+
+Yosys' generic mapping overstated LUTs by 28 % and DSPs by a third. The Zynq-7020 fit
+is comfortable rather than marginal, and the fallbacks previously recommended here —
+sharing storage registers into SRLs, or 48-bit words (`check_accuracy.py 24`) — are
+not needed. Use the Yosys figures only to rank configurations against each other, not
+as an area result.
+
+### 4.5 Routed (Vivado 2025.2, xc7z020clg400-1, 10 ns target, out of context)
+
+| resource | routed | available | % |
+|---|---|---|---|
+| LUT | 36,499 | 53,200 | 68.6 % |
+| of which shift-register LUTs | 1,401 | 17,400 | 8.1 % |
+| FF | 28,559 | 106,400 | 26.8 % |
+| DSP48E1 | 72 | 220 | 32.7 % |
+| BRAM tile | 4 | 140 | 2.9 % |
+
+| timing / power | value |
+|---|---|
+| WNS at 100 MHz | **−2.639 ns** (8,172 of 64,408 endpoints fail); WHS +0.037 ns |
+| Critical path | 12.31 ns, 29 levels (21 CARRY4), `t_reg[16]` → `cr2_inst/z_reg[63]` |
+| Fmax | ≈ 79.1 MHz (1 / (10 + 2.639) ns) |
+| AAD latency (price + 9 Greeks) | 4,572 FPGA cycles (host-setup design; setup and finish on the host) / 79.1 MHz ≈ **57.8 µs** |
+| Power (vectorless, 12.5 % toggle, at the 100 MHz constraint) | 0.258 W (0.153 dynamic + 0.105 static) |
+| Energy per evaluation | ≤ 14.9 µJ (0.258 W × 57.8 µs; an upper bound, since power was estimated at 100 MHz) |
+
+The design fits and routes but does not close at 100 MHz. The failing paths are 64-bit
+carry chains; pipelining them, or running at ≤ 79 MHz, are the options. The ZedBoard
+bring-up designs run the engine at 70 MHz for margin.
 
 ## 5. Limitations and open items
 
-- **No Vivado results yet**: Fmax, timing closure, power and energy are open.
-  Latency in seconds = cycles / Fmax.
+- **Timing does not close at 100 MHz** (§4.5): WNS −2.639 ns, Fmax ≈ 79 MHz. Routing
+  was reached after three obstacles: Vivado ML Enterprise refused to launch without a
+  licence (resolved by moving to ML Standard 2025.2); `read_verilog`, `read_xdc` and
+  `-include_dirs` take Tcl *lists*, so the space in the repository path tore every
+  filename in two (fixed by wrapping in `[list ...]`); and two runs were killed
+  mid-flow with no error message, most likely memory pressure (the flow now
+  checkpoints after placement, `impl_from_dcp.tcl` resumes from a checkpoint, and
+  `run_native.bat` runs the flow outside WSL). Power is vectorless; activity-based
+  (SAIF) power is still open.
+- **On silicon: 50 cases, bit-exact (2026-09-29).** The AXI4-Stream wrappers are
+  up to 1,456 bits wide, which no Zynq PS-PL port can carry, so `wrappers.py lite`
+  generates an AXI4-Lite register file (bit-exact, in `verify_all.sh`). On a ZedBoard
+  (xc7z020clg484-1), `zedboard/bd_jtag.tcl` puts it behind a JTAG-to-AXI master at
+  70 MHz (WNS +0.404 ns, so ~72 MHz in context against ~79 MHz out of context; 38,358
+  LUT, 72 DSP). `run_jtag.tcl` wrote the 56 input words, started the engine, saw done
+  on the first status poll, and read back all 9 outputs **bit-exact against the
+  emulator**. Log: `validation/results/board_zedboard_2026-09-29.log`. A sweep then
+  ran 50 cases back to back with no reset between them (the 2 fixed cases plus 48
+  random draws over the verified domain, seed 2026, not the seed the shifter ranges
+  were fitted on; 22 calls, 28 puts): 450/450 sums bit-exact, `range_err` never set,
+  56.9 s in all, almost all of it JTAG register traffic. Through the host finish step
+  all 500 outputs equal the emulator's, and the worst is 0.268 of its error bound
+  (`validation/board_report.py`; `results/board_sweep_*`). These runs used the
+  bitstream built before put-call parity (19 host constants, 56 input words); the
+  regenerated design (16 constants, 51 words) needs a new bitstream and a re-run.
+  Also open: the PS design (`bd_lite.tcl`), which needs a C port of the host setup
+  and finish.
+- **Calls are priced as puts plus put-call parity.** Priced directly, a call's COS
+  coefficients carry e^b, which over a wide truncation range grows and then cancels:
+  over the 22 calls of the 50-case board sweep, fixed-point price error reached 2.3e-3
+  (median 4.8e-5) against the integral reference. The term loop now always computes
+  the put, and the finish step adds S0 − K·e^(−rT) and its S0, K, T, r derivatives:
+  worst 3.1e-5 (median 5.4e-7), and every output improves. The COS reference prices
+  calls the same way (`parity=True`); the FSM engine still prices them directly.
 - **Verified input domain**: S0 = 100, K ∈ [60, 150], T ∈ [0.1, 3],
   r ∈ [0, 0.1], v0, θ ∈ [0.005, 0.25], κ ∈ [0.2, 6], ξ ∈ [0.1, 1], ρ ∈ [−0.95, 0.6].
   Outside it, `range_err` reports rather than silently returning wrong values.

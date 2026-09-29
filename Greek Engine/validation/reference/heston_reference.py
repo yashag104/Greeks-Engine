@@ -9,6 +9,10 @@ Two references, answering two different questions:
    Greeks by 4th-order Richardson-extrapolated central differences, which
    are accurate to ~1e-10 relative here -- far below any fixed-point error
    we want to resolve. The difference RTL - this is *hardware error*.
+   Calls are priced as puts plus put-call parity (``parity=True``, the
+   generated datapaths); ``parity=False`` prices the call payoff directly,
+   as the generation-1 FSM engine does. The two differ by the COS method's
+   own error, up to ~2e-4 on price at long T and high variance.
 
 2. ``integral_price`` / ``integral_greeks`` -- the Heston model itself,
    priced by adaptive quadrature of the Fourier integral (Albrecher et al.
@@ -48,8 +52,10 @@ def truncation_range(S0, K, T, r, v0, kappa, theta, xi, rho):
     return c1 - L_TRUNC * math.sqrt(c2), c1 + L_TRUNC * math.sqrt(c2)
 
 
-def cos_price(p, is_call=True, N=128, ab=None):
+def cos_price(p, is_call=True, N=128, ab=None, parity=True):
     S0, K, T, r, v0, kappa, theta, xi, rho = p
+    if is_call and parity:
+        return cos_price(p, False, N, ab) + S0 - K * math.exp(-r * T)
     a, b = ab if ab is not None else truncation_range(*p)
     x = math.log(S0 / K)
     k = np.arange(N)
@@ -82,10 +88,10 @@ def _step(p, i):
     return 1e-3 * max(abs(p[i]), 1e-2)
 
 
-def cos_greeks(p, is_call=True, N=128):
+def cos_greeks(p, is_call=True, N=128, parity=True):
     """dV/dp for all 9 parameters with [a, b] frozen at the base point."""
     ab = truncation_range(*p)
-    f = lambda q: cos_price(q, is_call, N, ab)
+    f = lambda q: cos_price(q, is_call, N, ab, parity)
     return [_richardson(f, p, i, _step(p, i)) for i in range(9)]
 
 

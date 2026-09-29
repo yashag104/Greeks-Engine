@@ -1,0 +1,35 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date         : Sat Sep 26 19:49:05 2026
+| Host         : SaY-PC running 64-bit major release  (build 9200)
+| Command      : report_utilization -hierarchical -file runs/xc7z020clg400-1/heston_aad_z7h/util_hier.rpt
+| Design       : heston_aad_z7h
+| Device       : xc7z020clg400-1
+| Speed File   : -1
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++--------------------+----------------------+------------+------------+---------+------+-------+--------+--------+------------+
+|      Instance      |        Module        | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | DSP Blocks |
++--------------------+----------------------+------------+------------+---------+------+-------+--------+--------+------------+
+| heston_aad_z7h     |                (top) |      36499 |      35098 |       0 | 1401 | 28559 |      1 |      6 |         72 |
+|   (heston_aad_z7h) |                (top) |      29406 |      28005 |       0 | 1401 | 26816 |      1 |      6 |         72 |
+|   cr0_inst         |   heston_aad_z7h_rot |       2023 |       2023 |       0 |    0 |   511 |      0 |      0 |          0 |
+|   cr1_inst         | heston_aad_z7h_rot_0 |       1937 |       1937 |       0 |    0 |   418 |      0 |      0 |          0 |
+|   cr2_inst         | heston_aad_z7h_rot_1 |        828 |        828 |       0 |    0 |   313 |      0 |      0 |          0 |
+|   cv0_inst         |   heston_aad_z7h_vec |       1265 |       1265 |       0 |    0 |   190 |      0 |      0 |          0 |
+|   cv1_inst         | heston_aad_z7h_vec_2 |       1081 |       1081 |       0 |    0 |   311 |      0 |      0 |          0 |
++--------------------+----------------------+------------+------------+---------+------+-------+--------+--------+------------+
+* Note: The sum of lower-level cells may be larger than their parent cells total, due to cross-hierarchy LUT combining
+
+
