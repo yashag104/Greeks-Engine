@@ -145,8 +145,8 @@ closed-form price, so the price is computed by a numerical method (we use the Fo
 built it as a hardware datapath. That is what this project is: a generator that takes the Heston-COS
 price <em>and its adjoint sweep</em> as a single operation graph and emits a fixed-point,
 resource-shared, modulo-scheduled Verilog datapath that produces the price and nine sensitivities in
-4,731 clock cycles on a Zynq-7020-sized design — where bump-and-reprice on the identical hardware
-takes 86,803.</p>
+4,733 clock cycles on a Zynq-7020-sized design — where bump-and-reprice on the identical hardware
+takes 86,860.</p>
 
 <div class="two">
   <div><h4>The product</h4><p>A parameterised Verilog generator plus the RTL it emits, verified
@@ -584,8 +584,8 @@ sequencing — the "reverse pass" is just more nodes in the same graph.</p></div
 
 <p>The classical result is that reverse-mode AD costs a small constant times the forward
 evaluation — typically 3–5× in software, because of tape write traffic and the reread on the
-backward sweep. Our measured figure is <strong>1.04×</strong> (4,731 cycles for price + 9 Greeks vs
-4,565 for price alone, Zynq-7020 config). Section 10 explains why: with no tape traffic, the extra
+backward sweep. Our measured figure is <strong>1.04×</strong> (4,733 cycles for price + 9 Greeks vs
+4,568 for price alone, Zynq-7020 config). Section 10 explains why: with no tape traffic, the extra
 adjoint multiplies simply occupy multiplier slots that the forward pass was leaving idle.</p>
 
 <p class="part">Part III — The hardware</p>
@@ -789,7 +789,7 @@ divider:  dedicated area,          Newton iteration:  6 shared multiplier uses
 sqrt:     bit-serial, dedicated    Newton on 1/√x:    9 shared multiplier uses
 exp/log:  dedicated modules        table + Taylor:    7 / 6 shared multiplier uses
 ──────────────────────────────────────────────────────────────────────
-28 divisions/term = 80% of latency  →  0 divisions; 251 multiplies/term</div>
+28 divisions/term = 80% of latency  →  0 divisions; 250 multiplies/term</div>
 
 <p>The reason this is a win is not that Newton is cheaper in isolation. It is that
 <strong>a multiplier use is schedulable and a divider is not</strong>. Once everything is measured in
@@ -917,7 +917,7 @@ rounding cycle) — so 32 cycles at FL = 28. Remember that number; section 10.3 
 
 <p>Summed over one COS term, forward pass plus reverse sweep plus adjoint normalisation:</p>
 
-<div class="eq">ONE COS TERM = 251 multiplies
+<div class="eq">ONE COS TERM = 250 multiplies
              +   3 CORDIC rotations
              +   2 CORDIC vectorings
              + ~380 add / shift / mux / ROM operations (dedicated glue)</div>
@@ -1000,7 +1000,7 @@ already-computed reciprocal.</p>
 
 <div class="note"><p><strong>Why this is a hardware result and not a software one.</strong> In
 software, recomputing a reciprocal costs one division instruction and you would not think about it.
-Here a complex reciprocal is ~10 of the 251 multiplier slots in a term, and the term's slot budget is
+Here a complex reciprocal is ~10 of the 250 multiplier slots in a term, and the term's slot budget is
 what sets II, which sets the entire latency. Fusing the graphs before scheduling is what makes the
 saving visible to the tool at all.</p></div>
 
@@ -1026,7 +1026,7 @@ strike_sens = (price − disc·acc_x) / K              (K enters through x AND t
 
 <h2 id="sched"><span class="n">10</span>Modulo scheduling: why all nine Greeks cost 1.04 pricings</h2>
 
-<p class="lead-in">Sections 8 and 9 reduced one COS term to a fixed bill: 251 multiplies, 3 CORDIC
+<p class="lead-in">Sections 8 and 9 reduced one COS term to a fixed bill: 250 multiplies, 3 CORDIC
 rotations, 2 CORDIC vectorings. This section spends that bill. It is the architectural heart of the
 project.</p>
 
@@ -1053,8 +1053,8 @@ in flight at once, and in steady state every unit repeats its behaviour with per
 <div class="eq">cycles_per_evaluation = length(setup) + (N_terms − 1)·II + length(term) + length(finish)
 
   z7h (host split, II = 32, L = 506, N = 128):   0 + 127·32 + 506 + 0  =  4,572
-  z7  (fully on-chip, II = 32):                                           4,731
-  zu  (II = 8):                                                           1,599</div>
+  z7  (fully on-chip, II = 32):                                           4,733
+  zu  (II = 8):                                                           1,593</div>
 
 <figure>
 <div class="sv">
@@ -1098,13 +1098,13 @@ busy_span = latency            for an iterative unit (blocked until it finishes)
 FL + 4 = 32, so it blocks its unit for 32 cycles.</p>
 
 <div class="eq">z7 (56-bit, M = 8, 3 CROT, 2 CVEC, ITERATIVE CORDIC):
-  multipliers: ceil(251 · 1 / 8)   = 32
+  multipliers: ceil(250 · 1 / 8)   = 32
   rotations:   ceil(3 · 32 / 3)    = 32
   vectorings:  ceil(2 · 32 / 2)    = 32
                                   ──── II = 32   ← all three classes balanced
 
 zu (64-bit, M = 32, 1 CROT, 1 CVEC, PIPELINED CORDIC):
-  multipliers: ceil(251 · 1 / 32)  = 8
+  multipliers: ceil(250 · 1 / 32)  = 8
   rotations:   ceil(3 · 1 / 1)     = 3
   vectorings:  ceil(2 · 1 / 1)     = 2
                                   ──── II = 8    ← set by multipliers alone</div>
@@ -1112,8 +1112,8 @@ zu (64-bit, M = 32, 1 CROT, 1 CVEC, PIPELINED CORDIC):
 <p>The z7 numbers are not a coincidence — 3 rotation units and 2 vectoring units were chosen
 <em>because</em> that is what balances 8 multipliers at FL = 28. Adding a ninth multiplier would not
 help: II would still be 32, pinned by the CORDICs. The measured table in section 14 confirms exactly
-this — going from 8 to 16 multipliers on the z7 config moves the cycle count only from 4,731 to
-4,619, a 2&nbsp;% gain for double the multipliers.</p>
+this — going from 8 to 16 multipliers on the z7 config moves the cycle count only from 4,733 to
+4,621, a 2&nbsp;% gain for double the multipliers.</p>
 
 <h3>10.4 Why the Greeks are nearly free</h3>
 
@@ -1122,9 +1122,9 @@ this — going from 8 to 16 multipliers on the z7 config moves the cycle count o
 <div class="tbl"><table>
 <thead><tr><th>z7 config (56-bit, 8 multipliers)</th><th>Cycles</th><th>vs price-only</th></tr></thead>
 <tbody>
-<tr><td>Price only (<span class="mono">z7_pricer</span>)</td><td class="num">4,565</td><td class="num">1.00×</td></tr>
-<tr><td><strong>Price + 9 Greeks (AAD)</strong></td><td class="num">4,731</td><td class="num"><strong>1.04×</strong></td></tr>
-<tr><td>Price + 9 Greeks (bump-and-reprice, 19 pricings)</td><td class="num">86,803</td><td class="num">19.0×</td></tr>
+<tr><td>Price only (<span class="mono">z7_pricer</span>)</td><td class="num">4,568</td><td class="num">1.00×</td></tr>
+<tr><td><strong>Price + 9 Greeks (AAD)</strong></td><td class="num">4,733</td><td class="num"><strong>1.04×</strong></td></tr>
+<tr><td>Price + 9 Greeks (bump-and-reprice, 19 pricings)</td><td class="num">86,860</td><td class="num">19.0×</td></tr>
 </tbody></table></div>
 
 <p>The mechanism: on the z7 configuration II is pinned at 32 <em>by the CORDIC units</em>, not by the
@@ -1140,7 +1140,7 @@ traffic. In a modulo-scheduled hardware datapath with no tape, the adjoint sweep
 whenever the forward pass is <em>latency-bound rather than throughput-bound</em> — which is exactly
 what an iterative CORDIC makes it. Measured: 1.04×.</p>
 <p>Note the honest form of the claim: on the zu configuration (II set by multipliers, pipelined
-CORDICs) the ratio is 1,599 / 1,023 = 1.56×, because there the multipliers <em>are</em> the
+CORDICs) the ratio is 1,593 / 1,026 = 1.55×, because there the multipliers <em>are</em> the
 bottleneck and the extra adjoint multiplies do cost II. Both numbers go in the paper.</p></div>
 
 <h3>10.5 Storage</h3>
@@ -1399,16 +1399,16 @@ puts — the Fang &amp; Oosterlee 2008 test set) against a double-precision refe
 <div class="tbl"><table>
 <thead><tr><th>Output</th><th>z7 (56-bit)</th><th>zu (64-bit)</th></tr></thead>
 <tbody>
-<tr><td>price</td><td class="num">6.1e-7</td><td class="num">5.9e-8</td></tr>
-<tr><td>delta</td><td class="num">1.3e-7</td><td class="num">1.9e-8</td></tr>
-<tr><td>strike_sens</td><td class="num">1.4e-7</td><td class="num">1.9e-8</td></tr>
-<tr><td>theta_greek</td><td class="num">9.5e-7</td><td class="num">2.3e-8</td></tr>
-<tr><td>rho_greek</td><td class="num">1.4e-7</td><td class="num">2.2e-8</td></tr>
-<tr><td>vega</td><td class="num">1.3e-6</td><td class="num">2.1e-8</td></tr>
-<tr><td><strong>kappa_sens</strong></td><td class="num"><strong>6.4e-5</strong></td><td class="num"><strong>6.0e-6</strong></td></tr>
-<tr><td>theta_sens</td><td class="num">2.0e-6</td><td class="num">1.0e-7</td></tr>
-<tr><td>xi_sens</td><td class="num">1.9e-5</td><td class="num">1.1e-6</td></tr>
-<tr><td>rho_corr</td><td class="num">2.4e-5</td><td class="num">1.2e-6</td></tr>
+<tr><td>price</td><td class="num">6.1e-7</td><td class="num">2.8e-8</td></tr>
+<tr><td>delta</td><td class="num">2.0e-7</td><td class="num">6.9e-9</td></tr>
+<tr><td>strike_sens</td><td class="num">2.5e-7</td><td class="num">6.6e-9</td></tr>
+<tr><td>theta_greek</td><td class="num">3.1e-7</td><td class="num">6.0e-9</td></tr>
+<tr><td>rho_greek</td><td class="num">2.4e-7</td><td class="num">8.9e-9</td></tr>
+<tr><td>vega</td><td class="num">6.2e-7</td><td class="num">2.0e-8</td></tr>
+<tr><td>kappa_sens</td><td class="num">7.8e-6</td><td class="num">4.1e-7</td></tr>
+<tr><td>theta_sens</td><td class="num">7.9e-7</td><td class="num">3.4e-8</td></tr>
+<tr><td>xi_sens</td><td class="num">2.7e-6</td><td class="num">2.2e-7</td></tr>
+<tr><td><strong>rho_corr</strong></td><td class="num"><strong>1.2e-5</strong></td><td class="num"><strong>7.4e-7</strong></td></tr>
 </tbody></table></div>
 <dl>
 <dt>Why it matters</dt><dd>This is the headline accuracy claim. The worst cases (κ, ξ, ρ
@@ -1493,28 +1493,28 @@ knob, and the answer is not "as many as fit".</dd>
 <div class="tbl"><table>
 <thead><tr><th>Config</th><th>Mults</th><th>II</th><th>AAD</th><th>Price only</th><th>Bump</th><th>Bump/AAD</th></tr></thead>
 <tbody>
-<tr><td>z7 (56/28)</td><td class="num">2</td><td class="num">126</td><td class="num">16,754</td><td class="num">8,724</td><td class="num">165,824</td><td class="num">9.9</td></tr>
-<tr><td>z7 (56/28)</td><td class="num">4</td><td class="num">63</td><td class="num">8,693</td><td class="num">4,610</td><td class="num">87,658</td><td class="num">10.1</td></tr>
-<tr><td><strong>z7 (56/28)</strong></td><td class="num"><strong>8</strong></td><td class="num"><strong>32</strong></td><td class="num"><strong>4,731</strong></td><td class="num">4,565</td><td class="num">86,803</td><td class="num"><strong>18.4</strong></td></tr>
-<tr><td>z7 (56/28)</td><td class="num">16</td><td class="num">32</td><td class="num">4,619</td><td class="num">4,560</td><td class="num">86,708</td><td class="num">18.8</td></tr>
-<tr><td>zu (64/32)</td><td class="num">1</td><td class="num">251</td><td class="num">32,936</td><td class="num">16,777</td><td class="num">318,831</td><td class="num">9.7</td></tr>
-<tr><td>zu (64/32)</td><td class="num">4</td><td class="num">63</td><td class="num">8,701</td><td class="num">4,633</td><td class="num">88,095</td><td class="num">10.1</td></tr>
-<tr><td>zu (64/32)</td><td class="num">8</td><td class="num">32</td><td class="num">4,704</td><td class="num">2,570</td><td class="num">48,898</td><td class="num">10.4</td></tr>
-<tr><td>zu (64/32)</td><td class="num">16</td><td class="num">16</td><td class="num">2,612</td><td class="num">1,537</td><td class="num">29,271</td><td class="num">11.2</td></tr>
-<tr><td><strong>zu (64/32)</strong></td><td class="num"><strong>32</strong></td><td class="num"><strong>8</strong></td><td class="num"><strong>1,599</strong></td><td class="num">1,023</td><td class="num">19,505</td><td class="num"><strong>12.2</strong></td></tr>
-<tr><td>zu (64/32)</td><td class="num">64</td><td class="num">4</td><td class="num">1,071</td><td class="num">885</td><td class="num">16,883</td><td class="num">15.8</td></tr>
-<tr><td>zu (64/32)</td><td class="num">128</td><td class="num">3</td><td class="num">940</td><td class="num">885</td><td class="num">16,883</td><td class="num">18.0</td></tr>
+<tr><td>z7 (56/28)</td><td class="num">2</td><td class="num">125</td><td class="num">16,754</td><td class="num">8,700</td><td class="num">165,368</td><td class="num">9.9</td></tr>
+<tr><td>z7 (56/28)</td><td class="num">4</td><td class="num">63</td><td class="num">8,694</td><td class="num">4,613</td><td class="num">87,715</td><td class="num">10.1</td></tr>
+<tr><td><strong>z7 (56/28)</strong></td><td class="num"><strong>8</strong></td><td class="num"><strong>32</strong></td><td class="num"><strong>4,733</strong></td><td class="num">4,568</td><td class="num">86,860</td><td class="num"><strong>18.4</strong></td></tr>
+<tr><td>z7 (56/28)</td><td class="num">16</td><td class="num">32</td><td class="num">4,621</td><td class="num">4,563</td><td class="num">86,765</td><td class="num">18.8</td></tr>
+<tr><td>zu (64/32)</td><td class="num">1</td><td class="num">250</td><td class="num">32,530</td><td class="num">16,773</td><td class="num">318,755</td><td class="num">9.8</td></tr>
+<tr><td>zu (64/32)</td><td class="num">4</td><td class="num">63</td><td class="num">8,700</td><td class="num">4,636</td><td class="num">88,152</td><td class="num">10.1</td></tr>
+<tr><td>zu (64/32)</td><td class="num">8</td><td class="num">32</td><td class="num">4,709</td><td class="num">2,573</td><td class="num">48,955</td><td class="num">10.4</td></tr>
+<tr><td>zu (64/32)</td><td class="num">16</td><td class="num">16</td><td class="num">2,614</td><td class="num">1,540</td><td class="num">29,328</td><td class="num">11.2</td></tr>
+<tr><td><strong>zu (64/32)</strong></td><td class="num"><strong>32</strong></td><td class="num"><strong>8</strong></td><td class="num"><strong>1,593</strong></td><td class="num">1,026</td><td class="num">19,562</td><td class="num"><strong>12.3</strong></td></tr>
+<tr><td>zu (64/32)</td><td class="num">64</td><td class="num">4</td><td class="num">1,073</td><td class="num">888</td><td class="num">16,940</td><td class="num">15.8</td></tr>
+<tr><td>zu (64/32)</td><td class="num">128</td><td class="num">3</td><td class="num">942</td><td class="num">888</td><td class="num">16,940</td><td class="num">18.0</td></tr>
 </tbody></table></div>
 <dl>
 <dt>What to read</dt><dd>Three regimes. Below 8 multipliers, cycles halve as multipliers double —
 throughput-bound, II set by the multiplier count. At 8 multipliers on the z7 config, II hits 32 and
 <strong>stops</strong>: the iterative CORDICs are now the binding constraint, so 16 multipliers buy
-2&nbsp;% (4,731 → 4,619). Past 64 on the zu config, returns collapse again as the dependency chain,
+2&nbsp;% (4,733 → 4,621). Past 64 on the zu config, returns collapse again as the dependency chain,
 not the resources, dominates. Figures: <span class="mono">fig8_architecture_cycles</span>,
 <span class="mono">fig9_cycles_vs_mults</span>.</dd>
 <dt>Why it matters</dt><dd>It is the evidence for the design choices, and it makes the
 "Greeks are nearly free" claim precise: look at the AAD vs price-only columns. On the z7 row at
-M = 8 they are 4,731 vs 4,565 (1.04×). On the zu row at M = 32 they are 1,599 vs 1,023 (1.56×). The
+M = 8 they are 4,733 vs 4,568 (1.04×). On the zu row at M = 32 they are 1,593 vs 1,026 (1.55×). The
 ratio depends on whether multipliers or CORDICs bind — and the paper must say so.</dd>
 </dl>
 </div>
@@ -1587,11 +1587,11 @@ measured on. With it, every accuracy result transfers unchanged.</dd>
 bump-and-reprice wrappers checked bit-exact against 19 emulated pricings.</dd>
 <dt>Result</dt><dd>All pass. <span class="chip ok">PASS</span></dd>
 <dt>Board interface</dt><dd><span class="chip ok">RESOLVED</span> The streams are very wide —
-<span class="mono">s_axis_tdata</span> is 1,624 bits on the host-split design, 560 on z7, 640 on zu —
+<span class="mono">s_axis_tdata</span> is 1,456 bits on the host-split design, 560 on z7, 640 on zu —
 and no Zynq PS–PL port is that wide, so the stream wrapper alone left the core unreachable from a
 board. <span class="mono">wrappers.py lite</span> now generates an <strong>AXI4-Lite register
-file</strong>: 56 input words, write <span class="mono">CTRL</span> bit 0 to start, poll
-<span class="mono">STAT</span> bit 0 for done, read 9 outputs from 0x200. ~75 register accesses per
+file</strong>: 51 input words, write <span class="mono">CTRL</span> bit 0 to start, poll
+<span class="mono">STAT</span> bit 0 for done, read 9 outputs from 0x200. ~70 register accesses per
 evaluation, irrelevant against a 4,572-cycle datapath, and no DMA or driver needed. Its testbench
 drives the AXI4-Lite protocol directly and all 9 outputs come back bit-exact; it also checks
 <span class="mono">bresp</span>/<span class="mono">rresp</span>, register readback, and the
@@ -1619,9 +1619,9 @@ parallel I/O bits, more than any package has pins.</dd>
 72 DSP, 4 BRAM. WNS <strong>&minus;2.639&nbsp;ns</strong> (8,172 of 64,408 endpoints fail; hold met),
 so <strong>Fmax &asymp; 79.1&nbsp;MHz</strong>. The critical path is 12.31&nbsp;ns, 29 logic levels of
 which 21 are CARRY4 &mdash; a 64-bit carry chain from <span class="mono">t_reg</span> into
-<span class="mono">cr2_inst/z_reg[63]</span>. At 79.1&nbsp;MHz one AAD evaluation (4,731 cycles)
-takes <strong>59.8&nbsp;&micro;s</strong>. Vectorless power at the 100&nbsp;MHz constraint is 0.258&nbsp;W
-(0.153 dynamic, 0.105 static), so energy per evaluation is at most 15.4&nbsp;&micro;J.</dd>
+<span class="mono">cr2_inst/z_reg[63]</span>. At 79.1&nbsp;MHz one AAD evaluation of the host-setup design (4,572 FPGA cycles; setup and finish run
+on the host) takes <strong>57.8&nbsp;&micro;s</strong>. Vectorless power at the 100&nbsp;MHz constraint is 0.258&nbsp;W
+(0.153 dynamic, 0.105 static), so energy per evaluation is at most 14.9&nbsp;&micro;J.</dd>
 <dt>Three obstacles, in the order they appeared</dt><dd>
 <strong>1. Licence.</strong> Vivado ML <em>Enterprise</em> 2026.1 was installed with no licence, so
 the tool refused to launch at all. Resolved by reinstalling as <strong>ML Standard 2025.2</strong>
@@ -1663,7 +1663,7 @@ produce the same bits?</dd>
 so no DDR, no MIO, no board file, no Vitis, no boot image and no ARM code. Vivado drives AXI
 transactions down the JTAG cable, so the only thing under test is the datapath.
 <span class="mono">board_vectors.py</span> emits the same case the simulation testbench checks as
-sourceable Tcl (56 input words, 9 expected outputs), and
+sourceable Tcl (56 input words for the bitstream that ran, 51 after put-call parity; 9 expected outputs), and
 <span class="mono">run_jtag.tcl</span> programs the device, replays it, polls done, and compares
 every output bit-exact against the emulator.</dd>
 <dt>Result</dt><dd><span class="chip ok">PASS, 50/50 CASES BIT-EXACT</span> 2026-09-29, ZedBoard, engine at
@@ -1677,8 +1677,11 @@ domain from a seed the shifter ranges were not fitted on; 22 calls, 28 puts). 45
 <span class="mono">range_err</span> never set, 56.9&nbsp;s in all, nearly all of it JTAG traffic
 against 68&nbsp;&micro;s of compute per case. After the host finish step, all 500 outputs equal the
 emulator's and the worst sits at 0.268 of its error bound
-(<span class="mono">validation/board_report.py</span>, <span class="mono">results/board_sweep_*</span>).</dd>
-<dt>Design note</dt><dd>The 19 host-setup constants are computed on the PC, not the ARM. The
+(<span class="mono">validation/board_report.py</span>, <span class="mono">results/board_sweep_*</span>).
+<span class="chip gap">RE-RUN</span> These runs used the bitstream built before calls were priced through
+put-call parity. The regenerated design has a different register map (16 host constants, not 19),
+so it needs a new bitstream and a repeat of the sweep.</dd>
+<dt>Design note</dt><dd>The 16 host-setup constants (19 before put-call parity) are computed on the PC, not the ARM. The
 Zynq-7000 PS is 32-bit ARMv7 with no <span class="mono">__int128</span>, and these are 56-bit values
 whose products need 112 bits, so a C port needs a hand-written 64×64→128 multiply. Phase 2
 (<span class="mono">bd_lite.tcl</span>, PS over <span class="mono">M_AXI_GP0</span>, exports an XSA)
@@ -1715,21 +1718,21 @@ the MATLAB and C++ trees have drifted.</p>
 <thead><tr><th>Design</th><th>Price + 9 Greeks</th><th>Bump, same hardware</th><th>Bump / AAD</th><th>AAD / price-only</th></tr></thead>
 <tbody>
 <tr><td>Generation 1, FSM (64-bit)</td><td class="num">433,779</td><td class="num">3,811,647</td><td class="num">8.8×</td><td class="num">2.16×</td></tr>
-<tr><td><strong>Generated, Zynq-7020 config</strong></td><td class="num"><strong>4,731</strong></td><td class="num">86,803</td><td class="num"><strong>18.3×</strong></td><td class="num"><strong>1.04×</strong></td></tr>
+<tr><td><strong>Generated, Zynq-7020 config</strong></td><td class="num"><strong>4,733</strong></td><td class="num">86,860</td><td class="num"><strong>18.4×</strong></td><td class="num"><strong>1.04×</strong></td></tr>
 <tr><td>Generated, host split (loop only)</td><td class="num">4,572</td><td>—</td><td>—</td><td>—</td></tr>
-<tr><td><strong>Generated, 64-bit, 32 mult</strong></td><td class="num"><strong>1,599</strong></td><td class="num">19,505</td><td class="num"><strong>12.2×</strong></td><td class="num">1.56×</td></tr>
+<tr><td><strong>Generated, 64-bit, 32 mult</strong></td><td class="num"><strong>1,593</strong></td><td class="num">19,562</td><td class="num"><strong>12.3×</strong></td><td class="num">1.55×</td></tr>
 </tbody></table></div>
 
 <p>Derived claims: generation 2 is <strong>92×</strong> fewer cycles than generation 1 on the
-Zynq-class config and <strong>271×</strong> in the 64-bit config.</p>
+Zynq-class config and <strong>272×</strong> in the 64-bit config.</p>
 
 <h3>15.2 Accuracy — confirmed</h3>
 
 <div class="tbl"><table>
 <thead><tr><th>Design</th><th>Price</th><th>Worst Greek</th><th>max error / bound</th></tr></thead>
 <tbody>
-<tr><td>Zynq-7020 config (56-bit)</td><td class="num">6.1e-7</td><td class="num">≤ 6.4e-5</td><td class="num">0.115</td></tr>
-<tr><td>64-bit config</td><td class="num">5.9e-8</td><td class="num">≤ 6.0e-6</td><td class="num">0.115</td></tr>
+<tr><td>Zynq-7020 config (56-bit)</td><td class="num">6.1e-7</td><td class="num">≤ 1.2e-5</td><td class="num">0.103</td></tr>
+<tr><td>64-bit config</td><td class="num">2.8e-8</td><td class="num">≤ 7.4e-7</td><td class="num">0.099</td></tr>
 <tr><td>Generation 1 FSM (64-bit)</td><td class="num">3.0e-7</td><td class="num">≤ 5.4e-5</td><td class="num">0.21</td></tr>
 </tbody></table></div>
 
@@ -1798,7 +1801,7 @@ COS was chosen over Monte Carlo, whose graph genuinely does depend on the random
 in noticing that the pricing-method choice and the differentiation-implementation choice are
 coupled.</dd>
 <dt>Evidence</dt><dd>E2 — the generated RTL is bit-exact against the emulator at every register, for
-five designs, with no tape anywhere in the netlist. E8 — 4,731 cycles versus generation 1's tape-ish
+five designs, with no tape anywhere in the netlist. E8 — 4,733 cycles versus generation 1's tape-ish
 FSM at 433,779.</dd>
 </dl>
 </div>
@@ -1810,7 +1813,7 @@ FSM at 433,779.</dd>
 the forward pass — in practice 3–5× in software, dominated by tape write and re-read traffic.
 Bump-and-reprice costs <em>n</em>+1 pricings.</dd>
 <dt>The claim</dt><dd>In a modulo-scheduled hardware datapath the adjoint sweep can be close to free.
-Measured on the Zynq-7020 configuration: 4,565 cycles for the price alone, 4,731 for the price plus
+Measured on the Zynq-7020 configuration: 4,568 cycles for the price alone, 4,733 for the price plus
 nine sensitivities — <strong>1.04×</strong>.</dd>
 <dt>Why it is not obvious</dt><dd>It is not a property of AAD; it is a property of the
 <em>scheduling</em>. On that configuration the initiation interval is pinned at 32 by the iterative
@@ -1821,7 +1824,7 @@ times. Getting this requires scheduling forward and reverse <em>together</em> as
 them as two phases and the slots are not there to fill.</dd>
 <dt>Evidence</dt><dd>E8, the AAD versus price-only columns. And the honest counterpart in the same
 table: on the 64-bit configuration, where multipliers <em>are</em> the binding resource, the ratio is
-1.56×. Both belong in the paper; the claim is conditional and we state the condition.</dd>
+1.55×. Both belong in the paper; the claim is conditional and we state the condition.</dd>
 </dl>
 </div>
 
@@ -1830,7 +1833,7 @@ table: on the 64-bit configuration, where multipliers <em>are</em> the binding r
 <dl>
 <dt>Background</dt><dd>Every adjoint rule reuses a forward quantity: ∂(a/b)/∂a = 1/b, ∂(a/b)/∂b =
 −a/b², ∂exp(a)/∂a = exp(a). In software this is a footnote.</dd>
-<dt>The claim</dt><dd>In a divider-free design a complex reciprocal costs about ten of the 251
+<dt>The claim</dt><dd>In a divider-free design a complex reciprocal costs about ten of the 250
 multiplier slots in a term, and the term's slot budget is what sets II, which sets the entire
 latency. Because forward and reverse are nodes in one graph, ordinary common-subexpression
 elimination finds this reuse automatically: each denominator is inverted exactly once and serves both
@@ -1840,7 +1843,7 @@ at all, but omg·(1/omge): a complex multiply, four slots instead of ten.</dd>
 dividers (so reciprocals are expensive in the shared currency), fused graphs (so CSE can see across
 the forward/reverse boundary), and resource-constrained scheduling (so slot count maps to latency).
 Any one of them missing and this is a micro-optimisation rather than an architectural result.</dd>
-<dt>Evidence</dt><dd>The per-term bill of 251 multiplies (§8.7), which is what II is computed from,
+<dt>Evidence</dt><dd>The per-term bill of 250 multiplies (§8.7), which is what II is computed from,
 and the schedule verification in E3.</dd>
 </dl>
 </div>
@@ -1877,7 +1880,7 @@ dedicated modules — often bit-serial, always occupying their own area.</dd>
 reciprocal and inverse square root as Newton-Raphson on a normalised mantissa with an 8-bit ROM seed
 (quadratic convergence, 8→16→32→64 bits in three iterations); exp by Tang's method; log by a 64-entry
 table plus a degree-4 series; sin/cos by CORDIC (shifts and adds only). The result is a per-term bill
-of exactly 251 multiplies, 3 CORDIC rotations, 2 CORDIC vectorings.</dd>
+of exactly 250 multiplies, 3 CORDIC rotations, 2 CORDIC vectorings.</dd>
 <dt>Why it is not obvious</dt><dd>None of these algorithms is new — that is not the claim. The claim
 is that expressing <em>everything</em> in a single currency is what makes one resource-constrained
 scheduler able to trade the whole design against one number, <em>M</em>. A divider cannot be
@@ -1915,7 +1918,7 @@ baseline and report a large factor. Such comparisons mostly measure the platform
 pricer</em>, same word length, same arithmetic, same scheduler — <span class="mono">heston_bump_z7</span>
 and <span class="mono">heston_bump_zu</span>, themselves verified bit-exact against 19 emulated
 pricings. The only variable between the two arms is the differentiation method.</dd>
-<dt>Why it matters</dt><dd>It makes both results defensible: 18.3× fewer cycles, <em>and</em> more
+<dt>Why it matters</dt><dd>It makes both results defensible: 18.4× fewer cycles, <em>and</em> more
 accurate than the best bump size chosen in hindsight per Greek. The accuracy comparison in
 particular would be meaningless across platforms, because the cancellation term ULP/<em>h</em> is a
 property of the number format.</dd>
@@ -2023,7 +2026,7 @@ finds them first.</p>
 <tr><td>Truncation range [a,b] held fixed when differentiating</td><td><span class="chip risk">CONVENTION</span></td><td>Standard COS practice; the software reference does the same</td></tr>
 <tr><td>Register sharing across values not implemented</td><td><span class="chip gap">OPEN</span></td><td>Largest remaining FF/LUT saving</td></tr>
 <tr><td>"First in hardware" rests on an unverified citation</td><td><span class="chip gap">OPEN</span></td><td>Resolve, or reframe around what was built</td></tr>
-<tr><td>The 1.04× Greeks claim is configuration-dependent (1.56× on zu)</td><td><span class="chip risk">STATE IT</span></td><td>Report both, with the II analysis that explains why</td></tr>
+<tr><td>The 1.04× Greeks claim is configuration-dependent (1.55× on zu)</td><td><span class="chip risk">STATE IT</span></td><td>Report both, with the II analysis that explains why</td></tr>
 <tr><td>Black-Scholes core still Q16.16, price error ~5e-4</td><td><span class="chip gap">OPEN</span></td><td>Port to the parameterised library, or drop from the paper</td></tr>
 <tr><td>MATLAB and C++ trees are stale and unexercised</td><td><span class="chip gap">OPEN</span></td><td>Refresh or remove</td></tr>
 </tbody></table></div>

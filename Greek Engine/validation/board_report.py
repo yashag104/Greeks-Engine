@@ -15,6 +15,10 @@ the ARM will do) on the board's sums, and compares the 10 outputs with
     -> results/board_report.csv, and a per-output summary on stdout
 
 Only the last run in the log is used. Needs numpy and scipy (the reference).
+
+Logs from the bitstream built before put-call parity (the 2026-09-29 runs)
+hold call sums for calls, which today's host.finish would misread: their
+reports are kept in results/, and f29ce46~1 reproduces them.
 """
 import argparse
 import csv
