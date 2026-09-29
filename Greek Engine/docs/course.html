@@ -154,7 +154,7 @@ takes 86,803.</p>
   <div><h4>The headline</h4><p>All 9 Greeks for 1.04 pricings of extra work. In software, AAD
   typically costs 3–5× a pricing.</p></div>
   <div><h4>The honest gap</h4><p>The design routes on a Zynq-7020 but misses 100&nbsp;MHz by
-  2.6&nbsp;ns (Fmax &asymp; 79&nbsp;MHz). Power is vectorless, and nothing has run on a board yet.</p></div>
+  2.6&nbsp;ns (Fmax &asymp; 79&nbsp;MHz). Power is vectorless. On a ZedBoard, one test vector is bit-exact on silicon.</p></div>
 </div>
 
 <h3>The five things that had to be true at once</h3>
@@ -1666,10 +1666,14 @@ transactions down the JTAG cable, so the only thing under test is the datapath.
 sourceable Tcl (56 input words, 9 expected outputs), and
 <span class="mono">run_jtag.tcl</span> programs the device, replays it, polls done, and compares
 every output bit-exact against the emulator.</dd>
-<dt>Result</dt><dd><span class="chip gap">NOT RUN</span> The first <span class="mono">bd_jtag.tcl</span>
-build stopped before implementation on the same Tcl list-splitting bug as E13, this time in
-<span class="mono">add_files</span>; fixed. The board designs now clock the engine at 70&nbsp;MHz,
-below the measured 79&nbsp;MHz Fmax, so a bitstream is not debugged alongside a timing violation.</dd>
+<dt>Result</dt><dd><span class="chip ok">PASS, 9/9 BIT-EXACT</span> 2026-09-29, ZedBoard, engine at
+70&nbsp;MHz (in-context WNS +0.404&nbsp;ns, so about 72&nbsp;MHz; 38,358 LUT, 72 DSP). All 56 input
+words written and read back, done on the first status poll, and every one of the 9 outputs identical
+to the emulator bit for bit. Log: <span class="mono">validation/results/board_zedboard_2026-09-29.log</span>.
+Two earlier attempts in that log failed on bugs in the test script, not the hardware (a stale
+<span class="mono">argv</span> taken as the base address; AXI read data parsed as signed).
+<span class="chip gap">NEXT</span> One vector is a demonstration, not a sweep: run many vectors
+across the verified domain.</dd>
 <dt>Design note</dt><dd>The 19 host-setup constants are computed on the PC, not the ARM. The
 Zynq-7000 PS is 32-bit ARMv7 with no <span class="mono">__int128</span>, and these are 56-bit values
 whose products need 112 bits, so a C port needs a hand-written 64×64→128 multiply. Phase 2
@@ -1756,7 +1760,7 @@ to 48-bit words" discussion — was resting on a generic-mapping estimate that o
 <tbody>
 <tr><td>Timing closure at 100&nbsp;MHz</td><td>Quoting 100&nbsp;MHz rather than 79&nbsp;MHz</td><td>Pipelining the 64-bit carry chains (E13)</td></tr>
 <tr><td>Power from simulated activity (SAIF)</td><td>A defensible energy number; <span class="mono">fig7</span></td><td>A SAIF flow; vectorless is in E13</td></tr>
-<tr><td>Bitstream, on-board measurement</td><td>A "running on hardware" claim</td><td>Running <span class="mono">bd_jtag.tcl</span>, then E14</td></tr>
+<tr><td>On-board sweep over the verified domain</td><td>A "correct on hardware" claim beyond one vector</td><td>More vectors from <span class="mono">board_vectors.py</span> (E14)</td></tr>
 <tr><td>Comparison to published FPGA-finance numbers</td><td>Positioning</td><td>Fmax; and verifying the Weiss citation</td></tr>
 </tbody></table></div>
 
@@ -2009,7 +2013,7 @@ finds them first.</p>
 <tbody>
 <tr><td>Timing misses 100&nbsp;MHz by 2.6&nbsp;ns; Fmax &asymp; 79&nbsp;MHz</td><td><span class="chip gap">OPEN</span></td><td>E13. Pipeline the 64-bit carry chains, or quote 79&nbsp;MHz. Board designs run at 70&nbsp;MHz</td></tr>
 <tr><td>Area was quoted from Yosys estimates that overstated LUTs by 28&nbsp;% and DSPs by a third</td><td><span class="chip ok">FIXED</span></td><td>Measured: 70.9&nbsp;% LUT, 32.7&nbsp;% DSP (§15.3). Fallbacks not needed</td></tr>
-<tr><td>Nothing has run on a board</td><td><span class="chip gap">OPEN</span></td><td>Scripts all exist and the route is done (§17.3, E14); build the JTAG bitstream next</td></tr>
+<tr><td>Only one vector has run on a board</td><td><span class="chip risk">PARTIAL</span></td><td>9/9 bit-exact on a ZedBoard (E14). Sweep more vectors before claiming correctness in general</td></tr>
 <tr><td>Routing reports congestion even at 71&nbsp;% LUT</td><td><span class="chip risk">WATCH</span></td><td>Observed once, mid-route. The completed route's critical path is 60&nbsp;% routing delay (7.37 of 12.31&nbsp;ns), consistent with it</td></tr>
 <tr><td>Verified input domain is bounded; outside it <span class="mono">range_err</span> fires</td><td><span class="chip risk">BY DESIGN</span></td><td>Must be stated as a limitation, not hidden</td></tr>
 <tr><td>Truncation range [a,b] held fixed when differentiating</td><td><span class="chip risk">CONVENTION</span></td><td>Standard COS practice; the software reference does the same</td></tr>

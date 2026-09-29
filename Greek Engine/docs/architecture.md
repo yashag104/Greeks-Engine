@@ -177,13 +177,16 @@ bring-up designs run the engine at 70 MHz for margin.
   checkpoints after placement, `impl_from_dcp.tcl` resumes from a checkpoint, and
   `run_native.bat` runs the flow outside WSL). Power is vectorless; activity-based
   (SAIF) power is still open.
-- **Nothing has run on a board yet.** The AXI4-Stream wrappers are up to 1,624 bits
-  wide, which no Zynq PS-PL port can carry; `wrappers.py lite` now generates an
-  AXI4-Lite register file instead (bit-exact, in `verify_all.sh`), and
-  `hardware/vivado/zedboard/` holds a JTAG-to-AXI bring-up design, a PS design, and a
-  scripted board test that compares every output bit-exact against the emulator. The
-  first JTAG build stopped on the same Tcl list-splitting bug in `add_files`, now
-  fixed; the bitstream has not been built yet.
+- **On silicon: one test vector, bit-exact (2026-09-29).** The AXI4-Stream wrappers are
+  up to 1,624 bits wide, which no Zynq PS-PL port can carry, so `wrappers.py lite`
+  generates an AXI4-Lite register file (bit-exact, in `verify_all.sh`). On a ZedBoard
+  (xc7z020clg484-1), `zedboard/bd_jtag.tcl` puts it behind a JTAG-to-AXI master at
+  70 MHz (WNS +0.404 ns, so ~72 MHz in context against ~79 MHz out of context; 38,358
+  LUT, 72 DSP). `run_jtag.tcl` wrote the 56 input words, started the engine, saw done
+  on the first status poll, and read back all 9 outputs **bit-exact against the
+  emulator**. Log: `validation/results/board_zedboard_2026-09-29.log`. Open: this is a
+  single vector; a sweep over the verified domain, and the PS design (`bd_lite.tcl`,
+  which needs a C port of the host setup), are not yet run.
 - **Verified input domain**: S0 = 100, K ∈ [60, 150], T ∈ [0.1, 3],
   r ∈ [0, 0.1], v0, θ ∈ [0.005, 0.25], κ ∈ [0.2, 6], ξ ∈ [0.1, 1], ρ ∈ [−0.95, 0.6].
   Outside it, `range_err` reports rather than silently returning wrong values.
