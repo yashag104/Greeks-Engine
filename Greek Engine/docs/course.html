@@ -1619,9 +1619,9 @@ parallel I/O bits, more than any package has pins.</dd>
 72 DSP, 4 BRAM. WNS <strong>&minus;2.639&nbsp;ns</strong> (8,172 of 64,408 endpoints fail; hold met),
 so <strong>Fmax &asymp; 79.1&nbsp;MHz</strong>. The critical path is 12.31&nbsp;ns, 29 logic levels of
 which 21 are CARRY4 &mdash; a 64-bit carry chain from <span class="mono">t_reg</span> into
-<span class="mono">cr2_inst/z_reg[63]</span>. At 79.1&nbsp;MHz one AAD evaluation (433,779 cycles)
-takes <strong>5.48&nbsp;ms</strong>. Vectorless power at the 100&nbsp;MHz constraint is 0.258&nbsp;W
-(0.153 dynamic, 0.105 static), so energy per evaluation is at most 1.41&nbsp;mJ.</dd>
+<span class="mono">cr2_inst/z_reg[63]</span>. At 79.1&nbsp;MHz one AAD evaluation (4,731 cycles)
+takes <strong>59.8&nbsp;&micro;s</strong>. Vectorless power at the 100&nbsp;MHz constraint is 0.258&nbsp;W
+(0.153 dynamic, 0.105 static), so energy per evaluation is at most 15.4&nbsp;&micro;J.</dd>
 <dt>Three obstacles, in the order they appeared</dt><dd>
 <strong>1. Licence.</strong> Vivado ML <em>Enterprise</em> 2026.1 was installed with no licence, so
 the tool refused to launch at all. Resolved by reinstalling as <strong>ML Standard 2025.2</strong>

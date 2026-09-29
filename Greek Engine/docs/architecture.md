@@ -158,9 +158,9 @@ as an area result.
 | WNS at 100 MHz | **−2.639 ns** (8,172 of 64,408 endpoints fail); WHS +0.037 ns |
 | Critical path | 12.31 ns, 29 levels (21 CARRY4), `t_reg[16]` → `cr2_inst/z_reg[63]` |
 | Fmax | ≈ 79.1 MHz (1 / (10 + 2.639) ns) |
-| AAD latency | 433,779 cycles / 79.1 MHz ≈ **5.48 ms** |
+| AAD latency (price + 9 Greeks) | 4,731 cycles / 79.1 MHz ≈ **59.8 µs** |
 | Power (vectorless, 12.5 % toggle, at the 100 MHz constraint) | 0.258 W (0.153 dynamic + 0.105 static) |
-| Energy per evaluation | ≤ 1.41 mJ (0.258 W × 5.48 ms; an upper bound, since power was estimated at 100 MHz) |
+| Energy per evaluation | ≤ 15.4 µJ (0.258 W × 59.8 µs; an upper bound, since power was estimated at 100 MHz) |
 
 The design fits and routes but does not close at 100 MHz. The failing paths are 64-bit
 carry chains; pipelining them, or running at ≤ 79 MHz, are the options. The ZedBoard
