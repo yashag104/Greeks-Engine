@@ -65,8 +65,10 @@ proc axi_r {off} {
     puts "       (bus error: wrong base address, or the engine is not responding)"
     stop
   }
-  # braced expr cannot splice "0x" onto $v (a parse error, not a bad value)
-  return [scan $v %x]
+  # braced expr cannot splice "0x" onto $v (a parse error, not a bad value).
+  # scan %x yields a SIGNED 32-bit int: mask it, or a low word with bit 31 set
+  # sign-extends over the high word (first board run: 4 outputs off by k*2^32).
+  return [expr {[scan $v %x] & 0xffffffff}]
 }
 
 # ---- connect and program ---------------------------------------------------
