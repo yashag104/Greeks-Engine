@@ -121,8 +121,8 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 <h2 id="ready"><span class="n">§0</span>Is it ready to run on the board?</h2>
 <div class="verdict">
-  <span class="big">Not yet</span>
-  <p>It's verified bit-exact in simulation and ready for a first Vivado run, but not for the board. Vivado has never been run on it, there's no Zynq system around the core, and the ARM-side host code exists only as a Python spec.</p>
+  <span class="big">Yes, it runs on a board</span>
+  <p>On 2026-09-29 a ZedBoard (xc7z020clg484-1) ran one evaluation over JTAG and all 9 outputs matched the emulator bit for bit. What remains is breadth (many cases, not one) and the ARM side (the host steps are still Python on the PC).</p>
 </div>
 
 <div class="tbl"><table>
@@ -130,22 +130,23 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 <tbody>
 <tr><td><span class="chip ok">done</span></td><td>RTL correctness</td><td>Bit-exact against the emulator at the register level (1,254–1,993 checks per design) plus all outputs. Measured cycles equal the schedule's predictions.</td></tr>
 <tr><td><span class="chip ok">done</span></td><td>Host split</td><td>Host setup + FPGA loop + host finish equals the on-chip design, bit for bit (<code>host.py</code>).</td></tr>
-<tr><td><span class="chip gap">gap</span></td><td>Vivado</td><td>No Fmax, timing, real utilization or power. Area comes from Yosys only: z7h 45.5K LUT, 86% of the 7020's 53.2K (91% with SRLs), which is tight for place and route.</td></tr>
-<tr><td><span class="chip gap">gap</span></td><td>Board system</td><td>The flow is out-of-context only. There's no PS7 block design, FCLK/reset, XDC or <code>write_bitstream</code>.</td></tr>
-<tr><td><span class="chip gap">gap</span></td><td>Bus interface</td><td>The z7h AXI4-Stream wrapper takes one 1,624-bit beat (29 lanes × 56 bits) and returns 504 bits. AXI DMA maxes out at 1,024 bits. An AXI4-Lite register file is the natural fix.</td></tr>
-<tr><td><span class="chip gap">gap</span></td><td>ARM software</td><td>The 19 <code>hs_*</code> constants and the finish step exist only in Python (graph evaluator). They need a bit-exact C port. Running the Python on PYNQ would take milliseconds.</td></tr>
-<tr><td><span class="chip risk">risk</span></td><td>Timing</td><td>Single-stage 56×56 multiply (~12 DSP48E1), 113-bit rounding barrel shift + add in one cycle, CORDIC variable shift + add, 112-bit leading-one detectors. Expect well under 100 MHz until pipelined. <code>rtlgen.py</code> hard-codes the 4-stage multiplier.</td></tr>
-<tr><td><span class="chip ok">fixed</span></td><td>Vivado scripts</td><td>Clock now constrained before synthesis, the clock port is found for AXI tops, and a failed run no longer aborts the matrix. Fixed in this session; see the end of the page.</td></tr>
+<tr><td><span class="chip ok">done</span></td><td>Vivado</td><td>Routed out of context on xc7z020clg400-1: 36,499 LUT (68.6%), 72 DSP. The Yosys estimate of 86–91% LUT was pessimistic. Timing misses 100 MHz by 2.639 ns, so Fmax is about 79 MHz; 4,731 cycles take 59.8 µs.</td></tr>
+<tr><td><span class="chip ok">done</span></td><td>Bus interface</td><td>The 1,624-bit AXI4-Stream beat is replaced by an AXI4-Lite register file (<code>wrappers.py lite</code>), bit-exact in simulation.</td></tr>
+<tr><td><span class="chip ok">done</span></td><td>Board system</td><td>JTAG-to-AXI block design (<code>zedboard/bd_jtag.tcl</code>), engine at 70 MHz with WNS +0.404 ns (about 72 MHz in context), 38,358 LUT. Bitstream built.</td></tr>
+<tr><td><span class="chip ok">done</span></td><td>On silicon</td><td>One vector, 9/9 outputs bit-exact vs the emulator (<code>validation/results/board_zedboard_2026-09-29.log</code>). Through the host finish step: price error 2e-6 against double-precision COS, every output ≤ 3.1% of its error bound (<code>validation/board_report.py</code>).</td></tr>
+<tr><td><span class="chip gap">next</span></td><td>Board sweep</td><td>50 cases back to back (<code>run_board.bat sweep</code>), 48 of them random over the verified domain with a seed the shifter ranges were not fitted on. Passes in simulation; not yet run on the board.</td></tr>
+<tr><td><span class="chip gap">gap</span></td><td>ARM software</td><td>The 19 <code>hs_*</code> constants and the finish step exist only in Python. They need a bit-exact C port, with a hand-written 64×64→128 multiply, since the Zynq-7000 is 32-bit ARMv7.</td></tr>
+<tr><td><span class="chip risk">risk</span></td><td>Call accuracy</td><td>Over 50 random cases, fixed-point rounding error on calls is about 180× that on puts (median 4.8e-5 vs 2.6e-7 on price; worst 2.3e-3, a deep in-the-money long-dated call). Always within the error bound, but pricing calls through put-call parity, as the COS literature does, is the likely fix.</td></tr>
 <tr><td><span class="chip risk">note</span></td><td>C++ “baseline”</td><td><code>hardware/cpp/heston_cos_aad.cpp</code> computes only the price, has no AAD, uses a different c₂ and payoff. Don't present it as a CPU comparison.</td></tr>
 </tbody></table></div>
 
 <h3>If asked “what's next”</h3>
 <ol>
-<li>Out-of-context Vivado run of <code>heston_aad_z7h</code> on xc7z020clg400-1 to get Fmax and real LUT/FF/DSP.</li>
-<li>Pipeline the multiplier and rounding stages if timing fails. Cycle counts change; bit-exactness doesn't.</li>
-<li>AXI4-Lite wrapper plus a PS7 block design, then a bitstream.</li>
-<li>Host setup and finish in C, checked against <code>host.py</code>.</li>
-<li>Run on a PYNQ-Z2 or Zybo Z7-20 and compare on-board outputs bit-exactly with the emulator. Measure power.</li>
+<li>Run the 50-case board sweep and publish it with <code>board_report.py</code>.</li>
+<li>Price calls through put-call parity and measure whether the call error drops to the put level.</li>
+<li>Pipeline the carry chains to close 100 MHz. Cycle counts change; bit-exactness doesn't.</li>
+<li>Host setup and finish in C on the ARM, checked against <code>host.py</code>, then the PS design (<code>bd_lite.tcl</code>).</li>
+<li>Activity-based (SAIF) power, or a board power measurement.</li>
 </ol>
 
 <h2 id="claim"><span class="n">§1</span>The one-sentence claim</h2>
