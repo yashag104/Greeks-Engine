@@ -38,12 +38,27 @@ if {$base % 4096 != 0} {
 }
 set bit  [expr {[llength $argv] > 1 && [file exists [lindex $argv 1]] ? [lindex $argv 1] \
                 : "$here/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper.bit"}]
-set vec  "$here/../../gen/build/heston_aad_z7h_lite_vector.tcl"
+# run_sweep.tcl sets ::JTAG_VEC to the sweep file; it is unset at once so a
+# later plain run in the same GUI session gets the single vector again.
+if {[info exists ::JTAG_VEC]} {
+  set vec $::JTAG_VEC; unset ::JTAG_VEC
+} else {
+  set vec "$here/../../gen/build/heston_aad_z7h_lite_vector.tcl"
+}
 
 foreach f [list $bit $vec] {
   if {![file exists $f]} { puts "ERROR: missing $f"; stop }
 }
+# clear what an earlier run in this GUI session may have left defined
+foreach v {VEC_CASES VEC_WRITES VEC_EXPECT} { if {[info exists $v]} { unset $v } }
 source $vec
+# a single-vector file is a sweep of one
+if {![info exists VEC_CASES]} {
+  set VEC_CASES [list [list "single vector" $VEC_WRITES $VEC_EXPECT]]
+}
+set VEC_WRITES [lindex $VEC_CASES 0 1]
+set VEC_EXPECT [lindex $VEC_CASES 0 2]
+puts "INFO: [llength $VEC_CASES] case(s) from [file tail $vec]"
 puts "INFO: base 0x[format %08x $base] ; [llength $VEC_WRITES] input words ; [llength $VEC_EXPECT] outputs"
 
 proc axi_w {off data} {
@@ -102,54 +117,62 @@ reset_hw_axi -quiet $axi
 set old [get_hw_axi_txns -quiet]
 if {[llength $old]} { delete_hw_axi_txn -quiet $old }
 
-# ---- drive one evaluation --------------------------------------------------
-set errors 0
-foreach w $VEC_WRITES { axi_w [lindex $w 0] [lindex $w 1] }
-
-# readback check on the first word, to catch a wrong base address early
-set first [lindex $VEC_WRITES 0]
-set rb [axi_r [lindex $first 0]]
-if {$rb != [lindex $first 1]} {
-  puts "FAIL: readback 0x[format %08x $rb] != written 0x[format %08x [lindex $first 1]]"
-  puts "      Wrong base address, or the design is not responding. Stopping."
-  stop
-}
-puts "INFO: readback ok, wrote [llength $VEC_WRITES] words"
-
-if {[expr {[axi_r $VEC_STAT] & 1}] != 0} { puts "FAIL: done set before start"; incr errors }
-axi_w $VEC_CTRL 1
-
-set st 0
-for {set i 0} {$i < 1000} {incr i} {
-  set st [axi_r $VEC_STAT]
-  if {$st & 1} break
-}
-if {!($st & 1)} { puts "FAIL: done never asserted (STAT=0x[format %08x $st])"; stop }
-puts "INFO: done after [expr {$i + 1}] status polls"
-if {$st & 2} { puts "FAIL: range_err set for an in-domain case"; incr errors }
-
-# ---- read back and compare -------------------------------------------------
+# ---- drive each case ------------------------------------------------------
+# Programming happens once; cases run back to back with no reset in between,
+# so a pass also shows the engine carries nothing over from the previous case.
 set sign [expr {1 << ($VEC_WL - 1)}]
 set mod  [expr {1 << $VEC_WL}]
-foreach e $VEC_EXPECT {
-  set name [lindex $e 0]
-  set off  [lindex $e 1]
-  set want [lindex $e 2]
-  set lo [axi_r $off]
-  set hi [axi_r [expr {$off + 4}]]
-  set raw [expr {(($hi & ((1 << ($VEC_WL - 32)) - 1)) << 32) | $lo}]
-  if {$raw >= $sign} { set raw [expr {$raw - $mod}] }
-  if {$raw != $want} {
-    puts [format "FAIL %-12s got %ld want %ld (diff %ld)" $name $raw $want [expr {$raw - $want}]]
-    incr errors
-  } else {
-    puts [format "  ok %-12s %ld  (%.10f)" $name $raw [expr {double($raw) / (1 << $VEC_FL)}]]
-  }
-}
+set ncase [llength $VEC_CASES]
+set bad_cases 0
+set t0 [clock milliseconds]
+for {set c 0} {$c < $ncase} {incr c} {
+  lassign [lindex $VEC_CASES $c] label writes expect
+  puts "CASE [expr {$c + 1}]/$ncase $label"
+  set errors 0
+  foreach w $writes { axi_w [lindex $w 0] [lindex $w 1] }
 
-if {$errors == 0} {
-  puts "PASS: ZedBoard outputs bit-exact vs the emulator, [llength $VEC_EXPECT] outputs"
+  # readback of the first word catches a wrong base address or dead design
+  set first [lindex $writes 0]
+  set rb [axi_r [lindex $first 0]]
+  if {$rb != [lindex $first 1]} {
+    puts "FAIL: readback 0x[format %08x $rb] != written 0x[format %08x [lindex $first 1]]"
+    puts "      Wrong base address, or the design is not responding. Stopping."
+    stop
+  }
+  # done stays set from the previous case until the next start, so this
+  # check only means something straight after programming
+  if {$c == 0 && ([axi_r $VEC_STAT] & 1) != 0} { puts "FAIL: done set before start"; incr errors }
+  axi_w $VEC_CTRL 1
+
+  set st 0
+  for {set i 0} {$i < 1000} {incr i} {
+    set st [axi_r $VEC_STAT]
+    if {$st & 1} break
+  }
+  if {!($st & 1)} { puts "FAIL: done never asserted (STAT=0x[format %08x $st])"; stop }
+  if {$st & 2} { puts "FAIL: range_err set for an in-domain case"; incr errors }
+
+  foreach e $expect {
+    lassign $e name off want
+    set lo [axi_r $off]
+    set hi [axi_r [expr {$off + 4}]]
+    set raw [expr {(($hi & ((1 << ($VEC_WL - 32)) - 1)) << 32) | $lo}]
+    if {$raw >= $sign} { set raw [expr {$raw - $mod}] }
+    if {$raw != $want} {
+      puts [format "FAIL %-12s got %ld want %ld (diff %ld)" $name $raw $want [expr {$raw - $want}]]
+      incr errors
+    } else {
+      puts [format "  ok %-12s %ld  (%.10f)" $name $raw [expr {double($raw) / (1 << $VEC_FL)}]]
+    }
+  }
+  if {$errors} { incr bad_cases; puts "CASE [expr {$c + 1}]: FAIL ($errors)" } else { puts "CASE [expr {$c + 1}]: ok" }
+}
+set secs [expr {([clock milliseconds] - $t0) / 1000.0}]
+
+if {$bad_cases == 0} {
+  puts [format "PASS: ZedBoard outputs bit-exact vs the emulator, %d case(s) x %d outputs (%.1f s)" \
+        $ncase [llength $VEC_EXPECT] $secs]
 } else {
-  puts "FAIL: $errors mismatch(es)"
+  puts "FAIL: $bad_cases of $ncase case(s) had mismatches"
 }
 close_hw_manager

@@ -187,6 +187,13 @@ bring-up designs run the engine at 70 MHz for margin.
   emulator**. Log: `validation/results/board_zedboard_2026-09-29.log`. Open: this is a
   single vector; a sweep over the verified domain, and the PS design (`bd_lite.tcl`,
   which needs a C port of the host setup), are not yet run.
+- **Calls lose more precision than puts.** Over 50 random in-domain cases (the board
+  sweep set, emulated), fixed-point rounding error on price is a median 4.8e-5 for
+  calls against 2.6e-7 for puts, worst 2.3e-3 (K = 61, T = 2.9, high variance). It is
+  within the first-order bound in every case (worst 0.27 of it), so the bound is
+  sound; the cause is the call payoff's coefficients growing like e^b over a wide
+  truncation range and cancelling. Pricing calls as puts plus put-call parity, as the
+  COS literature does, is the likely fix; not yet tried.
 - **Verified input domain**: S0 = 100, K ∈ [60, 150], T ∈ [0.1, 3],
   r ∈ [0, 0.1], v0, θ ∈ [0.005, 0.25], κ ∈ [0.2, 6], ξ ∈ [0.1, 1], ρ ∈ [−0.95, 0.6].
   Outside it, `range_err` reports rather than silently returning wrong values.
