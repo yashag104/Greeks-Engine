@@ -12,25 +12,22 @@
 //   0x038  xi           in   56 bits
 //   0x040  rho          in   56 bits
 //   0x048  is_call      in   1 bit
-//   0x04c  hs_11        in   1 bit
-//   0x050  hs_60        in   56 bits
-//   0x058  hs_122       in   56 bits
-//   0x060  hs_152       in   56 bits
-//   0x068  hs_153       in   56 bits
-//   0x070  hs_154       in   56 bits
-//   0x078  hs_180       in   56 bits
-//   0x080  hs_183       in   56 bits
-//   0x088  hs_185       in   56 bits
-//   0x090  hs_210       in   56 bits
-//   0x098  hs_235       in   56 bits
-//   0x0a0  hs_236       in   56 bits
-//   0x0a8  hs_237       in   56 bits
-//   0x0b0  hs_238       in   56 bits
-//   0x0b8  hs_260       in   56 bits
-//   0x0c0  hs_261       in   56 bits
-//   0x0c8  hs_263       in   56 bits
-//   0x0d0  hs_264       in   56 bits
-//   0x0d8  hs_265       in   56 bits
+//   0x04c  hs_60        in   56 bits
+//   0x054  hs_122       in   56 bits
+//   0x05c  hs_152       in   56 bits
+//   0x064  hs_153       in   56 bits
+//   0x06c  hs_179       in   56 bits
+//   0x074  hs_182       in   56 bits
+//   0x07c  hs_184       in   56 bits
+//   0x084  hs_209       in   56 bits
+//   0x08c  hs_210       in   56 bits
+//   0x094  hs_211       in   56 bits
+//   0x09c  hs_212       in   56 bits
+//   0x0a4  hs_234       in   56 bits
+//   0x0ac  hs_235       in   56 bits
+//   0x0b4  hs_237       in   56 bits
+//   0x0bc  hs_238       in   56 bits
+//   0x0c4  hs_239       in   56 bits
 //   0x100  CTRL         w    bit 0 = start (self-clearing)
 //   0x104  STAT         r    bit 0 = done, bit 1 = range_err, bit 2 = busy
 //   0x200  sum_price    out  56 bits, signed
@@ -55,7 +52,7 @@ module heston_aad_z7h_lite (
     output wire s_axi_rvalid, input wire s_axi_rready);
 
     localparam CTRL_W = 64, STAT_W = 65, OUT_W0 = 128;
-    reg [31:0] ireg [0:55];
+    reg [31:0] ireg [0:50];
     reg [31:0] oreg [0:17];
     reg go, done_l, err_l, busy;
     integer i;
@@ -102,7 +99,7 @@ module heston_aad_z7h_lite (
         rd_mux = 32'h0;
         if (rd_word == STAT_W) rd_mux = {29'b0, busy, err_l, done_l};
         else if (rd_word >= OUT_W0 && rd_word < OUT_W0 + 18) rd_mux = oreg[rd_word - OUT_W0];
-        else if (rd_word < 56) rd_mux = ireg[rd_word];   // readback of what was written
+        else if (rd_word < 51) rd_mux = ireg[rd_word];   // readback of what was written
     end
     always @(posedge aclk) begin
         if (!aresetn) begin arready_r <= 0; araddr_q <= 0; end
@@ -117,8 +114,8 @@ module heston_aad_z7h_lite (
 
     // ---- register file writes
     always @(posedge aclk) begin
-        if (!aresetn) for (i = 0; i < 56; i = i + 1) ireg[i] <= 32'h0;
-        else if (wr_fire && wr_word < 56) ireg[wr_word] <= s_axi_wdata;
+        if (!aresetn) for (i = 0; i < 51; i = i + 1) ireg[i] <= 32'h0;
+        else if (wr_fire && wr_word < 51) ireg[wr_word] <= s_axi_wdata;
     end
 
     // ---- core
@@ -132,28 +129,25 @@ module heston_aad_z7h_lite (
     wire signed [55:0] c_xi = {ireg[15][23:0], ireg[14]};
     wire signed [55:0] c_rho = {ireg[17][23:0], ireg[16]};
     wire c_is_call = ireg[18][0];
-    wire c_hs_11 = ireg[19][0];
-    wire signed [55:0] c_hs_60 = {ireg[21][23:0], ireg[20]};
-    wire signed [55:0] c_hs_122 = {ireg[23][23:0], ireg[22]};
-    wire signed [55:0] c_hs_152 = {ireg[25][23:0], ireg[24]};
-    wire signed [55:0] c_hs_153 = {ireg[27][23:0], ireg[26]};
-    wire signed [55:0] c_hs_154 = {ireg[29][23:0], ireg[28]};
-    wire signed [55:0] c_hs_180 = {ireg[31][23:0], ireg[30]};
-    wire signed [55:0] c_hs_183 = {ireg[33][23:0], ireg[32]};
-    wire signed [55:0] c_hs_185 = {ireg[35][23:0], ireg[34]};
-    wire signed [55:0] c_hs_210 = {ireg[37][23:0], ireg[36]};
-    wire signed [55:0] c_hs_235 = {ireg[39][23:0], ireg[38]};
-    wire signed [55:0] c_hs_236 = {ireg[41][23:0], ireg[40]};
-    wire signed [55:0] c_hs_237 = {ireg[43][23:0], ireg[42]};
-    wire signed [55:0] c_hs_238 = {ireg[45][23:0], ireg[44]};
-    wire signed [55:0] c_hs_260 = {ireg[47][23:0], ireg[46]};
-    wire signed [55:0] c_hs_261 = {ireg[49][23:0], ireg[48]};
-    wire signed [55:0] c_hs_263 = {ireg[51][23:0], ireg[50]};
-    wire signed [55:0] c_hs_264 = {ireg[53][23:0], ireg[52]};
-    wire signed [55:0] c_hs_265 = {ireg[55][23:0], ireg[54]};
+    wire signed [55:0] c_hs_60 = {ireg[20][23:0], ireg[19]};
+    wire signed [55:0] c_hs_122 = {ireg[22][23:0], ireg[21]};
+    wire signed [55:0] c_hs_152 = {ireg[24][23:0], ireg[23]};
+    wire signed [55:0] c_hs_153 = {ireg[26][23:0], ireg[25]};
+    wire signed [55:0] c_hs_179 = {ireg[28][23:0], ireg[27]};
+    wire signed [55:0] c_hs_182 = {ireg[30][23:0], ireg[29]};
+    wire signed [55:0] c_hs_184 = {ireg[32][23:0], ireg[31]};
+    wire signed [55:0] c_hs_209 = {ireg[34][23:0], ireg[33]};
+    wire signed [55:0] c_hs_210 = {ireg[36][23:0], ireg[35]};
+    wire signed [55:0] c_hs_211 = {ireg[38][23:0], ireg[37]};
+    wire signed [55:0] c_hs_212 = {ireg[40][23:0], ireg[39]};
+    wire signed [55:0] c_hs_234 = {ireg[42][23:0], ireg[41]};
+    wire signed [55:0] c_hs_235 = {ireg[44][23:0], ireg[43]};
+    wire signed [55:0] c_hs_237 = {ireg[46][23:0], ireg[45]};
+    wire signed [55:0] c_hs_238 = {ireg[48][23:0], ireg[47]};
+    wire signed [55:0] c_hs_239 = {ireg[50][23:0], ireg[49]};
     wire core_done, core_rerr;
     wire signed [55:0] o_sum_price, o_sum_T, o_sum_r, o_sum_v0, o_sum_kappa, o_sum_theta, o_sum_xi, o_sum_rho, o_sum_x;
-    heston_aad_z7h core (.clk(aclk), .rst(!aresetn), .start(go), .S0(c_S0), .K(c_K), .T(c_T), .r(c_r), .v0(c_v0), .kappa(c_kappa), .theta(c_theta), .xi(c_xi), .rho(c_rho), .is_call(c_is_call), .hs_11(c_hs_11), .hs_60(c_hs_60), .hs_122(c_hs_122), .hs_152(c_hs_152), .hs_153(c_hs_153), .hs_154(c_hs_154), .hs_180(c_hs_180), .hs_183(c_hs_183), .hs_185(c_hs_185), .hs_210(c_hs_210), .hs_235(c_hs_235), .hs_236(c_hs_236), .hs_237(c_hs_237), .hs_238(c_hs_238), .hs_260(c_hs_260), .hs_261(c_hs_261), .hs_263(c_hs_263), .hs_264(c_hs_264), .hs_265(c_hs_265), .sum_price(o_sum_price), .sum_T(o_sum_T), .sum_r(o_sum_r), .sum_v0(o_sum_v0), .sum_kappa(o_sum_kappa), .sum_theta(o_sum_theta), .sum_xi(o_sum_xi), .sum_rho(o_sum_rho), .sum_x(o_sum_x), .done(core_done), .range_err(core_rerr));
+    heston_aad_z7h core (.clk(aclk), .rst(!aresetn), .start(go), .S0(c_S0), .K(c_K), .T(c_T), .r(c_r), .v0(c_v0), .kappa(c_kappa), .theta(c_theta), .xi(c_xi), .rho(c_rho), .is_call(c_is_call), .hs_60(c_hs_60), .hs_122(c_hs_122), .hs_152(c_hs_152), .hs_153(c_hs_153), .hs_179(c_hs_179), .hs_182(c_hs_182), .hs_184(c_hs_184), .hs_209(c_hs_209), .hs_210(c_hs_210), .hs_211(c_hs_211), .hs_212(c_hs_212), .hs_234(c_hs_234), .hs_235(c_hs_235), .hs_237(c_hs_237), .hs_238(c_hs_238), .hs_239(c_hs_239), .sum_price(o_sum_price), .sum_T(o_sum_T), .sum_r(o_sum_r), .sum_v0(o_sum_v0), .sum_kappa(o_sum_kappa), .sum_theta(o_sum_theta), .sum_xi(o_sum_xi), .sum_rho(o_sum_rho), .sum_x(o_sum_x), .done(core_done), .range_err(core_rerr));
 
     wire start_wr = wr_fire && (wr_word == CTRL_W) && s_axi_wdata[0];
     always @(posedge aclk) begin

@@ -76,8 +76,8 @@ ZU="--wl 64 --fl 32 --mults 32 --crot 1 --cvec 1 --pipe-cordic"
 ( "$PY" gen_tb.py $ZU --price-only --name zu_pricer > "$LOG/gen_zu_price.log" 2>&1 ) &
 ( "$PY" gen_tb.py $Z7 --host-setup --name heston_aad_z7h > "$LOG/gen_z7h.log" 2>&1 ) &
 wait
-record "generated AAD, Zynq-7020 config: bit-exact, 4731 cycles" "$LOG/gen_z7.log" "PASS: RTL matches"
-record "generated AAD, 64-bit config: bit-exact, 1599 cycles" "$LOG/gen_zu.log" "PASS: RTL matches"
+record "generated AAD, Zynq-7020 config: bit-exact, 4733 cycles" "$LOG/gen_z7.log" "PASS: RTL matches"
+record "generated AAD, 64-bit config: bit-exact, 1593 cycles" "$LOG/gen_zu.log" "PASS: RTL matches"
 record "generated price-only pricer, Zynq-7020 config" "$LOG/gen_z7_price.log" "PASS: RTL matches"
 record "generated price-only pricer, 64-bit config" "$LOG/gen_zu_price.log" "PASS: RTL matches"
 record "generated AAD loop, host setup (Zynq-7020): bit-exact" "$LOG/gen_z7h.log" "PASS: RTL matches"

@@ -1,10 +1,4 @@
 {
- "hs_11": {
-  "node": 11,
-  "setup_value": "is_call",
-  "frac": 0,
-  "width": 1
- },
  "hs_60": {
   "node": 60,
   "setup_value": "x",
@@ -13,13 +7,13 @@
  },
  "hs_122": {
   "node": 122,
-  "setup_value": "internal",
+  "setup_value": "c1",
   "frac": 28,
   "width": 56
  },
  "hs_152": {
   "node": 152,
-  "setup_value": "internal",
+  "setup_value": "ten_sqrt_c2",
   "frac": 28,
   "width": 56
  },
@@ -29,86 +23,74 @@
   "frac": 28,
   "width": 56
  },
- "hs_154": {
-  "node": 154,
-  "setup_value": "b",
-  "frac": 28,
-  "width": 56
- },
- "hs_180": {
-  "node": 180,
+ "hs_179": {
+  "node": 179,
   "setup_value": "pob",
   "frac": 28,
   "width": 56
  },
- "hs_183": {
-  "node": 183,
+ "hs_182": {
+  "node": 182,
   "setup_value": "tkb",
   "frac": 28,
   "width": 56
  },
- "hs_185": {
-  "node": 185,
+ "hs_184": {
+  "node": 184,
   "setup_value": "kpi",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_209": {
+  "node": 209,
+  "setup_value": "exp_a",
   "frac": 28,
   "width": 56
  },
  "hs_210": {
   "node": 210,
-  "setup_value": "exp_a",
-  "frac": 28,
-  "width": 56
- },
- "hs_235": {
-  "node": 235,
-  "setup_value": "exp_b",
-  "frac": 28,
-  "width": 56
- },
- "hs_236": {
-  "node": 236,
   "setup_value": "rho_xi",
   "frac": 28,
   "width": 56
  },
+ "hs_211": {
+  "node": 211,
+  "setup_value": "xi_sq",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_212": {
+  "node": 212,
+  "setup_value": "kappa2",
+  "frac": 28,
+  "width": 56
+ },
+ "hs_234": {
+  "node": 234,
+  "setup_value": "recip_xi_sq[0]",
+  "frac": 53,
+  "width": 56
+ },
+ "hs_235": {
+  "node": 235,
+  "setup_value": "recip_xi_sq[1]",
+  "frac": 0,
+  "width": 56
+ },
  "hs_237": {
   "node": 237,
-  "setup_value": "xi_sq",
+  "setup_value": "kth",
   "frac": 28,
   "width": 56
  },
  "hs_238": {
   "node": 238,
-  "setup_value": "kappa2",
-  "frac": 28,
-  "width": 56
- },
- "hs_260": {
-  "node": 260,
-  "setup_value": "recip_xi_sq[0]",
-  "frac": 53,
-  "width": 56
- },
- "hs_261": {
-  "node": 261,
-  "setup_value": "recip_xi_sq[1]",
-  "frac": 0,
-  "width": 56
- },
- "hs_263": {
-  "node": 263,
-  "setup_value": "kth",
-  "frac": 28,
-  "width": 56
- },
- "hs_264": {
-  "node": 264,
   "setup_value": "rT",
   "frac": 28,
   "width": 56
  },
- "hs_265": {
-  "node": 265,
+ "hs_239": {
+  "node": 239,
   "setup_value": "t1r",
   "frac": 28,
   "width": 56
