@@ -8,7 +8,7 @@
   axi    <aad>_axi: AXI4-Stream wrapper for a generated AAD engine
          (10 WL-bit lanes in: S0..rho, is_call; 10 WL-bit lanes out).
   lite   <aad>_lite: AXI4-Lite register file around the same engine. The
-         stream wrapper is up to 1624 bits wide, which no Zynq PS-PL port can
+         stream wrapper is up to 1456 bits wide, which no Zynq PS-PL port can
          carry; this one is 32 bits at a time, so the core is reachable from
          a Zynq's ARM cores with no DMA. Emits <aad>_lite_regs.json.
 
@@ -195,7 +195,7 @@ def lite_map(in_ports, out_ports, wl):
 def lite_wrapper(name, core, wl, in_ports, out_ports):
     """AXI4-Lite register file around a generated engine.
 
-    The AXI4-Stream wrapper is 1624 bits wide on this design, which no Zynq
+    The AXI4-Stream wrapper is 1456 bits wide on this design, which no Zynq
     PS-PL port can carry. This trades throughput for reachability: the host
     pokes each parameter as 32-bit words, pulses start, polls done, reads the
     results back. One evaluation costs ~75 register accesses, which is

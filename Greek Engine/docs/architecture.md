@@ -44,7 +44,7 @@ The same graph gives:
 1/den, g/den, 1/omg, ratio/omg, 1/omge, dratio/omge, 1/ratio = omg/omge.
 Everything independent of u_k is hoisted into a once-per-evaluation setup.
 
-**One COS term** (forward + reverse sweep, adjoint normalization) costs 251
+**One COS term** (forward + reverse sweep, adjoint normalization) costs 250
 multiplies, 3 CORDIC rotations, 2 CORDIC vectorings, and ~380 add/shift/mux
 operations.
 
@@ -92,9 +92,9 @@ Beyond the scripted suite, the generator was also checked bit-exact on
 | design | AAD: price + 9 sensitivities | bump-and-reprice, same hardware | bump / AAD |
 |---|---|---|---|
 | FSM engine (64-bit) | 433,779 | 3,811,647 | 8.8× |
-| generated, Zynq-7020 config (56-bit, 8 multipliers) | **4,731** (92× fewer than FSM) | 86,803 | **18.3×** |
+| generated, Zynq-7020 config (56-bit, 8 multipliers) | **4,733** (92× fewer than FSM) | 86,860 | **18.4×** |
 | generated, host setup (56-bit, 8 multipliers) | 4,572 (loop only) | — | — |
-| generated, 64-bit, 32 multipliers | **1,599** (271× fewer) | 19,505 | **12.2×** |
+| generated, 64-bit, 32 multipliers | **1,593** (272× fewer) | 19,562 | **12.3×** |
 
 On the Zynq-7020 configuration, all 9 Greeks cost 1.04 pricings. The iterative
 CORDIC units set the pace per term, so the reverse sweep's extra multiplies use
@@ -106,10 +106,10 @@ multiplier slots that a price-only design leaves idle.
 Worst relative error over the 21-case grid (S0 = 100, K 80–120, T 0.1–2,
 ξ 0.2–1, ρ −0.9…0.5, calls and puts):
 
-| design | price | Greeks (worst: ∂V/∂κ, ∂V/∂ρ) | max error / bound |
+| design | price | Greeks (worst: ∂V/∂ρ, ∂V/∂κ) | max error / bound |
 |---|---|---|---|
-| Zynq-7020 config (56-bit) | 6.1e-7 | ≤ 6.4e-5 | 0.115 |
-| 64-bit config | 5.9e-8 | ≤ 6.0e-6 | 0.115 |
+| Zynq-7020 config (56-bit) | 6.1e-7 | ≤ 1.2e-5 | 0.103 |
+| 64-bit config | 2.8e-8 | ≤ 7.4e-7 | 0.099 |
 | FSM engine (64-bit) | 3.0e-7 | ≤ 5.4e-5 | 0.21 |
 
 Against bump-and-reprice on the same pricer and word length, sweeping h from 1e-8
@@ -158,9 +158,9 @@ as an area result.
 | WNS at 100 MHz | **−2.639 ns** (8,172 of 64,408 endpoints fail); WHS +0.037 ns |
 | Critical path | 12.31 ns, 29 levels (21 CARRY4), `t_reg[16]` → `cr2_inst/z_reg[63]` |
 | Fmax | ≈ 79.1 MHz (1 / (10 + 2.639) ns) |
-| AAD latency (price + 9 Greeks) | 4,731 cycles / 79.1 MHz ≈ **59.8 µs** |
+| AAD latency (price + 9 Greeks) | 4,572 FPGA cycles (host-setup design; setup and finish on the host) / 79.1 MHz ≈ **57.8 µs** |
 | Power (vectorless, 12.5 % toggle, at the 100 MHz constraint) | 0.258 W (0.153 dynamic + 0.105 static) |
-| Energy per evaluation | ≤ 15.4 µJ (0.258 W × 59.8 µs; an upper bound, since power was estimated at 100 MHz) |
+| Energy per evaluation | ≤ 14.9 µJ (0.258 W × 57.8 µs; an upper bound, since power was estimated at 100 MHz) |
 
 The design fits and routes but does not close at 100 MHz. The failing paths are 64-bit
 carry chains; pipelining them, or running at ≤ 79 MHz, are the options. The ZedBoard
@@ -178,7 +178,7 @@ bring-up designs run the engine at 70 MHz for margin.
   `run_native.bat` runs the flow outside WSL). Power is vectorless; activity-based
   (SAIF) power is still open.
 - **On silicon: 50 cases, bit-exact (2026-09-29).** The AXI4-Stream wrappers are
-  up to 1,624 bits wide, which no Zynq PS-PL port can carry, so `wrappers.py lite`
+  up to 1,456 bits wide, which no Zynq PS-PL port can carry, so `wrappers.py lite`
   generates an AXI4-Lite register file (bit-exact, in `verify_all.sh`). On a ZedBoard
   (xc7z020clg484-1), `zedboard/bd_jtag.tcl` puts it behind a JTAG-to-AXI master at
   70 MHz (WNS +0.404 ns, so ~72 MHz in context against ~79 MHz out of context; 38,358
@@ -190,15 +190,18 @@ bring-up designs run the engine at 70 MHz for margin.
   were fitted on; 22 calls, 28 puts): 450/450 sums bit-exact, `range_err` never set,
   56.9 s in all, almost all of it JTAG register traffic. Through the host finish step
   all 500 outputs equal the emulator's, and the worst is 0.268 of its error bound
-  (`validation/board_report.py`; `results/board_sweep_*`). Open: the PS design
-  (`bd_lite.tcl`), which needs a C port of the host setup and finish.
-- **Calls lose more precision than puts.** Over 50 random in-domain cases (the board
-  sweep set; the board results are identical), fixed-point rounding error on price is a median 4.8e-5 for
-  calls against 2.6e-7 for puts, worst 2.3e-3 (K = 61, T = 2.9, high variance). It is
-  within the first-order bound in every case (worst 0.27 of it), so the bound is
-  sound; the cause is the call payoff's coefficients growing like e^b over a wide
-  truncation range and cancelling. Pricing calls as puts plus put-call parity, as the
-  COS literature does, is the likely fix; not yet tried.
+  (`validation/board_report.py`; `results/board_sweep_*`). These runs used the
+  bitstream built before put-call parity (19 host constants, 56 input words); the
+  regenerated design (16 constants, 51 words) needs a new bitstream and a re-run.
+  Also open: the PS design (`bd_lite.tcl`), which needs a C port of the host setup
+  and finish.
+- **Calls are priced as puts plus put-call parity.** Priced directly, a call's COS
+  coefficients carry e^b, which over a wide truncation range grows and then cancels:
+  over the 22 calls of the 50-case board sweep, fixed-point price error reached 2.3e-3
+  (median 4.8e-5) against the integral reference. The term loop now always computes
+  the put, and the finish step adds S0 − K·e^(−rT) and its S0, K, T, r derivatives:
+  worst 3.1e-5 (median 5.4e-7), and every output improves. The COS reference prices
+  calls the same way (`parity=True`); the FSM engine still prices them directly.
 - **Verified input domain**: S0 = 100, K ∈ [60, 150], T ∈ [0.1, 3],
   r ∈ [0, 0.1], v0, θ ∈ [0.005, 0.25], κ ∈ [0.2, 6], ξ ∈ [0.1, 1], ρ ∈ [−0.95, 0.6].
   Outside it, `range_err` reports rather than silently returning wrong values.

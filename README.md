@@ -34,8 +34,8 @@ Requirements: Icarus Verilog 12, Python 3 with the packages in `software/require
 
 | design | cycles for price + 9 Greeks | bump-and-reprice on same hardware | worst relative error (21 cases) |
 |---|---|---|---|
-| Zynq-7020 config (56-bit, 8 shared multipliers) | 4,731 | 86,803 (18.3×) | price 6e-7, Greeks ≤ 6e-5 |
-| 64-bit config (32 shared multipliers) | 1,599 | 19,505 (12.2×) | price 6e-8, Greeks ≤ 6e-6 |
+| Zynq-7020 config (56-bit, 8 shared multipliers) | 4,733 | 86,860 (18.4×) | price 6e-7, Greeks ≤ 1.2e-5 |
+| 64-bit config (32 shared multipliers) | 1,593 | 19,562 (12.3×) | price 3e-8, Greeks ≤ 7e-7 |
 | first-generation FSM engine | 433,779 | 3,811,647 | price 3e-7, Greeks ≤ 5e-5 |
 
 Area (Yosys `synth_xilinx` estimates; Vivado runs pending):
