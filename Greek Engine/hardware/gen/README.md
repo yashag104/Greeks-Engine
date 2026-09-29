@@ -37,7 +37,7 @@ The design notes and results are in `docs/architecture.md`. Run
   `range_err` output flags any input that leaves that range. Yosys LUT count
   went from 90.6K to 59.0K.
 
-One COS term (forward + reverse) = 251 multiplies, 3 CORDIC rotations,
+One COS term (forward + reverse) = 250 multiplies, 3 CORDIC rotations,
 2 CORDIC vectorings, ~380 add/shift/mux operations.
 
 ## Designs (committed in `hardware/verilog/gen/`)
@@ -75,7 +75,7 @@ Fully on-chip: `(clk, rst, start, S0, K, T, r, v0, kappa, theta, xi, rho, is_cal
 xi_sens, rho_corr, done, range_err)`, all signed Q(WL−FL).FL. Outputs are valid
 when `done` pulses.
 
-Host setup: the same parameter inputs plus 19 `hs_*` constants (see the JSON), and
+Host setup: the same parameter inputs plus 16 `hs_*` constants (see the JSON), and
 outputs `sum_*` (the 9 undiscounted COS sums). `host.finish` turns them into the
 10 outputs, bit-identical to the on-chip design.
 

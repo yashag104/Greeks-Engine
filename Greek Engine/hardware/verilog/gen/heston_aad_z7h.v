@@ -14,25 +14,22 @@ module heston_aad_z7h (
     input  wire signed [55:0] rho,
     input  wire is_call,
     // per-evaluation constants computed by the host (see heston_aad_z7h_host.json); hold stable while running
-    input  wire hs_11,
     input  wire signed [55:0] hs_60,
     input  wire signed [55:0] hs_122,
     input  wire signed [55:0] hs_152,
     input  wire signed [55:0] hs_153,
-    input  wire signed [55:0] hs_154,
-    input  wire signed [55:0] hs_180,
-    input  wire signed [55:0] hs_183,
-    input  wire signed [55:0] hs_185,
+    input  wire signed [55:0] hs_179,
+    input  wire signed [55:0] hs_182,
+    input  wire signed [55:0] hs_184,
+    input  wire signed [55:0] hs_209,
     input  wire signed [55:0] hs_210,
+    input  wire signed [55:0] hs_211,
+    input  wire signed [55:0] hs_212,
+    input  wire signed [55:0] hs_234,
     input  wire signed [55:0] hs_235,
-    input  wire signed [55:0] hs_236,
     input  wire signed [55:0] hs_237,
     input  wire signed [55:0] hs_238,
-    input  wire signed [55:0] hs_260,
-    input  wire signed [55:0] hs_261,
-    input  wire signed [55:0] hs_263,
-    input  wire signed [55:0] hs_264,
-    input  wire signed [55:0] hs_265,
+    input  wire signed [55:0] hs_239,
     output wire signed [55:0] sum_price,
     output wire signed [55:0] sum_T,
     output wire signed [55:0] sum_r,
@@ -1107,445 +1104,437 @@ module heston_aad_z7h (
             endcase
         end
     endfunction
+    reg signed [55:0] v248;
+    reg v252;
+    reg signed [55:0] v254;
+    reg v255;
+    reg signed [55:0] v256;
+    reg signed [55:0] v257;
+    reg signed [55:0] v258;
+    reg signed [55:0] v259;
+    wire signed [15:0] sc259_sh = (-16'sd25) - $signed(v258);
+    wire [4:0] sc259_v = (sc259_sh > (-16'sd8)) ? 5'd20 : ((sc259_sh < (-16'sd28)) ? 5'd0 : sc259_sh - (-16'sd28));
+    wire signed [84:0] sc259_b = ($signed(v256) <<< 29);
+    wire signed [84:0] sc259_out = ((sc259_b >>> sc259_v) + 1) >>> 1;
+    reg signed [55:0] v260;
+    reg signed [55:0] v261;
+    reg signed [55:0] v264;
+    reg signed [55:0] v266;
+    reg signed [55:0] v268;
+    reg signed [55:0] v270;
+    reg signed [55:0] v272;
     reg signed [55:0] v274;
-    reg v278;
-    reg v279;
-    reg signed [55:0] v281;
-    reg v282;
+    reg signed [55:0] v275;
+    reg signed [55:0] v276;
+    reg signed [55:0] v277;
+    reg signed [55:0] v279;
+    reg signed [55:0] v282;
     reg signed [55:0] v283;
-    reg signed [55:0] v284;
     reg signed [55:0] v285;
     reg signed [55:0] v286;
-    wire signed [15:0] sc286_sh = (-16'sd25) - $signed(v285);
-    wire [4:0] sc286_v = (sc286_sh > (-16'sd8)) ? 5'd20 : ((sc286_sh < (-16'sd28)) ? 5'd0 : sc286_sh - (-16'sd28));
-    wire signed [84:0] sc286_b = ($signed(v283) <<< 29);
-    wire signed [84:0] sc286_out = ((sc286_b >>> sc286_v) + 1) >>> 1;
     reg signed [55:0] v287;
     reg signed [55:0] v288;
     reg signed [55:0] v291;
-    reg signed [55:0] v293;
-    reg signed [55:0] v295;
+    wire signed [15:0] sc291_sh = 16'sd0 - $signed((-56'sd1));
+    wire [2:0] sc291_v = (sc291_sh > 16'sd4) ? 3'd6 : ((sc291_sh < (-16'sd2)) ? 3'd0 : sc291_sh - (-16'sd2));
+    wire signed [58:0] sc291_b = ($signed($signed(mu0_out[55:0])) <<< 3);
+    wire signed [58:0] sc291_out = ((sc291_b >>> sc291_v) + 1) >>> 1;
+    reg signed [55:0] v292;
     reg signed [55:0] v297;
     reg signed [55:0] v299;
-    reg signed [55:0] v301;
-    reg signed [55:0] v302;
     reg signed [55:0] v303;
-    reg signed [55:0] v304;
-    reg signed [55:0] v306;
+    reg signed [55:0] v308;
     reg signed [55:0] v309;
-    reg signed [55:0] v310;
     reg signed [55:0] v311;
+    wire signed [15:0] sc311_sh = 16'sd0 - $signed((-56'sd1));
+    wire [2:0] sc311_v = (sc311_sh > 16'sd4) ? 3'd6 : ((sc311_sh < (-16'sd2)) ? 3'd0 : sc311_sh - (-16'sd2));
+    wire signed [58:0] sc311_b = ($signed(v309) <<< 3);
+    wire signed [58:0] sc311_out = ((sc311_b >>> sc311_v) + 1) >>> 1;
     reg signed [55:0] v312;
+    reg signed [55:0] v313;
     reg signed [55:0] v314;
+    wire signed [15:0] sc314_sh = (-16'sd25) - $signed(v313);
+    wire [4:0] sc314_v = (sc314_sh > (-16'sd10)) ? 5'd22 : ((sc314_sh < (-16'sd32)) ? 5'd0 : sc314_sh - (-16'sd32));
+    wire signed [88:0] sc314_b = ($signed(v311) <<< 33);
+    wire signed [88:0] sc314_out = ((sc314_b >>> sc314_v) + 1) >>> 1;
     reg signed [55:0] v315;
-    reg signed [55:0] v317;
-    reg signed [55:0] v318;
-    reg signed [55:0] v319;
-    reg signed [55:0] v320;
+    reg signed [55:0] v316;
     reg signed [55:0] v321;
-    reg signed [55:0] v322;
-    reg signed [55:0] v323;
-    reg signed [55:0] v326;
-    wire signed [15:0] sc326_sh = 16'sd0 - $signed((-56'sd1));
-    wire [2:0] sc326_v = (sc326_sh > 16'sd4) ? 3'd6 : ((sc326_sh < (-16'sd2)) ? 3'd0 : sc326_sh - (-16'sd2));
-    wire signed [58:0] sc326_b = ($signed($signed(mu0_out[55:0])) <<< 3);
-    wire signed [58:0] sc326_out = ((sc326_b >>> sc326_v) + 1) >>> 1;
-    reg signed [55:0] v327;
+    reg signed [55:0] v325;
+    reg signed [55:0] v329;
+    reg signed [55:0] v331;
     reg signed [55:0] v332;
-    reg signed [55:0] v334;
+    reg signed [55:0] v335;
+    reg v337;
     reg signed [55:0] v338;
+    reg signed [55:0] v339;
+    reg v340;
+    reg signed [55:0] v341;
+    reg signed [55:0] v342;
     reg signed [55:0] v343;
     reg signed [55:0] v344;
+    reg signed [55:0] v345;
     reg signed [55:0] v346;
-    wire signed [15:0] sc346_sh = 16'sd0 - $signed((-56'sd1));
-    wire [2:0] sc346_v = (sc346_sh > 16'sd4) ? 3'd6 : ((sc346_sh < (-16'sd2)) ? 3'd0 : sc346_sh - (-16'sd2));
-    wire signed [58:0] sc346_b = ($signed(v344) <<< 3);
-    wire signed [58:0] sc346_out = ((sc346_b >>> sc346_v) + 1) >>> 1;
     reg signed [55:0] v347;
     reg signed [55:0] v348;
     reg signed [55:0] v349;
-    wire signed [15:0] sc349_sh = (-16'sd25) - $signed(v348);
-    wire [4:0] sc349_v = (sc349_sh > (-16'sd10)) ? 5'd22 : ((sc349_sh < (-16'sd32)) ? 5'd0 : sc349_sh - (-16'sd32));
-    wire signed [88:0] sc349_b = ($signed(v346) <<< 33);
-    wire signed [88:0] sc349_out = ((sc349_b >>> sc349_v) + 1) >>> 1;
     reg signed [55:0] v350;
     reg signed [55:0] v351;
+    reg signed [55:0] v352;
+    reg signed [55:0] v354;
+    reg signed [55:0] v355;
     reg signed [55:0] v356;
-    reg signed [55:0] v360;
+    wire signed [15:0] sc356_sh = (-16'sd25) - $signed(v355);
+    wire [3:0] sc356_v = (sc356_sh > (-16'sd15)) ? 4'd13 : ((sc356_sh < (-16'sd28)) ? 4'd0 : sc356_sh - (-16'sd28));
+    wire signed [84:0] sc356_b = ($signed(v347) <<< 29);
+    wire signed [84:0] sc356_out = ((sc356_b >>> sc356_v) + 1) >>> 1;
+    reg signed [55:0] v357;
+    reg signed [55:0] v358;
+    wire signed [15:0] sc358_sh = (-16'sd25) - $signed(v357);
+    wire [3:0] sc358_v = (sc358_sh > (-16'sd15)) ? 4'd13 : ((sc358_sh < (-16'sd28)) ? 4'd0 : sc358_sh - (-16'sd28));
+    wire signed [84:0] sc358_b = ($signed(v348) <<< 29);
+    wire signed [84:0] sc358_out = ((sc358_b >>> sc358_v) + 1) >>> 1;
+    reg signed [55:0] v361;
+    reg v362;
+    reg signed [55:0] v363;
     reg signed [55:0] v364;
+    reg signed [55:0] v365;
     reg signed [55:0] v366;
+    wire signed [15:0] sc366_sh = 16'sd0 - $signed(v365);
+    wire [3:0] sc366_v = (sc366_sh > 16'sd3) ? 4'd8 : ((sc366_sh < (-16'sd5)) ? 4'd0 : sc366_sh - (-16'sd5));
+    wire signed [61:0] sc366_b = ($signed(v363) <<< 6);
+    wire signed [61:0] sc366_out = ((sc366_b >>> sc366_v) + 1) >>> 1;
     reg signed [55:0] v367;
-    reg signed [55:0] v370;
-    reg v372;
+    reg signed [55:0] v368;
+    reg signed [55:0] v371;
     reg signed [55:0] v373;
-    reg signed [55:0] v374;
-    reg v375;
-    reg signed [55:0] v376;
+    reg signed [55:0] v375;
     reg signed [55:0] v377;
-    reg signed [55:0] v378;
     reg signed [55:0] v379;
-    reg signed [55:0] v380;
     reg signed [55:0] v381;
     reg signed [55:0] v382;
     reg signed [55:0] v383;
     reg signed [55:0] v384;
-    reg signed [55:0] v385;
-    reg signed [55:0] v386;
     reg signed [55:0] v387;
-    reg signed [55:0] v389;
     reg signed [55:0] v390;
-    reg signed [55:0] v391;
-    wire signed [15:0] sc391_sh = (-16'sd25) - $signed(v390);
-    wire [3:0] sc391_v = (sc391_sh > (-16'sd15)) ? 4'd13 : ((sc391_sh < (-16'sd28)) ? 4'd0 : sc391_sh - (-16'sd28));
-    wire signed [84:0] sc391_b = ($signed(v382) <<< 29);
-    wire signed [84:0] sc391_out = ((sc391_b >>> sc391_v) + 1) >>> 1;
-    reg signed [55:0] v392;
     reg signed [55:0] v393;
-    wire signed [15:0] sc393_sh = (-16'sd25) - $signed(v392);
-    wire [3:0] sc393_v = (sc393_sh > (-16'sd15)) ? 4'd13 : ((sc393_sh < (-16'sd28)) ? 4'd0 : sc393_sh - (-16'sd28));
-    wire signed [84:0] sc393_b = ($signed(v383) <<< 29);
-    wire signed [84:0] sc393_out = ((sc393_b >>> sc393_v) + 1) >>> 1;
-    reg signed [55:0] v396;
-    reg v397;
-    reg signed [55:0] v398;
-    reg signed [55:0] v399;
-    reg signed [55:0] v400;
-    reg signed [55:0] v401;
-    wire signed [15:0] sc401_sh = 16'sd0 - $signed(v400);
-    wire [3:0] sc401_v = (sc401_sh > 16'sd3) ? 4'd8 : ((sc401_sh < (-16'sd5)) ? 4'd0 : sc401_sh - (-16'sd5));
-    wire signed [61:0] sc401_b = ($signed(v398) <<< 6);
-    wire signed [61:0] sc401_out = ((sc401_b >>> sc401_v) + 1) >>> 1;
+    reg signed [55:0] v395;
+    reg signed [55:0] v397;
     reg signed [55:0] v402;
-    reg signed [55:0] v403;
-    reg signed [55:0] v406;
+    reg signed [55:0] v404;
+    wire signed [15:0] sc404_sh = (-16'sd25) - $signed(56'sd0);
+    wire [2:0] sc404_v = (sc404_sh > (-16'sd22)) ? 3'd6 : ((sc404_sh < (-16'sd28)) ? 3'd0 : sc404_sh - (-16'sd28));
+    wire signed [84:0] sc404_b = ($signed(v402) <<< 29);
+    wire signed [84:0] sc404_out = ((sc404_b >>> sc404_v) + 1) >>> 1;
     reg signed [55:0] v408;
-    reg signed [55:0] v410;
-    reg signed [55:0] v412;
+    reg signed [55:0] v411;
     reg signed [55:0] v414;
-    reg signed [55:0] v416;
     reg signed [55:0] v417;
     reg signed [55:0] v418;
     reg signed [55:0] v419;
+    reg signed [55:0] v421;
     reg signed [55:0] v422;
-    reg signed [55:0] v425;
-    reg signed [55:0] v428;
-    reg signed [55:0] v430;
-    reg signed [55:0] v432;
-    reg signed [55:0] v437;
+    wire signed [15:0] sc422_sh = 16'sd25 - $signed(v421);
+    wire [5:0] sc422_v = (sc422_sh > 16'sd57) ? 6'd34 : ((sc422_sh < 16'sd23) ? 6'd0 : sc422_sh - 16'sd23);
+    wire signed [55:0] sc422_b = ($signed($signed(mu6_out[55:0])) >>> 22);
+    wire signed [55:0] sc422_out = ((sc422_b >>> sc422_v) + 1) >>> 1;
+    reg signed [55:0] v427;
+    reg signed [55:0] v435;
+    reg signed [55:0] v438;
     reg signed [55:0] v439;
-    wire signed [15:0] sc439_sh = (-16'sd25) - $signed(56'sd0);
-    wire [2:0] sc439_v = (sc439_sh > (-16'sd22)) ? 3'd6 : ((sc439_sh < (-16'sd28)) ? 3'd0 : sc439_sh - (-16'sd28));
-    wire signed [84:0] sc439_b = ($signed(v437) <<< 29);
-    wire signed [84:0] sc439_out = ((sc439_b >>> sc439_v) + 1) >>> 1;
+    reg signed [55:0] v440;
+    reg signed [55:0] v441;
+    reg signed [55:0] v442;
     reg signed [55:0] v443;
+    reg signed [55:0] v444;
+    reg signed [55:0] v445;
     reg signed [55:0] v446;
+    reg signed [55:0] v448;
     reg signed [55:0] v449;
+    reg signed [55:0] v450;
+    wire signed [15:0] sc450_sh = (-16'sd25) - $signed(v449);
+    wire [2:0] sc450_v = (sc450_sh > (-16'sd21)) ? 3'd7 : ((sc450_sh < (-16'sd28)) ? 3'd0 : sc450_sh - (-16'sd28));
+    wire signed [84:0] sc450_b = ($signed(v441) <<< 29);
+    wire signed [84:0] sc450_out = ((sc450_b >>> sc450_v) + 1) >>> 1;
+    reg signed [55:0] v451;
     reg signed [55:0] v452;
-    reg signed [55:0] v453;
-    reg signed [55:0] v454;
-    reg signed [55:0] v456;
+    wire signed [15:0] sc452_sh = (-16'sd25) - $signed(v451);
+    wire [2:0] sc452_v = (sc452_sh > (-16'sd21)) ? 3'd7 : ((sc452_sh < (-16'sd28)) ? 3'd0 : sc452_sh - (-16'sd28));
+    wire signed [84:0] sc452_b = ($signed(v442) <<< 29);
+    wire signed [84:0] sc452_out = ((sc452_b >>> sc452_v) + 1) >>> 1;
+    reg signed [55:0] v455;
+    reg v456;
     reg signed [55:0] v457;
-    wire signed [15:0] sc457_sh = 16'sd25 - $signed(v456);
-    wire [5:0] sc457_v = (sc457_sh > 16'sd57) ? 6'd34 : ((sc457_sh < 16'sd23) ? 6'd0 : sc457_sh - 16'sd23);
-    wire signed [55:0] sc457_b = ($signed($signed(mu6_out[55:0])) >>> 22);
-    wire signed [55:0] sc457_out = ((sc457_b >>> sc457_v) + 1) >>> 1;
+    reg signed [55:0] v458;
+    reg signed [55:0] v459;
+    reg signed [55:0] v460;
+    wire signed [15:0] sc460_sh = 16'sd0 - $signed(v459);
+    wire [3:0] sc460_v = (sc460_sh > 16'sd3) ? 4'd8 : ((sc460_sh < (-16'sd5)) ? 4'd0 : sc460_sh - (-16'sd5));
+    wire signed [61:0] sc460_b = ($signed(v457) <<< 6);
+    wire signed [61:0] sc460_out = ((sc460_b >>> sc460_v) + 1) >>> 1;
+    reg signed [55:0] v461;
     reg signed [55:0] v462;
-    reg signed [55:0] v470;
+    reg signed [55:0] v465;
+    reg signed [55:0] v467;
+    reg signed [55:0] v469;
+    reg signed [55:0] v471;
     reg signed [55:0] v473;
-    reg signed [55:0] v474;
     reg signed [55:0] v475;
     reg signed [55:0] v476;
     reg signed [55:0] v477;
     reg signed [55:0] v478;
-    reg signed [55:0] v479;
-    reg signed [55:0] v480;
     reg signed [55:0] v481;
-    reg signed [55:0] v483;
     reg signed [55:0] v484;
-    reg signed [55:0] v485;
-    wire signed [15:0] sc485_sh = (-16'sd25) - $signed(v484);
-    wire [2:0] sc485_v = (sc485_sh > (-16'sd21)) ? 3'd7 : ((sc485_sh < (-16'sd28)) ? 3'd0 : sc485_sh - (-16'sd28));
-    wire signed [84:0] sc485_b = ($signed(v476) <<< 29);
-    wire signed [84:0] sc485_out = ((sc485_b >>> sc485_v) + 1) >>> 1;
-    reg signed [55:0] v486;
     reg signed [55:0] v487;
-    wire signed [15:0] sc487_sh = (-16'sd25) - $signed(v486);
-    wire [2:0] sc487_v = (sc487_sh > (-16'sd21)) ? 3'd7 : ((sc487_sh < (-16'sd28)) ? 3'd0 : sc487_sh - (-16'sd28));
-    wire signed [84:0] sc487_b = ($signed(v477) <<< 29);
-    wire signed [84:0] sc487_out = ((sc487_b >>> sc487_v) + 1) >>> 1;
-    reg signed [55:0] v490;
-    reg v491;
     reg signed [55:0] v492;
     reg signed [55:0] v493;
     reg signed [55:0] v494;
+    wire signed [15:0] sc494_sh = (-16'sd25) - $signed(v493);
+    wire [3:0] sc494_v = (sc494_sh > (-16'sd21)) ? 4'd8 : ((sc494_sh < (-16'sd29)) ? 4'd0 : sc494_sh - (-16'sd29));
+    wire signed [85:0] sc494_b = ($signed(v489_s1) <<< 30);
+    wire signed [85:0] sc494_out = ((sc494_b >>> sc494_v) + 1) >>> 1;
     reg signed [55:0] v495;
-    wire signed [15:0] sc495_sh = 16'sd0 - $signed(v494);
-    wire [3:0] sc495_v = (sc495_sh > 16'sd3) ? 4'd8 : ((sc495_sh < (-16'sd5)) ? 4'd0 : sc495_sh - (-16'sd5));
-    wire signed [61:0] sc495_b = ($signed(v492) <<< 6);
-    wire signed [61:0] sc495_out = ((sc495_b >>> sc495_v) + 1) >>> 1;
     reg signed [55:0] v496;
-    reg signed [55:0] v497;
-    reg signed [55:0] v500;
-    reg signed [55:0] v502;
-    reg signed [55:0] v504;
+    reg signed [55:0] v499;
+    reg signed [55:0] v503;
     reg signed [55:0] v506;
-    reg signed [55:0] v508;
-    reg signed [55:0] v510;
+    reg signed [55:0] v509;
     reg signed [55:0] v511;
     reg signed [55:0] v512;
     reg signed [55:0] v513;
     reg signed [55:0] v516;
-    reg signed [55:0] v519;
-    reg signed [55:0] v522;
+    reg signed [55:0] v517;
+    reg signed [55:0] v521;
+    reg signed [55:0] v523;
     reg signed [55:0] v527;
-    reg signed [55:0] v528;
-    reg signed [55:0] v529;
-    wire signed [15:0] sc529_sh = (-16'sd25) - $signed(v528);
-    wire [3:0] sc529_v = (sc529_sh > (-16'sd21)) ? 4'd8 : ((sc529_sh < (-16'sd29)) ? 4'd0 : sc529_sh - (-16'sd29));
-    wire signed [85:0] sc529_b = ($signed(v524_s1) <<< 30);
-    wire signed [85:0] sc529_out = ((sc529_b >>> sc529_v) + 1) >>> 1;
     reg signed [55:0] v530;
     reg signed [55:0] v531;
+    reg signed [55:0] v532;
+    reg signed [55:0] v533;
     reg signed [55:0] v534;
+    reg signed [55:0] v536;
+    reg signed [55:0] v537;
     reg signed [55:0] v538;
-    reg signed [55:0] v541;
-    reg signed [55:0] v544;
+    wire signed [15:0] sc538_sh = (-16'sd25) - $signed(v537);
+    wire [2:0] sc538_v = (sc538_sh > (-16'sd21)) ? 3'd7 : ((sc538_sh < (-16'sd28)) ? 3'd0 : sc538_sh - (-16'sd28));
+    wire signed [84:0] sc538_b = ($signed(v439) <<< 29);
+    wire signed [84:0] sc538_out = ((sc538_b >>> sc538_v) + 1) >>> 1;
+    reg signed [55:0] v539;
+    reg signed [55:0] v540;
+    wire signed [15:0] sc540_sh = (-16'sd25) - $signed(v539);
+    wire [2:0] sc540_v = (sc540_sh > (-16'sd21)) ? 3'd7 : ((sc540_sh < (-16'sd28)) ? 3'd0 : sc540_sh - (-16'sd28));
+    wire signed [84:0] sc540_b = ($signed(v440) <<< 29);
+    wire signed [84:0] sc540_out = ((sc540_b >>> sc540_v) + 1) >>> 1;
+    reg signed [55:0] v543;
+    reg v544;
+    reg signed [55:0] v545;
     reg signed [55:0] v546;
     reg signed [55:0] v547;
     reg signed [55:0] v548;
-    reg signed [55:0] v551;
-    reg signed [55:0] v552;
-    reg signed [55:0] v556;
-    reg signed [55:0] v558;
-    reg signed [55:0] v562;
+    wire signed [15:0] sc548_sh = 16'sd0 - $signed(v547);
+    wire [3:0] sc548_v = (sc548_sh > 16'sd3) ? 4'd8 : ((sc548_sh < (-16'sd5)) ? 4'd0 : sc548_sh - (-16'sd5));
+    wire signed [61:0] sc548_b = ($signed(v545) <<< 6);
+    wire signed [61:0] sc548_out = ((sc548_b >>> sc548_v) + 1) >>> 1;
+    reg signed [55:0] v549;
+    reg signed [55:0] v550;
+    reg signed [55:0] v553;
+    reg signed [55:0] v555;
+    reg signed [55:0] v557;
+    reg signed [55:0] v559;
+    reg signed [55:0] v561;
+    reg signed [55:0] v563;
+    reg signed [55:0] v564;
     reg signed [55:0] v565;
     reg signed [55:0] v566;
-    reg signed [55:0] v567;
-    reg signed [55:0] v568;
     reg signed [55:0] v569;
-    reg signed [55:0] v571;
     reg signed [55:0] v572;
-    reg signed [55:0] v573;
-    wire signed [15:0] sc573_sh = (-16'sd25) - $signed(v572);
-    wire [2:0] sc573_v = (sc573_sh > (-16'sd21)) ? 3'd7 : ((sc573_sh < (-16'sd28)) ? 3'd0 : sc573_sh - (-16'sd28));
-    wire signed [84:0] sc573_b = ($signed(v474) <<< 29);
-    wire signed [84:0] sc573_out = ((sc573_b >>> sc573_v) + 1) >>> 1;
-    reg signed [55:0] v574;
     reg signed [55:0] v575;
-    wire signed [15:0] sc575_sh = (-16'sd25) - $signed(v574);
-    wire [2:0] sc575_v = (sc575_sh > (-16'sd21)) ? 3'd7 : ((sc575_sh < (-16'sd28)) ? 3'd0 : sc575_sh - (-16'sd28));
-    wire signed [84:0] sc575_b = ($signed(v475) <<< 29);
-    wire signed [84:0] sc575_out = ((sc575_b >>> sc575_v) + 1) >>> 1;
     reg signed [55:0] v578;
-    reg v579;
-    reg signed [55:0] v580;
     reg signed [55:0] v581;
-    reg signed [55:0] v582;
     reg signed [55:0] v583;
-    wire signed [15:0] sc583_sh = 16'sd0 - $signed(v582);
-    wire [3:0] sc583_v = (sc583_sh > 16'sd3) ? 4'd8 : ((sc583_sh < (-16'sd5)) ? 4'd0 : sc583_sh - (-16'sd5));
-    wire signed [61:0] sc583_b = ($signed(v580) <<< 6);
-    wire signed [61:0] sc583_out = ((sc583_b >>> sc583_v) + 1) >>> 1;
-    reg signed [55:0] v584;
     reg signed [55:0] v585;
-    reg signed [55:0] v588;
-    reg signed [55:0] v590;
+    reg signed [55:0] v587;
     reg signed [55:0] v592;
     reg signed [55:0] v594;
-    reg signed [55:0] v596;
+    wire signed [15:0] sc594_sh = (-16'sd25) - $signed(56'sd0);
+    wire [2:0] sc594_v = (sc594_sh > (-16'sd22)) ? 3'd6 : ((sc594_sh < (-16'sd28)) ? 3'd0 : sc594_sh - (-16'sd28));
+    wire signed [84:0] sc594_b = ($signed(v592) <<< 29);
+    wire signed [84:0] sc594_out = ((sc594_b >>> sc594_v) + 1) >>> 1;
     reg signed [55:0] v598;
-    reg signed [55:0] v599;
-    reg signed [55:0] v600;
     reg signed [55:0] v601;
     reg signed [55:0] v604;
     reg signed [55:0] v607;
-    reg signed [55:0] v610;
-    reg signed [55:0] v613;
-    reg signed [55:0] v616;
-    reg signed [55:0] v618;
-    reg signed [55:0] v620;
-    reg signed [55:0] v622;
-    reg signed [55:0] v627;
-    reg signed [55:0] v629;
-    wire signed [15:0] sc629_sh = (-16'sd25) - $signed(56'sd0);
-    wire [2:0] sc629_v = (sc629_sh > (-16'sd22)) ? 3'd6 : ((sc629_sh < (-16'sd28)) ? 3'd0 : sc629_sh - (-16'sd28));
-    wire signed [84:0] sc629_b = ($signed(v627) <<< 29);
-    wire signed [84:0] sc629_out = ((sc629_b >>> sc629_v) + 1) >>> 1;
+    reg signed [55:0] v608;
+    reg signed [55:0] v609;
+    reg signed [55:0] v611;
+    reg signed [55:0] v612;
+    wire signed [15:0] sc612_sh = 16'sd25 - $signed(v611);
+    wire [5:0] sc612_v = (sc612_sh > 16'sd57) ? 6'd35 : ((sc612_sh < 16'sd22) ? 6'd0 : sc612_sh - 16'sd22);
+    wire signed [55:0] sc612_b = ($signed($signed(mu3_out[55:0])) >>> 21);
+    wire signed [55:0] sc612_out = ((sc612_b >>> sc612_v) + 1) >>> 1;
+    reg signed [55:0] v617;
+    reg signed [55:0] v625;
+    reg signed [111:0] v629;
+    reg signed [111:0] v632;
     reg signed [55:0] v633;
-    reg signed [55:0] v636;
-    reg signed [55:0] v639;
-    reg signed [55:0] v642;
-    reg signed [55:0] v643;
+    reg signed [55:0] v634;
+    wire signed [15:0] sc634_sh = 16'sd28 - $signed(v633);
+    wire [5:0] sc634_v = (sc634_sh > 16'sd31) ? 6'd34 : ((sc634_sh < (-16'sd3)) ? 6'd0 : sc634_sh - (-16'sd3));
+    wire signed [115:0] sc634_b = ($signed(v629) <<< 4);
+    wire signed [115:0] sc634_out = ((sc634_b >>> sc634_v) + 1) >>> 1;
+    reg signed [55:0] v635;
+    wire signed [15:0] sc635_sh = 16'sd28 - $signed(v633);
+    wire [5:0] sc635_v = (sc635_sh > 16'sd31) ? 6'd34 : ((sc635_sh < (-16'sd3)) ? 6'd0 : sc635_sh - (-16'sd3));
+    wire signed [115:0] sc635_b = ($signed(v632) <<< 4);
+    wire signed [115:0] sc635_out = ((sc635_b >>> sc635_v) + 1) >>> 1;
+    reg signed [55:0] v640;
     reg signed [55:0] v644;
-    reg signed [55:0] v646;
     reg signed [55:0] v647;
-    wire signed [15:0] sc647_sh = 16'sd25 - $signed(v646);
-    wire [5:0] sc647_v = (sc647_sh > 16'sd57) ? 6'd35 : ((sc647_sh < 16'sd22) ? 6'd0 : sc647_sh - 16'sd22);
-    wire signed [55:0] sc647_b = ($signed($signed(mu3_out[55:0])) >>> 21);
-    wire signed [55:0] sc647_out = ((sc647_b >>> sc647_v) + 1) >>> 1;
-    reg signed [55:0] v652;
-    reg signed [55:0] v660;
-    reg signed [111:0] v664;
-    reg signed [111:0] v667;
-    reg signed [55:0] v668;
-    reg signed [55:0] v669;
-    wire signed [15:0] sc669_sh = 16'sd28 - $signed(v668);
-    wire [5:0] sc669_v = (sc669_sh > 16'sd31) ? 6'd34 : ((sc669_sh < (-16'sd3)) ? 6'd0 : sc669_sh - (-16'sd3));
-    wire signed [115:0] sc669_b = ($signed(v664) <<< 4);
-    wire signed [115:0] sc669_out = ((sc669_b >>> sc669_v) + 1) >>> 1;
+    reg signed [55:0] v650;
+    reg signed [55:0] v653;
+    reg signed [55:0] v658;
+    reg signed [55:0] v663;
+    reg signed [55:0] v664;
+    reg signed [55:0] v667;
     reg signed [55:0] v670;
-    wire signed [15:0] sc670_sh = 16'sd28 - $signed(v668);
-    wire [5:0] sc670_v = (sc670_sh > 16'sd31) ? 6'd34 : ((sc670_sh < (-16'sd3)) ? 6'd0 : sc670_sh - (-16'sd3));
-    wire signed [115:0] sc670_b = ($signed(v667) <<< 4);
-    wire signed [115:0] sc670_out = ((sc670_b >>> sc670_v) + 1) >>> 1;
-    reg signed [55:0] v675;
-    reg signed [55:0] v679;
-    reg signed [55:0] v682;
-    reg signed [55:0] v685;
-    reg signed [55:0] v688;
-    reg signed [55:0] v693;
-    reg signed [55:0] v698;
-    reg signed [55:0] v699;
-    reg signed [55:0] v702;
+    reg signed [55:0] v671;
+    reg signed [55:0] v676;
+    reg signed [55:0] v678;
+    reg signed [55:0] v683;
+    reg signed [55:0] v687;
+    reg signed [55:0] v689;
+    reg signed [55:0] v692;
+    reg signed [55:0] v695;
+    reg signed [55:0] v700;
     reg signed [55:0] v705;
-    reg signed [55:0] v706;
+    reg signed [55:0] v708;
     reg signed [55:0] v711;
-    reg signed [55:0] v713;
-    reg signed [55:0] v718;
+    reg signed [55:0] v714;
+    reg signed [55:0] v717;
+    reg signed [55:0] v720;
+    reg signed [55:0] v721;
     reg signed [55:0] v722;
-    reg signed [55:0] v724;
     reg signed [55:0] v727;
-    reg signed [55:0] v730;
-    reg signed [55:0] v735;
+    reg signed [55:0] v728;
+    reg signed [55:0] v733;
+    reg signed [55:0] v734;
+    reg signed [55:0] v737;
     reg signed [55:0] v740;
-    reg signed [55:0] v743;
-    reg signed [55:0] v746;
+    reg signed [55:0] v741;
+    reg signed [55:0] v742;
+    reg signed [55:0] v745;
+    reg signed [55:0] v748;
     reg signed [55:0] v749;
-    reg signed [55:0] v752;
-    reg signed [55:0] v755;
+    reg signed [55:0] v750;
+    reg signed [55:0] v753;
     reg signed [55:0] v756;
     reg signed [55:0] v757;
     reg signed [55:0] v762;
     reg signed [55:0] v763;
-    reg signed [55:0] v768;
+    reg signed [55:0] v766;
     reg signed [55:0] v769;
-    reg signed [55:0] v772;
-    reg signed [55:0] v775;
+    reg signed [55:0] v770;
+    reg signed [55:0] v771;
     reg signed [55:0] v776;
     reg signed [55:0] v777;
     reg signed [55:0] v780;
     reg signed [55:0] v783;
     reg signed [55:0] v784;
     reg signed [55:0] v785;
+    reg signed [55:0] v786;
+    reg signed [55:0] v787;
     reg signed [55:0] v788;
-    reg signed [55:0] v791;
-    reg signed [55:0] v792;
-    reg signed [55:0] v797;
+    reg signed [55:0] v789;
+    reg signed [55:0] v790;
+    reg signed [55:0] v793;
+    reg signed [55:0] v794;
+    reg signed [55:0] v795;
+    reg signed [55:0] v796;
     reg signed [55:0] v798;
+    reg signed [55:0] v799;
+    reg signed [55:0] v800;
+    wire signed [15:0] sc800_sh = (-16'sd25) - $signed(v799);
+    wire [3:0] sc800_v = (sc800_sh > (-16'sd14)) ? 4'd14 : ((sc800_sh < (-16'sd28)) ? 4'd0 : sc800_sh - (-16'sd28));
+    wire signed [84:0] sc800_b = ($signed((v339 <<< 1)) <<< 29);
+    wire signed [84:0] sc800_out = ((sc800_b >>> sc800_v) + 1) >>> 1;
     reg signed [55:0] v801;
-    reg signed [55:0] v804;
+    reg signed [55:0] v802;
+    wire signed [15:0] sc802_sh = (-16'sd25) - $signed(v801);
+    wire [3:0] sc802_v = (sc802_sh > (-16'sd14)) ? 4'd14 : ((sc802_sh < (-16'sd28)) ? 4'd0 : sc802_sh - (-16'sd28));
+    wire signed [84:0] sc802_b = ($signed((v343 <<< 1)) <<< 29);
+    wire signed [84:0] sc802_out = ((sc802_b >>> sc802_v) + 1) >>> 1;
     reg signed [55:0] v805;
-    reg signed [55:0] v806;
+    reg v806;
+    reg signed [55:0] v807;
+    reg signed [55:0] v808;
+    reg signed [55:0] v809;
+    reg signed [55:0] v810;
+    wire signed [15:0] sc810_sh = 16'sd0 - $signed(v809);
+    wire [3:0] sc810_v = (sc810_sh > 16'sd3) ? 4'd8 : ((sc810_sh < (-16'sd5)) ? 4'd0 : sc810_sh - (-16'sd5));
+    wire signed [61:0] sc810_b = ($signed(v807) <<< 6);
+    wire signed [61:0] sc810_out = ((sc810_b >>> sc810_v) + 1) >>> 1;
     reg signed [55:0] v811;
     reg signed [55:0] v812;
     reg signed [55:0] v815;
-    reg signed [55:0] v818;
+    reg signed [55:0] v817;
     reg signed [55:0] v819;
-    reg signed [55:0] v820;
     reg signed [55:0] v821;
-    reg signed [55:0] v822;
     reg signed [55:0] v823;
-    reg signed [55:0] v824;
     reg signed [55:0] v825;
+    reg signed [55:0] v826;
+    reg signed [55:0] v827;
     reg signed [55:0] v828;
-    reg signed [55:0] v829;
-    reg signed [55:0] v830;
     reg signed [55:0] v831;
-    reg signed [55:0] v833;
     reg signed [55:0] v834;
-    reg signed [55:0] v835;
-    wire signed [15:0] sc835_sh = (-16'sd25) - $signed(v834);
-    wire [3:0] sc835_v = (sc835_sh > (-16'sd14)) ? 4'd14 : ((sc835_sh < (-16'sd28)) ? 4'd0 : sc835_sh - (-16'sd28));
-    wire signed [84:0] sc835_b = ($signed((v374 <<< 1)) <<< 29);
-    wire signed [84:0] sc835_out = ((sc835_b >>> sc835_v) + 1) >>> 1;
-    reg signed [55:0] v836;
     reg signed [55:0] v837;
-    wire signed [15:0] sc837_sh = (-16'sd25) - $signed(v836);
-    wire [3:0] sc837_v = (sc837_sh > (-16'sd14)) ? 4'd14 : ((sc837_sh < (-16'sd28)) ? 4'd0 : sc837_sh - (-16'sd28));
-    wire signed [84:0] sc837_b = ($signed((v378 <<< 1)) <<< 29);
-    wire signed [84:0] sc837_out = ((sc837_b >>> sc837_v) + 1) >>> 1;
     reg signed [55:0] v840;
-    reg v841;
-    reg signed [55:0] v842;
-    reg signed [55:0] v843;
-    reg signed [55:0] v844;
-    reg signed [55:0] v845;
-    wire signed [15:0] sc845_sh = 16'sd0 - $signed(v844);
-    wire [3:0] sc845_v = (sc845_sh > 16'sd3) ? 4'd8 : ((sc845_sh < (-16'sd5)) ? 4'd0 : sc845_sh - (-16'sd5));
-    wire signed [61:0] sc845_b = ($signed(v842) <<< 6);
-    wire signed [61:0] sc845_out = ((sc845_b >>> sc845_v) + 1) >>> 1;
+    reg signed [55:0] v841;
     reg signed [55:0] v846;
-    reg signed [55:0] v847;
+    reg signed [55:0] v849;
     reg signed [55:0] v850;
-    reg signed [55:0] v852;
-    reg signed [55:0] v854;
+    reg signed [55:0] v851;
     reg signed [55:0] v856;
     reg signed [55:0] v858;
+    reg signed [55:0] v859;
+    wire signed [15:0] sc859_sh = 16'sd0 - $signed(v858_s1);
+    wire [5:0] sc859_v = (sc859_sh > 16'sd31) ? 6'd34 : ((sc859_sh < (-16'sd3)) ? 6'd0 : sc859_sh - (-16'sd3));
+    wire signed [59:0] sc859_b = ($signed(v763) <<< 4);
+    wire signed [59:0] sc859_out = ((sc859_b >>> sc859_v) + 1) >>> 1;
     reg signed [55:0] v860;
+    wire signed [15:0] sc860_sh = 16'sd0 - $signed(v858);
+    wire [5:0] sc860_v = (sc860_sh > 16'sd31) ? 6'd34 : ((sc860_sh < (-16'sd3)) ? 6'd0 : sc860_sh - (-16'sd3));
+    wire signed [59:0] sc860_b = ($signed($signed(mu7_out[55:0])) <<< 4);
+    wire signed [59:0] sc860_out = ((sc860_b >>> sc860_v) + 1) >>> 1;
     reg signed [55:0] v861;
+    wire signed [15:0] sc861_sh = 16'sd0 - $signed(v858);
+    wire [5:0] sc861_v = (sc861_sh > 16'sd31) ? 6'd34 : ((sc861_sh < (-16'sd3)) ? 6'd0 : sc861_sh - (-16'sd3));
+    wire signed [59:0] sc861_b = ($signed(v640) <<< 4);
+    wire signed [59:0] sc861_out = ((sc861_b >>> sc861_v) + 1) >>> 1;
     reg signed [55:0] v862;
+    wire signed [15:0] sc862_sh = 16'sd0 - $signed(v858_s3);
+    wire [5:0] sc862_v = (sc862_sh > 16'sd31) ? 6'd34 : ((sc862_sh < (-16'sd3)) ? 6'd0 : sc862_sh - (-16'sd3));
+    wire signed [59:0] sc862_b = ($signed(v851) <<< 4);
+    wire signed [59:0] sc862_out = ((sc862_b >>> sc862_v) + 1) >>> 1;
     reg signed [55:0] v863;
+    wire signed [15:0] sc863_sh = 16'sd0 - $signed(v858);
+    wire [5:0] sc863_v = (sc863_sh > 16'sd31) ? 6'd34 : ((sc863_sh < (-16'sd3)) ? 6'd0 : sc863_sh - (-16'sd3));
+    wire signed [59:0] sc863_b = ($signed($signed(mu7_out[55:0])) <<< 4);
+    wire signed [59:0] sc863_out = ((sc863_b >>> sc863_v) + 1) >>> 1;
+    reg signed [55:0] v864;
+    wire signed [15:0] sc864_sh = 16'sd0 - $signed(v858_s5);
+    wire [5:0] sc864_v = (sc864_sh > 16'sd31) ? 6'd34 : ((sc864_sh < (-16'sd3)) ? 6'd0 : sc864_sh - (-16'sd3));
+    wire signed [59:0] sc864_b = ($signed(v856) <<< 4);
+    wire signed [59:0] sc864_out = ((sc864_b >>> sc864_v) + 1) >>> 1;
+    reg signed [55:0] v865;
+    wire signed [15:0] sc865_sh = 16'sd0 - $signed(v858_s5);
+    wire [5:0] sc865_v = (sc865_sh > 16'sd31) ? 6'd34 : ((sc865_sh < (-16'sd3)) ? 6'd0 : sc865_sh - (-16'sd3));
+    wire signed [59:0] sc865_b = ($signed($signed(mu7_out[55:0])) <<< 4);
+    wire signed [59:0] sc865_out = ((sc865_b >>> sc865_v) + 1) >>> 1;
     reg signed [55:0] v866;
-    reg signed [55:0] v869;
-    reg signed [55:0] v872;
-    reg signed [55:0] v875;
-    reg signed [55:0] v876;
-    reg signed [55:0] v881;
-    reg signed [55:0] v884;
-    reg signed [55:0] v885;
-    reg signed [55:0] v886;
-    reg signed [55:0] v891;
-    reg signed [55:0] v893;
-    reg signed [55:0] v894;
-    wire signed [15:0] sc894_sh = 16'sd0 - $signed(v893_s1);
-    wire [5:0] sc894_v = (sc894_sh > 16'sd31) ? 6'd34 : ((sc894_sh < (-16'sd3)) ? 6'd0 : sc894_sh - (-16'sd3));
-    wire signed [59:0] sc894_b = ($signed(v798) <<< 4);
-    wire signed [59:0] sc894_out = ((sc894_b >>> sc894_v) + 1) >>> 1;
-    reg signed [55:0] v895;
-    wire signed [15:0] sc895_sh = 16'sd0 - $signed(v893);
-    wire [5:0] sc895_v = (sc895_sh > 16'sd31) ? 6'd34 : ((sc895_sh < (-16'sd3)) ? 6'd0 : sc895_sh - (-16'sd3));
-    wire signed [59:0] sc895_b = ($signed($signed(mu7_out[55:0])) <<< 4);
-    wire signed [59:0] sc895_out = ((sc895_b >>> sc895_v) + 1) >>> 1;
-    reg signed [55:0] v896;
-    wire signed [15:0] sc896_sh = 16'sd0 - $signed(v893);
-    wire [5:0] sc896_v = (sc896_sh > 16'sd31) ? 6'd34 : ((sc896_sh < (-16'sd3)) ? 6'd0 : sc896_sh - (-16'sd3));
-    wire signed [59:0] sc896_b = ($signed(v675) <<< 4);
-    wire signed [59:0] sc896_out = ((sc896_b >>> sc896_v) + 1) >>> 1;
-    reg signed [55:0] v897;
-    wire signed [15:0] sc897_sh = 16'sd0 - $signed(v893_s3);
-    wire [5:0] sc897_v = (sc897_sh > 16'sd31) ? 6'd34 : ((sc897_sh < (-16'sd3)) ? 6'd0 : sc897_sh - (-16'sd3));
-    wire signed [59:0] sc897_b = ($signed(v886) <<< 4);
-    wire signed [59:0] sc897_out = ((sc897_b >>> sc897_v) + 1) >>> 1;
-    reg signed [55:0] v898;
-    wire signed [15:0] sc898_sh = 16'sd0 - $signed(v893);
-    wire [5:0] sc898_v = (sc898_sh > 16'sd31) ? 6'd34 : ((sc898_sh < (-16'sd3)) ? 6'd0 : sc898_sh - (-16'sd3));
-    wire signed [59:0] sc898_b = ($signed($signed(mu7_out[55:0])) <<< 4);
-    wire signed [59:0] sc898_out = ((sc898_b >>> sc898_v) + 1) >>> 1;
-    reg signed [55:0] v899;
-    wire signed [15:0] sc899_sh = 16'sd0 - $signed(v893_s5);
-    wire [5:0] sc899_v = (sc899_sh > 16'sd31) ? 6'd34 : ((sc899_sh < (-16'sd3)) ? 6'd0 : sc899_sh - (-16'sd3));
-    wire signed [59:0] sc899_b = ($signed(v891) <<< 4);
-    wire signed [59:0] sc899_out = ((sc899_b >>> sc899_v) + 1) >>> 1;
-    reg signed [55:0] v900;
-    wire signed [15:0] sc900_sh = 16'sd0 - $signed(v893_s5);
-    wire [5:0] sc900_v = (sc900_sh > 16'sd31) ? 6'd34 : ((sc900_sh < (-16'sd3)) ? 6'd0 : sc900_sh - (-16'sd3));
-    wire signed [59:0] sc900_b = ($signed($signed(mu7_out[55:0])) <<< 4);
-    wire signed [59:0] sc900_out = ((sc900_b >>> sc900_v) + 1) >>> 1;
-    reg signed [55:0] v901;
-    wire signed [15:0] sc901_sh = 16'sd0 - $signed(v893);
-    wire [5:0] sc901_v = (sc901_sh > 16'sd31) ? 6'd34 : ((sc901_sh < (-16'sd3)) ? 6'd0 : sc901_sh - (-16'sd3));
-    wire signed [59:0] sc901_b = ($signed($signed(mu5_out[55:0])) <<< 4);
-    wire signed [59:0] sc901_out = ((sc901_b >>> sc901_v) + 1) >>> 1;
+    wire signed [15:0] sc866_sh = 16'sd0 - $signed(v858);
+    wire [5:0] sc866_v = (sc866_sh > 16'sd31) ? 6'd34 : ((sc866_sh < (-16'sd3)) ? 6'd0 : sc866_sh - (-16'sd3));
+    wire signed [59:0] sc866_b = ($signed($signed(mu5_out[55:0])) <<< 4);
+    wire signed [59:0] sc866_out = ((sc866_b >>> sc866_v) + 1) >>> 1;
     reg signed [55:0] acc_price;
     reg signed [55:0] acc_T;
     reg signed [55:0] acc_r;
@@ -1621,805 +1610,801 @@ module heston_aad_z7h (
     wire signed [55:0] cv0_o0, cv0_o1;
     reg cv1_go; reg signed [55:0] cv1_x, cv1_y;
     wire signed [55:0] cv1_o0, cv1_o1;
-    reg signed [55:0] v268_s1;
-    reg signed [55:0] v268_s2;
-    reg signed [55:0] v268_s3;
-    reg signed [55:0] v268_s4;
-    reg signed [55:0] v268_s5;
-    reg signed [55:0] v268_s6;
-    reg signed [55:0] v268_s7;
-    reg signed [55:0] v268_s8;
-    reg signed [55:0] v268_s9;
-    reg signed [55:0] v268_s10;
-    reg signed [55:0] v268_s11;
-    reg signed [55:0] v268_s12;
-    reg signed [55:0] v268_s13;
-    reg signed [55:0] v268_s14;
-    reg signed [55:0] v268_s15;
-    reg signed [55:0] v269_s1;
-    reg signed [55:0] v276_s1;
-    reg signed [55:0] v276_s2;
-    reg signed [55:0] v276_s3;
-    reg signed [55:0] v276_s4;
-    reg signed [55:0] v276_s5;
-    reg signed [55:0] v276_s6;
-    reg signed [55:0] v276_s7;
-    reg signed [55:0] v276_s8;
-    reg signed [55:0] v276_s9;
+    reg signed [55:0] v242_s1;
+    reg signed [55:0] v242_s2;
+    reg signed [55:0] v242_s3;
+    reg signed [55:0] v242_s4;
+    reg signed [55:0] v242_s5;
+    reg signed [55:0] v242_s6;
+    reg signed [55:0] v242_s7;
+    reg signed [55:0] v242_s8;
+    reg signed [55:0] v242_s9;
+    reg signed [55:0] v242_s10;
+    reg signed [55:0] v242_s11;
+    reg signed [55:0] v242_s12;
+    reg signed [55:0] v242_s13;
+    reg signed [55:0] v242_s14;
+    reg signed [55:0] v242_s15;
+    reg signed [55:0] v243_s1;
+    reg signed [55:0] v250_s1;
+    reg signed [55:0] v250_s2;
+    reg signed [55:0] v250_s3;
+    reg signed [55:0] v250_s4;
+    reg signed [55:0] v250_s5;
+    reg signed [55:0] v250_s6;
+    reg signed [55:0] v250_s7;
+    reg signed [55:0] v250_s8;
+    reg signed [55:0] v250_s9;
+    reg signed [55:0] v251_s1;
+    reg signed [55:0] v251_s2;
+    reg signed [55:0] v251_s3;
+    reg signed [55:0] v251_s4;
+    reg signed [55:0] v251_s5;
+    reg signed [55:0] v251_s6;
+    reg signed [55:0] v251_s7;
+    reg signed [55:0] v251_s8;
+    reg signed [55:0] v251_s9;
+    reg signed [0:0] v252_s1;
+    reg signed [55:0] v253_s1;
+    reg signed [55:0] v253_s2;
+    reg signed [55:0] v253_s3;
+    reg signed [55:0] v253_s4;
+    reg signed [55:0] v253_s5;
+    reg signed [55:0] v253_s6;
+    reg signed [55:0] v253_s7;
+    reg signed [55:0] v253_s8;
+    reg signed [55:0] v253_s9;
+    reg signed [55:0] v253_s10;
+    reg signed [55:0] v253_s11;
+    reg signed [55:0] v253_s12;
+    reg signed [55:0] v253_s13;
+    reg signed [55:0] v253_s14;
+    reg signed [0:0] v255_s1;
     reg signed [55:0] v277_s1;
-    reg signed [55:0] v277_s2;
-    reg signed [55:0] v277_s3;
-    reg signed [55:0] v277_s4;
-    reg signed [55:0] v277_s5;
-    reg signed [55:0] v277_s6;
-    reg signed [55:0] v277_s7;
-    reg signed [55:0] v277_s8;
-    reg signed [55:0] v277_s9;
-    reg signed [0:0] v278_s1;
-    reg signed [0:0] v278_s2;
     reg signed [55:0] v280_s1;
     reg signed [55:0] v280_s2;
-    reg signed [55:0] v280_s3;
-    reg signed [55:0] v280_s4;
-    reg signed [55:0] v280_s5;
-    reg signed [55:0] v280_s6;
-    reg signed [55:0] v280_s7;
-    reg signed [55:0] v280_s8;
-    reg signed [55:0] v280_s9;
-    reg signed [55:0] v280_s10;
-    reg signed [55:0] v280_s11;
-    reg signed [55:0] v280_s12;
-    reg signed [55:0] v280_s13;
-    reg signed [55:0] v280_s14;
-    reg signed [0:0] v282_s1;
-    reg signed [55:0] v304_s1;
-    reg signed [55:0] v307_s1;
-    reg signed [55:0] v307_s2;
-    reg signed [55:0] v310_s1;
-    reg signed [55:0] v318_s1;
-    reg signed [55:0] v324_s1;
-    reg signed [55:0] v327_s1;
-    reg signed [55:0] v327_s2;
-    reg signed [55:0] v327_s3;
-    reg signed [55:0] v327_s4;
-    reg signed [55:0] v327_s5;
-    reg signed [55:0] v327_s6;
-    reg signed [55:0] v327_s7;
-    reg signed [55:0] v327_s8;
-    reg signed [55:0] v328_s1;
-    reg signed [55:0] v328_s2;
-    reg signed [55:0] v328_s3;
-    reg signed [55:0] v328_s4;
-    reg signed [55:0] v328_s5;
-    reg signed [55:0] v328_s6;
-    reg signed [55:0] v328_s7;
-    reg signed [55:0] v328_s8;
-    reg signed [55:0] v328_s9;
-    reg signed [55:0] v329_s1;
-    reg signed [55:0] v329_s2;
-    reg signed [55:0] v329_s3;
-    reg signed [55:0] v329_s4;
-    reg signed [55:0] v329_s5;
-    reg signed [55:0] v329_s6;
-    reg signed [55:0] v329_s7;
-    reg signed [55:0] v329_s8;
-    reg signed [55:0] v329_s9;
-    reg signed [55:0] v330_s1;
-    reg signed [55:0] v330_s2;
-    reg signed [55:0] v330_s3;
-    reg signed [55:0] v330_s4;
-    reg signed [55:0] v330_s5;
-    reg signed [55:0] v330_s6;
-    reg signed [55:0] v330_s7;
-    reg signed [55:0] v330_s8;
-    reg signed [55:0] v330_s9;
-    reg signed [55:0] v330_s10;
-    reg signed [55:0] v330_s11;
-    reg signed [55:0] v330_s12;
-    reg signed [55:0] v330_s13;
-    reg signed [55:0] v330_s14;
+    reg signed [55:0] v285_s1;
+    reg signed [55:0] v289_s1;
+    reg signed [55:0] v292_s1;
+    reg signed [55:0] v292_s2;
+    reg signed [55:0] v292_s3;
+    reg signed [55:0] v292_s4;
+    reg signed [55:0] v292_s5;
+    reg signed [55:0] v292_s6;
+    reg signed [55:0] v292_s7;
+    reg signed [55:0] v292_s8;
+    reg signed [55:0] v293_s1;
+    reg signed [55:0] v293_s2;
+    reg signed [55:0] v293_s3;
+    reg signed [55:0] v293_s4;
+    reg signed [55:0] v293_s5;
+    reg signed [55:0] v293_s6;
+    reg signed [55:0] v293_s7;
+    reg signed [55:0] v293_s8;
+    reg signed [55:0] v293_s9;
+    reg signed [55:0] v294_s1;
+    reg signed [55:0] v294_s2;
+    reg signed [55:0] v294_s3;
+    reg signed [55:0] v294_s4;
+    reg signed [55:0] v294_s5;
+    reg signed [55:0] v294_s6;
+    reg signed [55:0] v294_s7;
+    reg signed [55:0] v294_s8;
+    reg signed [55:0] v294_s9;
+    reg signed [55:0] v295_s1;
+    reg signed [55:0] v295_s2;
+    reg signed [55:0] v295_s3;
+    reg signed [55:0] v295_s4;
+    reg signed [55:0] v295_s5;
+    reg signed [55:0] v295_s6;
+    reg signed [55:0] v295_s7;
+    reg signed [55:0] v295_s8;
+    reg signed [55:0] v295_s9;
+    reg signed [55:0] v295_s10;
+    reg signed [55:0] v295_s11;
+    reg signed [55:0] v295_s12;
+    reg signed [55:0] v295_s13;
+    reg signed [55:0] v295_s14;
+    reg signed [55:0] v298_s1;
+    reg signed [55:0] v302_s1;
+    reg signed [55:0] v303_s1;
+    reg signed [55:0] v303_s2;
+    reg signed [55:0] v308_s1;
+    reg signed [55:0] v311_s1;
+    reg signed [55:0] v314_s1;
+    reg signed [55:0] v322_s1;
+    reg signed [55:0] v326_s1;
+    reg signed [55:0] v332_s1;
     reg signed [55:0] v333_s1;
-    reg signed [55:0] v337_s1;
-    reg signed [55:0] v338_s1;
-    reg signed [55:0] v338_s2;
+    reg signed [55:0] v335_s1;
+    reg signed [55:0] v336_s1;
+    reg signed [0:0] v337_s1;
+    reg signed [0:0] v337_s2;
+    reg signed [55:0] v339_s1;
+    reg signed [55:0] v339_s2;
+    reg signed [55:0] v339_s3;
+    reg signed [55:0] v339_s4;
+    reg signed [55:0] v339_s5;
+    reg signed [55:0] v339_s6;
+    reg signed [55:0] v339_s7;
+    reg signed [55:0] v339_s8;
+    reg signed [55:0] v339_s9;
+    reg signed [0:0] v340_s1;
+    reg signed [0:0] v340_s2;
     reg signed [55:0] v343_s1;
+    reg signed [55:0] v343_s2;
+    reg signed [55:0] v343_s3;
+    reg signed [55:0] v343_s4;
+    reg signed [55:0] v343_s5;
+    reg signed [55:0] v343_s6;
+    reg signed [55:0] v343_s7;
+    reg signed [55:0] v343_s8;
+    reg signed [55:0] v343_s9;
+    reg signed [55:0] v344_s1;
+    reg signed [55:0] v344_s2;
+    reg signed [55:0] v344_s3;
+    reg signed [55:0] v344_s4;
+    reg signed [55:0] v344_s5;
+    reg signed [55:0] v344_s6;
+    reg signed [55:0] v344_s7;
+    reg signed [55:0] v345_s1;
+    reg signed [55:0] v345_s2;
     reg signed [55:0] v346_s1;
-    reg signed [55:0] v349_s1;
-    reg signed [55:0] v357_s1;
-    reg signed [55:0] v361_s1;
-    reg signed [55:0] v367_s1;
-    reg signed [55:0] v368_s1;
-    reg signed [55:0] v370_s1;
-    reg signed [55:0] v371_s1;
-    reg signed [0:0] v372_s1;
-    reg signed [0:0] v372_s2;
-    reg signed [55:0] v374_s1;
-    reg signed [55:0] v374_s2;
-    reg signed [55:0] v374_s3;
-    reg signed [55:0] v374_s4;
-    reg signed [55:0] v374_s5;
-    reg signed [55:0] v374_s6;
-    reg signed [55:0] v374_s7;
-    reg signed [55:0] v374_s8;
-    reg signed [55:0] v374_s9;
-    reg signed [0:0] v375_s1;
-    reg signed [0:0] v375_s2;
-    reg signed [55:0] v378_s1;
-    reg signed [55:0] v378_s2;
-    reg signed [55:0] v378_s3;
-    reg signed [55:0] v378_s4;
-    reg signed [55:0] v378_s5;
-    reg signed [55:0] v378_s6;
-    reg signed [55:0] v378_s7;
-    reg signed [55:0] v378_s8;
-    reg signed [55:0] v378_s9;
-    reg signed [55:0] v379_s1;
-    reg signed [55:0] v379_s2;
-    reg signed [55:0] v379_s3;
-    reg signed [55:0] v379_s4;
-    reg signed [55:0] v379_s5;
-    reg signed [55:0] v379_s6;
-    reg signed [55:0] v379_s7;
-    reg signed [55:0] v380_s1;
-    reg signed [55:0] v380_s2;
-    reg signed [55:0] v381_s1;
-    reg signed [55:0] v381_s2;
-    reg signed [55:0] v381_s3;
-    reg signed [55:0] v381_s4;
-    reg signed [55:0] v381_s5;
-    reg signed [55:0] v381_s6;
-    reg signed [55:0] v381_s7;
-    reg signed [55:0] v391_s1;
+    reg signed [55:0] v346_s2;
+    reg signed [55:0] v346_s3;
+    reg signed [55:0] v346_s4;
+    reg signed [55:0] v346_s5;
+    reg signed [55:0] v346_s6;
+    reg signed [55:0] v346_s7;
+    reg signed [55:0] v356_s1;
+    reg signed [55:0] v358_s1;
+    reg signed [0:0] v362_s1;
+    reg signed [55:0] v385_s1;
+    reg signed [55:0] v385_s2;
+    reg signed [55:0] v385_s3;
+    reg signed [55:0] v385_s4;
+    reg signed [55:0] v385_s5;
+    reg signed [55:0] v385_s6;
+    reg signed [55:0] v385_s7;
+    reg signed [55:0] v385_s8;
+    reg signed [55:0] v386_s1;
+    reg signed [55:0] v386_s2;
+    reg signed [55:0] v386_s3;
+    reg signed [55:0] v386_s4;
+    reg signed [55:0] v386_s5;
+    reg signed [55:0] v386_s6;
+    reg signed [55:0] v386_s7;
+    reg signed [55:0] v386_s8;
+    reg signed [55:0] v387_s1;
+    reg signed [55:0] v387_s2;
+    reg signed [55:0] v387_s3;
+    reg signed [55:0] v387_s4;
+    reg signed [55:0] v387_s5;
+    reg signed [55:0] v387_s6;
+    reg signed [55:0] v387_s7;
+    reg signed [55:0] v387_s8;
+    reg signed [55:0] v390_s1;
+    reg signed [55:0] v390_s2;
+    reg signed [55:0] v390_s3;
+    reg signed [55:0] v390_s4;
+    reg signed [55:0] v390_s5;
+    reg signed [55:0] v390_s6;
     reg signed [55:0] v393_s1;
-    reg signed [0:0] v397_s1;
-    reg signed [55:0] v420_s1;
-    reg signed [55:0] v420_s2;
-    reg signed [55:0] v420_s3;
-    reg signed [55:0] v420_s4;
-    reg signed [55:0] v420_s5;
-    reg signed [55:0] v420_s6;
-    reg signed [55:0] v420_s7;
-    reg signed [55:0] v420_s8;
-    reg signed [55:0] v421_s1;
-    reg signed [55:0] v421_s2;
-    reg signed [55:0] v421_s3;
-    reg signed [55:0] v421_s4;
-    reg signed [55:0] v421_s5;
-    reg signed [55:0] v421_s6;
-    reg signed [55:0] v421_s7;
-    reg signed [55:0] v421_s8;
-    reg signed [55:0] v422_s1;
-    reg signed [55:0] v422_s2;
-    reg signed [55:0] v422_s3;
-    reg signed [55:0] v422_s4;
-    reg signed [55:0] v422_s5;
-    reg signed [55:0] v422_s6;
-    reg signed [55:0] v422_s7;
-    reg signed [55:0] v422_s8;
-    reg signed [55:0] v425_s1;
-    reg signed [55:0] v425_s2;
-    reg signed [55:0] v425_s3;
-    reg signed [55:0] v425_s4;
-    reg signed [55:0] v425_s5;
-    reg signed [55:0] v425_s6;
-    reg signed [55:0] v428_s1;
-    reg signed [55:0] v428_s2;
-    reg signed [55:0] v428_s3;
-    reg signed [55:0] v428_s4;
-    reg signed [55:0] v428_s5;
-    reg signed [55:0] v428_s6;
-    reg signed [55:0] v466_s1;
-    reg signed [55:0] v466_s2;
-    reg signed [55:0] v466_s3;
-    reg signed [55:0] v466_s4;
-    reg signed [55:0] v466_s5;
-    reg signed [55:0] v466_s6;
-    reg signed [55:0] v466_s7;
-    reg signed [55:0] v466_s8;
-    reg signed [55:0] v467_s1;
-    reg signed [55:0] v467_s2;
-    reg signed [55:0] v467_s3;
-    reg signed [55:0] v467_s4;
-    reg signed [55:0] v467_s5;
-    reg signed [55:0] v467_s6;
-    reg signed [55:0] v467_s7;
-    reg signed [55:0] v467_s8;
-    reg signed [55:0] v473_s1;
-    reg signed [55:0] v474_s1;
-    reg signed [55:0] v476_s1;
-    reg signed [55:0] v485_s1;
-    reg signed [55:0] v487_s1;
-    reg signed [0:0] v491_s1;
-    reg signed [55:0] v514_s1;
-    reg signed [55:0] v514_s2;
-    reg signed [55:0] v514_s3;
-    reg signed [55:0] v514_s4;
-    reg signed [55:0] v514_s5;
+    reg signed [55:0] v393_s2;
+    reg signed [55:0] v393_s3;
+    reg signed [55:0] v393_s4;
+    reg signed [55:0] v393_s5;
+    reg signed [55:0] v393_s6;
+    reg signed [55:0] v431_s1;
+    reg signed [55:0] v431_s2;
+    reg signed [55:0] v431_s3;
+    reg signed [55:0] v431_s4;
+    reg signed [55:0] v431_s5;
+    reg signed [55:0] v431_s6;
+    reg signed [55:0] v431_s7;
+    reg signed [55:0] v431_s8;
+    reg signed [55:0] v432_s1;
+    reg signed [55:0] v432_s2;
+    reg signed [55:0] v432_s3;
+    reg signed [55:0] v432_s4;
+    reg signed [55:0] v432_s5;
+    reg signed [55:0] v432_s6;
+    reg signed [55:0] v432_s7;
+    reg signed [55:0] v432_s8;
+    reg signed [55:0] v438_s1;
+    reg signed [55:0] v439_s1;
+    reg signed [55:0] v441_s1;
+    reg signed [55:0] v450_s1;
+    reg signed [55:0] v452_s1;
+    reg signed [0:0] v456_s1;
+    reg signed [55:0] v479_s1;
+    reg signed [55:0] v479_s2;
+    reg signed [55:0] v479_s3;
+    reg signed [55:0] v479_s4;
+    reg signed [55:0] v479_s5;
+    reg signed [55:0] v480_s1;
+    reg signed [55:0] v480_s2;
+    reg signed [55:0] v480_s3;
+    reg signed [55:0] v480_s4;
+    reg signed [55:0] v480_s5;
+    reg signed [55:0] v481_s1;
+    reg signed [55:0] v481_s2;
+    reg signed [55:0] v481_s3;
+    reg signed [55:0] v481_s4;
+    reg signed [55:0] v481_s5;
+    reg signed [55:0] v489_s1;
     reg signed [55:0] v515_s1;
-    reg signed [55:0] v515_s2;
-    reg signed [55:0] v515_s3;
-    reg signed [55:0] v515_s4;
-    reg signed [55:0] v515_s5;
-    reg signed [55:0] v516_s1;
-    reg signed [55:0] v516_s2;
-    reg signed [55:0] v516_s3;
-    reg signed [55:0] v516_s4;
-    reg signed [55:0] v516_s5;
-    reg signed [55:0] v524_s1;
-    reg signed [55:0] v550_s1;
-    reg signed [55:0] v553_s1;
-    reg signed [55:0] v553_s2;
-    reg signed [55:0] v553_s3;
-    reg signed [55:0] v553_s4;
-    reg signed [55:0] v553_s5;
-    reg signed [55:0] v553_s6;
-    reg signed [55:0] v554_s1;
-    reg signed [55:0] v554_s2;
-    reg signed [55:0] v554_s3;
-    reg signed [55:0] v554_s4;
-    reg signed [55:0] v554_s5;
-    reg signed [55:0] v556_s1;
-    reg signed [55:0] v558_s1;
-    reg signed [55:0] v558_s2;
-    reg signed [55:0] v560_s1;
-    reg signed [55:0] v560_s2;
-    reg signed [55:0] v560_s3;
-    reg signed [55:0] v560_s4;
-    reg signed [55:0] v560_s5;
-    reg signed [55:0] v560_s6;
-    reg signed [55:0] v560_s7;
-    reg signed [55:0] v560_s8;
-    reg signed [55:0] v563_s1;
-    reg signed [55:0] v563_s2;
-    reg signed [55:0] v563_s3;
-    reg signed [55:0] v563_s4;
-    reg signed [55:0] v563_s5;
-    reg signed [55:0] v563_s6;
-    reg signed [55:0] v563_s7;
-    reg signed [55:0] v563_s8;
-    reg signed [55:0] v564_s1;
-    reg signed [55:0] v564_s2;
-    reg signed [55:0] v564_s3;
-    reg signed [55:0] v564_s4;
-    reg signed [55:0] v564_s5;
-    reg signed [55:0] v564_s6;
-    reg signed [55:0] v564_s7;
-    reg signed [55:0] v564_s8;
-    reg signed [55:0] v565_s1;
-    reg signed [55:0] v565_s2;
-    reg signed [55:0] v573_s1;
+    reg signed [55:0] v518_s1;
+    reg signed [55:0] v518_s2;
+    reg signed [55:0] v518_s3;
+    reg signed [55:0] v518_s4;
+    reg signed [55:0] v518_s5;
+    reg signed [55:0] v518_s6;
+    reg signed [55:0] v519_s1;
+    reg signed [55:0] v519_s2;
+    reg signed [55:0] v519_s3;
+    reg signed [55:0] v519_s4;
+    reg signed [55:0] v519_s5;
+    reg signed [55:0] v521_s1;
+    reg signed [55:0] v523_s1;
+    reg signed [55:0] v523_s2;
+    reg signed [55:0] v525_s1;
+    reg signed [55:0] v525_s2;
+    reg signed [55:0] v525_s3;
+    reg signed [55:0] v525_s4;
+    reg signed [55:0] v525_s5;
+    reg signed [55:0] v525_s6;
+    reg signed [55:0] v525_s7;
+    reg signed [55:0] v525_s8;
+    reg signed [55:0] v528_s1;
+    reg signed [55:0] v528_s2;
+    reg signed [55:0] v528_s3;
+    reg signed [55:0] v528_s4;
+    reg signed [55:0] v528_s5;
+    reg signed [55:0] v528_s6;
+    reg signed [55:0] v528_s7;
+    reg signed [55:0] v528_s8;
+    reg signed [55:0] v529_s1;
+    reg signed [55:0] v529_s2;
+    reg signed [55:0] v529_s3;
+    reg signed [55:0] v529_s4;
+    reg signed [55:0] v529_s5;
+    reg signed [55:0] v529_s6;
+    reg signed [55:0] v529_s7;
+    reg signed [55:0] v529_s8;
+    reg signed [55:0] v530_s1;
+    reg signed [55:0] v530_s2;
+    reg signed [55:0] v538_s1;
+    reg signed [55:0] v540_s1;
+    reg signed [0:0] v544_s1;
+    reg signed [55:0] v567_s1;
+    reg signed [55:0] v567_s2;
+    reg signed [55:0] v567_s3;
+    reg signed [55:0] v567_s4;
+    reg signed [55:0] v567_s5;
+    reg signed [55:0] v568_s1;
+    reg signed [55:0] v568_s2;
+    reg signed [55:0] v568_s3;
+    reg signed [55:0] v568_s4;
+    reg signed [55:0] v568_s5;
+    reg signed [55:0] v569_s1;
+    reg signed [55:0] v569_s2;
+    reg signed [55:0] v569_s3;
+    reg signed [55:0] v569_s4;
+    reg signed [55:0] v569_s5;
+    reg signed [55:0] v570_s1;
+    reg signed [55:0] v572_s1;
+    reg signed [55:0] v572_s2;
+    reg signed [55:0] v572_s3;
     reg signed [55:0] v575_s1;
-    reg signed [0:0] v579_s1;
-    reg signed [55:0] v602_s1;
-    reg signed [55:0] v602_s2;
-    reg signed [55:0] v602_s3;
-    reg signed [55:0] v602_s4;
-    reg signed [55:0] v602_s5;
-    reg signed [55:0] v603_s1;
-    reg signed [55:0] v603_s2;
-    reg signed [55:0] v603_s3;
-    reg signed [55:0] v603_s4;
-    reg signed [55:0] v603_s5;
-    reg signed [55:0] v604_s1;
-    reg signed [55:0] v604_s2;
-    reg signed [55:0] v604_s3;
-    reg signed [55:0] v604_s4;
-    reg signed [55:0] v604_s5;
-    reg signed [55:0] v605_s1;
-    reg signed [55:0] v607_s1;
-    reg signed [55:0] v607_s2;
-    reg signed [55:0] v607_s3;
-    reg signed [55:0] v610_s1;
-    reg signed [55:0] v610_s2;
-    reg signed [55:0] v610_s3;
-    reg signed [55:0] v613_s1;
-    reg signed [55:0] v613_s2;
-    reg signed [55:0] v613_s3;
-    reg signed [55:0] v614_s1;
-    reg signed [55:0] v616_s1;
-    reg signed [55:0] v616_s2;
-    reg signed [55:0] v616_s3;
-    reg signed [55:0] v617_s1;
-    reg signed [55:0] v617_s2;
+    reg signed [55:0] v575_s2;
+    reg signed [55:0] v575_s3;
+    reg signed [55:0] v578_s1;
+    reg signed [55:0] v578_s2;
+    reg signed [55:0] v578_s3;
+    reg signed [55:0] v579_s1;
+    reg signed [55:0] v581_s1;
+    reg signed [55:0] v581_s2;
+    reg signed [55:0] v581_s3;
+    reg signed [55:0] v582_s1;
+    reg signed [55:0] v582_s2;
+    reg signed [55:0] v584_s1;
+    reg signed [55:0] v586_s1;
+    reg signed [55:0] v586_s2;
+    reg signed [55:0] v586_s3;
+    reg signed [55:0] v586_s4;
+    reg signed [55:0] v586_s5;
+    reg signed [55:0] v586_s6;
+    reg signed [55:0] v586_s7;
+    reg signed [55:0] v586_s8;
     reg signed [55:0] v619_s1;
+    reg signed [55:0] v620_s1;
     reg signed [55:0] v621_s1;
-    reg signed [55:0] v621_s2;
-    reg signed [55:0] v621_s3;
-    reg signed [55:0] v621_s4;
-    reg signed [55:0] v621_s5;
-    reg signed [55:0] v621_s6;
-    reg signed [55:0] v621_s7;
-    reg signed [55:0] v621_s8;
+    reg signed [55:0] v622_s1;
+    reg signed [55:0] v623_s1;
+    reg signed [111:0] v630_s1;
+    reg signed [55:0] v636_s1;
+    reg signed [55:0] v651_s1;
     reg signed [55:0] v654_s1;
-    reg signed [55:0] v655_s1;
     reg signed [55:0] v656_s1;
-    reg signed [55:0] v657_s1;
-    reg signed [55:0] v658_s1;
-    reg signed [111:0] v665_s1;
-    reg signed [55:0] v696_s1;
+    reg signed [55:0] v661_s1;
+    reg signed [55:0] v663_s1;
+    reg signed [55:0] v663_s2;
+    reg signed [55:0] v663_s3;
+    reg signed [55:0] v664_s1;
+    reg signed [55:0] v664_s2;
+    reg signed [55:0] v664_s3;
+    reg signed [55:0] v665_s1;
+    reg signed [55:0] v669_s1;
+    reg signed [55:0] v679_s1;
+    reg signed [55:0] v680_s1;
+    reg signed [55:0] v686_s1;
+    reg signed [55:0] v688_s1;
+    reg signed [55:0] v689_s1;
+    reg signed [55:0] v694_s1;
+    reg signed [55:0] v695_s1;
+    reg signed [55:0] v697_s1;
     reg signed [55:0] v698_s1;
-    reg signed [55:0] v698_s2;
-    reg signed [55:0] v698_s3;
     reg signed [55:0] v699_s1;
-    reg signed [55:0] v699_s2;
-    reg signed [55:0] v699_s3;
     reg signed [55:0] v700_s1;
-    reg signed [55:0] v714_s1;
-    reg signed [55:0] v715_s1;
-    reg signed [55:0] v721_s1;
+    reg signed [55:0] v700_s2;
+    reg signed [55:0] v701_s1;
+    reg signed [55:0] v701_s2;
+    reg signed [55:0] v705_s1;
+    reg signed [55:0] v705_s2;
+    reg signed [55:0] v705_s3;
+    reg signed [55:0] v705_s4;
+    reg signed [55:0] v706_s1;
+    reg signed [55:0] v708_s1;
+    reg signed [55:0] v708_s2;
+    reg signed [55:0] v708_s3;
+    reg signed [55:0] v709_s1;
     reg signed [55:0] v723_s1;
-    reg signed [55:0] v724_s1;
-    reg signed [55:0] v729_s1;
-    reg signed [55:0] v730_s1;
-    reg signed [55:0] v732_s1;
-    reg signed [55:0] v733_s1;
-    reg signed [55:0] v734_s1;
-    reg signed [55:0] v735_s1;
-    reg signed [55:0] v735_s2;
-    reg signed [55:0] v736_s1;
-    reg signed [55:0] v736_s2;
-    reg signed [55:0] v740_s1;
-    reg signed [55:0] v740_s2;
-    reg signed [55:0] v740_s3;
-    reg signed [55:0] v740_s4;
-    reg signed [55:0] v741_s1;
+    reg signed [55:0] v727_s1;
+    reg signed [55:0] v727_s2;
+    reg signed [55:0] v727_s3;
+    reg signed [55:0] v727_s4;
+    reg signed [55:0] v728_s1;
+    reg signed [55:0] v728_s2;
+    reg signed [55:0] v728_s3;
+    reg signed [55:0] v731_s1;
     reg signed [55:0] v743_s1;
-    reg signed [55:0] v743_s2;
-    reg signed [55:0] v743_s3;
-    reg signed [55:0] v744_s1;
-    reg signed [55:0] v762_s1;
-    reg signed [55:0] v762_s2;
-    reg signed [55:0] v762_s3;
-    reg signed [55:0] v762_s4;
-    reg signed [55:0] v763_s1;
-    reg signed [55:0] v763_s2;
-    reg signed [55:0] v763_s3;
-    reg signed [55:0] v766_s1;
-    reg signed [55:0] v778_s1;
+    reg signed [55:0] v751_s1;
+    reg signed [55:0] v758_s1;
+    reg signed [55:0] v759_s1;
+    reg signed [55:0] v760_s1;
+    reg signed [55:0] v776_s1;
+    reg signed [55:0] v776_s2;
+    reg signed [55:0] v776_s3;
+    reg signed [55:0] v776_s4;
+    reg signed [55:0] v776_s5;
+    reg signed [55:0] v776_s6;
+    reg signed [55:0] v777_s1;
+    reg signed [55:0] v777_s2;
+    reg signed [55:0] v777_s3;
+    reg signed [55:0] v777_s4;
+    reg signed [55:0] v777_s5;
+    reg signed [55:0] v777_s6;
+    reg signed [55:0] v785_s1;
     reg signed [55:0] v786_s1;
-    reg signed [55:0] v793_s1;
-    reg signed [55:0] v794_s1;
-    reg signed [55:0] v795_s1;
-    reg signed [55:0] v811_s1;
-    reg signed [55:0] v811_s2;
-    reg signed [55:0] v811_s3;
-    reg signed [55:0] v811_s4;
-    reg signed [55:0] v811_s5;
-    reg signed [55:0] v811_s6;
-    reg signed [55:0] v812_s1;
-    reg signed [55:0] v812_s2;
-    reg signed [55:0] v812_s3;
-    reg signed [55:0] v812_s4;
-    reg signed [55:0] v812_s5;
-    reg signed [55:0] v812_s6;
-    reg signed [55:0] v820_s1;
-    reg signed [55:0] v821_s1;
-    reg signed [55:0] v835_s1;
-    reg signed [55:0] v835_s2;
-    reg signed [55:0] v835_s3;
-    reg signed [55:0] v835_s4;
-    reg signed [55:0] v837_s1;
-    reg signed [55:0] v837_s2;
-    reg signed [55:0] v837_s3;
-    reg signed [55:0] v837_s4;
-    reg signed [0:0] v841_s1;
-    reg signed [0:0] v841_s2;
-    reg signed [0:0] v841_s3;
-    reg signed [55:0] v845_s1;
-    reg signed [55:0] v845_s2;
-    reg signed [55:0] v864_s1;
-    reg signed [55:0] v864_s2;
-    reg signed [55:0] v864_s3;
-    reg signed [55:0] v864_s4;
-    reg signed [55:0] v864_s5;
-    reg signed [55:0] v864_s6;
-    reg signed [55:0] v865_s1;
-    reg signed [55:0] v865_s2;
-    reg signed [55:0] v865_s3;
-    reg signed [55:0] v865_s4;
-    reg signed [55:0] v865_s5;
-    reg signed [55:0] v865_s6;
-    reg signed [55:0] v866_s1;
-    reg signed [55:0] v866_s2;
-    reg signed [55:0] v866_s3;
-    reg signed [55:0] v866_s4;
-    reg signed [55:0] v866_s5;
-    reg signed [55:0] v866_s6;
-    reg signed [55:0] v866_s7;
-    reg signed [55:0] v866_s8;
-    reg signed [55:0] v887_s1;
-    reg signed [55:0] v889_s1;
-    reg signed [55:0] v893_s1;
-    reg signed [55:0] v893_s2;
-    reg signed [55:0] v893_s3;
-    reg signed [55:0] v893_s4;
-    reg signed [55:0] v893_s5;
-    always @(posedge clk) if (in_term && ph == 16) v274 <= v269_s1 - $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 0) v278 <= (kcur == 0);
-    always @(posedge clk) if (in_term && ph == 0) v279 <= kcur[0];
-    always @(posedge clk) if (in_term && ph == 8) v281 <= 56'sd268435456 + $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 9) v282 <= (v281 < 0);
-    always @(posedge clk) if (in_term && ph == 9) v283 <= ((v281 < 0) ? -v281 : v281);
-    always @(posedge clk) if (in_term && ph == 10) v284 <= (lead_pos_w(v283) - 16'sd28);
-    always @(posedge clk) if (in_term && ph == 11) v285 <= -v284;
-    always @(posedge clk) if (in_term && ph == 12) v286 <= sc286_out;
-    always @(posedge clk) if (in_term && ph == 13) v287 <= ((v286 >>> 45) & 56'sd255);
-    always @(posedge clk) if (in_term && ph == 14) v288 <= rom_recip_seed_53(v287);
-    always @(posedge clk) if (in_term && ph == 19) v291 <= 56'sd9007199254740992 - $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 24) v293 <= v288 + $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 29) v295 <= 56'sd9007199254740992 - $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 2) v297 <= v293 + $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 7) v299 <= 56'sd9007199254740992 - $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 12) v301 <= v297 + $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 13) v302 <= -v301;
-    always @(posedge clk) if (in_term && ph == 14) v303 <= (v282_s1 ? v302 : v301);
-    always @(posedge clk) if (in_term && ph == 11) v304 <= -v284;
-    always @(posedge clk) if (in_term && ph == 0) v306 <= rom_inv_k_53(kcur);
-    always @(posedge clk) if (in_term && ph == 0) v309 <= -hs_235;
-    always @(posedge clk) if (in_term && ph == 1) v310 <= (v279 ? v309 : hs_235);
-    always @(posedge clk) if (in_term && ph == 17) v311 <= v310_s1 - cr0_o0;
-    always @(posedge clk) if (in_term && ph == 21) v312 <= v311 + $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 17) v314 <= cr0_o0 - hs_210;
-    always @(posedge clk) if (in_term && ph == 21) v315 <= v314 - $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 21) v317 <= (v278_s1 ? hs_154 : $signed(mu1_out[55:0]));
-    always @(posedge clk) if (in_term && ph == 0) v318 <= hs_152 - hs_122;
-    always @(posedge clk) if (in_term && ph == 21) v319 <= -$signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 22) v320 <= (v278_s1 ? v318_s1 : v319);
-    always @(posedge clk) if (in_term && ph == 26) v321 <= $signed(mu0_out[55:0]) - v317;
-    always @(posedge clk) if (in_term && ph == 26) v322 <= v320 - $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 27) v323 <= (hs_11 ? v321 : v322);
-    always @(posedge clk) if (in_term && ph == 0) v326 <= sc326_out;
-    always @(posedge clk) if (in_term && ph == 1) v327 <= (v278_s2 ? v326 : v324_s1);
-    always @(posedge clk) if (in_term && ph == 12) v332 <= hs_238 - $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 13) v334 <= v332 + v333_s1;
-    always @(posedge clk) if (in_term && ph == 12) v338 <= ($signed(mu4_out[55:0]) <<< 1) + v337_s1;
-    always @(posedge clk) if (in_term && ph == 14) v343 <= ((v334 < 0) ? -v334 : v334);
-    always @(posedge clk) if (in_term && ph == 18) v344 <= $signed(mu0_out[55:0]) + v343_s1;
-    always @(posedge clk) if (in_term && ph == 19) v346 <= sc346_out;
-    always @(posedge clk) if (in_term && ph == 20) v347 <= ((lead_pos_w(v346) - 16'sd28) & ~16'sd1);
-    always @(posedge clk) if (in_term && ph == 21) v348 <= -v347;
-    always @(posedge clk) if (in_term && ph == 22) v349 <= sc349_out;
-    always @(posedge clk) if (in_term && ph == 23) v350 <= ((v349 >>> 47) & 56'sd255);
-    always @(posedge clk) if (in_term && ph == 24) v351 <= rom_rsqrt_seed_53(v350);
-    always @(posedge clk) if (in_term && ph == 1) v356 <= 56'sd27021597764222976 - $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 14) v360 <= 56'sd27021597764222976 - $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 27) v364 <= 56'sd27021597764222976 - $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 21) v366 <= (v347 >>> 1);
-    always @(posedge clk) if (in_term && ph == 22) v367 <= -v366;
-    always @(posedge clk) if (in_term && ph == 23) v370 <= v367 - 56'sd1;
-    always @(posedge clk) if (in_term && ph == 14) v372 <= (v334 < 0);
-    always @(posedge clk) if (in_term && ph == 4) v373 <= (($signed(mu2_out[55:0]) < 0) ? -$signed(mu2_out[55:0]) : $signed(mu2_out[55:0]));
-    always @(posedge clk) if (in_term && ph == 5) v374 <= (v372_s2 ? v373 : v368_s1);
-    always @(posedge clk) if (in_term && ph == 13) v375 <= (v338 < 0);
-    always @(posedge clk) if (in_term && ph == 4) v376 <= -$signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 5) v377 <= (v375_s2 ? v376 : v368_s1);
-    always @(posedge clk) if (in_term && ph == 6) v378 <= (v372_s2 ? v377 : v371_s1);
-    always @(posedge clk) if (in_term && ph == 6) v379 <= p_kappa - v374;
-    always @(posedge clk) if (in_term && ph == 8) v380 <= -$signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 7) v381 <= v380_s2 - v378;
-    always @(posedge clk) if (in_term && ph == 6) v382 <= p_kappa + v374;
-    always @(posedge clk) if (in_term && ph == 7) v383 <= v378 - v330_s3;
-    always @(posedge clk) if (in_term && ph == 7) v384 <= ((v382 < 0) ? -v382 : v382);
-    always @(posedge clk) if (in_term && ph == 8) v385 <= ((v383 < 0) ? -v383 : v383);
-    always @(posedge clk) if (in_term && ph == 9) v386 <= ((v384 >= v385) ? v384 : v385);
-    always @(posedge clk) if (in_term && ph == 10) v387 <= (lead_pos_w(v386) - 16'sd28);
-    always @(posedge clk) if (in_term && ph == 11) v389 <= v387 + 56'sd1;
-    always @(posedge clk) if (in_term && ph == 12) v390 <= -v389;
-    always @(posedge clk) if (in_term && ph == 13) v391 <= sc391_out;
-    always @(posedge clk) if (in_term && ph == 12) v392 <= -v389;
-    always @(posedge clk) if (in_term && ph == 13) v393 <= sc393_out;
-    always @(posedge clk) if (in_term && ph == 18) v396 <= $signed(mu1_out[55:0]) + $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 19) v397 <= (v396 < 0);
-    always @(posedge clk) if (in_term && ph == 19) v398 <= ((v396 < 0) ? -v396 : v396);
-    always @(posedge clk) if (in_term && ph == 20) v399 <= (lead_pos_w(v398) - 16'sd53);
-    always @(posedge clk) if (in_term && ph == 21) v400 <= -v399;
-    always @(posedge clk) if (in_term && ph == 22) v401 <= sc401_out;
-    always @(posedge clk) if (in_term && ph == 23) v402 <= ((v401 >>> 45) & 56'sd255);
-    always @(posedge clk) if (in_term && ph == 24) v403 <= rom_recip_seed_53(v402);
-    always @(posedge clk) if (in_term && ph == 29) v406 <= 56'sd9007199254740992 - $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 2) v408 <= v403 + $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 7) v410 <= 56'sd9007199254740992 - $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 12) v412 <= v408 + $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 17) v414 <= 56'sd9007199254740992 - $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 22) v416 <= v412 + $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 23) v417 <= -v416;
-    always @(posedge clk) if (in_term && ph == 24) v418 <= (v397_s1 ? v417 : v416);
-    always @(posedge clk) if (in_term && ph == 21) v419 <= -v399;
-    always @(posedge clk) if (in_term && ph == 22) v422 <= v419 - v389;
-    always @(posedge clk) if (in_term && ph == 1) v425 <= $signed(mu1_out[55:0]) - $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 1) v428 <= $signed(mu3_out[55:0]) + $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 10) v430 <= -$signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 11) v432 <= -$signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 18) v437 <= v430 - $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 19) v439 <= sc439_out;
-    always @(posedge clk) if (in_term && ph == 24) v443 <= $signed(mu1_out[55:0]) + 56'sd1501199875790165;
-    always @(posedge clk) if (in_term && ph == 29) v446 <= $signed(mu5_out[55:0]) + 56'sd4503599627370496;
-    always @(posedge clk) if (in_term && ph == 2) v449 <= $signed(mu2_out[55:0]) + 56'sd9007199254740992;
-    always @(posedge clk) if (in_term && ph == 7) v452 <= $signed(mu2_out[55:0]) + 56'sd9007199254740992;
-    always @(posedge clk) if (in_term && ph == 14) v453 <= ($signed(mu1_out[55:0]) & 56'sd31);
-    always @(posedge clk) if (in_term && ph == 15) v454 <= rom_exp2_53(v453);
-    always @(posedge clk) if (in_term && ph == 14) v456 <= ($signed(mu1_out[55:0]) >>> 5);
-    always @(posedge clk) if (in_term && ph == 12) v457 <= sc457_out;
-    always @(posedge clk) if (in_term && ph == 19) v462 <= v432 - $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 6) v470 <= $signed(mu3_out[55:0]) - $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 6) v473 <= $signed(mu5_out[55:0]) + $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 7) v474 <= 56'sd268435456 - v470;
-    always @(posedge clk) if (in_term && ph == 7) v475 <= -v473;
-    always @(posedge clk) if (in_term && ph == 2) v476 <= 56'sd268435456 - v425;
-    always @(posedge clk) if (in_term && ph == 2) v477 <= -v428;
-    always @(posedge clk) if (in_term && ph == 3) v478 <= ((v476 < 0) ? -v476 : v476);
-    always @(posedge clk) if (in_term && ph == 3) v479 <= ((v477 < 0) ? -v477 : v477);
-    always @(posedge clk) if (in_term && ph == 4) v480 <= ((v478 >= v479) ? v478 : v479);
-    always @(posedge clk) if (in_term && ph == 5) v481 <= (lead_pos_w(v480) - 16'sd28);
-    always @(posedge clk) if (in_term && ph == 6) v483 <= v481 + 56'sd1;
-    always @(posedge clk) if (in_term && ph == 7) v484 <= -v483;
-    always @(posedge clk) if (in_term && ph == 8) v485 <= sc485_out;
-    always @(posedge clk) if (in_term && ph == 7) v486 <= -v483;
-    always @(posedge clk) if (in_term && ph == 8) v487 <= sc487_out;
-    always @(posedge clk) if (in_term && ph == 13) v490 <= $signed(mu0_out[55:0]) + $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 14) v491 <= (v490 < 0);
-    always @(posedge clk) if (in_term && ph == 14) v492 <= ((v490 < 0) ? -v490 : v490);
-    always @(posedge clk) if (in_term && ph == 15) v493 <= (lead_pos_w(v492) - 16'sd53);
-    always @(posedge clk) if (in_term && ph == 16) v494 <= -v493;
-    always @(posedge clk) if (in_term && ph == 17) v495 <= sc495_out;
-    always @(posedge clk) if (in_term && ph == 18) v496 <= ((v495 >>> 45) & 56'sd255);
-    always @(posedge clk) if (in_term && ph == 19) v497 <= rom_recip_seed_53(v496);
-    always @(posedge clk) if (in_term && ph == 24) v500 <= 56'sd9007199254740992 - $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 29) v502 <= v497 + $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 2) v504 <= 56'sd9007199254740992 - $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 7) v506 <= v502 + $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 12) v508 <= 56'sd9007199254740992 - $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 17) v510 <= v506 + $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 18) v511 <= -v510;
-    always @(posedge clk) if (in_term && ph == 19) v512 <= (v491_s1 ? v511 : v510);
-    always @(posedge clk) if (in_term && ph == 16) v513 <= -v493;
-    always @(posedge clk) if (in_term && ph == 17) v516 <= v513 - v483;
-    always @(posedge clk) if (in_term && ph == 28) v519 <= $signed(mu0_out[55:0]) - $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 28) v522 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 29) v527 <= (lead_pos_w(cv1_o0) - 16'sd28);
-    always @(posedge clk) if (in_term && ph == 30) v528 <= -v527;
-    always @(posedge clk) if (in_term && ph == 31) v529 <= sc529_out;
-    always @(posedge clk) if (in_term && ph == 0) v530 <= ((v529 >>> 47) & 56'sd63);
-    always @(posedge clk) if (in_term && ph == 1) v531 <= rom_log_invc_53(v530);
-    always @(posedge clk) if (in_term && ph == 6) v534 <= $signed(mu7_out[55:0]) - 56'sd9007199254740992;
-    always @(posedge clk) if (in_term && ph == 11) v538 <= $signed(mu1_out[55:0]) + 56'sd3002399751580331;
-    always @(posedge clk) if (in_term && ph == 16) v541 <= $signed(mu1_out[55:0]) + (-56'sd4503599627370496);
-    always @(posedge clk) if (in_term && ph == 21) v544 <= $signed(mu2_out[55:0]) + 56'sd9007199254740992;
-    always @(posedge clk) if (in_term && ph == 1) v546 <= rom_log_lnc_53(v530);
-    always @(posedge clk) if (in_term && ph == 26) v547 <= v546 + $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 27) v548 <= (((v547 >>> 24) + 1) >>> 1);
-    always @(posedge clk) if (in_term && ph == 28) v551 <= v550_s1 + v548;
-    always @(posedge clk) if (in_term && ph == 29) v552 <= v551 + (-56'sd133898257);
-    always @(posedge clk) if (in_term && ph == 30) v556 <= v553_s6 - (v552 <<< 1);
-    always @(posedge clk) if (in_term && ph == 29) v558 <= v554_s5 - (cv1_o1 <<< 1);
-    always @(posedge clk) if (in_term && ph == 2) v562 <= v560_s8 + $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 24) v565 <= 56'sd268435456 - $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 8) v566 <= ((v474 < 0) ? -v474 : v474);
-    always @(posedge clk) if (in_term && ph == 8) v567 <= ((v475 < 0) ? -v475 : v475);
-    always @(posedge clk) if (in_term && ph == 9) v568 <= ((v566 >= v567) ? v566 : v567);
-    always @(posedge clk) if (in_term && ph == 10) v569 <= (lead_pos_w(v568) - 16'sd28);
-    always @(posedge clk) if (in_term && ph == 11) v571 <= v569 + 56'sd1;
-    always @(posedge clk) if (in_term && ph == 12) v572 <= -v571;
-    always @(posedge clk) if (in_term && ph == 13) v573 <= sc573_out;
-    always @(posedge clk) if (in_term && ph == 12) v574 <= -v571;
-    always @(posedge clk) if (in_term && ph == 13) v575 <= sc575_out;
-    always @(posedge clk) if (in_term && ph == 18) v578 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 19) v579 <= (v578 < 0);
-    always @(posedge clk) if (in_term && ph == 19) v580 <= ((v578 < 0) ? -v578 : v578);
-    always @(posedge clk) if (in_term && ph == 20) v581 <= (lead_pos_w(v580) - 16'sd53);
-    always @(posedge clk) if (in_term && ph == 21) v582 <= -v581;
-    always @(posedge clk) if (in_term && ph == 22) v583 <= sc583_out;
-    always @(posedge clk) if (in_term && ph == 23) v584 <= ((v583 >>> 45) & 56'sd255);
-    always @(posedge clk) if (in_term && ph == 24) v585 <= rom_recip_seed_53(v584);
-    always @(posedge clk) if (in_term && ph == 29) v588 <= 56'sd9007199254740992 - $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 2) v590 <= v585 + $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 7) v592 <= 56'sd9007199254740992 - $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 13) v594 <= v590 + $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 18) v596 <= 56'sd9007199254740992 - $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 23) v598 <= v594 + $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 24) v599 <= -v598;
-    always @(posedge clk) if (in_term && ph == 25) v600 <= (v579_s1 ? v599 : v598);
-    always @(posedge clk) if (in_term && ph == 21) v601 <= -v581;
-    always @(posedge clk) if (in_term && ph == 22) v604 <= v601 - v571;
-    always @(posedge clk) if (in_term && ph == 3) v607 <= v605_s1 - $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 3) v610 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 8) v613 <= $signed(mu5_out[55:0]) - $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 9) v616 <= v614_s1 + $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 3) v618 <= $signed(mu0_out[55:0]) + v617_s2;
-    always @(posedge clk) if (in_term && ph == 3) v620 <= v562 + v619_s1;
-    always @(posedge clk) if (in_term && ph == 4) v622 <= v620 + v621_s8;
-    always @(posedge clk) if (in_term && ph == 13) v627 <= v618 - $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 14) v629 <= sc629_out;
-    always @(posedge clk) if (in_term && ph == 19) v633 <= $signed(mu3_out[55:0]) + 56'sd1501199875790165;
-    always @(posedge clk) if (in_term && ph == 24) v636 <= $signed(mu7_out[55:0]) + 56'sd4503599627370496;
-    always @(posedge clk) if (in_term && ph == 30) v639 <= $signed(mu2_out[55:0]) + 56'sd9007199254740992;
-    always @(posedge clk) if (in_term && ph == 3) v642 <= $signed(mu4_out[55:0]) + 56'sd9007199254740992;
-    always @(posedge clk) if (in_term && ph == 9) v643 <= ($signed(mu2_out[55:0]) & 56'sd31);
-    always @(posedge clk) if (in_term && ph == 10) v644 <= rom_exp2_53(v643);
-    always @(posedge clk) if (in_term && ph == 9) v646 <= ($signed(mu2_out[55:0]) >>> 5);
-    always @(posedge clk) if (in_term && ph == 9) v647 <= sc647_out;
-    always @(posedge clk) if (in_term && ph == 13) v652 <= v622 - $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 19) v660 <= v658_s1 + $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 19) v664 <= mu5_out + mu6_out;
-    always @(posedge clk) if (in_term && ph == 20) v667 <= v665_s1 - mu0_out;
-    always @(posedge clk) if (in_term && ph == 21) v668 <= adj_shift_fn(v664, v667, 16'sd56, 16'sd28);
-    always @(posedge clk) if (in_term && ph == 22) v669 <= sc669_out;
-    always @(posedge clk) if (in_term && ph == 22) v670 <= sc670_out;
-    always @(posedge clk) if (in_term && ph == 27) v675 <= $signed(mu3_out[55:0]) + $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 31) v679 <= $signed(mu0_out[55:0]) - $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 31) v682 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 31) v685 <= $signed(mu4_out[55:0]) - $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 31) v688 <= $signed(mu6_out[55:0]) + $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 4) v693 <= $signed(mu5_out[55:0]) + $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 10) v698 <= v696_s1 + $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 9) v699 <= $signed(mu6_out[55:0]) - $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 5) v702 <= v700_s1 - $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 5) v705 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 4) v706 <= $signed(mu4_out[55:0]) - $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 5) v711 <= $signed(mu6_out[55:0]) + $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 10) v713 <= -$signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 28) v718 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 5) v722 <= $signed(mu4_out[55:0]) + v721_s1;
-    always @(posedge clk) if (in_term && ph == 5) v724 <= $signed(mu5_out[55:0]) + v723_s1;
-    always @(posedge clk) if (in_term && ph == 0) v727 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 1) v730 <= v727 + v729_s1;
-    always @(posedge clk) if (in_term && ph == 11) v735 <= v713 - v734_s1;
-    always @(posedge clk) if (in_term && ph == 3) v740 <= $signed(mu5_out[55:0]) - $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 10) v743 <= v741_s1 + $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 10) v746 <= v744_s1 - $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 10) v749 <= $signed(mu6_out[55:0]) + $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 15) v752 <= $signed(mu1_out[55:0]) - $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 15) v755 <= $signed(mu3_out[55:0]) + $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 16) v756 <= v702 + v752;
-    always @(posedge clk) if (in_term && ph == 16) v757 <= v705 + v755;
-    always @(posedge clk) if (in_term && ph == 11) v762 <= $signed(mu6_out[55:0]) + $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 11) v763 <= $signed(mu5_out[55:0]) - $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 16) v768 <= v766_s1 + $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 15) v769 <= $signed(mu6_out[55:0]) - $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 21) v772 <= $signed(mu3_out[55:0]) - $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 21) v775 <= $signed(mu5_out[55:0]) + $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 22) v776 <= v769 + v772;
-    always @(posedge clk) if (in_term && ph == 22) v777 <= v775 - v768;
-    always @(posedge clk) if (in_term && ph == 22) v780 <= v778_s1 - $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 22) v783 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 23) v784 <= v706 + v780;
-    always @(posedge clk) if (in_term && ph == 23) v785 <= v783 - v693;
-    always @(posedge clk) if (in_term && ph == 30) v788 <= v786_s1 - $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 30) v791 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 30) v792 <= $signed(mu3_out[55:0]) - v786_s1;
-    always @(posedge clk) if (in_term && ph == 16) v797 <= v795_s1 + $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 17) v798 <= v730_s1 - v797;
-    always @(posedge clk) if (in_term && ph == 30) v801 <= $signed(mu6_out[55:0]) - $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 16) v804 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 31) v805 <= v722 + v801;
-    always @(posedge clk) if (in_term && ph == 17) v806 <= v724_s1 + v804;
-    always @(posedge clk) if (in_term && ph == 17) v811 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 16) v812 <= $signed(mu7_out[55:0]) - $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 17) v815 <= $signed(mu4_out[55:0]) - $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 17) v818 <= $signed(mu6_out[55:0]) + $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 18) v819 <= v805 + v815;
-    always @(posedge clk) if (in_term && ph == 19) v820 <= v736_s2 + v819;
-    always @(posedge clk) if (in_term && ph == 18) v821 <= v806 + v818;
-    always @(posedge clk) if (in_term && ph == 18) v822 <= v815 - v805;
-    always @(posedge clk) if (in_term && ph == 19) v823 <= v793_s1 + v822;
-    always @(posedge clk) if (in_term && ph == 18) v824 <= v818 - v806;
-    always @(posedge clk) if (in_term && ph == 19) v825 <= v794_s1 + v824;
-    always @(posedge clk) if (in_term && ph == 6) v828 <= (((v374 <<< 1) < 0) ? -(v374 <<< 1) : (v374 <<< 1));
-    always @(posedge clk) if (in_term && ph == 7) v829 <= (((v378 <<< 1) < 0) ? -(v378 <<< 1) : (v378 <<< 1));
-    always @(posedge clk) if (in_term && ph == 8) v830 <= ((v828 >= v829) ? v828 : v829);
-    always @(posedge clk) if (in_term && ph == 9) v831 <= (lead_pos_w(v830) - 16'sd28);
-    always @(posedge clk) if (in_term && ph == 10) v833 <= v831 + 56'sd1;
-    always @(posedge clk) if (in_term && ph == 11) v834 <= -v833;
-    always @(posedge clk) if (in_term && ph == 12) v835 <= sc835_out;
-    always @(posedge clk) if (in_term && ph == 11) v836 <= -v833;
-    always @(posedge clk) if (in_term && ph == 12) v837 <= sc837_out;
-    always @(posedge clk) if (in_term && ph == 20) v840 <= $signed(mu1_out[55:0]) + $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 21) v841 <= (v840 < 0);
-    always @(posedge clk) if (in_term && ph == 21) v842 <= ((v840 < 0) ? -v840 : v840);
-    always @(posedge clk) if (in_term && ph == 22) v843 <= (lead_pos_w(v842) - 16'sd53);
-    always @(posedge clk) if (in_term && ph == 23) v844 <= -v843;
-    always @(posedge clk) if (in_term && ph == 24) v845 <= sc845_out;
-    always @(posedge clk) if (in_term && ph == 25) v846 <= ((v845 >>> 45) & 56'sd255);
-    always @(posedge clk) if (in_term && ph == 26) v847 <= rom_recip_seed_53(v846);
-    always @(posedge clk) if (in_term && ph == 20) v850 <= 56'sd9007199254740992 - $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 25) v852 <= v847 + $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 20) v854 <= 56'sd9007199254740992 - $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 25) v856 <= v852 + $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 20) v858 <= 56'sd9007199254740992 - $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 25) v860 <= v856 + $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 26) v861 <= -v860;
-    always @(posedge clk) if (in_term && ph == 27) v862 <= (v841_s3 ? v861 : v860);
-    always @(posedge clk) if (in_term && ph == 23) v863 <= -v843;
-    always @(posedge clk) if (in_term && ph == 24) v866 <= v863 - v833;
-    always @(posedge clk) if (in_term && ph == 25) v869 <= $signed(mu4_out[55:0]) - $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 25) v872 <= $signed(mu6_out[55:0]) + $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 22) v875 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 23) v876 <= v735_s2 + v875;
-    always @(posedge clk) if (in_term && ph == 22) v881 <= $signed(mu6_out[55:0]) - $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 23) v884 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 24) v885 <= v884 - v821_s1;
-    always @(posedge clk) if (in_term && ph == 23) v886 <= v820_s1 - v881;
-    always @(posedge clk) if (in_term && ph == 23) v891 <= v889_s1 + $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 22) v893 <= -v668;
-    always @(posedge clk) if (in_term && ph == 18) v894 <= sc894_out;
-    always @(posedge clk) if (in_term && ph == 0) v895 <= sc895_out;
-    always @(posedge clk) if (in_term && ph == 28) v896 <= sc896_out;
-    always @(posedge clk) if (in_term && ph == 24) v897 <= sc897_out;
-    always @(posedge clk) if (in_term && ph == 7) v898 <= sc898_out;
-    always @(posedge clk) if (in_term && ph == 24) v899 <= sc899_out;
-    always @(posedge clk) if (in_term && ph == 23) v900 <= sc900_out;
-    always @(posedge clk) if (in_term && ph == 27) v901 <= sc901_out;
+    reg signed [55:0] v800_s1;
+    reg signed [55:0] v800_s2;
+    reg signed [55:0] v800_s3;
+    reg signed [55:0] v800_s4;
+    reg signed [55:0] v802_s1;
+    reg signed [55:0] v802_s2;
+    reg signed [55:0] v802_s3;
+    reg signed [55:0] v802_s4;
+    reg signed [0:0] v806_s1;
+    reg signed [0:0] v806_s2;
+    reg signed [0:0] v806_s3;
+    reg signed [55:0] v810_s1;
+    reg signed [55:0] v810_s2;
+    reg signed [55:0] v829_s1;
+    reg signed [55:0] v829_s2;
+    reg signed [55:0] v829_s3;
+    reg signed [55:0] v829_s4;
+    reg signed [55:0] v829_s5;
+    reg signed [55:0] v829_s6;
+    reg signed [55:0] v830_s1;
+    reg signed [55:0] v830_s2;
+    reg signed [55:0] v830_s3;
+    reg signed [55:0] v830_s4;
+    reg signed [55:0] v830_s5;
+    reg signed [55:0] v830_s6;
+    reg signed [55:0] v831_s1;
+    reg signed [55:0] v831_s2;
+    reg signed [55:0] v831_s3;
+    reg signed [55:0] v831_s4;
+    reg signed [55:0] v831_s5;
+    reg signed [55:0] v831_s6;
+    reg signed [55:0] v831_s7;
+    reg signed [55:0] v831_s8;
+    reg signed [55:0] v852_s1;
+    reg signed [55:0] v854_s1;
+    reg signed [55:0] v858_s1;
+    reg signed [55:0] v858_s2;
+    reg signed [55:0] v858_s3;
+    reg signed [55:0] v858_s4;
+    reg signed [55:0] v858_s5;
+    always @(posedge clk) if (in_term && ph == 16) v248 <= v243_s1 - $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 0) v252 <= (kcur == 0);
+    always @(posedge clk) if (in_term && ph == 8) v254 <= 56'sd268435456 + $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 9) v255 <= (v254 < 0);
+    always @(posedge clk) if (in_term && ph == 9) v256 <= ((v254 < 0) ? -v254 : v254);
+    always @(posedge clk) if (in_term && ph == 10) v257 <= (lead_pos_w(v256) - 16'sd28);
+    always @(posedge clk) if (in_term && ph == 11) v258 <= -v257;
+    always @(posedge clk) if (in_term && ph == 12) v259 <= sc259_out;
+    always @(posedge clk) if (in_term && ph == 13) v260 <= ((v259 >>> 45) & 56'sd255);
+    always @(posedge clk) if (in_term && ph == 14) v261 <= rom_recip_seed_53(v260);
+    always @(posedge clk) if (in_term && ph == 19) v264 <= 56'sd9007199254740992 - $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 24) v266 <= v261 + $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 29) v268 <= 56'sd9007199254740992 - $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 2) v270 <= v266 + $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 7) v272 <= 56'sd9007199254740992 - $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 12) v274 <= v270 + $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 13) v275 <= -v274;
+    always @(posedge clk) if (in_term && ph == 14) v276 <= (v255_s1 ? v275 : v274);
+    always @(posedge clk) if (in_term && ph == 11) v277 <= -v257;
+    always @(posedge clk) if (in_term && ph == 0) v279 <= rom_inv_k_53(kcur);
+    always @(posedge clk) if (in_term && ph == 17) v282 <= cr0_o0 - hs_209;
+    always @(posedge clk) if (in_term && ph == 21) v283 <= v282 - $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 0) v285 <= hs_152 - hs_122;
+    always @(posedge clk) if (in_term && ph == 21) v286 <= -$signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 22) v287 <= (v252_s1 ? v285_s1 : v286);
+    always @(posedge clk) if (in_term && ph == 26) v288 <= v287 - $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 31) v291 <= sc291_out;
+    always @(posedge clk) if (in_term && ph == 0) v292 <= (v252_s1 ? v291 : v289_s1);
+    always @(posedge clk) if (in_term && ph == 12) v297 <= hs_212 - $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 13) v299 <= v297 + v298_s1;
+    always @(posedge clk) if (in_term && ph == 12) v303 <= ($signed(mu4_out[55:0]) <<< 1) + v302_s1;
+    always @(posedge clk) if (in_term && ph == 14) v308 <= ((v299 < 0) ? -v299 : v299);
+    always @(posedge clk) if (in_term && ph == 18) v309 <= $signed(mu0_out[55:0]) + v308_s1;
+    always @(posedge clk) if (in_term && ph == 19) v311 <= sc311_out;
+    always @(posedge clk) if (in_term && ph == 20) v312 <= ((lead_pos_w(v311) - 16'sd28) & ~16'sd1);
+    always @(posedge clk) if (in_term && ph == 21) v313 <= -v312;
+    always @(posedge clk) if (in_term && ph == 22) v314 <= sc314_out;
+    always @(posedge clk) if (in_term && ph == 23) v315 <= ((v314 >>> 47) & 56'sd255);
+    always @(posedge clk) if (in_term && ph == 24) v316 <= rom_rsqrt_seed_53(v315);
+    always @(posedge clk) if (in_term && ph == 1) v321 <= 56'sd27021597764222976 - $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 14) v325 <= 56'sd27021597764222976 - $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 27) v329 <= 56'sd27021597764222976 - $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 21) v331 <= (v312 >>> 1);
+    always @(posedge clk) if (in_term && ph == 22) v332 <= -v331;
+    always @(posedge clk) if (in_term && ph == 23) v335 <= v332 - 56'sd1;
+    always @(posedge clk) if (in_term && ph == 14) v337 <= (v299 < 0);
+    always @(posedge clk) if (in_term && ph == 4) v338 <= (($signed(mu2_out[55:0]) < 0) ? -$signed(mu2_out[55:0]) : $signed(mu2_out[55:0]));
+    always @(posedge clk) if (in_term && ph == 5) v339 <= (v337_s2 ? v338 : v333_s1);
+    always @(posedge clk) if (in_term && ph == 13) v340 <= (v303 < 0);
+    always @(posedge clk) if (in_term && ph == 4) v341 <= -$signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 5) v342 <= (v340_s2 ? v341 : v333_s1);
+    always @(posedge clk) if (in_term && ph == 6) v343 <= (v337_s2 ? v342 : v336_s1);
+    always @(posedge clk) if (in_term && ph == 6) v344 <= p_kappa - v339;
+    always @(posedge clk) if (in_term && ph == 8) v345 <= -$signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 7) v346 <= v345_s2 - v343;
+    always @(posedge clk) if (in_term && ph == 6) v347 <= p_kappa + v339;
+    always @(posedge clk) if (in_term && ph == 7) v348 <= v343 - v295_s3;
+    always @(posedge clk) if (in_term && ph == 7) v349 <= ((v347 < 0) ? -v347 : v347);
+    always @(posedge clk) if (in_term && ph == 8) v350 <= ((v348 < 0) ? -v348 : v348);
+    always @(posedge clk) if (in_term && ph == 9) v351 <= ((v349 >= v350) ? v349 : v350);
+    always @(posedge clk) if (in_term && ph == 10) v352 <= (lead_pos_w(v351) - 16'sd28);
+    always @(posedge clk) if (in_term && ph == 11) v354 <= v352 + 56'sd1;
+    always @(posedge clk) if (in_term && ph == 12) v355 <= -v354;
+    always @(posedge clk) if (in_term && ph == 13) v356 <= sc356_out;
+    always @(posedge clk) if (in_term && ph == 12) v357 <= -v354;
+    always @(posedge clk) if (in_term && ph == 13) v358 <= sc358_out;
+    always @(posedge clk) if (in_term && ph == 18) v361 <= $signed(mu1_out[55:0]) + $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 19) v362 <= (v361 < 0);
+    always @(posedge clk) if (in_term && ph == 19) v363 <= ((v361 < 0) ? -v361 : v361);
+    always @(posedge clk) if (in_term && ph == 20) v364 <= (lead_pos_w(v363) - 16'sd53);
+    always @(posedge clk) if (in_term && ph == 21) v365 <= -v364;
+    always @(posedge clk) if (in_term && ph == 22) v366 <= sc366_out;
+    always @(posedge clk) if (in_term && ph == 23) v367 <= ((v366 >>> 45) & 56'sd255);
+    always @(posedge clk) if (in_term && ph == 24) v368 <= rom_recip_seed_53(v367);
+    always @(posedge clk) if (in_term && ph == 29) v371 <= 56'sd9007199254740992 - $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 2) v373 <= v368 + $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 7) v375 <= 56'sd9007199254740992 - $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 12) v377 <= v373 + $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 17) v379 <= 56'sd9007199254740992 - $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 22) v381 <= v377 + $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 23) v382 <= -v381;
+    always @(posedge clk) if (in_term && ph == 24) v383 <= (v362_s1 ? v382 : v381);
+    always @(posedge clk) if (in_term && ph == 21) v384 <= -v364;
+    always @(posedge clk) if (in_term && ph == 22) v387 <= v384 - v354;
+    always @(posedge clk) if (in_term && ph == 1) v390 <= $signed(mu1_out[55:0]) - $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 1) v393 <= $signed(mu3_out[55:0]) + $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 10) v395 <= -$signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 11) v397 <= -$signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 18) v402 <= v395 - $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 19) v404 <= sc404_out;
+    always @(posedge clk) if (in_term && ph == 24) v408 <= $signed(mu1_out[55:0]) + 56'sd1501199875790165;
+    always @(posedge clk) if (in_term && ph == 29) v411 <= $signed(mu5_out[55:0]) + 56'sd4503599627370496;
+    always @(posedge clk) if (in_term && ph == 2) v414 <= $signed(mu2_out[55:0]) + 56'sd9007199254740992;
+    always @(posedge clk) if (in_term && ph == 7) v417 <= $signed(mu2_out[55:0]) + 56'sd9007199254740992;
+    always @(posedge clk) if (in_term && ph == 14) v418 <= ($signed(mu1_out[55:0]) & 56'sd31);
+    always @(posedge clk) if (in_term && ph == 15) v419 <= rom_exp2_53(v418);
+    always @(posedge clk) if (in_term && ph == 14) v421 <= ($signed(mu1_out[55:0]) >>> 5);
+    always @(posedge clk) if (in_term && ph == 12) v422 <= sc422_out;
+    always @(posedge clk) if (in_term && ph == 19) v427 <= v397 - $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 6) v435 <= $signed(mu1_out[55:0]) - $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 6) v438 <= $signed(mu3_out[55:0]) + $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 7) v439 <= 56'sd268435456 - v435;
+    always @(posedge clk) if (in_term && ph == 7) v440 <= -v438;
+    always @(posedge clk) if (in_term && ph == 2) v441 <= 56'sd268435456 - v390;
+    always @(posedge clk) if (in_term && ph == 2) v442 <= -v393;
+    always @(posedge clk) if (in_term && ph == 3) v443 <= ((v441 < 0) ? -v441 : v441);
+    always @(posedge clk) if (in_term && ph == 3) v444 <= ((v442 < 0) ? -v442 : v442);
+    always @(posedge clk) if (in_term && ph == 4) v445 <= ((v443 >= v444) ? v443 : v444);
+    always @(posedge clk) if (in_term && ph == 5) v446 <= (lead_pos_w(v445) - 16'sd28);
+    always @(posedge clk) if (in_term && ph == 6) v448 <= v446 + 56'sd1;
+    always @(posedge clk) if (in_term && ph == 7) v449 <= -v448;
+    always @(posedge clk) if (in_term && ph == 8) v450 <= sc450_out;
+    always @(posedge clk) if (in_term && ph == 7) v451 <= -v448;
+    always @(posedge clk) if (in_term && ph == 8) v452 <= sc452_out;
+    always @(posedge clk) if (in_term && ph == 13) v455 <= $signed(mu0_out[55:0]) + $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 14) v456 <= (v455 < 0);
+    always @(posedge clk) if (in_term && ph == 14) v457 <= ((v455 < 0) ? -v455 : v455);
+    always @(posedge clk) if (in_term && ph == 15) v458 <= (lead_pos_w(v457) - 16'sd53);
+    always @(posedge clk) if (in_term && ph == 16) v459 <= -v458;
+    always @(posedge clk) if (in_term && ph == 17) v460 <= sc460_out;
+    always @(posedge clk) if (in_term && ph == 18) v461 <= ((v460 >>> 45) & 56'sd255);
+    always @(posedge clk) if (in_term && ph == 19) v462 <= rom_recip_seed_53(v461);
+    always @(posedge clk) if (in_term && ph == 24) v465 <= 56'sd9007199254740992 - $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 29) v467 <= v462 + $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 2) v469 <= 56'sd9007199254740992 - $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 7) v471 <= v467 + $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 12) v473 <= 56'sd9007199254740992 - $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 17) v475 <= v471 + $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 18) v476 <= -v475;
+    always @(posedge clk) if (in_term && ph == 19) v477 <= (v456_s1 ? v476 : v475);
+    always @(posedge clk) if (in_term && ph == 16) v478 <= -v458;
+    always @(posedge clk) if (in_term && ph == 17) v481 <= v478 - v448;
+    always @(posedge clk) if (in_term && ph == 28) v484 <= $signed(mu0_out[55:0]) - $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 28) v487 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 29) v492 <= (lead_pos_w(cv1_o0) - 16'sd28);
+    always @(posedge clk) if (in_term && ph == 30) v493 <= -v492;
+    always @(posedge clk) if (in_term && ph == 31) v494 <= sc494_out;
+    always @(posedge clk) if (in_term && ph == 0) v495 <= ((v494 >>> 47) & 56'sd63);
+    always @(posedge clk) if (in_term && ph == 1) v496 <= rom_log_invc_53(v495);
+    always @(posedge clk) if (in_term && ph == 6) v499 <= $signed(mu5_out[55:0]) - 56'sd9007199254740992;
+    always @(posedge clk) if (in_term && ph == 11) v503 <= $signed(mu1_out[55:0]) + 56'sd3002399751580331;
+    always @(posedge clk) if (in_term && ph == 16) v506 <= $signed(mu1_out[55:0]) + (-56'sd4503599627370496);
+    always @(posedge clk) if (in_term && ph == 21) v509 <= $signed(mu2_out[55:0]) + 56'sd9007199254740992;
+    always @(posedge clk) if (in_term && ph == 1) v511 <= rom_log_lnc_53(v495);
+    always @(posedge clk) if (in_term && ph == 26) v512 <= v511 + $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 27) v513 <= (((v512 >>> 24) + 1) >>> 1);
+    always @(posedge clk) if (in_term && ph == 28) v516 <= v515_s1 + v513;
+    always @(posedge clk) if (in_term && ph == 29) v517 <= v516 + (-56'sd133898257);
+    always @(posedge clk) if (in_term && ph == 30) v521 <= v518_s6 - (v517 <<< 1);
+    always @(posedge clk) if (in_term && ph == 29) v523 <= v519_s5 - (cv1_o1 <<< 1);
+    always @(posedge clk) if (in_term && ph == 2) v527 <= v525_s8 + $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 24) v530 <= 56'sd268435456 - $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 8) v531 <= ((v439 < 0) ? -v439 : v439);
+    always @(posedge clk) if (in_term && ph == 8) v532 <= ((v440 < 0) ? -v440 : v440);
+    always @(posedge clk) if (in_term && ph == 9) v533 <= ((v531 >= v532) ? v531 : v532);
+    always @(posedge clk) if (in_term && ph == 10) v534 <= (lead_pos_w(v533) - 16'sd28);
+    always @(posedge clk) if (in_term && ph == 11) v536 <= v534 + 56'sd1;
+    always @(posedge clk) if (in_term && ph == 12) v537 <= -v536;
+    always @(posedge clk) if (in_term && ph == 13) v538 <= sc538_out;
+    always @(posedge clk) if (in_term && ph == 12) v539 <= -v536;
+    always @(posedge clk) if (in_term && ph == 13) v540 <= sc540_out;
+    always @(posedge clk) if (in_term && ph == 18) v543 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 19) v544 <= (v543 < 0);
+    always @(posedge clk) if (in_term && ph == 19) v545 <= ((v543 < 0) ? -v543 : v543);
+    always @(posedge clk) if (in_term && ph == 20) v546 <= (lead_pos_w(v545) - 16'sd53);
+    always @(posedge clk) if (in_term && ph == 21) v547 <= -v546;
+    always @(posedge clk) if (in_term && ph == 22) v548 <= sc548_out;
+    always @(posedge clk) if (in_term && ph == 23) v549 <= ((v548 >>> 45) & 56'sd255);
+    always @(posedge clk) if (in_term && ph == 24) v550 <= rom_recip_seed_53(v549);
+    always @(posedge clk) if (in_term && ph == 29) v553 <= 56'sd9007199254740992 - $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 2) v555 <= v550 + $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 7) v557 <= 56'sd9007199254740992 - $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 13) v559 <= v555 + $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 18) v561 <= 56'sd9007199254740992 - $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 23) v563 <= v559 + $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 24) v564 <= -v563;
+    always @(posedge clk) if (in_term && ph == 25) v565 <= (v544_s1 ? v564 : v563);
+    always @(posedge clk) if (in_term && ph == 21) v566 <= -v546;
+    always @(posedge clk) if (in_term && ph == 22) v569 <= v566 - v536;
+    always @(posedge clk) if (in_term && ph == 3) v572 <= v570_s1 - $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 3) v575 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 8) v578 <= $signed(mu5_out[55:0]) - $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 9) v581 <= v579_s1 + $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 3) v583 <= $signed(mu0_out[55:0]) + v582_s2;
+    always @(posedge clk) if (in_term && ph == 3) v585 <= v527 + v584_s1;
+    always @(posedge clk) if (in_term && ph == 4) v587 <= v585 + v586_s8;
+    always @(posedge clk) if (in_term && ph == 13) v592 <= v583 - $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 14) v594 <= sc594_out;
+    always @(posedge clk) if (in_term && ph == 19) v598 <= $signed(mu3_out[55:0]) + 56'sd1501199875790165;
+    always @(posedge clk) if (in_term && ph == 24) v601 <= $signed(mu7_out[55:0]) + 56'sd4503599627370496;
+    always @(posedge clk) if (in_term && ph == 30) v604 <= $signed(mu2_out[55:0]) + 56'sd9007199254740992;
+    always @(posedge clk) if (in_term && ph == 3) v607 <= $signed(mu4_out[55:0]) + 56'sd9007199254740992;
+    always @(posedge clk) if (in_term && ph == 9) v608 <= ($signed(mu2_out[55:0]) & 56'sd31);
+    always @(posedge clk) if (in_term && ph == 10) v609 <= rom_exp2_53(v608);
+    always @(posedge clk) if (in_term && ph == 9) v611 <= ($signed(mu2_out[55:0]) >>> 5);
+    always @(posedge clk) if (in_term && ph == 9) v612 <= sc612_out;
+    always @(posedge clk) if (in_term && ph == 13) v617 <= v587 - $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 19) v625 <= v623_s1 + $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 19) v629 <= mu5_out + mu6_out;
+    always @(posedge clk) if (in_term && ph == 20) v632 <= v630_s1 - mu0_out;
+    always @(posedge clk) if (in_term && ph == 21) v633 <= adj_shift_fn(v629, v632, 16'sd56, 16'sd28);
+    always @(posedge clk) if (in_term && ph == 22) v634 <= sc634_out;
+    always @(posedge clk) if (in_term && ph == 22) v635 <= sc635_out;
+    always @(posedge clk) if (in_term && ph == 27) v640 <= $signed(mu3_out[55:0]) + $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 31) v644 <= $signed(mu1_out[55:0]) - $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 31) v647 <= $signed(mu3_out[55:0]) + $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 31) v650 <= $signed(mu5_out[55:0]) - $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 0) v653 <= v651_s1 + $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 5) v658 <= v656_s1 + $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 10) v663 <= v661_s1 + $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 9) v664 <= $signed(mu6_out[55:0]) - $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 5) v667 <= v665_s1 - $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 5) v670 <= $signed(mu6_out[55:0]) + v669_s1;
+    always @(posedge clk) if (in_term && ph == 5) v671 <= $signed(mu3_out[55:0]) - v654_s1;
+    always @(posedge clk) if (in_term && ph == 6) v676 <= $signed(mu6_out[55:0]) + $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 11) v678 <= -$signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 28) v683 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 4) v687 <= $signed(mu7_out[55:0]) + v686_s1;
+    always @(posedge clk) if (in_term && ph == 5) v689 <= $signed(mu7_out[55:0]) + v688_s1;
+    always @(posedge clk) if (in_term && ph == 0) v692 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 1) v695 <= v692 + v694_s1;
+    always @(posedge clk) if (in_term && ph == 12) v700 <= v678 - v699_s1;
+    always @(posedge clk) if (in_term && ph == 3) v705 <= $signed(mu5_out[55:0]) - $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 10) v708 <= v706_s1 + $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 10) v711 <= v709_s1 - $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 10) v714 <= $signed(mu5_out[55:0]) + $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 15) v717 <= $signed(mu1_out[55:0]) - $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 15) v720 <= $signed(mu3_out[55:0]) + $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 16) v721 <= v667 + v717;
+    always @(posedge clk) if (in_term && ph == 16) v722 <= v670 + v720;
+    always @(posedge clk) if (in_term && ph == 11) v727 <= $signed(mu6_out[55:0]) + $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 11) v728 <= $signed(mu5_out[55:0]) - v723_s1;
+    always @(posedge clk) if (in_term && ph == 16) v733 <= v731_s1 + $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 15) v734 <= $signed(mu6_out[55:0]) - $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 21) v737 <= $signed(mu3_out[55:0]) - $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 21) v740 <= $signed(mu5_out[55:0]) + $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 22) v741 <= v734 + v737;
+    always @(posedge clk) if (in_term && ph == 22) v742 <= v740 - v733;
+    always @(posedge clk) if (in_term && ph == 22) v745 <= v743_s1 - $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 22) v748 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 23) v749 <= v671 + v745;
+    always @(posedge clk) if (in_term && ph == 23) v750 <= v748 - v658;
+    always @(posedge clk) if (in_term && ph == 30) v753 <= v751_s1 - $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 30) v756 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 30) v757 <= $signed(mu3_out[55:0]) - v751_s1;
+    always @(posedge clk) if (in_term && ph == 16) v762 <= v760_s1 + $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 17) v763 <= v695_s1 - v762;
+    always @(posedge clk) if (in_term && ph == 30) v766 <= $signed(mu6_out[55:0]) - $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 16) v769 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 31) v770 <= v687 + v766;
+    always @(posedge clk) if (in_term && ph == 17) v771 <= v689_s1 + v769;
+    always @(posedge clk) if (in_term && ph == 17) v776 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 16) v777 <= $signed(mu7_out[55:0]) - $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 17) v780 <= $signed(mu4_out[55:0]) - $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 17) v783 <= $signed(mu6_out[55:0]) + $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 18) v784 <= v770 + v780;
+    always @(posedge clk) if (in_term && ph == 19) v785 <= v701_s2 + v784;
+    always @(posedge clk) if (in_term && ph == 18) v786 <= v771 + v783;
+    always @(posedge clk) if (in_term && ph == 18) v787 <= v780 - v770;
+    always @(posedge clk) if (in_term && ph == 19) v788 <= v758_s1 + v787;
+    always @(posedge clk) if (in_term && ph == 18) v789 <= v783 - v771;
+    always @(posedge clk) if (in_term && ph == 19) v790 <= v759_s1 + v789;
+    always @(posedge clk) if (in_term && ph == 6) v793 <= (((v339 <<< 1) < 0) ? -(v339 <<< 1) : (v339 <<< 1));
+    always @(posedge clk) if (in_term && ph == 7) v794 <= (((v343 <<< 1) < 0) ? -(v343 <<< 1) : (v343 <<< 1));
+    always @(posedge clk) if (in_term && ph == 8) v795 <= ((v793 >= v794) ? v793 : v794);
+    always @(posedge clk) if (in_term && ph == 9) v796 <= (lead_pos_w(v795) - 16'sd28);
+    always @(posedge clk) if (in_term && ph == 10) v798 <= v796 + 56'sd1;
+    always @(posedge clk) if (in_term && ph == 11) v799 <= -v798;
+    always @(posedge clk) if (in_term && ph == 12) v800 <= sc800_out;
+    always @(posedge clk) if (in_term && ph == 11) v801 <= -v798;
+    always @(posedge clk) if (in_term && ph == 12) v802 <= sc802_out;
+    always @(posedge clk) if (in_term && ph == 20) v805 <= $signed(mu1_out[55:0]) + $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 21) v806 <= (v805 < 0);
+    always @(posedge clk) if (in_term && ph == 21) v807 <= ((v805 < 0) ? -v805 : v805);
+    always @(posedge clk) if (in_term && ph == 22) v808 <= (lead_pos_w(v807) - 16'sd53);
+    always @(posedge clk) if (in_term && ph == 23) v809 <= -v808;
+    always @(posedge clk) if (in_term && ph == 24) v810 <= sc810_out;
+    always @(posedge clk) if (in_term && ph == 25) v811 <= ((v810 >>> 45) & 56'sd255);
+    always @(posedge clk) if (in_term && ph == 26) v812 <= rom_recip_seed_53(v811);
+    always @(posedge clk) if (in_term && ph == 20) v815 <= 56'sd9007199254740992 - $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 25) v817 <= v812 + $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 20) v819 <= 56'sd9007199254740992 - $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 25) v821 <= v817 + $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 20) v823 <= 56'sd9007199254740992 - $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 25) v825 <= v821 + $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 26) v826 <= -v825;
+    always @(posedge clk) if (in_term && ph == 27) v827 <= (v806_s3 ? v826 : v825);
+    always @(posedge clk) if (in_term && ph == 23) v828 <= -v808;
+    always @(posedge clk) if (in_term && ph == 24) v831 <= v828 - v798;
+    always @(posedge clk) if (in_term && ph == 25) v834 <= $signed(mu4_out[55:0]) - $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 25) v837 <= $signed(mu6_out[55:0]) + $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 22) v840 <= $signed(mu4_out[55:0]) + $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 23) v841 <= v700_s2 + v840;
+    always @(posedge clk) if (in_term && ph == 22) v846 <= $signed(mu6_out[55:0]) - $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 23) v849 <= $signed(mu2_out[55:0]) + $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 24) v850 <= v849 - v786_s1;
+    always @(posedge clk) if (in_term && ph == 23) v851 <= v785_s1 - v846;
+    always @(posedge clk) if (in_term && ph == 23) v856 <= v854_s1 + $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 22) v858 <= -v633;
+    always @(posedge clk) if (in_term && ph == 18) v859 <= sc859_out;
+    always @(posedge clk) if (in_term && ph == 0) v860 <= sc860_out;
+    always @(posedge clk) if (in_term && ph == 28) v861 <= sc861_out;
+    always @(posedge clk) if (in_term && ph == 24) v862 <= sc862_out;
+    always @(posedge clk) if (in_term && ph == 7) v863 <= sc863_out;
+    always @(posedge clk) if (in_term && ph == 24) v864 <= sc864_out;
+    always @(posedge clk) if (in_term && ph == 23) v865 <= sc865_out;
+    always @(posedge clk) if (in_term && ph == 27) v866 <= sc866_out;
     always @(posedge clk) begin
         if (start_evt) acc_price <= 0;
         else if (in_term && ph == 25 && t >= 32'd345 && t <= 32'd4409) acc_price <= acc_price + $signed(mu0_out[55:0]);
     end
     always @(posedge clk) begin
         if (start_evt) acc_T <= 0;
-        else if (in_term && ph == 19 && t >= 32'd403 && t <= 32'd4467) acc_T <= acc_T + v894;
+        else if (in_term && ph == 19 && t >= 32'd403 && t <= 32'd4467) acc_T <= acc_T + v859;
     end
     always @(posedge clk) begin
         if (start_evt) acc_r <= 0;
-        else if (in_term && ph == 1 && t >= 32'd353 && t <= 32'd4417) acc_r <= acc_r + v895;
+        else if (in_term && ph == 1 && t >= 32'd353 && t <= 32'd4417) acc_r <= acc_r + v860;
     end
     always @(posedge clk) begin
         if (start_evt) acc_v0 <= 0;
-        else if (in_term && ph == 29 && t >= 32'd349 && t <= 32'd4413) acc_v0 <= acc_v0 + v896;
+        else if (in_term && ph == 29 && t >= 32'd349 && t <= 32'd4413) acc_v0 <= acc_v0 + v861;
     end
     always @(posedge clk) begin
         if (start_evt) acc_kappa <= 0;
-        else if (in_term && ph == 25 && t >= 32'd441 && t <= 32'd4505) acc_kappa <= acc_kappa + v897;
+        else if (in_term && ph == 25 && t >= 32'd441 && t <= 32'd4505) acc_kappa <= acc_kappa + v862;
     end
     always @(posedge clk) begin
         if (start_evt) acc_theta <= 0;
-        else if (in_term && ph == 8 && t >= 32'd360 && t <= 32'd4424) acc_theta <= acc_theta + v898;
+        else if (in_term && ph == 8 && t >= 32'd360 && t <= 32'd4424) acc_theta <= acc_theta + v863;
     end
     always @(posedge clk) begin
         if (start_evt) acc_xi <= 0;
-        else if (in_term && ph == 25 && t >= 32'd505 && t <= 32'd4569) acc_xi <= acc_xi + v899;
+        else if (in_term && ph == 25 && t >= 32'd505 && t <= 32'd4569) acc_xi <= acc_xi + v864;
     end
     always @(posedge clk) begin
         if (start_evt) acc_rho <= 0;
-        else if (in_term && ph == 24 && t >= 32'd504 && t <= 32'd4568) acc_rho <= acc_rho + v900;
+        else if (in_term && ph == 24 && t >= 32'd504 && t <= 32'd4568) acc_rho <= acc_rho + v865;
     end
     always @(posedge clk) begin
         if (start_evt) acc_x <= 0;
-        else if (in_term && ph == 28 && t >= 32'd348 && t <= 32'd4412) acc_x <= acc_x + v901;
+        else if (in_term && ph == 28 && t >= 32'd348 && t <= 32'd4412) acc_x <= acc_x + v866;
     end
     always @* begin
         mu0_a = 0; mu0_b = 0; mu0_sh = 0; mu0_neg = 0; mu0_val = 0;
         if (in_term) case (ph)
-            0: begin mu0_a = kcur; mu0_b = hs_180; mu0_sh = 16'sd0; mu0_neg = 1'b0; mu0_val = (t >= 32'd0 && t <= 32'd4064); end
+            0: begin mu0_a = kcur; mu0_b = hs_179; mu0_sh = 16'sd0; mu0_neg = 1'b0; mu0_val = (t >= 32'd0 && t <= 32'd4064); end
             4: begin mu0_a = $signed(mu0_out[55:0]); mu0_b = hs_153; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd4 && t <= 32'd4068); end
             8: begin mu0_a = $signed(mu0_out[55:0]); mu0_b = 56'sd1433540284805665; mu0_sh = 16'sd81; mu0_neg = 1'b0; mu0_val = (t >= 32'd8 && t <= 32'd4072); end
             12: begin mu0_a = $signed(mu0_out[55:0]); mu0_b = 56'sd28296951008113761; mu0_sh = 16'sd24; mu0_neg = 1'b0; mu0_val = (t >= 32'd12 && t <= 32'd4076); end
-            15: begin mu0_a = v286; mu0_b = v288; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd15 && t <= 32'd4079); end
-            20: begin mu0_a = v288; mu0_b = v291; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd20 && t <= 32'd4084); end
-            25: begin mu0_a = v286; mu0_b = v293; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd25 && t <= 32'd4089); end
-            30: begin mu0_a = v293; mu0_b = v295; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd30 && t <= 32'd4094); end
-            3: begin mu0_a = v286; mu0_b = v297; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd35 && t <= 32'd4099); end
-            17: begin mu0_a = v268_s2; mu0_b = cr0_o1; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd49 && t <= 32'd4113); end
-            1: begin mu0_a = hs_185; mu0_b = v306; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd1 && t <= 32'd4065); end
-            22: begin mu0_a = v312; mu0_b = v303; mu0_sh = (16'sd53 - $signed(v304_s1)); mu0_neg = 1'b0; mu0_val = (t >= 32'd54 && t <= 32'd4118); end
-            28: begin mu0_a = hs_183; mu0_b = v323; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd60 && t <= 32'd4124); end
-            2: begin mu0_a = v327; mu0_b = v276_s1; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd66 && t <= 32'd4130); end
+            15: begin mu0_a = v259; mu0_b = v261; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd15 && t <= 32'd4079); end
+            20: begin mu0_a = v261; mu0_b = v264; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd20 && t <= 32'd4084); end
+            25: begin mu0_a = v259; mu0_b = v266; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd25 && t <= 32'd4089); end
+            30: begin mu0_a = v266; mu0_b = v268; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd30 && t <= 32'd4094); end
+            3: begin mu0_a = v259; mu0_b = v270; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd35 && t <= 32'd4099); end
+            17: begin mu0_a = v242_s2; mu0_b = cr0_o1; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd49 && t <= 32'd4113); end
+            1: begin mu0_a = hs_184; mu0_b = v279; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd1 && t <= 32'd4065); end
+            22: begin mu0_a = v283; mu0_b = v276; mu0_sh = (16'sd53 - $signed(v277_s1)); mu0_neg = 1'b0; mu0_val = (t >= 32'd54 && t <= 32'd4118); end
+            27: begin mu0_a = hs_182; mu0_b = v288; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd59 && t <= 32'd4123); end
             14: begin mu0_a = cv0_o0; mu0_b = 56'sd5469648183651275; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd46 && t <= 32'd4110); end
-            29: begin mu0_a = v349; mu0_b = $signed(mu1_out[55:0]); mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd61 && t <= 32'd4125); end
-            6: begin mu0_a = $signed(mu2_out[55:0]); mu0_b = $signed(mu2_out[55:0]); mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd70 && t <= 32'd4134); end
-            10: begin mu0_a = v349; mu0_b = $signed(mu0_out[55:0]); mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd74 && t <= 32'd4138); end
+            29: begin mu0_a = v314; mu0_b = $signed(mu1_out[55:0]); mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd61 && t <= 32'd4125); end
+            2: begin mu0_a = v316; mu0_b = v321; mu0_sh = (16'sd53 - $signed((-56'sd1))); mu0_neg = 1'b0; mu0_val = (t >= 32'd66 && t <= 32'd4130); end
+            6: begin mu0_a = $signed(mu0_out[55:0]); mu0_b = $signed(mu0_out[55:0]); mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd70 && t <= 32'd4134); end
+            10: begin mu0_a = v314; mu0_b = $signed(mu0_out[55:0]); mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd74 && t <= 32'd4138); end
             19: begin mu0_a = $signed(mu1_out[55:0]); mu0_b = $signed(mu1_out[55:0]); mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd83 && t <= 32'd4147); end
-            23: begin mu0_a = v349_s1; mu0_b = $signed(mu0_out[55:0]); mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd87 && t <= 32'd4151); end
-            13: begin mu0_a = v401; mu0_b = v412; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd141 && t <= 32'd4205); end
-            18: begin mu0_a = v412; mu0_b = v414; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd146 && t <= 32'd4210); end
-            7: begin mu0_a = v378; mu0_b = p_T; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd103 && t <= 32'd4167); end
+            23: begin mu0_a = v314_s1; mu0_b = $signed(mu0_out[55:0]); mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd87 && t <= 32'd4151); end
+            28: begin mu0_a = v326_s1; mu0_b = v329; mu0_sh = (16'sd53 - $signed((-56'sd1))); mu0_neg = 1'b0; mu0_val = (t >= 32'd92 && t <= 32'd4156); end
+            13: begin mu0_a = v366; mu0_b = v377; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd141 && t <= 32'd4205); end
+            18: begin mu0_a = v377; mu0_b = v379; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd146 && t <= 32'd4210); end
+            7: begin mu0_a = v343; mu0_b = p_T; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd103 && t <= 32'd4167); end
             11: begin mu0_a = $signed(mu0_out[55:0]); mu0_b = 56'sd1433540284805665; mu0_sh = 16'sd81; mu0_neg = 1'b1; mu0_val = (t >= 32'd107 && t <= 32'd4171); end
-            9: begin mu0_a = v485; mu0_b = v485; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd169 && t <= 32'd4233); end
-            24: begin mu0_a = v474_s1; mu0_b = $signed(mu5_out[55:0]); mu0_sh = (16'sd53 - $signed(v516_s1)); mu0_neg = 1'b0; mu0_val = (t >= 32'd216 && t <= 32'd4280); end
-            31: begin mu0_a = hs_263; mu0_b = v556; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd287 && t <= 32'd4351); end
-            26: begin mu0_a = v573_s1; mu0_b = v600; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd218 && t <= 32'd4282); end
-            5: begin mu0_a = v564_s4; mu0_b = v607; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd229 && t <= 32'd4293); end
-            21: begin mu0_a = v660; mu0_b = v327_s8; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd341 && t <= 32'd4405); end
-            16: begin mu0_a = v657_s1; mu0_b = v328_s9; mu0_sh = 16'sd0; mu0_neg = 1'b0; mu0_val = (t >= 32'd336 && t <= 32'd4400); end
-            27: begin mu0_a = v607_s3; mu0_b = $signed(mu1_out[55:0]); mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd347 && t <= 32'd4411); end
+            9: begin mu0_a = v450; mu0_b = v450; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd169 && t <= 32'd4233); end
+            24: begin mu0_a = v439_s1; mu0_b = $signed(mu5_out[55:0]); mu0_sh = (16'sd53 - $signed(v481_s1)); mu0_neg = 1'b0; mu0_val = (t >= 32'd216 && t <= 32'd4280); end
+            31: begin mu0_a = hs_237; mu0_b = v521; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd287 && t <= 32'd4351); end
+            26: begin mu0_a = v538_s1; mu0_b = v565; mu0_sh = 16'sd53; mu0_neg = 1'b0; mu0_val = (t >= 32'd218 && t <= 32'd4282); end
+            5: begin mu0_a = v529_s4; mu0_b = v572; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd229 && t <= 32'd4293); end
+            21: begin mu0_a = v625; mu0_b = v292_s8; mu0_sh = 16'sd28; mu0_neg = 1'b0; mu0_val = (t >= 32'd341 && t <= 32'd4405); end
+            16: begin mu0_a = v622_s1; mu0_b = v293_s9; mu0_sh = 16'sd0; mu0_neg = 1'b0; mu0_val = (t >= 32'd336 && t <= 32'd4400); end
             default: ;
         endcase
     end
@@ -2433,37 +2418,37 @@ module heston_aad_z7h (
         mu1_a = 0; mu1_b = 0; mu1_sh = 0; mu1_neg = 0; mu1_val = 0;
         if (in_term) case (ph)
             4: begin mu1_a = $signed(mu0_out[55:0]); mu1_b = $signed(mu0_out[55:0]); mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd4 && t <= 32'd4068); end
-            8: begin mu1_a = v297; mu1_b = v299; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd40 && t <= 32'd4104); end
-            17: begin mu1_a = v307_s2; mu1_b = cr0_o1; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd49 && t <= 32'd4113); end
-            22: begin mu1_a = v315; mu1_b = v303; mu1_sh = (16'sd53 - $signed(v304_s1)); mu1_neg = 1'b0; mu1_val = (t >= 32'd54 && t <= 32'd4118); end
-            2: begin mu1_a = v327; mu1_b = v277_s1; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd66 && t <= 32'd4130); end
-            25: begin mu1_a = v351; mu1_b = v351; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd57 && t <= 32'd4121); end
-            15: begin mu1_a = v357_s1; mu1_b = v360; mu1_sh = (16'sd53 - $signed((-56'sd1))); mu1_neg = 1'b0; mu1_val = (t >= 32'd79 && t <= 32'd4143); end
-            28: begin mu1_a = v361_s1; mu1_b = v364; mu1_sh = (16'sd53 - $signed((-56'sd1))); mu1_neg = 1'b0; mu1_val = (t >= 32'd92 && t <= 32'd4156); end
-            0: begin mu1_a = v346_s1; mu1_b = $signed(mu1_out[55:0]); mu1_sh = (16'sd53 - $signed(v367_s1)); mu1_neg = 1'b0; mu1_val = (t >= 32'd96 && t <= 32'd4160); end
-            14: begin mu1_a = v391; mu1_b = v391; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd110 && t <= 32'd4174); end
-            30: begin mu1_a = v403; mu1_b = v406; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd126 && t <= 32'd4190); end
-            3: begin mu1_a = v401; mu1_b = v408; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd131 && t <= 32'd4195); end
-            29: begin mu1_a = v379_s1; mu1_b = $signed(mu3_out[55:0]); mu1_sh = (16'sd53 - $signed(v422_s1)); mu1_neg = 1'b0; mu1_val = (t >= 32'd157 && t <= 32'd4221); end
-            6: begin mu1_a = v374; mu1_b = p_T; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd102 && t <= 32'd4166); end
+            8: begin mu1_a = v270; mu1_b = v272; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd40 && t <= 32'd4104); end
+            17: begin mu1_a = v280_s2; mu1_b = cr0_o1; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd49 && t <= 32'd4113); end
+            1: begin mu1_a = v292; mu1_b = v250_s1; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd65 && t <= 32'd4129); end
+            25: begin mu1_a = v316; mu1_b = v316; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd57 && t <= 32'd4121); end
+            15: begin mu1_a = v322_s1; mu1_b = v325; mu1_sh = (16'sd53 - $signed((-56'sd1))); mu1_neg = 1'b0; mu1_val = (t >= 32'd79 && t <= 32'd4143); end
+            0: begin mu1_a = v311_s1; mu1_b = $signed(mu0_out[55:0]); mu1_sh = (16'sd53 - $signed(v332_s1)); mu1_neg = 1'b0; mu1_val = (t >= 32'd96 && t <= 32'd4160); end
+            14: begin mu1_a = v356; mu1_b = v356; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd110 && t <= 32'd4174); end
+            30: begin mu1_a = v368; mu1_b = v371; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd126 && t <= 32'd4190); end
+            3: begin mu1_a = v366; mu1_b = v373; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd131 && t <= 32'd4195); end
+            29: begin mu1_a = v344_s1; mu1_b = $signed(mu3_out[55:0]); mu1_sh = (16'sd53 - $signed(v387_s1)); mu1_neg = 1'b0; mu1_val = (t >= 32'd157 && t <= 32'd4221); end
+            6: begin mu1_a = v339; mu1_b = p_T; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd102 && t <= 32'd4166); end
             10: begin mu1_a = $signed(mu1_out[55:0]); mu1_b = 56'sd25989283394227192; mu1_sh = 16'sd77; mu1_neg = 1'b1; mu1_val = (t >= 32'd106 && t <= 32'd4170); end
-            20: begin mu1_a = 56'sd375299968947541; mu1_b = v439; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd116 && t <= 32'd4180); end
-            9: begin mu1_a = v487; mu1_b = v487; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd169 && t <= 32'd4233); end
-            13: begin mu1_a = v506; mu1_b = v508; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd205 && t <= 32'd4269); end
-            24: begin mu1_a = v473_s1; mu1_b = $signed(mu6_out[55:0]); mu1_sh = (16'sd53 - $signed(v516_s1)); mu1_neg = 1'b0; mu1_val = (t >= 32'd216 && t <= 32'd4280); end
-            7: begin mu1_a = (-56'sd2251799813685248); mu1_b = v534; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd263 && t <= 32'd4327); end
-            12: begin mu1_a = v538; mu1_b = v534; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd268 && t <= 32'd4332); end
-            19: begin mu1_a = v594; mu1_b = v596; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd211 && t <= 32'd4275); end
-            26: begin mu1_a = v575_s1; mu1_b = v600; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd218 && t <= 32'd4282); end
-            31: begin mu1_a = v467_s3; mu1_b = v603_s1; mu1_sh = (16'sd53 - $signed(v604_s1)); mu1_neg = 1'b0; mu1_val = (t >= 32'd223 && t <= 32'd4287); end
-            5: begin mu1_a = v268_s1; mu1_b = hs_60; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd5 && t <= 32'd4069); end
-            23: begin mu1_a = v669; mu1_b = p_v0; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd343 && t <= 32'd4407); end
-            27: begin mu1_a = v610_s3; mu1_b = $signed(mu2_out[55:0]); mu1_sh = 16'sd28; mu1_neg = 1'b1; mu1_val = (t >= 32'd347 && t <= 32'd4411); end
-            1: begin mu1_a = v698_s3; mu1_b = v688; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd353 && t <= 32'd4417); end
-            11: begin mu1_a = v746; mu1_b = v514_s5; mu1_sh = (16'sd53 - $signed(v516_s5)); mu1_neg = 1'b0; mu1_val = (t >= 32'd363 && t <= 32'd4427); end
-            18: begin mu1_a = v428_s6; mu1_b = v757; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd370 && t <= 32'd4434); end
-            16: begin mu1_a = v835; mu1_b = v835; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd112 && t <= 32'd4176); end
-            21: begin mu1_a = v847; mu1_b = v850; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd149 && t <= 32'd4213); end
+            20: begin mu1_a = 56'sd375299968947541; mu1_b = v404; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd116 && t <= 32'd4180); end
+            2: begin mu1_a = v390; mu1_b = v431_s1; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd162 && t <= 32'd4226); end
+            9: begin mu1_a = v452; mu1_b = v452; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd169 && t <= 32'd4233); end
+            13: begin mu1_a = v471; mu1_b = v473; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd205 && t <= 32'd4269); end
+            24: begin mu1_a = v438_s1; mu1_b = $signed(mu6_out[55:0]); mu1_sh = (16'sd53 - $signed(v481_s1)); mu1_neg = 1'b0; mu1_val = (t >= 32'd216 && t <= 32'd4280); end
+            7: begin mu1_a = (-56'sd2251799813685248); mu1_b = v499; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd263 && t <= 32'd4327); end
+            12: begin mu1_a = v503; mu1_b = v499; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd268 && t <= 32'd4332); end
+            22: begin mu1_a = v509; mu1_b = v499; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd278 && t <= 32'd4342); end
+            19: begin mu1_a = v559; mu1_b = v561; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd211 && t <= 32'd4275); end
+            26: begin mu1_a = v540_s1; mu1_b = v565; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd218 && t <= 32'd4282); end
+            31: begin mu1_a = v432_s3; mu1_b = v568_s1; mu1_sh = (16'sd53 - $signed(v569_s1)); mu1_neg = 1'b0; mu1_val = (t >= 32'd223 && t <= 32'd4287); end
+            5: begin mu1_a = v242_s1; mu1_b = hs_60; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd5 && t <= 32'd4069); end
+            23: begin mu1_a = v634; mu1_b = p_v0; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd343 && t <= 32'd4407); end
+            27: begin mu1_a = v572_s3; mu1_b = $signed(mu1_out[55:0]); mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd347 && t <= 32'd4411); end
+            28: begin mu1_a = v529_s8; mu1_b = v636_s1; mu1_sh = 16'sd28; mu1_neg = 1'b1; mu1_val = (t >= 32'd348 && t <= 32'd4412); end
+            11: begin mu1_a = v711; mu1_b = v479_s5; mu1_sh = (16'sd53 - $signed(v481_s5)); mu1_neg = 1'b0; mu1_val = (t >= 32'd363 && t <= 32'd4427); end
+            18: begin mu1_a = v393_s6; mu1_b = v722; mu1_sh = 16'sd28; mu1_neg = 1'b0; mu1_val = (t >= 32'd370 && t <= 32'd4434); end
+            16: begin mu1_a = v800; mu1_b = v800; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd112 && t <= 32'd4176); end
+            21: begin mu1_a = v812; mu1_b = v815; mu1_sh = 16'sd53; mu1_neg = 1'b0; mu1_val = (t >= 32'd149 && t <= 32'd4213); end
             default: ;
         endcase
     end
@@ -2476,38 +2461,37 @@ module heston_aad_z7h (
     always @* begin
         mu2_a = 0; mu2_b = 0; mu2_sh = 0; mu2_neg = 0; mu2_val = 0;
         if (in_term) case (ph)
-            4: begin mu2_a = hs_236; mu2_b = $signed(mu0_out[55:0]); mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd4 && t <= 32'd4068); end
+            1: begin mu2_a = v292; mu2_b = v251_s1; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd65 && t <= 32'd4129); end
+            4: begin mu2_a = hs_210; mu2_b = $signed(mu0_out[55:0]); mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd4 && t <= 32'd4068); end
             8: begin mu2_a = $signed(mu2_out[55:0]); mu2_b = $signed(mu2_out[55:0]); mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd8 && t <= 32'd4072); end
-            2: begin mu2_a = v351; mu2_b = v356; mu2_sh = (16'sd53 - $signed((-56'sd1))); mu2_neg = 1'b0; mu2_val = (t >= 32'd66 && t <= 32'd4130); end
-            0: begin mu2_a = v338_s2; mu2_b = $signed(mu1_out[55:0]); mu2_sh = (16'sd53 - $signed(v370_s1)); mu2_neg = 1'b0; mu2_val = (t >= 32'd96 && t <= 32'd4160); end
-            14: begin mu2_a = v393; mu2_b = v393; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd110 && t <= 32'd4174); end
-            25: begin mu2_a = v401; mu2_b = v403; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd121 && t <= 32'd4185); end
-            29: begin mu2_a = v381_s1; mu2_b = $signed(mu4_out[55:0]); mu2_sh = (16'sd53 - $signed(v422_s1)); mu2_neg = 1'b1; mu2_val = (t >= 32'd157 && t <= 32'd4221); end
-            30: begin mu2_a = v446; mu2_b = v439; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd126 && t <= 32'd4190); end
-            3: begin mu2_a = v449; mu2_b = v439; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd131 && t <= 32'd4195); end
+            0: begin mu2_a = v303_s2; mu2_b = $signed(mu0_out[55:0]); mu2_sh = (16'sd53 - $signed(v335_s1)); mu2_neg = 1'b0; mu2_val = (t >= 32'd96 && t <= 32'd4160); end
+            14: begin mu2_a = v358; mu2_b = v358; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd110 && t <= 32'd4174); end
+            25: begin mu2_a = v366; mu2_b = v368; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd121 && t <= 32'd4185); end
+            29: begin mu2_a = v346_s1; mu2_b = $signed(mu4_out[55:0]); mu2_sh = (16'sd53 - $signed(v387_s1)); mu2_neg = 1'b1; mu2_val = (t >= 32'd157 && t <= 32'd4221); end
+            30: begin mu2_a = v411; mu2_b = v404; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd126 && t <= 32'd4190); end
+            3: begin mu2_a = v414; mu2_b = v404; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd131 && t <= 32'd4195); end
             15: begin mu2_a = $signed(mu0_out[55:0]); mu2_b = 56'sd28296951008113761; mu2_sh = 16'sd24; mu2_neg = 1'b0; mu2_val = (t >= 32'd111 && t <= 32'd4175); end
-            20: begin mu2_a = v457; mu2_b = cr1_o0; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd148 && t <= 32'd4212); end
-            24: begin mu2_a = v474_s1; mu2_b = $signed(mu6_out[55:0]); mu2_sh = (16'sd53 - $signed(v516_s1)); mu2_neg = 1'b1; mu2_val = (t >= 32'd216 && t <= 32'd4280); end
-            17: begin mu2_a = v541; mu2_b = v534; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd273 && t <= 32'd4337); end
-            22: begin mu2_a = v544; mu2_b = v534; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd278 && t <= 32'd4342); end
-            7: begin mu2_a = v379; mu2_b = p_T; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd103 && t <= 32'd4167); end
-            9: begin mu2_a = v381; mu2_b = p_T; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd105 && t <= 32'd4169); end
-            31: begin mu2_a = v565_s2; mu2_b = v603_s1; mu2_sh = (16'sd53 - $signed(v604_s1)); mu2_neg = 1'b1; mu2_val = (t >= 32'd223 && t <= 32'd4287); end
-            10: begin mu2_a = v616; mu2_b = p_v0; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd234 && t <= 32'd4298); end
-            5: begin mu2_a = v618; mu2_b = 56'sd25989283394227192; mu2_sh = 16'sd77; mu2_neg = 1'b0; mu2_val = (t >= 32'd293 && t <= 32'd4357); end
-            26: begin mu2_a = v636; mu2_b = v629; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd314 && t <= 32'd4378); end
-            23: begin mu2_a = v670; mu2_b = p_v0; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd343 && t <= 32'd4407); end
-            27: begin mu2_a = v607_s3; mu2_b = $signed(mu2_out[55:0]); mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd347 && t <= 32'd4411); end
-            6: begin mu2_a = v610; mu2_b = v602_s1; mu2_sh = (16'sd53 - $signed(v604_s1)); mu2_neg = 1'b0; mu2_val = (t >= 32'd230 && t <= 32'd4294); end
-            1: begin mu2_a = v699_s3; mu2_b = v688; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd353 && t <= 32'd4417); end
-            28: begin mu2_a = v714_s1; mu2_b = p_T; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd348 && t <= 32'd4412); end
-            11: begin mu2_a = v749; mu2_b = v515_s5; mu2_sh = (16'sd53 - $signed(v516_s5)); mu2_neg = 1'b0; mu2_val = (t >= 32'd363 && t <= 32'd4427); end
-            12: begin mu2_a = v762_s4; mu2_b = v746; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd364 && t <= 32'd4428); end
-            18: begin mu2_a = v425_s6; mu2_b = v757; mu2_sh = 16'sd28; mu2_neg = 1'b1; mu2_val = (t >= 32'd370 && t <= 32'd4434); end
-            13: begin mu2_a = v425; mu2_b = v421_s1; mu2_sh = (16'sd53 - $signed(v422_s1)); mu2_neg = 1'b1; mu2_val = (t >= 32'd173 && t <= 32'd4237); end
-            16: begin mu2_a = v837; mu2_b = v837; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd112 && t <= 32'd4176); end
-            21: begin mu2_a = v852; mu2_b = v854; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd181 && t <= 32'd4245); end
-            19: begin mu2_a = (hs_265 <<< 1); mu2_b = v872; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd435 && t <= 32'd4499); end
+            20: begin mu2_a = v422; mu2_b = cr1_o0; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd148 && t <= 32'd4212); end
+            2: begin mu2_a = v393; mu2_b = v432_s1; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd162 && t <= 32'd4226); end
+            24: begin mu2_a = v439_s1; mu2_b = $signed(mu6_out[55:0]); mu2_sh = (16'sd53 - $signed(v481_s1)); mu2_neg = 1'b1; mu2_val = (t >= 32'd216 && t <= 32'd4280); end
+            17: begin mu2_a = v506; mu2_b = v499; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd273 && t <= 32'd4337); end
+            7: begin mu2_a = v344; mu2_b = p_T; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd103 && t <= 32'd4167); end
+            9: begin mu2_a = v346; mu2_b = p_T; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd105 && t <= 32'd4169); end
+            31: begin mu2_a = v530_s2; mu2_b = v568_s1; mu2_sh = (16'sd53 - $signed(v569_s1)); mu2_neg = 1'b1; mu2_val = (t >= 32'd223 && t <= 32'd4287); end
+            10: begin mu2_a = v581; mu2_b = p_v0; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd234 && t <= 32'd4298); end
+            5: begin mu2_a = v583; mu2_b = 56'sd25989283394227192; mu2_sh = 16'sd77; mu2_neg = 1'b0; mu2_val = (t >= 32'd293 && t <= 32'd4357); end
+            26: begin mu2_a = v601; mu2_b = v594; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd314 && t <= 32'd4378); end
+            23: begin mu2_a = v635; mu2_b = p_v0; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd343 && t <= 32'd4407); end
+            27: begin mu2_a = v575_s3; mu2_b = $signed(mu2_out[55:0]); mu2_sh = 16'sd28; mu2_neg = 1'b1; mu2_val = (t >= 32'd347 && t <= 32'd4411); end
+            6: begin mu2_a = v575; mu2_b = v567_s1; mu2_sh = (16'sd53 - $signed(v569_s1)); mu2_neg = 1'b0; mu2_val = (t >= 32'd230 && t <= 32'd4294); end
+            28: begin mu2_a = v679_s1; mu2_b = p_T; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd348 && t <= 32'd4412); end
+            11: begin mu2_a = v714; mu2_b = v480_s5; mu2_sh = (16'sd53 - $signed(v481_s5)); mu2_neg = 1'b0; mu2_val = (t >= 32'd363 && t <= 32'd4427); end
+            12: begin mu2_a = v727_s4; mu2_b = v711; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd364 && t <= 32'd4428); end
+            18: begin mu2_a = v390_s6; mu2_b = v722; mu2_sh = 16'sd28; mu2_neg = 1'b1; mu2_val = (t >= 32'd370 && t <= 32'd4434); end
+            13: begin mu2_a = v390; mu2_b = v386_s1; mu2_sh = (16'sd53 - $signed(v387_s1)); mu2_neg = 1'b1; mu2_val = (t >= 32'd173 && t <= 32'd4237); end
+            16: begin mu2_a = v802; mu2_b = v802; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd112 && t <= 32'd4176); end
+            21: begin mu2_a = v817; mu2_b = v819; mu2_sh = 16'sd53; mu2_neg = 1'b0; mu2_val = (t >= 32'd181 && t <= 32'd4245); end
+            19: begin mu2_a = (hs_239 <<< 1); mu2_b = v837; mu2_sh = 16'sd28; mu2_neg = 1'b0; mu2_val = (t >= 32'd435 && t <= 32'd4499); end
             default: ;
         endcase
     end
@@ -2520,37 +2504,37 @@ module heston_aad_z7h (
     always @* begin
         mu3_a = 0; mu3_b = 0; mu3_sh = 0; mu3_neg = 0; mu3_val = 0;
         if (in_term) case (ph)
-            8: begin mu3_a = hs_237; mu3_b = $signed(mu1_out[55:0]); mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd8 && t <= 32'd4072); end
-            4: begin mu3_a = hs_237; mu3_b = $signed(mu0_out[55:0]); mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd4 && t <= 32'd4068); end
-            25: begin mu3_a = v391_s1; mu3_b = v418; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd153 && t <= 32'd4217); end
-            29: begin mu3_a = v379_s1; mu3_b = $signed(mu4_out[55:0]); mu3_sh = (16'sd53 - $signed(v422_s1)); mu3_neg = 1'b1; mu3_val = (t >= 32'd157 && t <= 32'd4221); end
+            8: begin mu3_a = hs_211; mu3_b = $signed(mu1_out[55:0]); mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd8 && t <= 32'd4072); end
+            4: begin mu3_a = hs_211; mu3_b = $signed(mu0_out[55:0]); mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd4 && t <= 32'd4068); end
+            25: begin mu3_a = v356_s1; mu3_b = v383; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd153 && t <= 32'd4217); end
+            29: begin mu3_a = v344_s1; mu3_b = $signed(mu4_out[55:0]); mu3_sh = (16'sd53 - $signed(v387_s1)); mu3_neg = 1'b1; mu3_val = (t >= 32'd157 && t <= 32'd4221); end
             14: begin mu3_a = $signed(mu1_out[55:0]); mu3_b = 56'sd780414346020670; mu3_sh = 16'sd27; mu3_neg = 1'b0; mu3_val = (t >= 32'd110 && t <= 32'd4174); end
-            20: begin mu3_a = v457; mu3_b = cr1_o1; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd148 && t <= 32'd4212); end
-            2: begin mu3_a = v425; mu3_b = v466_s1; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd162 && t <= 32'd4226); end
-            30: begin mu3_a = v495; mu3_b = v502; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd190 && t <= 32'd4254); end
-            3: begin mu3_a = v502; mu3_b = v504; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd195 && t <= 32'd4259); end
-            24: begin mu3_a = v473_s1; mu3_b = $signed(mu5_out[55:0]); mu3_sh = (16'sd53 - $signed(v516_s1)); mu3_neg = 1'b1; mu3_val = (t >= 32'd216 && t <= 32'd4280); end
-            7: begin mu3_a = v379; mu3_b = hs_260; mu3_sh = (16'sd53 - $signed(hs_261)); mu3_neg = 1'b0; mu3_val = (t >= 32'd103 && t <= 32'd4167); end
-            9: begin mu3_a = v381; mu3_b = hs_260; mu3_sh = (16'sd53 - $signed(hs_261)); mu3_neg = 1'b0; mu3_val = (t >= 32'd105 && t <= 32'd4169); end
-            31: begin mu3_a = v467_s3; mu3_b = v602_s1; mu3_sh = (16'sd53 - $signed(v604_s1)); mu3_neg = 1'b1; mu3_val = (t >= 32'd223 && t <= 32'd4287); end
-            15: begin mu3_a = 56'sd375299968947541; mu3_b = v629; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd303 && t <= 32'd4367); end
-            5: begin mu3_a = v642; mu3_b = v644; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd325 && t <= 32'd4389); end
-            10: begin mu3_a = v647; mu3_b = v654_s1; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd330 && t <= 32'd4394); end
-            23: begin mu3_a = v669; mu3_b = v613_s3; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd343 && t <= 32'd4407); end
-            27: begin mu3_a = v610_s3; mu3_b = $signed(mu1_out[55:0]); mu3_sh = 16'sd28; mu3_neg = 1'b1; mu3_val = (t >= 32'd347 && t <= 32'd4411); end
-            0: begin mu3_a = v685; mu3_b = v602_s5; mu3_sh = (16'sd53 - $signed(v604_s5)); mu3_neg = 1'b0; mu3_val = (t >= 32'd352 && t <= 32'd4416); end
-            1: begin mu3_a = v698_s3; mu3_b = v685; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd353 && t <= 32'd4417); end
-            6: begin mu3_a = v711; mu3_b = hs_260; mu3_sh = (16'sd53 - $signed(hs_261)); mu3_neg = 1'b0; mu3_val = (t >= 32'd358 && t <= 32'd4422); end
-            28: begin mu3_a = v715_s1; mu3_b = p_T; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd348 && t <= 32'd4412); end
-            11: begin mu3_a = v746; mu3_b = v515_s5; mu3_sh = (16'sd53 - $signed(v516_s5)); mu3_neg = 1'b0; mu3_val = (t >= 32'd363 && t <= 32'd4427); end
-            17: begin mu3_a = v466_s7; mu3_b = v756; mu3_sh = 16'sd28; mu3_neg = 1'b1; mu3_val = (t >= 32'd369 && t <= 32'd4433); end
-            18: begin mu3_a = v428_s6; mu3_b = v756; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd370 && t <= 32'd4434); end
-            26: begin mu3_a = v467_s8; mu3_b = v785; mu3_sh = 16'sd28; mu3_neg = 1'b1; mu3_val = (t >= 32'd378 && t <= 32'd4442); end
-            12: begin mu3_a = v791; mu3_b = v378_s9; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd396 && t <= 32'd4460); end
-            13: begin mu3_a = v428; mu3_b = v420_s1; mu3_sh = (16'sd53 - $signed(v422_s1)); mu3_neg = 1'b0; mu3_val = (t >= 32'd173 && t <= 32'd4237); end
-            16: begin mu3_a = v845; mu3_b = v847; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd144 && t <= 32'd4208); end
-            21: begin mu3_a = v856; mu3_b = v858; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd213 && t <= 32'd4277); end
-            19: begin mu3_a = (v330_s14 <<< 1); mu3_b = v869; mu3_sh = 16'sd28; mu3_neg = 1'b1; mu3_val = (t >= 32'd435 && t <= 32'd4499); end
+            20: begin mu3_a = v422; mu3_b = cr1_o1; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd148 && t <= 32'd4212); end
+            2: begin mu3_a = v390; mu3_b = v432_s1; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd162 && t <= 32'd4226); end
+            30: begin mu3_a = v460; mu3_b = v467; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd190 && t <= 32'd4254); end
+            3: begin mu3_a = v467; mu3_b = v469; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd195 && t <= 32'd4259); end
+            24: begin mu3_a = v438_s1; mu3_b = $signed(mu5_out[55:0]); mu3_sh = (16'sd53 - $signed(v481_s1)); mu3_neg = 1'b1; mu3_val = (t >= 32'd216 && t <= 32'd4280); end
+            7: begin mu3_a = v344; mu3_b = hs_234; mu3_sh = (16'sd53 - $signed(hs_235)); mu3_neg = 1'b0; mu3_val = (t >= 32'd103 && t <= 32'd4167); end
+            9: begin mu3_a = v346; mu3_b = hs_234; mu3_sh = (16'sd53 - $signed(hs_235)); mu3_neg = 1'b0; mu3_val = (t >= 32'd105 && t <= 32'd4169); end
+            31: begin mu3_a = v432_s3; mu3_b = v567_s1; mu3_sh = (16'sd53 - $signed(v569_s1)); mu3_neg = 1'b1; mu3_val = (t >= 32'd223 && t <= 32'd4287); end
+            15: begin mu3_a = 56'sd375299968947541; mu3_b = v594; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd303 && t <= 32'd4367); end
+            5: begin mu3_a = v607; mu3_b = v609; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd325 && t <= 32'd4389); end
+            10: begin mu3_a = v612; mu3_b = v619_s1; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd330 && t <= 32'd4394); end
+            23: begin mu3_a = v634; mu3_b = v578_s3; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd343 && t <= 32'd4407); end
+            27: begin mu3_a = v572_s3; mu3_b = $signed(mu2_out[55:0]); mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd347 && t <= 32'd4411); end
+            0: begin mu3_a = v650; mu3_b = v567_s5; mu3_sh = (16'sd53 - $signed(v569_s5)); mu3_neg = 1'b0; mu3_val = (t >= 32'd352 && t <= 32'd4416); end
+            1: begin mu3_a = v653; mu3_b = v568_s5; mu3_sh = (16'sd53 - $signed(v569_s5)); mu3_neg = 1'b0; mu3_val = (t >= 32'd353 && t <= 32'd4417); end
+            28: begin mu3_a = v680_s1; mu3_b = p_T; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd348 && t <= 32'd4412); end
+            6: begin mu3_a = v393_s2; mu3_b = v567_s1; mu3_sh = (16'sd53 - $signed(v569_s1)); mu3_neg = 1'b1; mu3_val = (t >= 32'd230 && t <= 32'd4294); end
+            11: begin mu3_a = v711; mu3_b = v480_s5; mu3_sh = (16'sd53 - $signed(v481_s5)); mu3_neg = 1'b0; mu3_val = (t >= 32'd363 && t <= 32'd4427); end
+            17: begin mu3_a = v431_s7; mu3_b = v721; mu3_sh = 16'sd28; mu3_neg = 1'b1; mu3_val = (t >= 32'd369 && t <= 32'd4433); end
+            18: begin mu3_a = v393_s6; mu3_b = v721; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd370 && t <= 32'd4434); end
+            26: begin mu3_a = v432_s8; mu3_b = v750; mu3_sh = 16'sd28; mu3_neg = 1'b1; mu3_val = (t >= 32'd378 && t <= 32'd4442); end
+            12: begin mu3_a = v756; mu3_b = v343_s9; mu3_sh = 16'sd28; mu3_neg = 1'b0; mu3_val = (t >= 32'd396 && t <= 32'd4460); end
+            13: begin mu3_a = v393; mu3_b = v385_s1; mu3_sh = (16'sd53 - $signed(v387_s1)); mu3_neg = 1'b0; mu3_val = (t >= 32'd173 && t <= 32'd4237); end
+            16: begin mu3_a = v810; mu3_b = v812; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd144 && t <= 32'd4208); end
+            21: begin mu3_a = v821; mu3_b = v823; mu3_sh = 16'sd53; mu3_neg = 1'b0; mu3_val = (t >= 32'd213 && t <= 32'd4277); end
+            19: begin mu3_a = (v295_s14 <<< 1); mu3_b = v834; mu3_sh = 16'sd28; mu3_neg = 1'b1; mu3_val = (t >= 32'd435 && t <= 32'd4499); end
             default: ;
         endcase
     end
@@ -2564,36 +2548,36 @@ module heston_aad_z7h (
         mu4_a = 0; mu4_b = 0; mu4_sh = 0; mu4_neg = 0; mu4_val = 0;
         if (in_term) case (ph)
             8: begin mu4_a = p_kappa; mu4_b = $signed(mu2_out[55:0]); mu4_sh = 16'sd28; mu4_neg = 1'b1; mu4_val = (t >= 32'd8 && t <= 32'd4072); end
-            25: begin mu4_a = v393_s1; mu4_b = v418; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd153 && t <= 32'd4217); end
-            29: begin mu4_a = v381_s1; mu4_b = $signed(mu3_out[55:0]); mu4_sh = (16'sd53 - $signed(v422_s1)); mu4_neg = 1'b0; mu4_val = (t >= 32'd157 && t <= 32'd4221); end
-            2: begin mu4_a = v428; mu4_b = v467_s1; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd162 && t <= 32'd4226); end
-            20: begin mu4_a = v495; mu4_b = v497; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd180 && t <= 32'd4244); end
-            30: begin mu4_a = v527; mu4_b = 56'sd6243314768165359; mu4_sh = 16'sd25; mu4_neg = 1'b0; mu4_val = (t >= 32'd254 && t <= 32'd4318); end
-            4: begin mu4_a = $signed(mu0_out[55:0]); mu4_b = hs_264; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd4 && t <= 32'd4068); end
-            14: begin mu4_a = v573; mu4_b = v573; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd174 && t <= 32'd4238); end
-            3: begin mu4_a = v583; mu4_b = v590; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd195 && t <= 32'd4259); end
-            9: begin mu4_a = v590; mu4_b = v592; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd201 && t <= 32'd4265); end
-            31: begin mu4_a = v639; mu4_b = v629; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd319 && t <= 32'd4383); end
-            5: begin mu4_a = v622; mu4_b = 56'sd1433540284805665; mu4_sh = 16'sd81; mu4_neg = 1'b0; mu4_val = (t >= 32'd261 && t <= 32'd4325); end
-            10: begin mu4_a = v647; mu4_b = v655_s1; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd330 && t <= 32'd4394); end
-            15: begin mu4_a = v657_s1; mu4_b = v277_s9; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd335 && t <= 32'd4399); end
-            23: begin mu4_a = v670; mu4_b = v616_s3; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd343 && t <= 32'd4407); end
-            27: begin mu4_a = v563_s8; mu4_b = $signed(mu1_out[55:0]); mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd347 && t <= 32'd4411); end
-            0: begin mu4_a = v688; mu4_b = v603_s5; mu4_sh = (16'sd53 - $signed(v604_s5)); mu4_neg = 1'b0; mu4_val = (t >= 32'd352 && t <= 32'd4416); end
-            1: begin mu4_a = v679; mu4_b = hs_260; mu4_sh = (16'sd53 - $signed(hs_261)); mu4_neg = 1'b0; mu4_val = (t >= 32'd353 && t <= 32'd4417); end
-            24: begin mu4_a = v669; mu4_b = v556_s1; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd344 && t <= 32'd4408); end
-            28: begin mu4_a = v714_s1; mu4_b = v379_s7; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd348 && t <= 32'd4412); end
-            6: begin mu4_a = v428_s2; mu4_b = v602_s1; mu4_sh = (16'sd53 - $signed(v604_s1)); mu4_neg = 1'b1; mu4_val = (t >= 32'd230 && t <= 32'd4294); end
-            11: begin mu4_a = v749; mu4_b = v514_s5; mu4_sh = (16'sd53 - $signed(v516_s5)); mu4_neg = 1'b0; mu4_val = (t >= 32'd363 && t <= 32'd4427); end
-            7: begin mu4_a = v519; mu4_b = v514_s1; mu4_sh = (16'sd53 - $signed(v516_s1)); mu4_neg = 1'b0; mu4_val = (t >= 32'd231 && t <= 32'd4295); end
-            17: begin mu4_a = v467_s7; mu4_b = v757; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd369 && t <= 32'd4433); end
-            26: begin mu4_a = v466_s8; mu4_b = v785; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd378 && t <= 32'd4442); end
-            12: begin mu4_a = v776; mu4_b = v421_s8; mu4_sh = (16'sd53 - $signed(v422_s8)); mu4_neg = 1'b0; mu4_val = (t >= 32'd396 && t <= 32'd4460); end
-            13: begin mu4_a = v812_s6; mu4_b = v776; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd397 && t <= 32'd4461); end
-            16: begin mu4_a = v845_s1; mu4_b = v852; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd176 && t <= 32'd4240); end
-            21: begin mu4_a = v823; mu4_b = v864_s6; mu4_sh = (16'sd53 - $signed(v866_s8)); mu4_neg = 1'b0; mu4_val = (t >= 32'd405 && t <= 32'd4469); end
-            18: begin mu4_a = v869; mu4_b = v280_s14; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd434 && t <= 32'd4498); end
-            19: begin mu4_a = v885; mu4_b = v268_s15; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd467 && t <= 32'd4531); end
+            25: begin mu4_a = v358_s1; mu4_b = v383; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd153 && t <= 32'd4217); end
+            29: begin mu4_a = v346_s1; mu4_b = $signed(mu3_out[55:0]); mu4_sh = (16'sd53 - $signed(v387_s1)); mu4_neg = 1'b0; mu4_val = (t >= 32'd157 && t <= 32'd4221); end
+            2: begin mu4_a = v393; mu4_b = v431_s1; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd162 && t <= 32'd4226); end
+            20: begin mu4_a = v460; mu4_b = v462; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd180 && t <= 32'd4244); end
+            30: begin mu4_a = v492; mu4_b = 56'sd6243314768165359; mu4_sh = 16'sd25; mu4_neg = 1'b0; mu4_val = (t >= 32'd254 && t <= 32'd4318); end
+            4: begin mu4_a = $signed(mu0_out[55:0]); mu4_b = hs_238; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd4 && t <= 32'd4068); end
+            14: begin mu4_a = v538; mu4_b = v538; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd174 && t <= 32'd4238); end
+            3: begin mu4_a = v548; mu4_b = v555; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd195 && t <= 32'd4259); end
+            9: begin mu4_a = v555; mu4_b = v557; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd201 && t <= 32'd4265); end
+            31: begin mu4_a = v604; mu4_b = v594; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd319 && t <= 32'd4383); end
+            5: begin mu4_a = v587; mu4_b = 56'sd1433540284805665; mu4_sh = 16'sd81; mu4_neg = 1'b0; mu4_val = (t >= 32'd261 && t <= 32'd4325); end
+            10: begin mu4_a = v612; mu4_b = v620_s1; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd330 && t <= 32'd4394); end
+            15: begin mu4_a = v622_s1; mu4_b = v251_s9; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd335 && t <= 32'd4399); end
+            23: begin mu4_a = v635; mu4_b = v581_s3; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd343 && t <= 32'd4407); end
+            27: begin mu4_a = v575_s3; mu4_b = $signed(mu1_out[55:0]); mu4_sh = 16'sd28; mu4_neg = 1'b1; mu4_val = (t >= 32'd347 && t <= 32'd4411); end
+            0: begin mu4_a = v650; mu4_b = v568_s5; mu4_sh = (16'sd53 - $signed(v569_s5)); mu4_neg = 1'b0; mu4_val = (t >= 32'd352 && t <= 32'd4416); end
+            1: begin mu4_a = v653; mu4_b = v567_s5; mu4_sh = (16'sd53 - $signed(v569_s5)); mu4_neg = 1'b0; mu4_val = (t >= 32'd353 && t <= 32'd4417); end
+            7: begin mu4_a = v676; mu4_b = hs_234; mu4_sh = (16'sd53 - $signed(hs_235)); mu4_neg = 1'b0; mu4_val = (t >= 32'd359 && t <= 32'd4423); end
+            24: begin mu4_a = v634; mu4_b = v521_s1; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd344 && t <= 32'd4408); end
+            28: begin mu4_a = v679_s1; mu4_b = v344_s7; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd348 && t <= 32'd4412); end
+            6: begin mu4_a = v708_s3; mu4_b = (v680_s1 <<< 1); mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd358 && t <= 32'd4422); end
+            11: begin mu4_a = v714; mu4_b = v479_s5; mu4_sh = (16'sd53 - $signed(v481_s5)); mu4_neg = 1'b0; mu4_val = (t >= 32'd363 && t <= 32'd4427); end
+            17: begin mu4_a = v432_s7; mu4_b = v722; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd369 && t <= 32'd4433); end
+            26: begin mu4_a = v431_s8; mu4_b = v750; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd378 && t <= 32'd4442); end
+            12: begin mu4_a = v741; mu4_b = v386_s8; mu4_sh = (16'sd53 - $signed(v387_s8)); mu4_neg = 1'b0; mu4_val = (t >= 32'd396 && t <= 32'd4460); end
+            13: begin mu4_a = v777_s6; mu4_b = v741; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd397 && t <= 32'd4461); end
+            16: begin mu4_a = v810_s1; mu4_b = v817; mu4_sh = 16'sd53; mu4_neg = 1'b0; mu4_val = (t >= 32'd176 && t <= 32'd4240); end
+            21: begin mu4_a = v788; mu4_b = v829_s6; mu4_sh = (16'sd53 - $signed(v831_s8)); mu4_neg = 1'b0; mu4_val = (t >= 32'd405 && t <= 32'd4469); end
+            18: begin mu4_a = v834; mu4_b = v253_s14; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd434 && t <= 32'd4498); end
+            19: begin mu4_a = v850; mu4_b = v242_s15; mu4_sh = 16'sd28; mu4_neg = 1'b0; mu4_val = (t >= 32'd467 && t <= 32'd4531); end
             default: ;
         endcase
     end
@@ -2606,37 +2590,37 @@ module heston_aad_z7h (
     always @* begin
         mu5_a = 0; mu5_b = 0; mu5_sh = 0; mu5_neg = 0; mu5_val = 0;
         if (in_term) case (ph)
-            8: begin mu5_a = v408; mu5_b = v410; mu5_sh = 16'sd53; mu5_neg = 1'b0; mu5_val = (t >= 32'd136 && t <= 32'd4200); end
-            25: begin mu5_a = v443; mu5_b = v439; mu5_sh = 16'sd53; mu5_neg = 1'b0; mu5_val = (t >= 32'd121 && t <= 32'd4185); end
-            2: begin mu5_a = v425; mu5_b = v467_s1; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd162 && t <= 32'd4226); end
-            20: begin mu5_a = v485_s1; mu5_b = v512; mu5_sh = 16'sd53; mu5_neg = 1'b0; mu5_val = (t >= 32'd212 && t <= 32'd4276); end
-            30: begin mu5_a = hs_263; mu5_b = v558; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd254 && t <= 32'd4318); end
-            14: begin mu5_a = v575; mu5_b = v575; mu5_sh = 16'sd53; mu5_neg = 1'b0; mu5_val = (t >= 32'd174 && t <= 32'd4238); end
-            4: begin mu5_a = v563_s4; mu5_b = v607; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd228 && t <= 32'd4292); end
-            9: begin mu5_a = v613; mu5_b = p_v0; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd233 && t <= 32'd4297); end
-            15: begin mu5_a = v656_s1; mu5_b = v328_s9; mu5_sh = 16'sd0; mu5_neg = 1'b0; mu5_val = (t >= 32'd335 && t <= 32'd4399); end
-            23: begin mu5_a = v670; mu5_b = v268_s11; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd343 && t <= 32'd4407); end
-            27: begin mu5_a = v564_s8; mu5_b = $signed(mu2_out[55:0]); mu5_sh = 16'sd28; mu5_neg = 1'b1; mu5_val = (t >= 32'd347 && t <= 32'd4411); end
-            0: begin mu5_a = v685; mu5_b = v603_s5; mu5_sh = (16'sd53 - $signed(v604_s5)); mu5_neg = 1'b0; mu5_val = (t >= 32'd352 && t <= 32'd4416); end
-            5: begin mu5_a = v607; mu5_b = v602_s1; mu5_sh = (16'sd53 - $signed(v604_s1)); mu5_neg = 1'b0; mu5_val = (t >= 32'd229 && t <= 32'd4293); end
-            1: begin mu5_a = v682; mu5_b = hs_260; mu5_sh = (16'sd53 - $signed(hs_261)); mu5_neg = 1'b0; mu5_val = (t >= 32'd353 && t <= 32'd4417); end
-            24: begin mu5_a = v670; mu5_b = v558_s2; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd344 && t <= 32'd4408); end
-            28: begin mu5_a = v715_s1; mu5_b = v381_s7; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd348 && t <= 32'd4412); end
-            29: begin mu5_a = v718; mu5_b = hs_260; mu5_sh = (16'sd53 - $signed(hs_261)); mu5_neg = 1'b0; mu5_val = (t >= 32'd349 && t <= 32'd4413); end
-            3: begin mu5_a = v733_s1; mu5_b = hs_260; mu5_sh = (16'sd53 - $signed(hs_261)); mu5_neg = 1'b0; mu5_val = (t >= 32'd355 && t <= 32'd4419); end
-            31: begin mu5_a = v476_s1; mu5_b = v602_s1; mu5_sh = (16'sd53 - $signed(v604_s1)); mu5_neg = 1'b0; mu5_val = (t >= 32'd223 && t <= 32'd4287); end
-            6: begin mu5_a = v743_s3; mu5_b = (v715_s1 <<< 1); mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd358 && t <= 32'd4422); end
-            7: begin mu5_a = v522; mu5_b = v515_s1; mu5_sh = (16'sd53 - $signed(v516_s1)); mu5_neg = 1'b1; mu5_val = (t >= 32'd231 && t <= 32'd4295); end
-            11: begin mu5_a = v763_s3; mu5_b = v746; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd363 && t <= 32'd4427); end
-            17: begin mu5_a = v466_s7; mu5_b = v757; mu5_sh = 16'sd28; mu5_neg = 1'b1; mu5_val = (t >= 32'd369 && t <= 32'd4433); end
-            26: begin mu5_a = v467_s8; mu5_b = v784; mu5_sh = 16'sd28; mu5_neg = 1'b1; mu5_val = (t >= 32'd378 && t <= 32'd4442); end
-            10: begin mu5_a = v792; mu5_b = p_T; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd394 && t <= 32'd4458); end
-            12: begin mu5_a = v777; mu5_b = v420_s8; mu5_sh = (16'sd53 - $signed(v422_s8)); mu5_neg = 1'b0; mu5_val = (t >= 32'd396 && t <= 32'd4460); end
-            13: begin mu5_a = v811_s6; mu5_b = v777; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd397 && t <= 32'd4461); end
-            16: begin mu5_a = v845_s2; mu5_b = v856; mu5_sh = 16'sd53; mu5_neg = 1'b0; mu5_val = (t >= 32'd208 && t <= 32'd4272); end
-            21: begin mu5_a = v825; mu5_b = v865_s6; mu5_sh = (16'sd53 - $signed(v866_s8)); mu5_neg = 1'b0; mu5_val = (t >= 32'd405 && t <= 32'd4469); end
-            18: begin mu5_a = v872; mu5_b = v268_s14; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd434 && t <= 32'd4498); end
-            19: begin mu5_a = v876; mu5_b = (p_xi <<< 1); mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd467 && t <= 32'd4531); end
+            8: begin mu5_a = v373; mu5_b = v375; mu5_sh = 16'sd53; mu5_neg = 1'b0; mu5_val = (t >= 32'd136 && t <= 32'd4200); end
+            25: begin mu5_a = v408; mu5_b = v404; mu5_sh = 16'sd53; mu5_neg = 1'b0; mu5_val = (t >= 32'd121 && t <= 32'd4185); end
+            20: begin mu5_a = v450_s1; mu5_b = v477; mu5_sh = 16'sd53; mu5_neg = 1'b0; mu5_val = (t >= 32'd212 && t <= 32'd4276); end
+            2: begin mu5_a = v494; mu5_b = v496; mu5_sh = 16'sd53; mu5_neg = 1'b0; mu5_val = (t >= 32'd258 && t <= 32'd4322); end
+            30: begin mu5_a = hs_237; mu5_b = v523; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd254 && t <= 32'd4318); end
+            14: begin mu5_a = v540; mu5_b = v540; mu5_sh = 16'sd53; mu5_neg = 1'b0; mu5_val = (t >= 32'd174 && t <= 32'd4238); end
+            4: begin mu5_a = v528_s4; mu5_b = v572; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd228 && t <= 32'd4292); end
+            9: begin mu5_a = v578; mu5_b = p_v0; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd233 && t <= 32'd4297); end
+            15: begin mu5_a = v621_s1; mu5_b = v293_s9; mu5_sh = 16'sd0; mu5_neg = 1'b0; mu5_val = (t >= 32'd335 && t <= 32'd4399); end
+            23: begin mu5_a = v635; mu5_b = v242_s11; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd343 && t <= 32'd4407); end
+            27: begin mu5_a = v528_s8; mu5_b = $signed(mu1_out[55:0]); mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd347 && t <= 32'd4411); end
+            5: begin mu5_a = v572; mu5_b = v567_s1; mu5_sh = (16'sd53 - $signed(v569_s1)); mu5_neg = 1'b0; mu5_val = (t >= 32'd229 && t <= 32'd4293); end
+            0: begin mu5_a = v664_s3; mu5_b = v650; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd352 && t <= 32'd4416); end
+            1: begin mu5_a = v663_s3; mu5_b = v653; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd353 && t <= 32'd4417); end
+            24: begin mu5_a = v635; mu5_b = v523_s2; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd344 && t <= 32'd4408); end
+            28: begin mu5_a = v680_s1; mu5_b = v346_s7; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd348 && t <= 32'd4412); end
+            29: begin mu5_a = v683; mu5_b = hs_234; mu5_sh = (16'sd53 - $signed(hs_235)); mu5_neg = 1'b0; mu5_val = (t >= 32'd349 && t <= 32'd4413); end
+            3: begin mu5_a = v698_s1; mu5_b = hs_234; mu5_sh = (16'sd53 - $signed(hs_235)); mu5_neg = 1'b0; mu5_val = (t >= 32'd355 && t <= 32'd4419); end
+            31: begin mu5_a = v441_s1; mu5_b = v567_s1; mu5_sh = (16'sd53 - $signed(v569_s1)); mu5_neg = 1'b0; mu5_val = (t >= 32'd223 && t <= 32'd4287); end
+            6: begin mu5_a = v705_s4; mu5_b = (v680_s1 <<< 1); mu5_sh = 16'sd28; mu5_neg = 1'b1; mu5_val = (t >= 32'd358 && t <= 32'd4422); end
+            7: begin mu5_a = v487; mu5_b = v480_s1; mu5_sh = (16'sd53 - $signed(v481_s1)); mu5_neg = 1'b1; mu5_val = (t >= 32'd231 && t <= 32'd4295); end
+            11: begin mu5_a = v728_s3; mu5_b = v711; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd363 && t <= 32'd4427); end
+            17: begin mu5_a = v431_s7; mu5_b = v722; mu5_sh = 16'sd28; mu5_neg = 1'b1; mu5_val = (t >= 32'd369 && t <= 32'd4433); end
+            26: begin mu5_a = v432_s8; mu5_b = v749; mu5_sh = 16'sd28; mu5_neg = 1'b1; mu5_val = (t >= 32'd378 && t <= 32'd4442); end
+            10: begin mu5_a = v757; mu5_b = p_T; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd394 && t <= 32'd4458); end
+            12: begin mu5_a = v742; mu5_b = v385_s8; mu5_sh = (16'sd53 - $signed(v387_s8)); mu5_neg = 1'b0; mu5_val = (t >= 32'd396 && t <= 32'd4460); end
+            13: begin mu5_a = v776_s6; mu5_b = v742; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd397 && t <= 32'd4461); end
+            16: begin mu5_a = v810_s2; mu5_b = v821; mu5_sh = 16'sd53; mu5_neg = 1'b0; mu5_val = (t >= 32'd208 && t <= 32'd4272); end
+            21: begin mu5_a = v790; mu5_b = v830_s6; mu5_sh = (16'sd53 - $signed(v831_s8)); mu5_neg = 1'b0; mu5_val = (t >= 32'd405 && t <= 32'd4469); end
+            18: begin mu5_a = v837; mu5_b = v242_s14; mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd434 && t <= 32'd4498); end
+            19: begin mu5_a = v841; mu5_b = (p_xi <<< 1); mu5_sh = 16'sd28; mu5_neg = 1'b0; mu5_val = (t >= 32'd467 && t <= 32'd4531); end
             default: ;
         endcase
     end
@@ -2649,37 +2633,37 @@ module heston_aad_z7h (
     always @* begin
         mu6_a = 0; mu6_b = 0; mu6_sh = 0; mu6_neg = 0; mu6_val = 0;
         if (in_term) case (ph)
-            8: begin mu6_a = v452; mu6_b = v454; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd136 && t <= 32'd4200); end
-            2: begin mu6_a = v428; mu6_b = v466_s1; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd162 && t <= 32'd4226); end
-            25: begin mu6_a = v497; mu6_b = v500; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd185 && t <= 32'd4249); end
-            20: begin mu6_a = v487_s1; mu6_b = v512; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd212 && t <= 32'd4276); end
-            30: begin mu6_a = v585; mu6_b = v588; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd190 && t <= 32'd4254); end
-            14: begin mu6_a = v583; mu6_b = v594; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd206 && t <= 32'd4270); end
-            4: begin mu6_a = v564_s4; mu6_b = v610; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd228 && t <= 32'd4292); end
+            8: begin mu6_a = v417; mu6_b = v419; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd136 && t <= 32'd4200); end
+            25: begin mu6_a = v462; mu6_b = v465; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd185 && t <= 32'd4249); end
+            20: begin mu6_a = v452_s1; mu6_b = v477; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd212 && t <= 32'd4276); end
+            30: begin mu6_a = v550; mu6_b = v553; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd190 && t <= 32'd4254); end
+            14: begin mu6_a = v548; mu6_b = v559; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd206 && t <= 32'd4270); end
+            4: begin mu6_a = v529_s4; mu6_b = v575; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd228 && t <= 32'd4292); end
             9: begin mu6_a = $signed(mu2_out[55:0]); mu6_b = 56'sd780414346020670; mu6_sh = 16'sd27; mu6_neg = 1'b0; mu6_val = (t >= 32'd297 && t <= 32'd4361); end
-            15: begin mu6_a = v657_s1; mu6_b = v329_s9; mu6_sh = 16'sd0; mu6_neg = 1'b0; mu6_val = (t >= 32'd335 && t <= 32'd4399); end
-            27: begin mu6_a = v563_s8; mu6_b = $signed(mu2_out[55:0]); mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd347 && t <= 32'd4411); end
-            0: begin mu6_a = v688; mu6_b = v602_s5; mu6_sh = (16'sd53 - $signed(v604_s5)); mu6_neg = 1'b0; mu6_val = (t >= 32'd352 && t <= 32'd4416); end
-            5: begin mu6_a = v610; mu6_b = v603_s1; mu6_sh = (16'sd53 - $signed(v604_s1)); mu6_neg = 1'b1; mu6_val = (t >= 32'd229 && t <= 32'd4293); end
-            1: begin mu6_a = v679; mu6_b = v563_s8; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd353 && t <= 32'd4417); end
-            23: begin mu6_a = hs_263; mu6_b = v669; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd343 && t <= 32'd4407); end
-            24: begin mu6_a = v670; mu6_b = v268_s11; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd344 && t <= 32'd4408); end
+            15: begin mu6_a = v622_s1; mu6_b = v294_s9; mu6_sh = 16'sd0; mu6_neg = 1'b0; mu6_val = (t >= 32'd335 && t <= 32'd4399); end
+            27: begin mu6_a = v529_s8; mu6_b = $signed(mu2_out[55:0]); mu6_sh = 16'sd28; mu6_neg = 1'b1; mu6_val = (t >= 32'd347 && t <= 32'd4411); end
+            5: begin mu6_a = v575; mu6_b = v568_s1; mu6_sh = (16'sd53 - $signed(v569_s1)); mu6_neg = 1'b1; mu6_val = (t >= 32'd229 && t <= 32'd4293); end
+            1: begin mu6_a = v664_s3; mu6_b = v653; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd353 && t <= 32'd4417); end
+            0: begin mu6_a = v663_s3; mu6_b = v650; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd352 && t <= 32'd4416); end
+            2: begin mu6_a = v644; mu6_b = v528_s8; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd354 && t <= 32'd4418); end
+            23: begin mu6_a = hs_237; mu6_b = v634; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd343 && t <= 32'd4407); end
+            24: begin mu6_a = v635; mu6_b = v242_s11; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd344 && t <= 32'd4408); end
             28: begin mu6_a = $signed(mu6_out[55:0]); mu6_b = p_r; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd348 && t <= 32'd4412); end
-            29: begin mu6_a = v718; mu6_b = hs_263; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd349 && t <= 32'd4413); end
-            3: begin mu6_a = v732_s1; mu6_b = p_theta; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd355 && t <= 32'd4419); end
-            31: begin mu6_a = v428_s1; mu6_b = v603_s1; mu6_sh = (16'sd53 - $signed(v604_s1)); mu6_neg = 1'b0; mu6_val = (t >= 32'd223 && t <= 32'd4287); end
-            6: begin mu6_a = v740_s4; mu6_b = (v715_s1 <<< 1); mu6_sh = 16'sd28; mu6_neg = 1'b1; mu6_val = (t >= 32'd358 && t <= 32'd4422); end
-            7: begin mu6_a = v519; mu6_b = v515_s1; mu6_sh = (16'sd53 - $signed(v516_s1)); mu6_neg = 1'b1; mu6_val = (t >= 32'd231 && t <= 32'd4295); end
-            11: begin mu6_a = v762_s3; mu6_b = v749; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd363 && t <= 32'd4427); end
-            17: begin mu6_a = v467_s7; mu6_b = v756; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd369 && t <= 32'd4433); end
-            10: begin mu6_a = v791; mu6_b = p_T; mu6_sh = 16'sd28; mu6_neg = 1'b1; mu6_val = (t >= 32'd394 && t <= 32'd4458); end
-            26: begin mu6_a = v776; mu6_b = v420_s7; mu6_sh = (16'sd53 - $signed(v422_s8)); mu6_neg = 1'b0; mu6_val = (t >= 32'd378 && t <= 32'd4442); end
-            12: begin mu6_a = v425; mu6_b = v420_s1; mu6_sh = (16'sd53 - $signed(v422_s1)); mu6_neg = 1'b0; mu6_val = (t >= 32'd172 && t <= 32'd4236); end
-            13: begin mu6_a = v812_s6; mu6_b = v777; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd397 && t <= 32'd4461); end
-            16: begin mu6_a = v835_s4; mu6_b = v862; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd240 && t <= 32'd4304); end
-            21: begin mu6_a = v823; mu6_b = v865_s6; mu6_sh = (16'sd53 - $signed(v866_s8)); mu6_neg = 1'b0; mu6_val = (t >= 32'd405 && t <= 32'd4469); end
-            18: begin mu6_a = (hs_265 <<< 1); mu6_b = v869; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd434 && t <= 32'd4498); end
-            19: begin mu6_a = v887_s1; mu6_b = p_rho; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd499 && t <= 32'd4563); end
+            29: begin mu6_a = v683; mu6_b = hs_237; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd349 && t <= 32'd4413); end
+            3: begin mu6_a = v697_s1; mu6_b = p_theta; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd355 && t <= 32'd4419); end
+            31: begin mu6_a = v393_s1; mu6_b = v568_s1; mu6_sh = (16'sd53 - $signed(v569_s1)); mu6_neg = 1'b0; mu6_val = (t >= 32'd223 && t <= 32'd4287); end
+            6: begin mu6_a = v708_s3; mu6_b = (v679_s1 <<< 1); mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd358 && t <= 32'd4422); end
+            7: begin mu6_a = v484; mu6_b = v480_s1; mu6_sh = (16'sd53 - $signed(v481_s1)); mu6_neg = 1'b1; mu6_val = (t >= 32'd231 && t <= 32'd4295); end
+            11: begin mu6_a = v727_s3; mu6_b = v714; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd363 && t <= 32'd4427); end
+            17: begin mu6_a = v432_s7; mu6_b = v721; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd369 && t <= 32'd4433); end
+            10: begin mu6_a = v756; mu6_b = p_T; mu6_sh = 16'sd28; mu6_neg = 1'b1; mu6_val = (t >= 32'd394 && t <= 32'd4458); end
+            26: begin mu6_a = v741; mu6_b = v385_s7; mu6_sh = (16'sd53 - $signed(v387_s8)); mu6_neg = 1'b0; mu6_val = (t >= 32'd378 && t <= 32'd4442); end
+            12: begin mu6_a = v390; mu6_b = v385_s1; mu6_sh = (16'sd53 - $signed(v387_s1)); mu6_neg = 1'b0; mu6_val = (t >= 32'd172 && t <= 32'd4236); end
+            13: begin mu6_a = v777_s6; mu6_b = v742; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd397 && t <= 32'd4461); end
+            16: begin mu6_a = v800_s4; mu6_b = v827; mu6_sh = 16'sd53; mu6_neg = 1'b0; mu6_val = (t >= 32'd240 && t <= 32'd4304); end
+            21: begin mu6_a = v788; mu6_b = v830_s6; mu6_sh = (16'sd53 - $signed(v831_s8)); mu6_neg = 1'b0; mu6_val = (t >= 32'd405 && t <= 32'd4469); end
+            18: begin mu6_a = (hs_239 <<< 1); mu6_b = v834; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd434 && t <= 32'd4498); end
+            19: begin mu6_a = v852_s1; mu6_b = p_rho; mu6_sh = 16'sd28; mu6_neg = 1'b0; mu6_val = (t >= 32'd499 && t <= 32'd4563); end
             default: ;
         endcase
     end
@@ -2692,37 +2676,37 @@ module heston_aad_z7h (
     always @* begin
         mu7_a = 0; mu7_b = 0; mu7_sh = 0; mu7_neg = 0; mu7_val = 0;
         if (in_term) case (ph)
-            8: begin mu7_a = v495; mu7_b = v506; mu7_sh = 16'sd53; mu7_neg = 1'b0; mu7_val = (t >= 32'd200 && t <= 32'd4264); end
-            2: begin mu7_a = v529; mu7_b = v531; mu7_sh = 16'sd53; mu7_neg = 1'b0; mu7_val = (t >= 32'd258 && t <= 32'd4322); end
-            25: begin mu7_a = v583; mu7_b = v585; mu7_sh = 16'sd53; mu7_neg = 1'b0; mu7_val = (t >= 32'd185 && t <= 32'd4249); end
-            30: begin mu7_a = v565_s2; mu7_b = $signed(mu0_out[55:0]); mu7_sh = (16'sd53 - $signed(v604_s1)); mu7_neg = 1'b0; mu7_val = (t >= 32'd222 && t <= 32'd4286); end
-            4: begin mu7_a = v563_s4; mu7_b = v610; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd228 && t <= 32'd4292); end
-            20: begin mu7_a = v633; mu7_b = v629; mu7_sh = 16'sd53; mu7_neg = 1'b0; mu7_val = (t >= 32'd308 && t <= 32'd4372); end
+            8: begin mu7_a = v460; mu7_b = v471; mu7_sh = 16'sd53; mu7_neg = 1'b0; mu7_val = (t >= 32'd200 && t <= 32'd4264); end
+            25: begin mu7_a = v548; mu7_b = v550; mu7_sh = 16'sd53; mu7_neg = 1'b0; mu7_val = (t >= 32'd185 && t <= 32'd4249); end
+            30: begin mu7_a = v530_s2; mu7_b = $signed(mu0_out[55:0]); mu7_sh = (16'sd53 - $signed(v569_s1)); mu7_neg = 1'b0; mu7_val = (t >= 32'd222 && t <= 32'd4286); end
+            4: begin mu7_a = v528_s4; mu7_b = v575; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd228 && t <= 32'd4292); end
+            20: begin mu7_a = v598; mu7_b = v594; mu7_sh = 16'sd53; mu7_neg = 1'b0; mu7_val = (t >= 32'd308 && t <= 32'd4372); end
             9: begin mu7_a = $signed(mu4_out[55:0]); mu7_b = 56'sd28296951008113761; mu7_sh = 16'sd24; mu7_neg = 1'b0; mu7_val = (t >= 32'd265 && t <= 32'd4329); end
-            14: begin mu7_a = $signed(mu3_out[55:0]); mu7_b = v276_s9; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd334 && t <= 32'd4398); end
-            15: begin mu7_a = v656_s1; mu7_b = v329_s9; mu7_sh = 16'sd0; mu7_neg = 1'b0; mu7_val = (t >= 32'd335 && t <= 32'd4399); end
-            27: begin mu7_a = v564_s8; mu7_b = $signed(mu1_out[55:0]); mu7_sh = 16'sd28; mu7_neg = 1'b1; mu7_val = (t >= 32'd347 && t <= 32'd4411); end
-            5: begin mu7_a = v607; mu7_b = v603_s1; mu7_sh = (16'sd53 - $signed(v604_s1)); mu7_neg = 1'b1; mu7_val = (t >= 32'd229 && t <= 32'd4293); end
-            0: begin mu7_a = v699_s3; mu7_b = v685; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd352 && t <= 32'd4416); end
-            1: begin mu7_a = v682; mu7_b = v564_s8; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd353 && t <= 32'd4417); end
-            23: begin mu7_a = hs_263; mu7_b = v670; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd343 && t <= 32'd4407); end
+            14: begin mu7_a = $signed(mu3_out[55:0]); mu7_b = v250_s9; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd334 && t <= 32'd4398); end
+            15: begin mu7_a = v621_s1; mu7_b = v294_s9; mu7_sh = 16'sd0; mu7_neg = 1'b0; mu7_val = (t >= 32'd335 && t <= 32'd4399); end
+            27: begin mu7_a = v528_s8; mu7_b = $signed(mu2_out[55:0]); mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd347 && t <= 32'd4411); end
+            5: begin mu7_a = v572; mu7_b = v568_s1; mu7_sh = (16'sd53 - $signed(v569_s1)); mu7_neg = 1'b1; mu7_val = (t >= 32'd229 && t <= 32'd4293); end
+            0: begin mu7_a = v644; mu7_b = hs_234; mu7_sh = (16'sd53 - $signed(hs_235)); mu7_neg = 1'b0; mu7_val = (t >= 32'd352 && t <= 32'd4416); end
+            1: begin mu7_a = v647; mu7_b = hs_234; mu7_sh = (16'sd53 - $signed(hs_235)); mu7_neg = 1'b0; mu7_val = (t >= 32'd353 && t <= 32'd4417); end
+            2: begin mu7_a = v647; mu7_b = v529_s8; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd354 && t <= 32'd4418); end
+            23: begin mu7_a = hs_237; mu7_b = v635; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd343 && t <= 32'd4407); end
             28: begin mu7_a = $signed(mu6_out[55:0]); mu7_b = p_T; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd348 && t <= 32'd4412); end
-            3: begin mu7_a = v732_s1; mu7_b = p_kappa; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd355 && t <= 32'd4419); end
-            31: begin mu7_a = v476_s1; mu7_b = v603_s1; mu7_sh = (16'sd53 - $signed(v604_s1)); mu7_neg = 1'b1; mu7_val = (t >= 32'd223 && t <= 32'd4287); end
-            29: begin mu7_a = v740_s3; mu7_b = (v714_s1 <<< 1); mu7_sh = 16'sd28; mu7_neg = 1'b1; mu7_val = (t >= 32'd349 && t <= 32'd4413); end
-            6: begin mu7_a = v743_s3; mu7_b = (v714_s1 <<< 1); mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd358 && t <= 32'd4422); end
-            7: begin mu7_a = v522; mu7_b = v514_s1; mu7_sh = (16'sd53 - $signed(v516_s1)); mu7_neg = 1'b0; mu7_val = (t >= 32'd231 && t <= 32'd4295); end
-            11: begin mu7_a = v763_s3; mu7_b = v749; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd363 && t <= 32'd4427); end
-            17: begin mu7_a = v425_s6; mu7_b = v756; mu7_sh = 16'sd28; mu7_neg = 1'b1; mu7_val = (t >= 32'd369 && t <= 32'd4433); end
-            24: begin mu7_a = v466_s7; mu7_b = v784; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd376 && t <= 32'd4440); end
-            10: begin mu7_a = v788; mu7_b = v374_s9; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd394 && t <= 32'd4458); end
-            26: begin mu7_a = v777; mu7_b = v421_s7; mu7_sh = (16'sd53 - $signed(v422_s8)); mu7_neg = 1'b0; mu7_val = (t >= 32'd378 && t <= 32'd4442); end
-            12: begin mu7_a = v428; mu7_b = v421_s1; mu7_sh = (16'sd53 - $signed(v422_s1)); mu7_neg = 1'b1; mu7_val = (t >= 32'd172 && t <= 32'd4236); end
-            13: begin mu7_a = v811_s6; mu7_b = v776; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd397 && t <= 32'd4461); end
-            16: begin mu7_a = v837_s4; mu7_b = v862; mu7_sh = 16'sd53; mu7_neg = 1'b0; mu7_val = (t >= 32'd240 && t <= 32'd4304); end
-            21: begin mu7_a = v825; mu7_b = v864_s6; mu7_sh = (16'sd53 - $signed(v866_s8)); mu7_neg = 1'b0; mu7_val = (t >= 32'd405 && t <= 32'd4469); end
-            18: begin mu7_a = (v330_s14 <<< 1); mu7_b = v872; mu7_sh = 16'sd28; mu7_neg = 1'b1; mu7_val = (t >= 32'd434 && t <= 32'd4498); end
-            19: begin mu7_a = v887_s1; mu7_b = p_xi; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd499 && t <= 32'd4563); end
+            3: begin mu7_a = v697_s1; mu7_b = p_kappa; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd355 && t <= 32'd4419); end
+            31: begin mu7_a = v441_s1; mu7_b = v568_s1; mu7_sh = (16'sd53 - $signed(v569_s1)); mu7_neg = 1'b1; mu7_val = (t >= 32'd223 && t <= 32'd4287); end
+            29: begin mu7_a = v705_s3; mu7_b = (v679_s1 <<< 1); mu7_sh = 16'sd28; mu7_neg = 1'b1; mu7_val = (t >= 32'd349 && t <= 32'd4413); end
+            6: begin mu7_a = v484; mu7_b = v479_s1; mu7_sh = (16'sd53 - $signed(v481_s1)); mu7_neg = 1'b0; mu7_val = (t >= 32'd230 && t <= 32'd4294); end
+            7: begin mu7_a = v487; mu7_b = v479_s1; mu7_sh = (16'sd53 - $signed(v481_s1)); mu7_neg = 1'b0; mu7_val = (t >= 32'd231 && t <= 32'd4295); end
+            11: begin mu7_a = v728_s3; mu7_b = v714; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd363 && t <= 32'd4427); end
+            17: begin mu7_a = v390_s6; mu7_b = v721; mu7_sh = 16'sd28; mu7_neg = 1'b1; mu7_val = (t >= 32'd369 && t <= 32'd4433); end
+            24: begin mu7_a = v431_s7; mu7_b = v749; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd376 && t <= 32'd4440); end
+            10: begin mu7_a = v753; mu7_b = v339_s9; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd394 && t <= 32'd4458); end
+            26: begin mu7_a = v742; mu7_b = v386_s7; mu7_sh = (16'sd53 - $signed(v387_s8)); mu7_neg = 1'b0; mu7_val = (t >= 32'd378 && t <= 32'd4442); end
+            12: begin mu7_a = v393; mu7_b = v386_s1; mu7_sh = (16'sd53 - $signed(v387_s1)); mu7_neg = 1'b1; mu7_val = (t >= 32'd172 && t <= 32'd4236); end
+            13: begin mu7_a = v776_s6; mu7_b = v741; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd397 && t <= 32'd4461); end
+            16: begin mu7_a = v802_s4; mu7_b = v827; mu7_sh = 16'sd53; mu7_neg = 1'b0; mu7_val = (t >= 32'd240 && t <= 32'd4304); end
+            21: begin mu7_a = v790; mu7_b = v829_s6; mu7_sh = (16'sd53 - $signed(v831_s8)); mu7_neg = 1'b0; mu7_val = (t >= 32'd405 && t <= 32'd4469); end
+            18: begin mu7_a = (v295_s14 <<< 1); mu7_b = v837; mu7_sh = 16'sd28; mu7_neg = 1'b1; mu7_val = (t >= 32'd434 && t <= 32'd4498); end
+            19: begin mu7_a = v852_s1; mu7_b = p_xi; mu7_sh = 16'sd28; mu7_neg = 1'b0; mu7_val = (t >= 32'd499 && t <= 32'd4563); end
             default: ;
         endcase
     end
@@ -2735,7 +2719,7 @@ module heston_aad_z7h (
     always @* begin
         cr0_go = 0; cr0_x = 0; cr0_y = 0;
         if (in_term) case (ph)
-            17: begin cr0_go = 1; cr0_x = v274; cr0_y = 0; end
+            17: begin cr0_go = 1; cr0_x = v248; cr0_y = 0; end
             default: ;
         endcase
     end
@@ -2743,7 +2727,7 @@ module heston_aad_z7h (
     always @* begin
         cr1_go = 0; cr1_x = 0; cr1_y = 0;
         if (in_term) case (ph)
-            20: begin cr1_go = 1; cr1_x = v462; cr1_y = 0; end
+            20: begin cr1_go = 1; cr1_x = v427; cr1_y = 0; end
             default: ;
         endcase
     end
@@ -2751,7 +2735,7 @@ module heston_aad_z7h (
     always @* begin
         cr2_go = 0; cr2_x = 0; cr2_y = 0;
         if (in_term) case (ph)
-            14: begin cr2_go = 1; cr2_x = v652; cr2_y = 0; end
+            14: begin cr2_go = 1; cr2_x = v617; cr2_y = 0; end
             default: ;
         endcase
     end
@@ -2759,7 +2743,7 @@ module heston_aad_z7h (
     always @* begin
         cv0_go = 0; cv0_x = 0; cv0_y = 0;
         if (in_term) case (ph)
-            14: begin cv0_go = 1; cv0_x = v334; cv0_y = v338; end
+            14: begin cv0_go = 1; cv0_x = v299; cv0_y = v303; end
             default: ;
         endcase
     end
@@ -2767,457 +2751,461 @@ module heston_aad_z7h (
     always @* begin
         cv1_go = 0; cv1_x = 0; cv1_y = 0;
         if (in_term) case (ph)
-            29: begin cv1_go = 1; cv1_x = v519; cv1_y = v522; end
+            29: begin cv1_go = 1; cv1_x = v484; cv1_y = v487; end
             default: ;
         endcase
     end
     heston_aad_z7h_vec #(.WL(56)) cv1_inst (.clk(clk), .go(cv1_go), .a(cv1_x), .b(cv1_y), .o0(cv1_o0), .o1(cv1_o1));
-    always @(posedge clk) if (in_term && ph == 4) v268_s1 <= $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 4) v268_s2 <= v268_s1;
-    always @(posedge clk) if (in_term && ph == 4) v268_s3 <= v268_s2;
-    always @(posedge clk) if (in_term && ph == 4) v268_s4 <= v268_s3;
-    always @(posedge clk) if (in_term && ph == 4) v268_s5 <= v268_s4;
-    always @(posedge clk) if (in_term && ph == 4) v268_s6 <= v268_s5;
-    always @(posedge clk) if (in_term && ph == 4) v268_s7 <= v268_s6;
-    always @(posedge clk) if (in_term && ph == 4) v268_s8 <= v268_s7;
-    always @(posedge clk) if (in_term && ph == 4) v268_s9 <= v268_s8;
-    always @(posedge clk) if (in_term && ph == 4) v268_s10 <= v268_s9;
-    always @(posedge clk) if (in_term && ph == 4) v268_s11 <= v268_s10;
-    always @(posedge clk) if (in_term && ph == 4) v268_s12 <= v268_s11;
-    always @(posedge clk) if (in_term && ph == 4) v268_s13 <= v268_s12;
-    always @(posedge clk) if (in_term && ph == 4) v268_s14 <= v268_s13;
-    always @(posedge clk) if (in_term && ph == 4) v268_s15 <= v268_s14;
-    always @(posedge clk) if (in_term && ph == 8) v269_s1 <= $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 17) v276_s1 <= cr0_o0;
-    always @(posedge clk) if (in_term && ph == 17) v276_s2 <= v276_s1;
-    always @(posedge clk) if (in_term && ph == 17) v276_s3 <= v276_s2;
-    always @(posedge clk) if (in_term && ph == 17) v276_s4 <= v276_s3;
-    always @(posedge clk) if (in_term && ph == 17) v276_s5 <= v276_s4;
-    always @(posedge clk) if (in_term && ph == 17) v276_s6 <= v276_s5;
-    always @(posedge clk) if (in_term && ph == 17) v276_s7 <= v276_s6;
-    always @(posedge clk) if (in_term && ph == 17) v276_s8 <= v276_s7;
-    always @(posedge clk) if (in_term && ph == 17) v276_s9 <= v276_s8;
-    always @(posedge clk) if (in_term && ph == 17) v277_s1 <= cr0_o1;
-    always @(posedge clk) if (in_term && ph == 17) v277_s2 <= v277_s1;
-    always @(posedge clk) if (in_term && ph == 17) v277_s3 <= v277_s2;
-    always @(posedge clk) if (in_term && ph == 17) v277_s4 <= v277_s3;
-    always @(posedge clk) if (in_term && ph == 17) v277_s5 <= v277_s4;
-    always @(posedge clk) if (in_term && ph == 17) v277_s6 <= v277_s5;
-    always @(posedge clk) if (in_term && ph == 17) v277_s7 <= v277_s6;
-    always @(posedge clk) if (in_term && ph == 17) v277_s8 <= v277_s7;
-    always @(posedge clk) if (in_term && ph == 17) v277_s9 <= v277_s8;
-    always @(posedge clk) if (in_term && ph == 0) v278_s1 <= v278;
-    always @(posedge clk) if (in_term && ph == 0) v278_s2 <= v278_s1;
-    always @(posedge clk) if (in_term && ph == 8) v280_s1 <= $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 8) v280_s2 <= v280_s1;
-    always @(posedge clk) if (in_term && ph == 8) v280_s3 <= v280_s2;
-    always @(posedge clk) if (in_term && ph == 8) v280_s4 <= v280_s3;
-    always @(posedge clk) if (in_term && ph == 8) v280_s5 <= v280_s4;
-    always @(posedge clk) if (in_term && ph == 8) v280_s6 <= v280_s5;
-    always @(posedge clk) if (in_term && ph == 8) v280_s7 <= v280_s6;
-    always @(posedge clk) if (in_term && ph == 8) v280_s8 <= v280_s7;
-    always @(posedge clk) if (in_term && ph == 8) v280_s9 <= v280_s8;
-    always @(posedge clk) if (in_term && ph == 8) v280_s10 <= v280_s9;
-    always @(posedge clk) if (in_term && ph == 8) v280_s11 <= v280_s10;
-    always @(posedge clk) if (in_term && ph == 8) v280_s12 <= v280_s11;
-    always @(posedge clk) if (in_term && ph == 8) v280_s13 <= v280_s12;
-    always @(posedge clk) if (in_term && ph == 8) v280_s14 <= v280_s13;
-    always @(posedge clk) if (in_term && ph == 9) v282_s1 <= v282;
-    always @(posedge clk) if (in_term && ph == 11) v304_s1 <= v304;
-    always @(posedge clk) if (in_term && ph == 5) v307_s1 <= $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 5) v307_s2 <= v307_s1;
-    always @(posedge clk) if (in_term && ph == 1) v310_s1 <= v310;
-    always @(posedge clk) if (in_term && ph == 0) v318_s1 <= v318;
-    always @(posedge clk) if (in_term && ph == 0) v324_s1 <= $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 1) v327_s1 <= v327;
-    always @(posedge clk) if (in_term && ph == 1) v327_s2 <= v327_s1;
-    always @(posedge clk) if (in_term && ph == 1) v327_s3 <= v327_s2;
-    always @(posedge clk) if (in_term && ph == 1) v327_s4 <= v327_s3;
-    always @(posedge clk) if (in_term && ph == 1) v327_s5 <= v327_s4;
-    always @(posedge clk) if (in_term && ph == 1) v327_s6 <= v327_s5;
-    always @(posedge clk) if (in_term && ph == 1) v327_s7 <= v327_s6;
-    always @(posedge clk) if (in_term && ph == 1) v327_s8 <= v327_s7;
-    always @(posedge clk) if (in_term && ph == 6) v328_s1 <= $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 6) v328_s2 <= v328_s1;
-    always @(posedge clk) if (in_term && ph == 6) v328_s3 <= v328_s2;
-    always @(posedge clk) if (in_term && ph == 6) v328_s4 <= v328_s3;
-    always @(posedge clk) if (in_term && ph == 6) v328_s5 <= v328_s4;
-    always @(posedge clk) if (in_term && ph == 6) v328_s6 <= v328_s5;
-    always @(posedge clk) if (in_term && ph == 6) v328_s7 <= v328_s6;
-    always @(posedge clk) if (in_term && ph == 6) v328_s8 <= v328_s7;
-    always @(posedge clk) if (in_term && ph == 6) v328_s9 <= v328_s8;
-    always @(posedge clk) if (in_term && ph == 6) v329_s1 <= $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 6) v329_s2 <= v329_s1;
-    always @(posedge clk) if (in_term && ph == 6) v329_s3 <= v329_s2;
-    always @(posedge clk) if (in_term && ph == 6) v329_s4 <= v329_s3;
-    always @(posedge clk) if (in_term && ph == 6) v329_s5 <= v329_s4;
-    always @(posedge clk) if (in_term && ph == 6) v329_s6 <= v329_s5;
-    always @(posedge clk) if (in_term && ph == 6) v329_s7 <= v329_s6;
-    always @(posedge clk) if (in_term && ph == 6) v329_s8 <= v329_s7;
-    always @(posedge clk) if (in_term && ph == 6) v329_s9 <= v329_s8;
-    always @(posedge clk) if (in_term && ph == 8) v330_s1 <= $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 8) v330_s2 <= v330_s1;
-    always @(posedge clk) if (in_term && ph == 8) v330_s3 <= v330_s2;
-    always @(posedge clk) if (in_term && ph == 8) v330_s4 <= v330_s3;
-    always @(posedge clk) if (in_term && ph == 8) v330_s5 <= v330_s4;
-    always @(posedge clk) if (in_term && ph == 8) v330_s6 <= v330_s5;
-    always @(posedge clk) if (in_term && ph == 8) v330_s7 <= v330_s6;
-    always @(posedge clk) if (in_term && ph == 8) v330_s8 <= v330_s7;
-    always @(posedge clk) if (in_term && ph == 8) v330_s9 <= v330_s8;
-    always @(posedge clk) if (in_term && ph == 8) v330_s10 <= v330_s9;
-    always @(posedge clk) if (in_term && ph == 8) v330_s11 <= v330_s10;
-    always @(posedge clk) if (in_term && ph == 8) v330_s12 <= v330_s11;
-    always @(posedge clk) if (in_term && ph == 8) v330_s13 <= v330_s12;
-    always @(posedge clk) if (in_term && ph == 8) v330_s14 <= v330_s13;
-    always @(posedge clk) if (in_term && ph == 12) v333_s1 <= $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 8) v337_s1 <= $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 12) v338_s1 <= v338;
-    always @(posedge clk) if (in_term && ph == 12) v338_s2 <= v338_s1;
-    always @(posedge clk) if (in_term && ph == 14) v343_s1 <= v343;
-    always @(posedge clk) if (in_term && ph == 19) v346_s1 <= v346;
-    always @(posedge clk) if (in_term && ph == 22) v349_s1 <= v349;
-    always @(posedge clk) if (in_term && ph == 6) v357_s1 <= $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 19) v361_s1 <= $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 22) v367_s1 <= v367;
-    always @(posedge clk) if (in_term && ph == 4) v368_s1 <= $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 23) v370_s1 <= v370;
-    always @(posedge clk) if (in_term && ph == 4) v371_s1 <= $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 14) v372_s1 <= v372;
-    always @(posedge clk) if (in_term && ph == 14) v372_s2 <= v372_s1;
-    always @(posedge clk) if (in_term && ph == 5) v374_s1 <= v374;
-    always @(posedge clk) if (in_term && ph == 5) v374_s2 <= v374_s1;
-    always @(posedge clk) if (in_term && ph == 5) v374_s3 <= v374_s2;
-    always @(posedge clk) if (in_term && ph == 5) v374_s4 <= v374_s3;
-    always @(posedge clk) if (in_term && ph == 5) v374_s5 <= v374_s4;
-    always @(posedge clk) if (in_term && ph == 5) v374_s6 <= v374_s5;
-    always @(posedge clk) if (in_term && ph == 5) v374_s7 <= v374_s6;
-    always @(posedge clk) if (in_term && ph == 5) v374_s8 <= v374_s7;
-    always @(posedge clk) if (in_term && ph == 5) v374_s9 <= v374_s8;
-    always @(posedge clk) if (in_term && ph == 13) v375_s1 <= v375;
-    always @(posedge clk) if (in_term && ph == 13) v375_s2 <= v375_s1;
-    always @(posedge clk) if (in_term && ph == 6) v378_s1 <= v378;
-    always @(posedge clk) if (in_term && ph == 6) v378_s2 <= v378_s1;
-    always @(posedge clk) if (in_term && ph == 6) v378_s3 <= v378_s2;
-    always @(posedge clk) if (in_term && ph == 6) v378_s4 <= v378_s3;
-    always @(posedge clk) if (in_term && ph == 6) v378_s5 <= v378_s4;
-    always @(posedge clk) if (in_term && ph == 6) v378_s6 <= v378_s5;
-    always @(posedge clk) if (in_term && ph == 6) v378_s7 <= v378_s6;
-    always @(posedge clk) if (in_term && ph == 6) v378_s8 <= v378_s7;
-    always @(posedge clk) if (in_term && ph == 6) v378_s9 <= v378_s8;
-    always @(posedge clk) if (in_term && ph == 6) v379_s1 <= v379;
-    always @(posedge clk) if (in_term && ph == 6) v379_s2 <= v379_s1;
-    always @(posedge clk) if (in_term && ph == 6) v379_s3 <= v379_s2;
-    always @(posedge clk) if (in_term && ph == 6) v379_s4 <= v379_s3;
-    always @(posedge clk) if (in_term && ph == 6) v379_s5 <= v379_s4;
-    always @(posedge clk) if (in_term && ph == 6) v379_s6 <= v379_s5;
-    always @(posedge clk) if (in_term && ph == 6) v379_s7 <= v379_s6;
-    always @(posedge clk) if (in_term && ph == 8) v380_s1 <= v380;
-    always @(posedge clk) if (in_term && ph == 8) v380_s2 <= v380_s1;
-    always @(posedge clk) if (in_term && ph == 7) v381_s1 <= v381;
-    always @(posedge clk) if (in_term && ph == 7) v381_s2 <= v381_s1;
-    always @(posedge clk) if (in_term && ph == 7) v381_s3 <= v381_s2;
-    always @(posedge clk) if (in_term && ph == 7) v381_s4 <= v381_s3;
-    always @(posedge clk) if (in_term && ph == 7) v381_s5 <= v381_s4;
-    always @(posedge clk) if (in_term && ph == 7) v381_s6 <= v381_s5;
-    always @(posedge clk) if (in_term && ph == 7) v381_s7 <= v381_s6;
-    always @(posedge clk) if (in_term && ph == 13) v391_s1 <= v391;
-    always @(posedge clk) if (in_term && ph == 13) v393_s1 <= v393;
-    always @(posedge clk) if (in_term && ph == 19) v397_s1 <= v397;
-    always @(posedge clk) if (in_term && ph == 29) v420_s1 <= $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 29) v420_s2 <= v420_s1;
-    always @(posedge clk) if (in_term && ph == 29) v420_s3 <= v420_s2;
-    always @(posedge clk) if (in_term && ph == 29) v420_s4 <= v420_s3;
-    always @(posedge clk) if (in_term && ph == 29) v420_s5 <= v420_s4;
-    always @(posedge clk) if (in_term && ph == 29) v420_s6 <= v420_s5;
-    always @(posedge clk) if (in_term && ph == 29) v420_s7 <= v420_s6;
-    always @(posedge clk) if (in_term && ph == 29) v420_s8 <= v420_s7;
-    always @(posedge clk) if (in_term && ph == 29) v421_s1 <= $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 29) v421_s2 <= v421_s1;
-    always @(posedge clk) if (in_term && ph == 29) v421_s3 <= v421_s2;
-    always @(posedge clk) if (in_term && ph == 29) v421_s4 <= v421_s3;
-    always @(posedge clk) if (in_term && ph == 29) v421_s5 <= v421_s4;
-    always @(posedge clk) if (in_term && ph == 29) v421_s6 <= v421_s5;
-    always @(posedge clk) if (in_term && ph == 29) v421_s7 <= v421_s6;
-    always @(posedge clk) if (in_term && ph == 29) v421_s8 <= v421_s7;
-    always @(posedge clk) if (in_term && ph == 22) v422_s1 <= v422;
-    always @(posedge clk) if (in_term && ph == 22) v422_s2 <= v422_s1;
-    always @(posedge clk) if (in_term && ph == 22) v422_s3 <= v422_s2;
-    always @(posedge clk) if (in_term && ph == 22) v422_s4 <= v422_s3;
-    always @(posedge clk) if (in_term && ph == 22) v422_s5 <= v422_s4;
-    always @(posedge clk) if (in_term && ph == 22) v422_s6 <= v422_s5;
-    always @(posedge clk) if (in_term && ph == 22) v422_s7 <= v422_s6;
-    always @(posedge clk) if (in_term && ph == 22) v422_s8 <= v422_s7;
-    always @(posedge clk) if (in_term && ph == 1) v425_s1 <= v425;
-    always @(posedge clk) if (in_term && ph == 1) v425_s2 <= v425_s1;
-    always @(posedge clk) if (in_term && ph == 1) v425_s3 <= v425_s2;
-    always @(posedge clk) if (in_term && ph == 1) v425_s4 <= v425_s3;
-    always @(posedge clk) if (in_term && ph == 1) v425_s5 <= v425_s4;
-    always @(posedge clk) if (in_term && ph == 1) v425_s6 <= v425_s5;
-    always @(posedge clk) if (in_term && ph == 1) v428_s1 <= v428;
-    always @(posedge clk) if (in_term && ph == 1) v428_s2 <= v428_s1;
-    always @(posedge clk) if (in_term && ph == 1) v428_s3 <= v428_s2;
-    always @(posedge clk) if (in_term && ph == 1) v428_s4 <= v428_s3;
-    always @(posedge clk) if (in_term && ph == 1) v428_s5 <= v428_s4;
-    always @(posedge clk) if (in_term && ph == 1) v428_s6 <= v428_s5;
-    always @(posedge clk) if (in_term && ph == 24) v466_s1 <= $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 24) v466_s2 <= v466_s1;
-    always @(posedge clk) if (in_term && ph == 24) v466_s3 <= v466_s2;
-    always @(posedge clk) if (in_term && ph == 24) v466_s4 <= v466_s3;
-    always @(posedge clk) if (in_term && ph == 24) v466_s5 <= v466_s4;
-    always @(posedge clk) if (in_term && ph == 24) v466_s6 <= v466_s5;
-    always @(posedge clk) if (in_term && ph == 24) v466_s7 <= v466_s6;
-    always @(posedge clk) if (in_term && ph == 24) v466_s8 <= v466_s7;
-    always @(posedge clk) if (in_term && ph == 24) v467_s1 <= $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 24) v467_s2 <= v467_s1;
-    always @(posedge clk) if (in_term && ph == 24) v467_s3 <= v467_s2;
-    always @(posedge clk) if (in_term && ph == 24) v467_s4 <= v467_s3;
-    always @(posedge clk) if (in_term && ph == 24) v467_s5 <= v467_s4;
-    always @(posedge clk) if (in_term && ph == 24) v467_s6 <= v467_s5;
-    always @(posedge clk) if (in_term && ph == 24) v467_s7 <= v467_s6;
-    always @(posedge clk) if (in_term && ph == 24) v467_s8 <= v467_s7;
-    always @(posedge clk) if (in_term && ph == 6) v473_s1 <= v473;
-    always @(posedge clk) if (in_term && ph == 7) v474_s1 <= v474;
-    always @(posedge clk) if (in_term && ph == 2) v476_s1 <= v476;
-    always @(posedge clk) if (in_term && ph == 8) v485_s1 <= v485;
-    always @(posedge clk) if (in_term && ph == 8) v487_s1 <= v487;
-    always @(posedge clk) if (in_term && ph == 14) v491_s1 <= v491;
-    always @(posedge clk) if (in_term && ph == 24) v514_s1 <= $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 24) v514_s2 <= v514_s1;
-    always @(posedge clk) if (in_term && ph == 24) v514_s3 <= v514_s2;
-    always @(posedge clk) if (in_term && ph == 24) v514_s4 <= v514_s3;
-    always @(posedge clk) if (in_term && ph == 24) v514_s5 <= v514_s4;
-    always @(posedge clk) if (in_term && ph == 24) v515_s1 <= $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 24) v515_s2 <= v515_s1;
-    always @(posedge clk) if (in_term && ph == 24) v515_s3 <= v515_s2;
-    always @(posedge clk) if (in_term && ph == 24) v515_s4 <= v515_s3;
-    always @(posedge clk) if (in_term && ph == 24) v515_s5 <= v515_s4;
-    always @(posedge clk) if (in_term && ph == 17) v516_s1 <= v516;
-    always @(posedge clk) if (in_term && ph == 17) v516_s2 <= v516_s1;
-    always @(posedge clk) if (in_term && ph == 17) v516_s3 <= v516_s2;
-    always @(posedge clk) if (in_term && ph == 17) v516_s4 <= v516_s3;
-    always @(posedge clk) if (in_term && ph == 17) v516_s5 <= v516_s4;
-    always @(posedge clk) if (in_term && ph == 29) v524_s1 <= cv1_o0;
-    always @(posedge clk) if (in_term && ph == 2) v550_s1 <= $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 11) v553_s1 <= $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 11) v553_s2 <= v553_s1;
-    always @(posedge clk) if (in_term && ph == 11) v553_s3 <= v553_s2;
-    always @(posedge clk) if (in_term && ph == 11) v553_s4 <= v553_s3;
-    always @(posedge clk) if (in_term && ph == 11) v553_s5 <= v553_s4;
-    always @(posedge clk) if (in_term && ph == 11) v553_s6 <= v553_s5;
-    always @(posedge clk) if (in_term && ph == 13) v554_s1 <= $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 13) v554_s2 <= v554_s1;
-    always @(posedge clk) if (in_term && ph == 13) v554_s3 <= v554_s2;
-    always @(posedge clk) if (in_term && ph == 13) v554_s4 <= v554_s3;
-    always @(posedge clk) if (in_term && ph == 13) v554_s5 <= v554_s4;
-    always @(posedge clk) if (in_term && ph == 30) v556_s1 <= v556;
-    always @(posedge clk) if (in_term && ph == 29) v558_s1 <= v558;
-    always @(posedge clk) if (in_term && ph == 29) v558_s2 <= v558_s1;
-    always @(posedge clk) if (in_term && ph == 8) v560_s1 <= $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 8) v560_s2 <= v560_s1;
-    always @(posedge clk) if (in_term && ph == 8) v560_s3 <= v560_s2;
-    always @(posedge clk) if (in_term && ph == 8) v560_s4 <= v560_s3;
-    always @(posedge clk) if (in_term && ph == 8) v560_s5 <= v560_s4;
-    always @(posedge clk) if (in_term && ph == 8) v560_s6 <= v560_s5;
-    always @(posedge clk) if (in_term && ph == 8) v560_s7 <= v560_s6;
-    always @(posedge clk) if (in_term && ph == 8) v560_s8 <= v560_s7;
-    always @(posedge clk) if (in_term && ph == 11) v563_s1 <= $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 11) v563_s2 <= v563_s1;
-    always @(posedge clk) if (in_term && ph == 11) v563_s3 <= v563_s2;
-    always @(posedge clk) if (in_term && ph == 11) v563_s4 <= v563_s3;
-    always @(posedge clk) if (in_term && ph == 11) v563_s5 <= v563_s4;
-    always @(posedge clk) if (in_term && ph == 11) v563_s6 <= v563_s5;
-    always @(posedge clk) if (in_term && ph == 11) v563_s7 <= v563_s6;
-    always @(posedge clk) if (in_term && ph == 11) v563_s8 <= v563_s7;
-    always @(posedge clk) if (in_term && ph == 13) v564_s1 <= $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 13) v564_s2 <= v564_s1;
-    always @(posedge clk) if (in_term && ph == 13) v564_s3 <= v564_s2;
-    always @(posedge clk) if (in_term && ph == 13) v564_s4 <= v564_s3;
-    always @(posedge clk) if (in_term && ph == 13) v564_s5 <= v564_s4;
-    always @(posedge clk) if (in_term && ph == 13) v564_s6 <= v564_s5;
-    always @(posedge clk) if (in_term && ph == 13) v564_s7 <= v564_s6;
-    always @(posedge clk) if (in_term && ph == 13) v564_s8 <= v564_s7;
-    always @(posedge clk) if (in_term && ph == 24) v565_s1 <= v565;
-    always @(posedge clk) if (in_term && ph == 24) v565_s2 <= v565_s1;
-    always @(posedge clk) if (in_term && ph == 13) v573_s1 <= v573;
-    always @(posedge clk) if (in_term && ph == 13) v575_s1 <= v575;
-    always @(posedge clk) if (in_term && ph == 19) v579_s1 <= v579;
-    always @(posedge clk) if (in_term && ph == 30) v602_s1 <= $signed(mu0_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 30) v602_s2 <= v602_s1;
-    always @(posedge clk) if (in_term && ph == 30) v602_s3 <= v602_s2;
-    always @(posedge clk) if (in_term && ph == 30) v602_s4 <= v602_s3;
-    always @(posedge clk) if (in_term && ph == 30) v602_s5 <= v602_s4;
-    always @(posedge clk) if (in_term && ph == 30) v603_s1 <= $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 30) v603_s2 <= v603_s1;
-    always @(posedge clk) if (in_term && ph == 30) v603_s3 <= v603_s2;
-    always @(posedge clk) if (in_term && ph == 30) v603_s4 <= v603_s3;
-    always @(posedge clk) if (in_term && ph == 30) v603_s5 <= v603_s4;
-    always @(posedge clk) if (in_term && ph == 22) v604_s1 <= v604;
-    always @(posedge clk) if (in_term && ph == 22) v604_s2 <= v604_s1;
-    always @(posedge clk) if (in_term && ph == 22) v604_s3 <= v604_s2;
-    always @(posedge clk) if (in_term && ph == 22) v604_s4 <= v604_s3;
-    always @(posedge clk) if (in_term && ph == 22) v604_s5 <= v604_s4;
-    always @(posedge clk) if (in_term && ph == 2) v605_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 3) v607_s1 <= v607;
-    always @(posedge clk) if (in_term && ph == 3) v607_s2 <= v607_s1;
-    always @(posedge clk) if (in_term && ph == 3) v607_s3 <= v607_s2;
-    always @(posedge clk) if (in_term && ph == 3) v610_s1 <= v610;
-    always @(posedge clk) if (in_term && ph == 3) v610_s2 <= v610_s1;
-    always @(posedge clk) if (in_term && ph == 3) v610_s3 <= v610_s2;
-    always @(posedge clk) if (in_term && ph == 8) v613_s1 <= v613;
-    always @(posedge clk) if (in_term && ph == 8) v613_s2 <= v613_s1;
-    always @(posedge clk) if (in_term && ph == 8) v613_s3 <= v613_s2;
-    always @(posedge clk) if (in_term && ph == 8) v614_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 9) v616_s1 <= v616;
-    always @(posedge clk) if (in_term && ph == 9) v616_s2 <= v616_s1;
-    always @(posedge clk) if (in_term && ph == 9) v616_s3 <= v616_s2;
-    always @(posedge clk) if (in_term && ph == 13) v617_s1 <= $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 13) v617_s2 <= v617_s1;
-    always @(posedge clk) if (in_term && ph == 14) v619_s1 <= $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 9) v621_s1 <= $signed(mu1_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 9) v621_s2 <= v621_s1;
-    always @(posedge clk) if (in_term && ph == 9) v621_s3 <= v621_s2;
-    always @(posedge clk) if (in_term && ph == 9) v621_s4 <= v621_s3;
-    always @(posedge clk) if (in_term && ph == 9) v621_s5 <= v621_s4;
-    always @(posedge clk) if (in_term && ph == 9) v621_s6 <= v621_s5;
-    always @(posedge clk) if (in_term && ph == 9) v621_s7 <= v621_s6;
-    always @(posedge clk) if (in_term && ph == 9) v621_s8 <= v621_s7;
-    always @(posedge clk) if (in_term && ph == 14) v654_s1 <= cr2_o0;
-    always @(posedge clk) if (in_term && ph == 14) v655_s1 <= cr2_o1;
-    always @(posedge clk) if (in_term && ph == 14) v656_s1 <= $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 14) v657_s1 <= $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 18) v658_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 19) v665_s1 <= mu7_out;
-    always @(posedge clk) if (in_term && ph == 9) v696_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 10) v698_s1 <= v698;
-    always @(posedge clk) if (in_term && ph == 10) v698_s2 <= v698_s1;
-    always @(posedge clk) if (in_term && ph == 10) v698_s3 <= v698_s2;
-    always @(posedge clk) if (in_term && ph == 9) v699_s1 <= v699;
-    always @(posedge clk) if (in_term && ph == 9) v699_s2 <= v699_s1;
-    always @(posedge clk) if (in_term && ph == 9) v699_s3 <= v699_s2;
-    always @(posedge clk) if (in_term && ph == 4) v700_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 27) v714_s1 <= $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 27) v715_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 0) v721_s1 <= $signed(mu2_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 0) v723_s1 <= $signed(mu3_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 5) v724_s1 <= v724;
-    always @(posedge clk) if (in_term && ph == 0) v729_s1 <= $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 1) v730_s1 <= v730;
-    always @(posedge clk) if (in_term && ph == 1) v732_s1 <= $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 1) v733_s1 <= $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 7) v734_s1 <= $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 11) v735_s1 <= v735;
-    always @(posedge clk) if (in_term && ph == 11) v735_s2 <= v735_s1;
-    always @(posedge clk) if (in_term && ph == 7) v736_s1 <= $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 7) v736_s2 <= v736_s1;
-    always @(posedge clk) if (in_term && ph == 3) v740_s1 <= v740;
-    always @(posedge clk) if (in_term && ph == 3) v740_s2 <= v740_s1;
-    always @(posedge clk) if (in_term && ph == 3) v740_s3 <= v740_s2;
-    always @(posedge clk) if (in_term && ph == 3) v740_s4 <= v740_s3;
-    always @(posedge clk) if (in_term && ph == 3) v741_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 10) v743_s1 <= v743;
-    always @(posedge clk) if (in_term && ph == 10) v743_s2 <= v743_s1;
-    always @(posedge clk) if (in_term && ph == 10) v743_s3 <= v743_s2;
-    always @(posedge clk) if (in_term && ph == 1) v744_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 11) v762_s1 <= v762;
-    always @(posedge clk) if (in_term && ph == 11) v762_s2 <= v762_s1;
-    always @(posedge clk) if (in_term && ph == 11) v762_s3 <= v762_s2;
-    always @(posedge clk) if (in_term && ph == 11) v762_s4 <= v762_s3;
-    always @(posedge clk) if (in_term && ph == 11) v763_s1 <= v763;
-    always @(posedge clk) if (in_term && ph == 11) v763_s2 <= v763_s1;
-    always @(posedge clk) if (in_term && ph == 11) v763_s3 <= v763_s2;
-    always @(posedge clk) if (in_term && ph == 15) v766_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 21) v778_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 28) v786_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 14) v793_s1 <= $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 14) v794_s1 <= $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 14) v795_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 17) v811_s1 <= v811;
-    always @(posedge clk) if (in_term && ph == 17) v811_s2 <= v811_s1;
-    always @(posedge clk) if (in_term && ph == 17) v811_s3 <= v811_s2;
-    always @(posedge clk) if (in_term && ph == 17) v811_s4 <= v811_s3;
-    always @(posedge clk) if (in_term && ph == 17) v811_s5 <= v811_s4;
-    always @(posedge clk) if (in_term && ph == 17) v811_s6 <= v811_s5;
-    always @(posedge clk) if (in_term && ph == 16) v812_s1 <= v812;
-    always @(posedge clk) if (in_term && ph == 16) v812_s2 <= v812_s1;
-    always @(posedge clk) if (in_term && ph == 16) v812_s3 <= v812_s2;
-    always @(posedge clk) if (in_term && ph == 16) v812_s4 <= v812_s3;
-    always @(posedge clk) if (in_term && ph == 16) v812_s5 <= v812_s4;
-    always @(posedge clk) if (in_term && ph == 16) v812_s6 <= v812_s5;
-    always @(posedge clk) if (in_term && ph == 19) v820_s1 <= v820;
-    always @(posedge clk) if (in_term && ph == 18) v821_s1 <= v821;
-    always @(posedge clk) if (in_term && ph == 12) v835_s1 <= v835;
-    always @(posedge clk) if (in_term && ph == 12) v835_s2 <= v835_s1;
-    always @(posedge clk) if (in_term && ph == 12) v835_s3 <= v835_s2;
-    always @(posedge clk) if (in_term && ph == 12) v835_s4 <= v835_s3;
-    always @(posedge clk) if (in_term && ph == 12) v837_s1 <= v837;
-    always @(posedge clk) if (in_term && ph == 12) v837_s2 <= v837_s1;
-    always @(posedge clk) if (in_term && ph == 12) v837_s3 <= v837_s2;
-    always @(posedge clk) if (in_term && ph == 12) v837_s4 <= v837_s3;
-    always @(posedge clk) if (in_term && ph == 21) v841_s1 <= v841;
-    always @(posedge clk) if (in_term && ph == 21) v841_s2 <= v841_s1;
-    always @(posedge clk) if (in_term && ph == 21) v841_s3 <= v841_s2;
-    always @(posedge clk) if (in_term && ph == 24) v845_s1 <= v845;
-    always @(posedge clk) if (in_term && ph == 24) v845_s2 <= v845_s1;
-    always @(posedge clk) if (in_term && ph == 20) v864_s1 <= $signed(mu6_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 20) v864_s2 <= v864_s1;
-    always @(posedge clk) if (in_term && ph == 20) v864_s3 <= v864_s2;
-    always @(posedge clk) if (in_term && ph == 20) v864_s4 <= v864_s3;
-    always @(posedge clk) if (in_term && ph == 20) v864_s5 <= v864_s4;
-    always @(posedge clk) if (in_term && ph == 20) v864_s6 <= v864_s5;
-    always @(posedge clk) if (in_term && ph == 20) v865_s1 <= $signed(mu7_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 20) v865_s2 <= v865_s1;
-    always @(posedge clk) if (in_term && ph == 20) v865_s3 <= v865_s2;
-    always @(posedge clk) if (in_term && ph == 20) v865_s4 <= v865_s3;
-    always @(posedge clk) if (in_term && ph == 20) v865_s5 <= v865_s4;
-    always @(posedge clk) if (in_term && ph == 20) v865_s6 <= v865_s5;
-    always @(posedge clk) if (in_term && ph == 24) v866_s1 <= v866;
-    always @(posedge clk) if (in_term && ph == 24) v866_s2 <= v866_s1;
-    always @(posedge clk) if (in_term && ph == 24) v866_s3 <= v866_s2;
-    always @(posedge clk) if (in_term && ph == 24) v866_s4 <= v866_s3;
-    always @(posedge clk) if (in_term && ph == 24) v866_s5 <= v866_s4;
-    always @(posedge clk) if (in_term && ph == 24) v866_s6 <= v866_s5;
-    always @(posedge clk) if (in_term && ph == 24) v866_s7 <= v866_s6;
-    always @(posedge clk) if (in_term && ph == 24) v866_s8 <= v866_s7;
-    always @(posedge clk) if (in_term && ph == 23) v887_s1 <= $signed(mu4_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 23) v889_s1 <= $signed(mu5_out[55:0]);
-    always @(posedge clk) if (in_term && ph == 22) v893_s1 <= v893;
-    always @(posedge clk) if (in_term && ph == 22) v893_s2 <= v893_s1;
-    always @(posedge clk) if (in_term && ph == 22) v893_s3 <= v893_s2;
-    always @(posedge clk) if (in_term && ph == 22) v893_s4 <= v893_s3;
-    always @(posedge clk) if (in_term && ph == 22) v893_s5 <= v893_s4;
+    always @(posedge clk) if (in_term && ph == 4) v242_s1 <= $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 4) v242_s2 <= v242_s1;
+    always @(posedge clk) if (in_term && ph == 4) v242_s3 <= v242_s2;
+    always @(posedge clk) if (in_term && ph == 4) v242_s4 <= v242_s3;
+    always @(posedge clk) if (in_term && ph == 4) v242_s5 <= v242_s4;
+    always @(posedge clk) if (in_term && ph == 4) v242_s6 <= v242_s5;
+    always @(posedge clk) if (in_term && ph == 4) v242_s7 <= v242_s6;
+    always @(posedge clk) if (in_term && ph == 4) v242_s8 <= v242_s7;
+    always @(posedge clk) if (in_term && ph == 4) v242_s9 <= v242_s8;
+    always @(posedge clk) if (in_term && ph == 4) v242_s10 <= v242_s9;
+    always @(posedge clk) if (in_term && ph == 4) v242_s11 <= v242_s10;
+    always @(posedge clk) if (in_term && ph == 4) v242_s12 <= v242_s11;
+    always @(posedge clk) if (in_term && ph == 4) v242_s13 <= v242_s12;
+    always @(posedge clk) if (in_term && ph == 4) v242_s14 <= v242_s13;
+    always @(posedge clk) if (in_term && ph == 4) v242_s15 <= v242_s14;
+    always @(posedge clk) if (in_term && ph == 8) v243_s1 <= $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 17) v250_s1 <= cr0_o0;
+    always @(posedge clk) if (in_term && ph == 17) v250_s2 <= v250_s1;
+    always @(posedge clk) if (in_term && ph == 17) v250_s3 <= v250_s2;
+    always @(posedge clk) if (in_term && ph == 17) v250_s4 <= v250_s3;
+    always @(posedge clk) if (in_term && ph == 17) v250_s5 <= v250_s4;
+    always @(posedge clk) if (in_term && ph == 17) v250_s6 <= v250_s5;
+    always @(posedge clk) if (in_term && ph == 17) v250_s7 <= v250_s6;
+    always @(posedge clk) if (in_term && ph == 17) v250_s8 <= v250_s7;
+    always @(posedge clk) if (in_term && ph == 17) v250_s9 <= v250_s8;
+    always @(posedge clk) if (in_term && ph == 17) v251_s1 <= cr0_o1;
+    always @(posedge clk) if (in_term && ph == 17) v251_s2 <= v251_s1;
+    always @(posedge clk) if (in_term && ph == 17) v251_s3 <= v251_s2;
+    always @(posedge clk) if (in_term && ph == 17) v251_s4 <= v251_s3;
+    always @(posedge clk) if (in_term && ph == 17) v251_s5 <= v251_s4;
+    always @(posedge clk) if (in_term && ph == 17) v251_s6 <= v251_s5;
+    always @(posedge clk) if (in_term && ph == 17) v251_s7 <= v251_s6;
+    always @(posedge clk) if (in_term && ph == 17) v251_s8 <= v251_s7;
+    always @(posedge clk) if (in_term && ph == 17) v251_s9 <= v251_s8;
+    always @(posedge clk) if (in_term && ph == 0) v252_s1 <= v252;
+    always @(posedge clk) if (in_term && ph == 8) v253_s1 <= $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 8) v253_s2 <= v253_s1;
+    always @(posedge clk) if (in_term && ph == 8) v253_s3 <= v253_s2;
+    always @(posedge clk) if (in_term && ph == 8) v253_s4 <= v253_s3;
+    always @(posedge clk) if (in_term && ph == 8) v253_s5 <= v253_s4;
+    always @(posedge clk) if (in_term && ph == 8) v253_s6 <= v253_s5;
+    always @(posedge clk) if (in_term && ph == 8) v253_s7 <= v253_s6;
+    always @(posedge clk) if (in_term && ph == 8) v253_s8 <= v253_s7;
+    always @(posedge clk) if (in_term && ph == 8) v253_s9 <= v253_s8;
+    always @(posedge clk) if (in_term && ph == 8) v253_s10 <= v253_s9;
+    always @(posedge clk) if (in_term && ph == 8) v253_s11 <= v253_s10;
+    always @(posedge clk) if (in_term && ph == 8) v253_s12 <= v253_s11;
+    always @(posedge clk) if (in_term && ph == 8) v253_s13 <= v253_s12;
+    always @(posedge clk) if (in_term && ph == 8) v253_s14 <= v253_s13;
+    always @(posedge clk) if (in_term && ph == 9) v255_s1 <= v255;
+    always @(posedge clk) if (in_term && ph == 11) v277_s1 <= v277;
+    always @(posedge clk) if (in_term && ph == 5) v280_s1 <= $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 5) v280_s2 <= v280_s1;
+    always @(posedge clk) if (in_term && ph == 0) v285_s1 <= v285;
+    always @(posedge clk) if (in_term && ph == 31) v289_s1 <= $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 0) v292_s1 <= v292;
+    always @(posedge clk) if (in_term && ph == 0) v292_s2 <= v292_s1;
+    always @(posedge clk) if (in_term && ph == 0) v292_s3 <= v292_s2;
+    always @(posedge clk) if (in_term && ph == 0) v292_s4 <= v292_s3;
+    always @(posedge clk) if (in_term && ph == 0) v292_s5 <= v292_s4;
+    always @(posedge clk) if (in_term && ph == 0) v292_s6 <= v292_s5;
+    always @(posedge clk) if (in_term && ph == 0) v292_s7 <= v292_s6;
+    always @(posedge clk) if (in_term && ph == 0) v292_s8 <= v292_s7;
+    always @(posedge clk) if (in_term && ph == 5) v293_s1 <= $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 5) v293_s2 <= v293_s1;
+    always @(posedge clk) if (in_term && ph == 5) v293_s3 <= v293_s2;
+    always @(posedge clk) if (in_term && ph == 5) v293_s4 <= v293_s3;
+    always @(posedge clk) if (in_term && ph == 5) v293_s5 <= v293_s4;
+    always @(posedge clk) if (in_term && ph == 5) v293_s6 <= v293_s5;
+    always @(posedge clk) if (in_term && ph == 5) v293_s7 <= v293_s6;
+    always @(posedge clk) if (in_term && ph == 5) v293_s8 <= v293_s7;
+    always @(posedge clk) if (in_term && ph == 5) v293_s9 <= v293_s8;
+    always @(posedge clk) if (in_term && ph == 5) v294_s1 <= $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 5) v294_s2 <= v294_s1;
+    always @(posedge clk) if (in_term && ph == 5) v294_s3 <= v294_s2;
+    always @(posedge clk) if (in_term && ph == 5) v294_s4 <= v294_s3;
+    always @(posedge clk) if (in_term && ph == 5) v294_s5 <= v294_s4;
+    always @(posedge clk) if (in_term && ph == 5) v294_s6 <= v294_s5;
+    always @(posedge clk) if (in_term && ph == 5) v294_s7 <= v294_s6;
+    always @(posedge clk) if (in_term && ph == 5) v294_s8 <= v294_s7;
+    always @(posedge clk) if (in_term && ph == 5) v294_s9 <= v294_s8;
+    always @(posedge clk) if (in_term && ph == 8) v295_s1 <= $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 8) v295_s2 <= v295_s1;
+    always @(posedge clk) if (in_term && ph == 8) v295_s3 <= v295_s2;
+    always @(posedge clk) if (in_term && ph == 8) v295_s4 <= v295_s3;
+    always @(posedge clk) if (in_term && ph == 8) v295_s5 <= v295_s4;
+    always @(posedge clk) if (in_term && ph == 8) v295_s6 <= v295_s5;
+    always @(posedge clk) if (in_term && ph == 8) v295_s7 <= v295_s6;
+    always @(posedge clk) if (in_term && ph == 8) v295_s8 <= v295_s7;
+    always @(posedge clk) if (in_term && ph == 8) v295_s9 <= v295_s8;
+    always @(posedge clk) if (in_term && ph == 8) v295_s10 <= v295_s9;
+    always @(posedge clk) if (in_term && ph == 8) v295_s11 <= v295_s10;
+    always @(posedge clk) if (in_term && ph == 8) v295_s12 <= v295_s11;
+    always @(posedge clk) if (in_term && ph == 8) v295_s13 <= v295_s12;
+    always @(posedge clk) if (in_term && ph == 8) v295_s14 <= v295_s13;
+    always @(posedge clk) if (in_term && ph == 12) v298_s1 <= $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 8) v302_s1 <= $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 12) v303_s1 <= v303;
+    always @(posedge clk) if (in_term && ph == 12) v303_s2 <= v303_s1;
+    always @(posedge clk) if (in_term && ph == 14) v308_s1 <= v308;
+    always @(posedge clk) if (in_term && ph == 19) v311_s1 <= v311;
+    always @(posedge clk) if (in_term && ph == 22) v314_s1 <= v314;
+    always @(posedge clk) if (in_term && ph == 6) v322_s1 <= $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 19) v326_s1 <= $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 22) v332_s1 <= v332;
+    always @(posedge clk) if (in_term && ph == 4) v333_s1 <= $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 23) v335_s1 <= v335;
+    always @(posedge clk) if (in_term && ph == 4) v336_s1 <= $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 14) v337_s1 <= v337;
+    always @(posedge clk) if (in_term && ph == 14) v337_s2 <= v337_s1;
+    always @(posedge clk) if (in_term && ph == 5) v339_s1 <= v339;
+    always @(posedge clk) if (in_term && ph == 5) v339_s2 <= v339_s1;
+    always @(posedge clk) if (in_term && ph == 5) v339_s3 <= v339_s2;
+    always @(posedge clk) if (in_term && ph == 5) v339_s4 <= v339_s3;
+    always @(posedge clk) if (in_term && ph == 5) v339_s5 <= v339_s4;
+    always @(posedge clk) if (in_term && ph == 5) v339_s6 <= v339_s5;
+    always @(posedge clk) if (in_term && ph == 5) v339_s7 <= v339_s6;
+    always @(posedge clk) if (in_term && ph == 5) v339_s8 <= v339_s7;
+    always @(posedge clk) if (in_term && ph == 5) v339_s9 <= v339_s8;
+    always @(posedge clk) if (in_term && ph == 13) v340_s1 <= v340;
+    always @(posedge clk) if (in_term && ph == 13) v340_s2 <= v340_s1;
+    always @(posedge clk) if (in_term && ph == 6) v343_s1 <= v343;
+    always @(posedge clk) if (in_term && ph == 6) v343_s2 <= v343_s1;
+    always @(posedge clk) if (in_term && ph == 6) v343_s3 <= v343_s2;
+    always @(posedge clk) if (in_term && ph == 6) v343_s4 <= v343_s3;
+    always @(posedge clk) if (in_term && ph == 6) v343_s5 <= v343_s4;
+    always @(posedge clk) if (in_term && ph == 6) v343_s6 <= v343_s5;
+    always @(posedge clk) if (in_term && ph == 6) v343_s7 <= v343_s6;
+    always @(posedge clk) if (in_term && ph == 6) v343_s8 <= v343_s7;
+    always @(posedge clk) if (in_term && ph == 6) v343_s9 <= v343_s8;
+    always @(posedge clk) if (in_term && ph == 6) v344_s1 <= v344;
+    always @(posedge clk) if (in_term && ph == 6) v344_s2 <= v344_s1;
+    always @(posedge clk) if (in_term && ph == 6) v344_s3 <= v344_s2;
+    always @(posedge clk) if (in_term && ph == 6) v344_s4 <= v344_s3;
+    always @(posedge clk) if (in_term && ph == 6) v344_s5 <= v344_s4;
+    always @(posedge clk) if (in_term && ph == 6) v344_s6 <= v344_s5;
+    always @(posedge clk) if (in_term && ph == 6) v344_s7 <= v344_s6;
+    always @(posedge clk) if (in_term && ph == 8) v345_s1 <= v345;
+    always @(posedge clk) if (in_term && ph == 8) v345_s2 <= v345_s1;
+    always @(posedge clk) if (in_term && ph == 7) v346_s1 <= v346;
+    always @(posedge clk) if (in_term && ph == 7) v346_s2 <= v346_s1;
+    always @(posedge clk) if (in_term && ph == 7) v346_s3 <= v346_s2;
+    always @(posedge clk) if (in_term && ph == 7) v346_s4 <= v346_s3;
+    always @(posedge clk) if (in_term && ph == 7) v346_s5 <= v346_s4;
+    always @(posedge clk) if (in_term && ph == 7) v346_s6 <= v346_s5;
+    always @(posedge clk) if (in_term && ph == 7) v346_s7 <= v346_s6;
+    always @(posedge clk) if (in_term && ph == 13) v356_s1 <= v356;
+    always @(posedge clk) if (in_term && ph == 13) v358_s1 <= v358;
+    always @(posedge clk) if (in_term && ph == 19) v362_s1 <= v362;
+    always @(posedge clk) if (in_term && ph == 29) v385_s1 <= $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 29) v385_s2 <= v385_s1;
+    always @(posedge clk) if (in_term && ph == 29) v385_s3 <= v385_s2;
+    always @(posedge clk) if (in_term && ph == 29) v385_s4 <= v385_s3;
+    always @(posedge clk) if (in_term && ph == 29) v385_s5 <= v385_s4;
+    always @(posedge clk) if (in_term && ph == 29) v385_s6 <= v385_s5;
+    always @(posedge clk) if (in_term && ph == 29) v385_s7 <= v385_s6;
+    always @(posedge clk) if (in_term && ph == 29) v385_s8 <= v385_s7;
+    always @(posedge clk) if (in_term && ph == 29) v386_s1 <= $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 29) v386_s2 <= v386_s1;
+    always @(posedge clk) if (in_term && ph == 29) v386_s3 <= v386_s2;
+    always @(posedge clk) if (in_term && ph == 29) v386_s4 <= v386_s3;
+    always @(posedge clk) if (in_term && ph == 29) v386_s5 <= v386_s4;
+    always @(posedge clk) if (in_term && ph == 29) v386_s6 <= v386_s5;
+    always @(posedge clk) if (in_term && ph == 29) v386_s7 <= v386_s6;
+    always @(posedge clk) if (in_term && ph == 29) v386_s8 <= v386_s7;
+    always @(posedge clk) if (in_term && ph == 22) v387_s1 <= v387;
+    always @(posedge clk) if (in_term && ph == 22) v387_s2 <= v387_s1;
+    always @(posedge clk) if (in_term && ph == 22) v387_s3 <= v387_s2;
+    always @(posedge clk) if (in_term && ph == 22) v387_s4 <= v387_s3;
+    always @(posedge clk) if (in_term && ph == 22) v387_s5 <= v387_s4;
+    always @(posedge clk) if (in_term && ph == 22) v387_s6 <= v387_s5;
+    always @(posedge clk) if (in_term && ph == 22) v387_s7 <= v387_s6;
+    always @(posedge clk) if (in_term && ph == 22) v387_s8 <= v387_s7;
+    always @(posedge clk) if (in_term && ph == 1) v390_s1 <= v390;
+    always @(posedge clk) if (in_term && ph == 1) v390_s2 <= v390_s1;
+    always @(posedge clk) if (in_term && ph == 1) v390_s3 <= v390_s2;
+    always @(posedge clk) if (in_term && ph == 1) v390_s4 <= v390_s3;
+    always @(posedge clk) if (in_term && ph == 1) v390_s5 <= v390_s4;
+    always @(posedge clk) if (in_term && ph == 1) v390_s6 <= v390_s5;
+    always @(posedge clk) if (in_term && ph == 1) v393_s1 <= v393;
+    always @(posedge clk) if (in_term && ph == 1) v393_s2 <= v393_s1;
+    always @(posedge clk) if (in_term && ph == 1) v393_s3 <= v393_s2;
+    always @(posedge clk) if (in_term && ph == 1) v393_s4 <= v393_s3;
+    always @(posedge clk) if (in_term && ph == 1) v393_s5 <= v393_s4;
+    always @(posedge clk) if (in_term && ph == 1) v393_s6 <= v393_s5;
+    always @(posedge clk) if (in_term && ph == 24) v431_s1 <= $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 24) v431_s2 <= v431_s1;
+    always @(posedge clk) if (in_term && ph == 24) v431_s3 <= v431_s2;
+    always @(posedge clk) if (in_term && ph == 24) v431_s4 <= v431_s3;
+    always @(posedge clk) if (in_term && ph == 24) v431_s5 <= v431_s4;
+    always @(posedge clk) if (in_term && ph == 24) v431_s6 <= v431_s5;
+    always @(posedge clk) if (in_term && ph == 24) v431_s7 <= v431_s6;
+    always @(posedge clk) if (in_term && ph == 24) v431_s8 <= v431_s7;
+    always @(posedge clk) if (in_term && ph == 24) v432_s1 <= $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 24) v432_s2 <= v432_s1;
+    always @(posedge clk) if (in_term && ph == 24) v432_s3 <= v432_s2;
+    always @(posedge clk) if (in_term && ph == 24) v432_s4 <= v432_s3;
+    always @(posedge clk) if (in_term && ph == 24) v432_s5 <= v432_s4;
+    always @(posedge clk) if (in_term && ph == 24) v432_s6 <= v432_s5;
+    always @(posedge clk) if (in_term && ph == 24) v432_s7 <= v432_s6;
+    always @(posedge clk) if (in_term && ph == 24) v432_s8 <= v432_s7;
+    always @(posedge clk) if (in_term && ph == 6) v438_s1 <= v438;
+    always @(posedge clk) if (in_term && ph == 7) v439_s1 <= v439;
+    always @(posedge clk) if (in_term && ph == 2) v441_s1 <= v441;
+    always @(posedge clk) if (in_term && ph == 8) v450_s1 <= v450;
+    always @(posedge clk) if (in_term && ph == 8) v452_s1 <= v452;
+    always @(posedge clk) if (in_term && ph == 14) v456_s1 <= v456;
+    always @(posedge clk) if (in_term && ph == 24) v479_s1 <= $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 24) v479_s2 <= v479_s1;
+    always @(posedge clk) if (in_term && ph == 24) v479_s3 <= v479_s2;
+    always @(posedge clk) if (in_term && ph == 24) v479_s4 <= v479_s3;
+    always @(posedge clk) if (in_term && ph == 24) v479_s5 <= v479_s4;
+    always @(posedge clk) if (in_term && ph == 24) v480_s1 <= $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 24) v480_s2 <= v480_s1;
+    always @(posedge clk) if (in_term && ph == 24) v480_s3 <= v480_s2;
+    always @(posedge clk) if (in_term && ph == 24) v480_s4 <= v480_s3;
+    always @(posedge clk) if (in_term && ph == 24) v480_s5 <= v480_s4;
+    always @(posedge clk) if (in_term && ph == 17) v481_s1 <= v481;
+    always @(posedge clk) if (in_term && ph == 17) v481_s2 <= v481_s1;
+    always @(posedge clk) if (in_term && ph == 17) v481_s3 <= v481_s2;
+    always @(posedge clk) if (in_term && ph == 17) v481_s4 <= v481_s3;
+    always @(posedge clk) if (in_term && ph == 17) v481_s5 <= v481_s4;
+    always @(posedge clk) if (in_term && ph == 29) v489_s1 <= cv1_o0;
+    always @(posedge clk) if (in_term && ph == 2) v515_s1 <= $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 11) v518_s1 <= $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 11) v518_s2 <= v518_s1;
+    always @(posedge clk) if (in_term && ph == 11) v518_s3 <= v518_s2;
+    always @(posedge clk) if (in_term && ph == 11) v518_s4 <= v518_s3;
+    always @(posedge clk) if (in_term && ph == 11) v518_s5 <= v518_s4;
+    always @(posedge clk) if (in_term && ph == 11) v518_s6 <= v518_s5;
+    always @(posedge clk) if (in_term && ph == 13) v519_s1 <= $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 13) v519_s2 <= v519_s1;
+    always @(posedge clk) if (in_term && ph == 13) v519_s3 <= v519_s2;
+    always @(posedge clk) if (in_term && ph == 13) v519_s4 <= v519_s3;
+    always @(posedge clk) if (in_term && ph == 13) v519_s5 <= v519_s4;
+    always @(posedge clk) if (in_term && ph == 30) v521_s1 <= v521;
+    always @(posedge clk) if (in_term && ph == 29) v523_s1 <= v523;
+    always @(posedge clk) if (in_term && ph == 29) v523_s2 <= v523_s1;
+    always @(posedge clk) if (in_term && ph == 8) v525_s1 <= $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 8) v525_s2 <= v525_s1;
+    always @(posedge clk) if (in_term && ph == 8) v525_s3 <= v525_s2;
+    always @(posedge clk) if (in_term && ph == 8) v525_s4 <= v525_s3;
+    always @(posedge clk) if (in_term && ph == 8) v525_s5 <= v525_s4;
+    always @(posedge clk) if (in_term && ph == 8) v525_s6 <= v525_s5;
+    always @(posedge clk) if (in_term && ph == 8) v525_s7 <= v525_s6;
+    always @(posedge clk) if (in_term && ph == 8) v525_s8 <= v525_s7;
+    always @(posedge clk) if (in_term && ph == 11) v528_s1 <= $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 11) v528_s2 <= v528_s1;
+    always @(posedge clk) if (in_term && ph == 11) v528_s3 <= v528_s2;
+    always @(posedge clk) if (in_term && ph == 11) v528_s4 <= v528_s3;
+    always @(posedge clk) if (in_term && ph == 11) v528_s5 <= v528_s4;
+    always @(posedge clk) if (in_term && ph == 11) v528_s6 <= v528_s5;
+    always @(posedge clk) if (in_term && ph == 11) v528_s7 <= v528_s6;
+    always @(posedge clk) if (in_term && ph == 11) v528_s8 <= v528_s7;
+    always @(posedge clk) if (in_term && ph == 13) v529_s1 <= $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 13) v529_s2 <= v529_s1;
+    always @(posedge clk) if (in_term && ph == 13) v529_s3 <= v529_s2;
+    always @(posedge clk) if (in_term && ph == 13) v529_s4 <= v529_s3;
+    always @(posedge clk) if (in_term && ph == 13) v529_s5 <= v529_s4;
+    always @(posedge clk) if (in_term && ph == 13) v529_s6 <= v529_s5;
+    always @(posedge clk) if (in_term && ph == 13) v529_s7 <= v529_s6;
+    always @(posedge clk) if (in_term && ph == 13) v529_s8 <= v529_s7;
+    always @(posedge clk) if (in_term && ph == 24) v530_s1 <= v530;
+    always @(posedge clk) if (in_term && ph == 24) v530_s2 <= v530_s1;
+    always @(posedge clk) if (in_term && ph == 13) v538_s1 <= v538;
+    always @(posedge clk) if (in_term && ph == 13) v540_s1 <= v540;
+    always @(posedge clk) if (in_term && ph == 19) v544_s1 <= v544;
+    always @(posedge clk) if (in_term && ph == 30) v567_s1 <= $signed(mu0_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 30) v567_s2 <= v567_s1;
+    always @(posedge clk) if (in_term && ph == 30) v567_s3 <= v567_s2;
+    always @(posedge clk) if (in_term && ph == 30) v567_s4 <= v567_s3;
+    always @(posedge clk) if (in_term && ph == 30) v567_s5 <= v567_s4;
+    always @(posedge clk) if (in_term && ph == 30) v568_s1 <= $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 30) v568_s2 <= v568_s1;
+    always @(posedge clk) if (in_term && ph == 30) v568_s3 <= v568_s2;
+    always @(posedge clk) if (in_term && ph == 30) v568_s4 <= v568_s3;
+    always @(posedge clk) if (in_term && ph == 30) v568_s5 <= v568_s4;
+    always @(posedge clk) if (in_term && ph == 22) v569_s1 <= v569;
+    always @(posedge clk) if (in_term && ph == 22) v569_s2 <= v569_s1;
+    always @(posedge clk) if (in_term && ph == 22) v569_s3 <= v569_s2;
+    always @(posedge clk) if (in_term && ph == 22) v569_s4 <= v569_s3;
+    always @(posedge clk) if (in_term && ph == 22) v569_s5 <= v569_s4;
+    always @(posedge clk) if (in_term && ph == 2) v570_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 3) v572_s1 <= v572;
+    always @(posedge clk) if (in_term && ph == 3) v572_s2 <= v572_s1;
+    always @(posedge clk) if (in_term && ph == 3) v572_s3 <= v572_s2;
+    always @(posedge clk) if (in_term && ph == 3) v575_s1 <= v575;
+    always @(posedge clk) if (in_term && ph == 3) v575_s2 <= v575_s1;
+    always @(posedge clk) if (in_term && ph == 3) v575_s3 <= v575_s2;
+    always @(posedge clk) if (in_term && ph == 8) v578_s1 <= v578;
+    always @(posedge clk) if (in_term && ph == 8) v578_s2 <= v578_s1;
+    always @(posedge clk) if (in_term && ph == 8) v578_s3 <= v578_s2;
+    always @(posedge clk) if (in_term && ph == 8) v579_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 9) v581_s1 <= v581;
+    always @(posedge clk) if (in_term && ph == 9) v581_s2 <= v581_s1;
+    always @(posedge clk) if (in_term && ph == 9) v581_s3 <= v581_s2;
+    always @(posedge clk) if (in_term && ph == 13) v582_s1 <= $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 13) v582_s2 <= v582_s1;
+    always @(posedge clk) if (in_term && ph == 14) v584_s1 <= $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 9) v586_s1 <= $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 9) v586_s2 <= v586_s1;
+    always @(posedge clk) if (in_term && ph == 9) v586_s3 <= v586_s2;
+    always @(posedge clk) if (in_term && ph == 9) v586_s4 <= v586_s3;
+    always @(posedge clk) if (in_term && ph == 9) v586_s5 <= v586_s4;
+    always @(posedge clk) if (in_term && ph == 9) v586_s6 <= v586_s5;
+    always @(posedge clk) if (in_term && ph == 9) v586_s7 <= v586_s6;
+    always @(posedge clk) if (in_term && ph == 9) v586_s8 <= v586_s7;
+    always @(posedge clk) if (in_term && ph == 14) v619_s1 <= cr2_o0;
+    always @(posedge clk) if (in_term && ph == 14) v620_s1 <= cr2_o1;
+    always @(posedge clk) if (in_term && ph == 14) v621_s1 <= $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 14) v622_s1 <= $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 18) v623_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 19) v630_s1 <= mu7_out;
+    always @(posedge clk) if (in_term && ph == 27) v636_s1 <= $signed(mu1_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 31) v651_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 4) v654_s1 <= $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 4) v656_s1 <= $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 9) v661_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 10) v663_s1 <= v663;
+    always @(posedge clk) if (in_term && ph == 10) v663_s2 <= v663_s1;
+    always @(posedge clk) if (in_term && ph == 10) v663_s3 <= v663_s2;
+    always @(posedge clk) if (in_term && ph == 9) v664_s1 <= v664;
+    always @(posedge clk) if (in_term && ph == 9) v664_s2 <= v664_s1;
+    always @(posedge clk) if (in_term && ph == 9) v664_s3 <= v664_s2;
+    always @(posedge clk) if (in_term && ph == 4) v665_s1 <= $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 4) v669_s1 <= $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 27) v679_s1 <= $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 27) v680_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 0) v686_s1 <= $signed(mu2_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 0) v688_s1 <= $signed(mu3_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 5) v689_s1 <= v689;
+    always @(posedge clk) if (in_term && ph == 0) v694_s1 <= $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 1) v695_s1 <= v695;
+    always @(posedge clk) if (in_term && ph == 1) v697_s1 <= $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 1) v698_s1 <= $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 7) v699_s1 <= $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 12) v700_s1 <= v700;
+    always @(posedge clk) if (in_term && ph == 12) v700_s2 <= v700_s1;
+    always @(posedge clk) if (in_term && ph == 7) v701_s1 <= $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 7) v701_s2 <= v701_s1;
+    always @(posedge clk) if (in_term && ph == 3) v705_s1 <= v705;
+    always @(posedge clk) if (in_term && ph == 3) v705_s2 <= v705_s1;
+    always @(posedge clk) if (in_term && ph == 3) v705_s3 <= v705_s2;
+    always @(posedge clk) if (in_term && ph == 3) v705_s4 <= v705_s3;
+    always @(posedge clk) if (in_term && ph == 3) v706_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 10) v708_s1 <= v708;
+    always @(posedge clk) if (in_term && ph == 10) v708_s2 <= v708_s1;
+    always @(posedge clk) if (in_term && ph == 10) v708_s3 <= v708_s2;
+    always @(posedge clk) if (in_term && ph == 1) v709_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 10) v723_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 11) v727_s1 <= v727;
+    always @(posedge clk) if (in_term && ph == 11) v727_s2 <= v727_s1;
+    always @(posedge clk) if (in_term && ph == 11) v727_s3 <= v727_s2;
+    always @(posedge clk) if (in_term && ph == 11) v727_s4 <= v727_s3;
+    always @(posedge clk) if (in_term && ph == 11) v728_s1 <= v728;
+    always @(posedge clk) if (in_term && ph == 11) v728_s2 <= v728_s1;
+    always @(posedge clk) if (in_term && ph == 11) v728_s3 <= v728_s2;
+    always @(posedge clk) if (in_term && ph == 15) v731_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 21) v743_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 28) v751_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 14) v758_s1 <= $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 14) v759_s1 <= $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 14) v760_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 17) v776_s1 <= v776;
+    always @(posedge clk) if (in_term && ph == 17) v776_s2 <= v776_s1;
+    always @(posedge clk) if (in_term && ph == 17) v776_s3 <= v776_s2;
+    always @(posedge clk) if (in_term && ph == 17) v776_s4 <= v776_s3;
+    always @(posedge clk) if (in_term && ph == 17) v776_s5 <= v776_s4;
+    always @(posedge clk) if (in_term && ph == 17) v776_s6 <= v776_s5;
+    always @(posedge clk) if (in_term && ph == 16) v777_s1 <= v777;
+    always @(posedge clk) if (in_term && ph == 16) v777_s2 <= v777_s1;
+    always @(posedge clk) if (in_term && ph == 16) v777_s3 <= v777_s2;
+    always @(posedge clk) if (in_term && ph == 16) v777_s4 <= v777_s3;
+    always @(posedge clk) if (in_term && ph == 16) v777_s5 <= v777_s4;
+    always @(posedge clk) if (in_term && ph == 16) v777_s6 <= v777_s5;
+    always @(posedge clk) if (in_term && ph == 19) v785_s1 <= v785;
+    always @(posedge clk) if (in_term && ph == 18) v786_s1 <= v786;
+    always @(posedge clk) if (in_term && ph == 12) v800_s1 <= v800;
+    always @(posedge clk) if (in_term && ph == 12) v800_s2 <= v800_s1;
+    always @(posedge clk) if (in_term && ph == 12) v800_s3 <= v800_s2;
+    always @(posedge clk) if (in_term && ph == 12) v800_s4 <= v800_s3;
+    always @(posedge clk) if (in_term && ph == 12) v802_s1 <= v802;
+    always @(posedge clk) if (in_term && ph == 12) v802_s2 <= v802_s1;
+    always @(posedge clk) if (in_term && ph == 12) v802_s3 <= v802_s2;
+    always @(posedge clk) if (in_term && ph == 12) v802_s4 <= v802_s3;
+    always @(posedge clk) if (in_term && ph == 21) v806_s1 <= v806;
+    always @(posedge clk) if (in_term && ph == 21) v806_s2 <= v806_s1;
+    always @(posedge clk) if (in_term && ph == 21) v806_s3 <= v806_s2;
+    always @(posedge clk) if (in_term && ph == 24) v810_s1 <= v810;
+    always @(posedge clk) if (in_term && ph == 24) v810_s2 <= v810_s1;
+    always @(posedge clk) if (in_term && ph == 20) v829_s1 <= $signed(mu6_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 20) v829_s2 <= v829_s1;
+    always @(posedge clk) if (in_term && ph == 20) v829_s3 <= v829_s2;
+    always @(posedge clk) if (in_term && ph == 20) v829_s4 <= v829_s3;
+    always @(posedge clk) if (in_term && ph == 20) v829_s5 <= v829_s4;
+    always @(posedge clk) if (in_term && ph == 20) v829_s6 <= v829_s5;
+    always @(posedge clk) if (in_term && ph == 20) v830_s1 <= $signed(mu7_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 20) v830_s2 <= v830_s1;
+    always @(posedge clk) if (in_term && ph == 20) v830_s3 <= v830_s2;
+    always @(posedge clk) if (in_term && ph == 20) v830_s4 <= v830_s3;
+    always @(posedge clk) if (in_term && ph == 20) v830_s5 <= v830_s4;
+    always @(posedge clk) if (in_term && ph == 20) v830_s6 <= v830_s5;
+    always @(posedge clk) if (in_term && ph == 24) v831_s1 <= v831;
+    always @(posedge clk) if (in_term && ph == 24) v831_s2 <= v831_s1;
+    always @(posedge clk) if (in_term && ph == 24) v831_s3 <= v831_s2;
+    always @(posedge clk) if (in_term && ph == 24) v831_s4 <= v831_s3;
+    always @(posedge clk) if (in_term && ph == 24) v831_s5 <= v831_s4;
+    always @(posedge clk) if (in_term && ph == 24) v831_s6 <= v831_s5;
+    always @(posedge clk) if (in_term && ph == 24) v831_s7 <= v831_s6;
+    always @(posedge clk) if (in_term && ph == 24) v831_s8 <= v831_s7;
+    always @(posedge clk) if (in_term && ph == 23) v852_s1 <= $signed(mu4_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 23) v854_s1 <= $signed(mu5_out[55:0]);
+    always @(posedge clk) if (in_term && ph == 22) v858_s1 <= v858;
+    always @(posedge clk) if (in_term && ph == 22) v858_s2 <= v858_s1;
+    always @(posedge clk) if (in_term && ph == 22) v858_s3 <= v858_s2;
+    always @(posedge clk) if (in_term && ph == 22) v858_s4 <= v858_s3;
+    always @(posedge clk) if (in_term && ph == 22) v858_s5 <= v858_s4;
     always @(posedge clk) begin
         if (rst || start_evt) range_err <= 1'b0;
-        else if (((in_term && ph == 12) && (t >= 32'd12 && t <= 32'd4076) && ((sc286_sh < (-16'sd28)) || sc286_sh > (-16'sd8))) ||
-            ((in_term && ph == 0) && (t >= 32'd64 && t <= 32'd4128) && ((sc326_sh < (-16'sd2)) || sc326_sh > 16'sd4)) ||
-            ((in_term && ph == 19) && (t >= 32'd51 && t <= 32'd4115) && ((sc346_sh < (-16'sd2)) || sc346_sh > 16'sd4)) ||
-            ((in_term && ph == 22) && (t >= 32'd54 && t <= 32'd4118) && ((sc349_sh < (-16'sd32)) || sc349_sh > (-16'sd10))) ||
-            ((in_term && ph == 13) && (t >= 32'd109 && t <= 32'd4173) && ((sc391_sh < (-16'sd28)) || sc391_sh > (-16'sd15))) ||
-            ((in_term && ph == 13) && (t >= 32'd109 && t <= 32'd4173) && ((sc393_sh < (-16'sd28)) || sc393_sh > (-16'sd15))) ||
-            ((in_term && ph == 22) && (t >= 32'd118 && t <= 32'd4182) && ((sc401_sh < (-16'sd5)) || sc401_sh > 16'sd3)) ||
-            ((in_term && ph == 19) && (t >= 32'd115 && t <= 32'd4179) && ((sc439_sh < (-16'sd28)) || sc439_sh > (-16'sd22))) ||
-            ((in_term && ph == 12) && (t >= 32'd140 && t <= 32'd4204) && (sc457_sh < 16'sd23)) ||
-            ((in_term && ph == 8) && (t >= 32'd168 && t <= 32'd4232) && ((sc485_sh < (-16'sd28)) || sc485_sh > (-16'sd21))) ||
-            ((in_term && ph == 8) && (t >= 32'd168 && t <= 32'd4232) && ((sc487_sh < (-16'sd28)) || sc487_sh > (-16'sd21))) ||
-            ((in_term && ph == 17) && (t >= 32'd177 && t <= 32'd4241) && ((sc495_sh < (-16'sd5)) || sc495_sh > 16'sd3)) ||
-            ((in_term && ph == 31) && (t >= 32'd255 && t <= 32'd4319) && ((sc529_sh < (-16'sd29)) || sc529_sh > (-16'sd21))) ||
-            ((in_term && ph == 13) && (t >= 32'd173 && t <= 32'd4237) && ((sc573_sh < (-16'sd28)) || sc573_sh > (-16'sd21))) ||
-            ((in_term && ph == 13) && (t >= 32'd173 && t <= 32'd4237) && ((sc575_sh < (-16'sd28)) || sc575_sh > (-16'sd21))) ||
-            ((in_term && ph == 22) && (t >= 32'd182 && t <= 32'd4246) && ((sc583_sh < (-16'sd5)) || sc583_sh > 16'sd3)) ||
-            ((in_term && ph == 14) && (t >= 32'd302 && t <= 32'd4366) && ((sc629_sh < (-16'sd28)) || sc629_sh > (-16'sd22))) ||
-            ((in_term && ph == 9) && (t >= 32'd329 && t <= 32'd4393) && (sc647_sh < 16'sd22)) ||
-            ((in_term && ph == 22) && (t >= 32'd342 && t <= 32'd4406) && ((sc669_sh < (-16'sd3)) || sc669_sh > 16'sd31)) ||
-            ((in_term && ph == 22) && (t >= 32'd342 && t <= 32'd4406) && ((sc670_sh < (-16'sd3)) || sc670_sh > 16'sd31)) ||
-            ((in_term && ph == 12) && (t >= 32'd108 && t <= 32'd4172) && ((sc835_sh < (-16'sd28)) || sc835_sh > (-16'sd14))) ||
-            ((in_term && ph == 12) && (t >= 32'd108 && t <= 32'd4172) && ((sc837_sh < (-16'sd28)) || sc837_sh > (-16'sd14))) ||
-            ((in_term && ph == 24) && (t >= 32'd120 && t <= 32'd4184) && ((sc845_sh < (-16'sd5)) || sc845_sh > 16'sd3)) ||
-            ((in_term && ph == 18) && (t >= 32'd402 && t <= 32'd4466) && ((sc894_sh < (-16'sd3)) || sc894_sh > 16'sd31)) ||
-            ((in_term && ph == 0) && (t >= 32'd352 && t <= 32'd4416) && ((sc895_sh < (-16'sd3)) || sc895_sh > 16'sd31)) ||
-            ((in_term && ph == 28) && (t >= 32'd348 && t <= 32'd4412) && ((sc896_sh < (-16'sd3)) || sc896_sh > 16'sd31)) ||
-            ((in_term && ph == 24) && (t >= 32'd440 && t <= 32'd4504) && ((sc897_sh < (-16'sd3)) || sc897_sh > 16'sd31)) ||
-            ((in_term && ph == 7) && (t >= 32'd359 && t <= 32'd4423) && ((sc898_sh < (-16'sd3)) || sc898_sh > 16'sd31)) ||
-            ((in_term && ph == 24) && (t >= 32'd504 && t <= 32'd4568) && ((sc899_sh < (-16'sd3)) || sc899_sh > 16'sd31)) ||
-            ((in_term && ph == 23) && (t >= 32'd503 && t <= 32'd4567) && ((sc900_sh < (-16'sd3)) || sc900_sh > 16'sd31)) ||
-            ((in_term && ph == 27) && (t >= 32'd347 && t <= 32'd4411) && ((sc901_sh < (-16'sd3)) || sc901_sh > 16'sd31)) ||
+        else if (((in_term && ph == 12) && (t >= 32'd12 && t <= 32'd4076) && ((sc259_sh < (-16'sd28)) || sc259_sh > (-16'sd8))) ||
+            ((in_term && ph == 31) && (t >= 32'd63 && t <= 32'd4127) && ((sc291_sh < (-16'sd2)) || sc291_sh > 16'sd4)) ||
+            ((in_term && ph == 19) && (t >= 32'd51 && t <= 32'd4115) && ((sc311_sh < (-16'sd2)) || sc311_sh > 16'sd4)) ||
+            ((in_term && ph == 22) && (t >= 32'd54 && t <= 32'd4118) && ((sc314_sh < (-16'sd32)) || sc314_sh > (-16'sd10))) ||
+            ((in_term && ph == 13) && (t >= 32'd109 && t <= 32'd4173) && ((sc356_sh < (-16'sd28)) || sc356_sh > (-16'sd15))) ||
+            ((in_term && ph == 13) && (t >= 32'd109 && t <= 32'd4173) && ((sc358_sh < (-16'sd28)) || sc358_sh > (-16'sd15))) ||
+            ((in_term && ph == 22) && (t >= 32'd118 && t <= 32'd4182) && ((sc366_sh < (-16'sd5)) || sc366_sh > 16'sd3)) ||
+            ((in_term && ph == 19) && (t >= 32'd115 && t <= 32'd4179) && ((sc404_sh < (-16'sd28)) || sc404_sh > (-16'sd22))) ||
+            ((in_term && ph == 12) && (t >= 32'd140 && t <= 32'd4204) && (sc422_sh < 16'sd23)) ||
+            ((in_term && ph == 8) && (t >= 32'd168 && t <= 32'd4232) && ((sc450_sh < (-16'sd28)) || sc450_sh > (-16'sd21))) ||
+            ((in_term && ph == 8) && (t >= 32'd168 && t <= 32'd4232) && ((sc452_sh < (-16'sd28)) || sc452_sh > (-16'sd21))) ||
+            ((in_term && ph == 17) && (t >= 32'd177 && t <= 32'd4241) && ((sc460_sh < (-16'sd5)) || sc460_sh > 16'sd3)) ||
+            ((in_term && ph == 31) && (t >= 32'd255 && t <= 32'd4319) && ((sc494_sh < (-16'sd29)) || sc494_sh > (-16'sd21))) ||
+            ((in_term && ph == 13) && (t >= 32'd173 && t <= 32'd4237) && ((sc538_sh < (-16'sd28)) || sc538_sh > (-16'sd21))) ||
+            ((in_term && ph == 13) && (t >= 32'd173 && t <= 32'd4237) && ((sc540_sh < (-16'sd28)) || sc540_sh > (-16'sd21))) ||
+            ((in_term && ph == 22) && (t >= 32'd182 && t <= 32'd4246) && ((sc548_sh < (-16'sd5)) || sc548_sh > 16'sd3)) ||
+            ((in_term && ph == 14) && (t >= 32'd302 && t <= 32'd4366) && ((sc594_sh < (-16'sd28)) || sc594_sh > (-16'sd22))) ||
+            ((in_term && ph == 9) && (t >= 32'd329 && t <= 32'd4393) && (sc612_sh < 16'sd22)) ||
+            ((in_term && ph == 22) && (t >= 32'd342 && t <= 32'd4406) && ((sc634_sh < (-16'sd3)) || sc634_sh > 16'sd31)) ||
+            ((in_term && ph == 22) && (t >= 32'd342 && t <= 32'd4406) && ((sc635_sh < (-16'sd3)) || sc635_sh > 16'sd31)) ||
+            ((in_term && ph == 12) && (t >= 32'd108 && t <= 32'd4172) && ((sc800_sh < (-16'sd28)) || sc800_sh > (-16'sd14))) ||
+            ((in_term && ph == 12) && (t >= 32'd108 && t <= 32'd4172) && ((sc802_sh < (-16'sd28)) || sc802_sh > (-16'sd14))) ||
+            ((in_term && ph == 24) && (t >= 32'd120 && t <= 32'd4184) && ((sc810_sh < (-16'sd5)) || sc810_sh > 16'sd3)) ||
+            ((in_term && ph == 18) && (t >= 32'd402 && t <= 32'd4466) && ((sc859_sh < (-16'sd3)) || sc859_sh > 16'sd31)) ||
+            ((in_term && ph == 0) && (t >= 32'd352 && t <= 32'd4416) && ((sc860_sh < (-16'sd3)) || sc860_sh > 16'sd31)) ||
+            ((in_term && ph == 28) && (t >= 32'd348 && t <= 32'd4412) && ((sc861_sh < (-16'sd3)) || sc861_sh > 16'sd31)) ||
+            ((in_term && ph == 24) && (t >= 32'd440 && t <= 32'd4504) && ((sc862_sh < (-16'sd3)) || sc862_sh > 16'sd31)) ||
+            ((in_term && ph == 7) && (t >= 32'd359 && t <= 32'd4423) && ((sc863_sh < (-16'sd3)) || sc863_sh > 16'sd31)) ||
+            ((in_term && ph == 24) && (t >= 32'd504 && t <= 32'd4568) && ((sc864_sh < (-16'sd3)) || sc864_sh > 16'sd31)) ||
+            ((in_term && ph == 23) && (t >= 32'd503 && t <= 32'd4567) && ((sc865_sh < (-16'sd3)) || sc865_sh > 16'sd31)) ||
+            ((in_term && ph == 27) && (t >= 32'd347 && t <= 32'd4411) && ((sc866_sh < (-16'sd3)) || sc866_sh > 16'sd31)) ||
             (mu0_V3 && ((mu0_S3 < 16'sd0) || mu0_S3 > 16'sd81)) ||
             (mu1_V3 && ((mu1_S3 < 16'sd28) || mu1_S3 > 16'sd77)) ||
             (mu2_V3 && ((mu2_S3 < 16'sd24) || mu2_S3 > 16'sd77)) ||

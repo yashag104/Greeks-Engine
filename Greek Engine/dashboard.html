@@ -1,0 +1,439 @@
+<title>Greeks Engine</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root {
+  --bg: #f3f5f1;
+  --surface: #ffffff;
+  --sunk: #e9ede7;
+  --ink: #16202a;
+  --muted: #56626b;
+  --rule: #d5dbd3;
+  --accent: #0f6b5c;
+  --accent-soft: #dcefe9;
+  --aad: #1fa97a;
+  --bump: #e8683a;
+  --good: #25784f;
+  --good-bg: #dff2e6;
+  --warn: #9a6512;
+  --warn-bg: #f7ecd6;
+  --crit: #b83232;
+  --crit-bg: #f8e1e1;
+  --plate: #ffffff;
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1417; --surface: #161d21; --sunk: #1c252a; --ink: #e4ebe7; --muted: #9aa7a3;
+    --rule: #2a353a; --accent: #52c3a7; --accent-soft: #173a33; --good: #6fd19b; --good-bg: #173427;
+    --warn: #e6b45a; --warn-bg: #3a2e17; --crit: #f08a8a; --crit-bg: #3d1d1d;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1417; --surface: #161d21; --sunk: #1c252a; --ink: #e4ebe7; --muted: #9aa7a3;
+  --rule: #2a353a; --accent: #52c3a7; --accent-soft: #173a33; --good: #6fd19b; --good-bg: #173427;
+  --warn: #e6b45a; --warn-bg: #3a2e17; --crit: #f08a8a; --crit-bg: #3d1d1d;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font: 15px/1.6 var(--body);
+  margin: 0; padding-inline: 16px; padding-block: 0 48px;
+}
+.wrap { max-width: 1200px; margin: 0 auto; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.15; margin: 0; }
+h2 { font-size: 1.75rem; font-weight: 600; }
+h3 { font-size: 1.15rem; font-weight: 600; }
+p { margin: 0; max-width: 68ch; }
+a { color: var(--accent); }
+a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num, td.num, .mono { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.eyebrow { font: 500 0.72rem/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+
+/* ---- header */
+header.top { padding-block: 40px 28px; border-bottom: 1px solid var(--rule); display: grid; gap: 14px; }
+header.top h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 700; letter-spacing: -0.01em; }
+header.top .lede { font-size: 1.1rem; color: var(--muted); max-width: 72ch; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font: 500 0.78rem/1 var(--mono); padding: 6px 10px; border-radius: 999px; border: 1px solid transparent; }
+.pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.pill.good { color: var(--good); background: var(--good-bg); }
+.pill.warn { color: var(--warn); background: var(--warn-bg); }
+.pill.crit { color: var(--crit); background: var(--crit-bg); }
+.pill.info { color: var(--accent); background: var(--accent-soft); }
+
+/* ---- layout with index */
+.layout { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 40px; padding-top: 28px; }
+nav.index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); align-self: start; display: grid; gap: 2px; }
+nav.index a { text-decoration: none; color: var(--muted); font: 500 0.88rem/1.3 var(--body); padding: 6px 10px; border-left: 2px solid var(--rule); }
+nav.index a:hover { color: var(--ink); border-left-color: var(--accent); }
+main { display: grid; gap: 56px; min-width: 0; }
+section { display: grid; gap: 18px; scroll-margin-top: 20px; }
+section > header { display: grid; gap: 6px; }
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  nav.index { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  nav.index a { border: 1px solid var(--rule); border-radius: 999px; padding: 5px 10px; }
+}
+
+/* ---- KPI tiles */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(175px, 1fr)); gap: 12px; }
+.kpi { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; display: grid; gap: 4px; align-content: start; }
+.kpi .v { font: 500 1.9rem/1.1 var(--mono); letter-spacing: -0.02em; }
+.kpi .v small { font-size: 0.9rem; color: var(--muted); margin-left: 2px; }
+.kpi .l { font-weight: 600; font-size: 0.9rem; }
+.kpi .d { color: var(--muted); font-size: 0.8rem; line-height: 1.45; }
+.kpi.aad .v { color: var(--aad); }
+
+/* ---- prose blocks */
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 18px 20px; display: grid; gap: 10px; align-content: start; }
+.card p, .card li { color: var(--ink); }
+.card ul, .card ol { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.muted { color: var(--muted); }
+.claim { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: baseline; }
+.claim .tag { font: 600 0.8rem/1 var(--mono); color: var(--accent); background: var(--accent-soft); border-radius: 4px; padding: 4px 6px; }
+.note { border-left: 3px solid var(--warn); background: var(--warn-bg); padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 0.92rem; max-width: 80ch; }
+
+/* ---- flow diagram */
+.flow { display: grid; grid-template-columns: minmax(170px, 1fr) auto minmax(0, 2.2fr); gap: 14px; align-items: center; }
+.flow .src { background: var(--accent); color: #fff; border-radius: 8px; padding: 16px; font-family: var(--display); font-weight: 600; font-size: 1.05rem; }
+.flow .src span { display: block; font: 400 0.8rem/1.4 var(--body); opacity: 0.9; margin-top: 4px; }
+.flow .arrow { font: 500 1.4rem var(--mono); color: var(--muted); }
+.flow .outs { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+.flow .out { border: 1px solid var(--rule); background: var(--surface); border-radius: 6px; padding: 10px 12px; font-size: 0.86rem; }
+.flow .out b { display: block; font-family: var(--display); font-size: 0.95rem; }
+@media (max-width: 700px) { .flow { grid-template-columns: 1fr; } .flow .arrow { transform: rotate(90deg); justify-self: center; } }
+
+/* ---- timeline */
+.timeline { display: grid; gap: 0; border-left: 2px solid var(--rule); margin-left: 6px; }
+.tl { display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 0 0 16px 18px; position: relative; }
+.tl::before { content: ""; position: absolute; left: -7px; top: 6px; width: 12px; height: 12px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+.tl.now::before { background: var(--accent); }
+.tl .when { font: 500 0.8rem/1.6 var(--mono); color: var(--muted); }
+.tl .what b { font-family: var(--display); font-size: 1rem; }
+.tl .what p { font-size: 0.9rem; color: var(--muted); }
+@media (max-width: 520px) { .tl { grid-template-columns: 1fr; gap: 2px; } }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; }
+.stat { background: var(--surface); padding: 12px 14px; display: grid; gap: 2px; }
+.stat .v { font: 500 1.35rem/1.2 var(--mono); }
+.stat .l { font-size: 0.8rem; color: var(--muted); }
+
+/* ---- figures */
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+figure { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; display: grid; align-content: start; }
+figure .plate { background: var(--plate); padding: 10px; display: grid; place-items: center; border-bottom: 1px solid var(--rule); }
+figure img { display: block; width: 100%; height: auto; max-width: 100%; }
+figcaption { padding: 12px 14px; font-size: 0.86rem; color: var(--muted); display: grid; gap: 4px; }
+figcaption b { color: var(--ink); font-family: var(--display); font-size: 0.95rem; }
+figure.wide { grid-column: 1 / -1; }
+
+/* ---- tables */
+.tbl { overflow-x: auto; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.88rem; }
+th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th { font: 600 0.74rem/1.3 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); background: var(--sunk); }
+td.num, th.num { text-align: right; }
+tr:last-child td { border-bottom: 0; }
+tr.hi td { background: var(--accent-soft); font-weight: 600; }
+.better { color: var(--good); font-weight: 600; }
+.caption { font-size: 0.85rem; color: var(--muted); max-width: 90ch; }
+
+/* ---- next steps */
+.steps { display: grid; gap: 10px; counter-reset: step; }
+.step { display: grid; grid-template-columns: 34px 1fr auto; gap: 14px; align-items: start; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 14px 16px; }
+.step::before { counter-increment: step; content: counter(step); font: 600 1rem/34px var(--mono); text-align: center; width: 34px; height: 34px; border-radius: 50%; background: var(--sunk); color: var(--ink); }
+.step .t { font-family: var(--display); font-weight: 600; font-size: 1.02rem; }
+.step p { font-size: 0.9rem; color: var(--muted); }
+@media (max-width: 560px) { .step { grid-template-columns: 34px 1fr; } .step .pill { grid-column: 2; justify-self: start; } }
+.limits { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.limit { border: 1px solid var(--rule); border-left: 3px solid var(--warn); background: var(--surface); border-radius: 6px; padding: 12px 14px; display: grid; gap: 4px; }
+.limit b { font-family: var(--display); }
+.limit p { font-size: 0.88rem; color: var(--muted); }
+footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule); font-size: 0.82rem; color: var(--muted); display: grid; gap: 4px; }
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="eyebrow">FPGA · Heston stochastic volatility · COS method · reverse-mode AAD</div>
+  <h1>Greeks Engine</h1>
+  <p class="lede">Fixed-point FPGA hardware that computes a Heston option price and all nine of its sensitivities (the Greeks) in one forward and one reverse pass. It is generated from a single description, verified bit-exact against a golden model with a guaranteed error bound per Greek, and has run on a Zynq-7020 ZedBoard.</p>
+  <div class="pills">
+    <span class="pill good">Simulation: 22 / 22 checks pass</span>
+    <span class="pill good">ZedBoard: 50 / 50 cases bit-exact</span>
+    <span class="pill warn">Board bitstream predates put-call parity: rebuild pending</span>
+    <span class="pill warn">79 MHz, not 100 MHz</span>
+    <span class="pill info">Status as of 29 Sep 2026</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="index" aria-label="Sections">
+  <a href="#summary">Summary</a>
+  <a href="#motivation">Motivation</a>
+  <a href="#aim">Aim and claims</a>
+  <a href="#work">Work done</a>
+  <a href="#latency">Speed</a>
+  <a href="#accuracy">Accuracy</a>
+  <a href="#parity">Put-call parity</a>
+  <a href="#hardware">Vivado results</a>
+  <a href="#silicon">On the board</a>
+  <a href="#gen1">Generation 1</a>
+  <a href="#limits">Known limits</a>
+  <a href="#next">Next steps</a>
+</nav>
+
+<main>
+<!-- ============================================================ SUMMARY -->
+<section id="summary">
+  <header><div class="eyebrow">At a glance</div><h2>Where the project stands</h2></header>
+  <div class="kpis">
+    <div class="kpi aad"><div class="l">Greeks cost</div><div class="v">1.04<small>×</small></div><div class="d">a single price. 4,733 cycles for price + 9 Greeks against 4,568 for the price alone (Zynq-7020 design).</div></div>
+    <div class="kpi aad"><div class="l">Faster than bump-and-reprice</div><div class="v">18.4<small>×</small></div><div class="d">on identical hardware: 4,733 cycles against 86,860 for 19 pricings.</div></div>
+    <div class="kpi"><div class="l">Latency per evaluation</div><div class="v">57.8<small>µs</small></div><div class="d">4,572 FPGA cycles at the routed 79.1 MHz (setup and finish on the host). 65.3 µs on the board at 70 MHz.</div></div>
+    <div class="kpi"><div class="l">On silicon</div><div class="v">50<small>/50</small></div><div class="d">random cases bit-exact on a ZedBoard, run back to back: 450 of 450 results identical to the emulator.</div></div>
+    <div class="kpi"><div class="l">Error vs guarantee</div><div class="v">≤ 0.103</div><div class="d">worst measured error as a fraction of the first-order bound, all 10 outputs, 21-case grid (must stay ≤ 1).</div></div>
+    <div class="kpi"><div class="l">Fits a Zynq-7020</div><div class="v">72<small>% LUT</small></div><div class="d">ZedBoard build: 38,358 LUT, 72 of 220 DSP, timing met at 70 MHz (WNS +0.404 ns).</div></div>
+  </div>
+</section>
+
+<!-- ============================================================ MOTIVATION -->
+<section id="motivation">
+  <header><div class="eyebrow">Why</div><h2>Motivation</h2></header>
+  <div class="cols">
+    <div class="card"><h3>Risk needs derivatives, not just prices</h3><p>A bank holding options must continuously know how each price moves with every input: spot, strike, maturity, rate and each model parameter. These sensitivities are the Greeks. Under the Heston stochastic-volatility model there is no closed-form price, so it is computed numerically; this project uses the Fourier-cosine (COS) method with 128 terms.</p></div>
+    <div class="card"><h3>The usual method is slow and inaccurate</h3><p>Bump-and-reprice nudges each parameter and prices again. Nine Greeks cost 19 pricings with central differences, and the result depends on a bump size with no safe choice: too small and rounding dominates, too large and truncation does. On this hardware its best case is still 10–1000× less accurate than AAD.</p></div>
+    <div class="card"><h3>AAD is the fix, but only in software</h3><p>Reverse-mode algorithmic differentiation (AAD) gets every Greek from one backward sweep over the pricing computation, at a small constant multiple of one pricing. Software AAD records a tape and replays it, typically costing 3–5 pricings. A literature check (Sept 2026) found no published FPGA implementation of AAD for option Greeks, and none of the COS method: FPGA Greeks work so far re-runs the pricer.</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ AIM -->
+<section id="aim">
+  <header><div class="eyebrow">What</div><h2>Aim and claims</h2></header>
+  <p>Build a generator that turns the Heston-COS price and its adjoint sweep into one fixed-point, resource-shared, modulo-scheduled Verilog datapath that fits a Zynq-7020, is provably accurate, and runs on a real board.</p>
+  <div class="flow" aria-label="One description, five uses">
+    <div class="src">One operation graph<span>Heston-COS price + reverse-mode adjoint, written once in <span class="mono">hardware/gen/heston.py</span></span></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="outs">
+      <div class="out"><b>Bit-accurate emulator</b>the golden model every test compares against</div>
+      <div class="out"><b>Float evaluation</b>the same algorithm in double precision</div>
+      <div class="out"><b>Error bound</b>first-order bound for the price and each Greek</div>
+      <div class="out"><b>Scheduled RTL</b>Verilog with shared multipliers and CORDIC units</div>
+      <div class="out"><b>Testbenches</b>every register checked at the cycle it is valid</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>The three claims that carry the paper</h3>
+    <div class="claim"><span class="tag">N1</span><p><b>AAD with no tape.</b> COS pricing runs the same operations for every input, so the reverse sweep can be unrolled at design time into a fixed datapath: no tape memory, no replay sequencer. Evidence: generated RTL bit-exact on 5 designs, now on silicon.</p></div>
+    <div class="claim"><span class="tag">N2</span><p><b>Nine Greeks for 1.04 pricings.</b> On the Zynq-7020 design the iterative CORDIC units set the pace, leaving multiplier slots idle that the adjoint's multiplies fill. The condition matters: on the 64-bit design, where multipliers bind, the ratio is 1.55×.</p></div>
+    <div class="claim"><span class="tag">N4</span><p><b>A guaranteed error bound for every Greek.</b> AAD applied a second time, to the hardware's own rounding model, bounds the error of each output. Measured error never exceeds 0.103 of that bound on the grid, 0.199 on the 50 random cases. The method is classical (Linnainmaa, 1976); applying it to a datapath that itself computes adjoints is the new part.</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ WORK -->
+<section id="work">
+  <header><div class="eyebrow">How much</div><h2>Work done</h2><p class="muted">46 days, 39 commits, two hardware generations, one board.</p></header>
+  <div class="stats">
+    <div class="stat"><span class="v">3,069</span><span class="l">lines of Python in the generator (IR, emulator, scheduler, RTL writer)</span></div>
+    <div class="stat"><span class="v">22,924</span><span class="l">lines of generated Verilog, 11 designs and wrappers</span></div>
+    <div class="stat"><span class="v">5,351</span><span class="l">lines of hand-written Verilog, generation 1 and arithmetic library</span></div>
+    <div class="stat"><span class="v">2,046</span><span class="l">lines of validation code: references, sweeps, figures, board report</span></div>
+    <div class="stat"><span class="v">683</span><span class="l">lines of Vivado Tcl: implementation, board build, board test</span></div>
+    <div class="stat"><span class="v">22</span><span class="l">automated checks in <span class="mono">verify_all.sh</span>, all passing</span></div>
+  </div>
+  <div class="timeline">
+    <div class="tl"><span class="when">15 Aug</span><div class="what"><b>Project start</b><p>Black-Scholes and Heston models, software AAD engine, MATLAB and C++ prototypes.</p></div></div>
+    <div class="tl"><span class="when">21 Aug – 9 Sep</span><div class="what"><b>Generation 1: hand-written FSM engine</b><p>Heston AAD in 64-bit fixed point: correct, but 433,779 cycles and far too many multipliers for a Zynq-7020.</p></div></div>
+    <div class="tl"><span class="when">17 Sep</span><div class="what"><b>Generation 2: the datapath generator</b><p>Precision bugs fixed, first-order error bound, bump-and-reprice baseline, then the IR, modulo scheduler and RTL generator. 92× fewer cycles.</p></div></div>
+    <div class="tl"><span class="when">22 – 24 Sep</span><div class="what"><b>Vivado flow and documentation</b><p>Out-of-context implementation scripts, viva study guide, the full course document.</p></div></div>
+    <div class="tl"><span class="when">26 – 27 Sep</span><div class="what"><b>Routed, and board-ready</b><p>AXI4-Lite register file, ZedBoard JTAG and PS designs. First complete route: fits the Zynq-7020 at 68.6% LUT, Fmax about 79 MHz.</p></div></div>
+    <div class="tl now"><span class="when">29 Sep</span><div class="what"><b>On silicon, then more accurate</b><p>ZedBoard bitstream at 70 MHz. One vector, then 50 cases, all bit-exact. Calls re-derived through put-call parity: worst call price error 75× smaller.</p></div></div>
+  </div>
+</section>
+
+<!-- ============================================================ LATENCY -->
+<section id="latency">
+  <header><div class="eyebrow">Result 1</div><h2>Speed: cycles for price + 9 Greeks</h2></header>
+  <div class="figs">
+    <figure class="wide"><div class="plate"><img src="validation/figures/fig8_architecture_cycles.png" alt="Bar chart of clock cycles per evaluation on a log scale. FSM engine: AAD 433,779, bump-and-reprice 3,811,647. Generated Zynq-7020: AAD 4,733, bump 86,860. Generated 64-bit: AAD 1,593, bump 19,562." loading="lazy"></div>
+      <figcaption><b>AAD against bump-and-reprice on the same hardware</b>RTL simulation, 128 COS terms. The generated designs are 92× (Zynq-7020) and 272× (64-bit) faster than generation 1, and 18.4× and 12.3× faster than bump-and-reprice on identical hardware.</figcaption></figure>
+    <figure><div class="plate"><img src="validation/figures/fig9_cycles_vs_mults.png" alt="Line chart of cycles against shared multipliers from 1 to 128 for the 64-bit datapath, AAD below bump-and-reprice throughout." loading="lazy"></div>
+      <figcaption><b>Cycles against shared multipliers (64-bit)</b>Cycles halve as multipliers double until the dependency chain dominates past 64. Circled points were simulated as RTL and matched the scheduler exactly.</figcaption></figure>
+    <div class="tbl" style="align-self:start">
+      <table>
+        <thead><tr><th>Design</th><th class="num">AAD</th><th class="num">Price only</th><th class="num">Bump</th><th class="num">Bump ÷ AAD</th></tr></thead>
+        <tbody>
+          <tr><td>FSM engine, 64-bit</td><td class="num">433,779</td><td class="num">200,562</td><td class="num">3,811,647</td><td class="num">8.8×</td></tr>
+          <tr class="hi"><td>Zynq-7020, 56-bit, 8 mult</td><td class="num">4,733</td><td class="num">4,568</td><td class="num">86,860</td><td class="num">18.4×</td></tr>
+          <tr><td>Host-setup loop (on board)</td><td class="num">4,572</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+          <tr><td>64-bit, 32 mult</td><td class="num">1,593</td><td class="num">1,026</td><td class="num">19,562</td><td class="num">12.3×</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Config</th><th class="num">Multipliers</th><th class="num">II</th><th class="num">AAD</th><th class="num">Price only</th><th class="num">Bump</th><th class="num">Bump ÷ AAD</th></tr></thead>
+      <tbody>
+        <tr><td>Zynq-7020 (56/28)</td><td class="num">2</td><td class="num">125</td><td class="num">16,754</td><td class="num">8,700</td><td class="num">165,368</td><td class="num">9.9</td></tr>
+        <tr><td>Zynq-7020 (56/28)</td><td class="num">4</td><td class="num">63</td><td class="num">8,694</td><td class="num">4,613</td><td class="num">87,715</td><td class="num">10.1</td></tr>
+        <tr class="hi"><td>Zynq-7020 (56/28)</td><td class="num">8</td><td class="num">32</td><td class="num">4,733</td><td class="num">4,568</td><td class="num">86,860</td><td class="num">18.4</td></tr>
+        <tr><td>Zynq-7020 (56/28)</td><td class="num">16</td><td class="num">32</td><td class="num">4,621</td><td class="num">4,563</td><td class="num">86,765</td><td class="num">18.8</td></tr>
+        <tr><td>64-bit (64/32)</td><td class="num">1</td><td class="num">250</td><td class="num">32,530</td><td class="num">16,773</td><td class="num">318,755</td><td class="num">9.8</td></tr>
+        <tr><td>64-bit (64/32)</td><td class="num">4</td><td class="num">63</td><td class="num">8,700</td><td class="num">4,636</td><td class="num">88,152</td><td class="num">10.1</td></tr>
+        <tr><td>64-bit (64/32)</td><td class="num">8</td><td class="num">32</td><td class="num">4,709</td><td class="num">2,573</td><td class="num">48,955</td><td class="num">10.4</td></tr>
+        <tr><td>64-bit (64/32)</td><td class="num">16</td><td class="num">16</td><td class="num">2,614</td><td class="num">1,540</td><td class="num">29,328</td><td class="num">11.2</td></tr>
+        <tr class="hi"><td>64-bit (64/32)</td><td class="num">32</td><td class="num">8</td><td class="num">1,593</td><td class="num">1,026</td><td class="num">19,562</td><td class="num">12.3</td></tr>
+        <tr><td>64-bit (64/32)</td><td class="num">64</td><td class="num">4</td><td class="num">1,073</td><td class="num">888</td><td class="num">16,940</td><td class="num">15.8</td></tr>
+        <tr><td>64-bit (64/32)</td><td class="num">128</td><td class="num">3</td><td class="num">942</td><td class="num">888</td><td class="num">16,940</td><td class="num">18.0</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">II is the initiation interval: cycles between the starts of consecutive COS terms. On the Zynq-7020 design, 8 multipliers, 3 CORDIC rotators and 2 vectorers all give II = 32, so a 16th multiplier buys only 2%. Each term costs 250 multiplies, 3 CORDIC rotations and 2 vectorings. The bump advantage beyond the ~9.6× work ratio comes from the idle multiplier slots AAD fills.</p>
+</section>
+
+<!-- ============================================================ ACCURACY -->
+<section id="accuracy">
+  <header><div class="eyebrow">Result 2</div><h2>Accuracy</h2></header>
+  <div class="figs">
+    <figure class="wide"><div class="plate"><img src="validation/figures/fig11_gen_accuracy.png" alt="Strip plot of relative error for price and nine Greeks over 21 parameter sets. Zynq-7020 points lie between about 1e-9 and 1.2e-5, 64-bit points between about 1e-10 and 7e-7." loading="lazy"></div>
+      <figcaption><b>Generated designs against the double-precision COS reference, 21 parameter sets</b>Every output of both designs over a grid of moneyness, maturity, vol-of-vol, correlation, calls and puts. The Zynq-7020 design stays under 1.2e-5 relative error; the 64-bit under 7.4e-7.</figcaption></figure>
+    <figure class="wide"><div class="plate"><img src="validation/figures/fig10_gen_bump_vs_aad.png" alt="Nine panels, one per Greek, of relative error against bump size from 1e-8 to 1e-1. Bump-and-reprice curves are U-shaped and stay above the flat AAD lines in every panel." loading="lazy"></div>
+      <figcaption><b>AAD against bump-and-reprice, every Greek</b>Bump-and-reprice (curves) on the same pricer and word length, swept over bump size h. It is U-shaped: rounding dominates at small h, truncation at large h. AAD (flat lines) is more accurate than the best bump size chosen in hindsight, for every Greek and both designs.</figcaption></figure>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Output</th><th class="num">Zynq-7020, worst rel. error</th><th class="num">64-bit, worst rel. error</th><th class="num">Worst error ÷ bound</th></tr></thead>
+      <tbody>
+        <tr><td>Price</td><td class="num">6.1e-7</td><td class="num">2.8e-8</td><td class="num">0.074</td></tr>
+        <tr><td>Delta ∂V/∂S₀</td><td class="num">2.0e-7</td><td class="num">6.9e-9</td><td class="num">0.049</td></tr>
+        <tr><td>∂V/∂K</td><td class="num">2.5e-7</td><td class="num">6.6e-9</td><td class="num">0.051</td></tr>
+        <tr><td>∂V/∂T</td><td class="num">3.1e-7</td><td class="num">6.0e-9</td><td class="num">0.093</td></tr>
+        <tr><td>Rho ∂V/∂r</td><td class="num">2.4e-7</td><td class="num">8.9e-9</td><td class="num">0.049</td></tr>
+        <tr><td>Vega ∂V/∂v₀</td><td class="num">6.2e-7</td><td class="num">2.0e-8</td><td class="num">0.103</td></tr>
+        <tr><td>∂V/∂κ</td><td class="num">7.8e-6</td><td class="num">4.1e-7</td><td class="num">0.098</td></tr>
+        <tr><td>∂V/∂θ</td><td class="num">7.9e-7</td><td class="num">3.4e-8</td><td class="num">0.102</td></tr>
+        <tr><td>∂V/∂ξ</td><td class="num">2.7e-6</td><td class="num">2.2e-7</td><td class="num">0.099</td></tr>
+        <tr><td>∂V/∂ρ</td><td class="num">1.2e-5</td><td class="num">7.4e-7</td><td class="num">0.087</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">The bound column is the largest ratio across both designs. A ratio below 1 means the guaranteed bound held; all are at most 0.103, so the bound is safe and about ten times conservative.</p>
+</section>
+
+<!-- ============================================================ PARITY -->
+<section id="parity">
+  <header><div class="eyebrow">Improvement found on 29 Sep</div><h2>Calls through put-call parity</h2></header>
+  <p>The 50-case board sweep showed calls carrying about 180× the rounding error of puts. A call's COS coefficients contain e<sup>b</sup>, which grows large over a wide truncation range and then cancels. The design now always computes the put and adds S₀ − K·e<sup>−rT</sup> and its derivatives on the host. Measured on the 22 calls of the sweep, against the independent Fourier-integral price:</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Worst absolute error over 22 calls</th><th class="num">Direct call</th><th class="num">Put + parity</th><th class="num">Gain</th></tr></thead>
+      <tbody>
+        <tr class="hi"><td>Price</td><td class="num">2.3e-3</td><td class="num">3.1e-5</td><td class="num better">75×</td></tr>
+        <tr><td>Price, median</td><td class="num">4.8e-5</td><td class="num">5.4e-7</td><td class="num better">~90×</td></tr>
+        <tr><td>∂V/∂κ</td><td class="num">2.4e-3</td><td class="num">3.9e-4</td><td class="num better">6×</td></tr>
+        <tr><td>∂V/∂θ</td><td class="num">1.7e-2</td><td class="num">2.5e-3</td><td class="num better">7×</td></tr>
+        <tr><td>∂V/∂ξ</td><td class="num">1.3e-2</td><td class="num">1.8e-3</td><td class="num better">7×</td></tr>
+        <tr><td>∂V/∂ρ</td><td class="num">8.3e-3</td><td class="num">4.7e-4</td><td class="num better">18×</td></tr>
+        <tr><td>Delta, ∂V/∂K, ∂V/∂T, rho, vega</td><td class="num">—</td><td class="num">—</td><td class="num better">2–2.5×</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">Cost: 4,731 → 4,733 cycles on the Zynq-7020 design, 1,599 → 1,593 on the 64-bit, one multiply per term fewer (251 → 250), 16 host constants instead of 19. After the change the FPGA's error matches the double-precision COS method's own error, so rounding is no longer the limiting factor. Predicted for the board re-run: worst price error over the 50 cases 2.3e-3 → 1.5e-5.</p>
+</section>
+
+<!-- ============================================================ HARDWARE -->
+<section id="hardware">
+  <header><div class="eyebrow">Result 3</div><h2>Vivado implementation</h2></header>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Build</th><th class="num">LUT</th><th class="num">FF</th><th class="num">DSP</th><th class="num">Clock</th><th class="num">WNS</th><th class="num">Power</th></tr></thead>
+      <tbody>
+        <tr><td>Engine only, out of context, xc7z020clg400-1</td><td class="num">36,499 (68.6%)</td><td class="num">28,559 (26.8%)</td><td class="num">72 (32.7%)</td><td class="num">100 MHz</td><td class="num" style="color:var(--crit)">−2.639 ns</td><td class="num">0.258 W</td></tr>
+        <tr class="hi"><td>ZedBoard system, xc7z020clg484-1</td><td class="num">38,358 (72.1%)</td><td class="num">32,206 (30.3%)</td><td class="num">72 (32.7%)</td><td class="num">70 MHz</td><td class="num" style="color:var(--good)">+0.404 ns</td><td class="num">0.341 W</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">Fmax is about 79 MHz for the engine alone and about 72 MHz inside the ZedBoard system; both are limited by 64-bit carry chains and multiplier outputs, mostly routing delay. Power is Vivado's vectorless estimate; 0.121 W of the board figure is the clock generator. Both builds predate put-call parity, which changes the RTL slightly. Vivado's 67 DRC warnings are 56 suggestions to use the DSP blocks' internal registers, the likely route to 100 MHz, plus routine notices; no errors.</p>
+  <div class="figs">
+    <figure><div class="plate"><img src="validation/results/vivado/Design.png" alt="Vivado device view of the Zynq-7020 with most of the programmable logic filled by the placed design." loading="lazy"></div><figcaption><b>Placed design on the Zynq-7020</b>Device view: the engine fills about three quarters of the programmable logic.</figcaption></figure>
+    <figure><div class="plate"><img src="validation/results/vivado/Timing.png" alt="Vivado design timing summary: WNS 0.404 ns, WHS 0.021 ns, 0 failing endpoints out of 76,961. All user specified timing constraints are met." loading="lazy"></div><figcaption><b>Timing met at 70 MHz</b>0 failing endpoints of 76,961 for setup, hold and pulse width.</figcaption></figure>
+    <figure><div class="plate"><img src="validation/results/vivado/Summary.png" alt="Vivado project summary: 67 DRC warnings, 3 advisories, utilization LUT 72 percent, FF 30, DSP 33, total on-chip power 0.341 W, junction 28.9 C." loading="lazy"></div><figcaption><b>Project summary</b>Utilization, timing and power of the ZedBoard build.</figcaption></figure>
+    <figure><div class="plate"><img src="validation/results/vivado/Power.png" alt="Vivado power breakdown: dynamic 0.235 W, of which clock manager 0.121 W, signals 0.042, clocks 0.040, logic 0.031; device static 0.106 W." loading="lazy"></div><figcaption><b>Power breakdown</b>Vectorless: 0.235 W dynamic, 0.106 W static. The clock manager is the largest single consumer.</figcaption></figure>
+  </div>
+  <p class="caption">Block diagram of the board system: <a href="validation/results/vivado/Block_design.pdf">Block_design.pdf</a> (clock generator → reset → JTAG-to-AXI master → AXI SmartConnect → engine).</p>
+</section>
+
+<!-- ============================================================ SILICON -->
+<section id="silicon">
+  <header><div class="eyebrow">Result 4</div><h2>On the ZedBoard</h2></header>
+  <div class="cols">
+    <div class="card"><h3>Test method</h3><p>Vivado drives the engine over the JTAG cable through a JTAG-to-AXI master: no processor software involved. The PC writes the inputs, starts the engine, polls for done, reads the 9 raw sums and compares them bit for bit with the emulator. The host then turns the sums into the price and 9 Greeks.</p></div>
+    <div class="card"><h3>Sweep design</h3><p>2 fixed cases plus 48 random draws over the verified input domain, 22 calls and 28 puts, using a seed the hardware's shifter ranges were not tuned on. Cases run back to back with no reset between them, so leftover state would show. The script was tested against a software model of the board with injected faults before use.</p></div>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Run</th><th class="num">Cases</th><th class="num">Bit-exact results</th><th class="num">range_err</th><th class="num">Worst error ÷ bound</th><th class="num">Wall time</th></tr></thead>
+      <tbody>
+        <tr><td>First vector</td><td class="num">1</td><td class="num">9 / 9</td><td class="num">0</td><td class="num">0.031</td><td class="num">—</td></tr>
+        <tr class="hi"><td>Sweep</td><td class="num">50</td><td class="num">450 / 450</td><td class="num">0</td><td class="num">0.268</td><td class="num">56.9 s</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">Almost all of the 56.9 s is JTAG register traffic; the engine computes each case in about 65 µs. These runs used the bitstream built before put-call parity; after the rebuild the same 50 cases are ready to re-run, with the worst error ÷ bound predicted at 0.199. Logs and reports: <span class="mono">validation/results/board_*</span>.</p>
+</section>
+
+<!-- ============================================================ GEN 1 -->
+<section id="gen1">
+  <header><div class="eyebrow">Earlier results</div><h2>Generation 1: the hand-written FSM engine</h2><p class="muted">The first engine, 64-bit fixed point (Q32.32), established the error model and the bump-and-reprice comparison that generation 2 inherited.</p></header>
+  <div class="figs">
+    <figure><div class="plate"><img src="validation/figures/fig1_bump_vs_aad_error.png" alt="Error against bump size for RTL bump-and-reprice, double-precision bump and RTL AAD, generation 1." loading="lazy"></div><figcaption><b>Bump size against error</b>Fixed-point bump-and-reprice, double-precision bump and RTL AAD.</figcaption></figure>
+    <figure><div class="plate"><img src="validation/figures/fig2_accuracy_sweep.png" alt="RTL AAD relative error per output over the parameter grid, generation 1." loading="lazy"></div><figcaption><b>Accuracy over the parameter grid</b>Price worst 3.0e-7, Greeks at most 5.4e-5.</figcaption></figure>
+    <figure><div class="plate"><img src="validation/figures/fig3_bound_tightness.png" alt="Measured error divided by the first-order bound for each output; every point below 1." loading="lazy"></div><figcaption><b>Error ÷ bound</b>Every point below 1; worst 0.21.</figcaption></figure>
+    <figure><div class="plate"><img src="validation/figures/fig4_precision_vs_fl.png" alt="Error against number of fractional bits: measured error, worst-case bound and one-sigma estimate." loading="lazy"></div><figcaption><b>Error against fractional bits</b>The 1-sigma form of the bound predicts measured error from FL = 16 to 40.</figcaption></figure>
+    <figure><div class="plate"><img src="validation/figures/fig5_cost_vs_greeks.png" alt="Clock cycles against number of sensitivities for AAD and bump-and-reprice." loading="lazy"></div><figcaption><b>Cost against number of Greeks</b>AAD's cost is flat in the number of Greeks; bump-and-reprice grows linearly, 3.8 million cycles at 9.</figcaption></figure>
+  </div>
+</section>
+
+<!-- ============================================================ LIMITS -->
+<section id="limits">
+  <header><div class="eyebrow">Stated openly</div><h2>Known limits</h2></header>
+  <div class="limits">
+    <div class="limit"><b>79 MHz, not 100 MHz</b><p>The engine misses 100 MHz by 2.6 ns on 64-bit carry chains. Latency figures use the measured Fmax.</p></div>
+    <div class="limit"><b>Board bitstream is one change behind</b><p>The on-silicon results used the design before put-call parity. The new RTL passes all simulation checks and needs a rebuild and re-run.</p></div>
+    <div class="limit"><b>Host steps run on the PC</b><p>Setup and finish are Python on the PC, not C on the ARM. The processor-based design exists as a script but is not built.</p></div>
+    <div class="limit"><b>Power is an estimate</b><p>Vectorless, 12.5% toggle rate. No simulated-activity (SAIF) figure or board measurement yet.</p></div>
+    <div class="limit"><b>Priority is "to our knowledge"</b><p>No FPGA AAD for Greeks found in a 99-study FPGA survey, the 2024 AAD review, AMD's finance library or FPGA Greeks papers. Unpublished industry work cannot be excluded, and reverse mode itself runs in every ML training accelerator.</p></div>
+    <div class="limit"><b>Bounded input domain</b><p>Verified for S₀ = 100, K 60–150, T 0.1–3, and ranges for each model parameter. Outside it the hardware raises <span class="mono">range_err</span> instead of returning a wrong value.</p></div>
+  </div>
+</section>
+
+<!-- ============================================================ NEXT -->
+<section id="next">
+  <header><div class="eyebrow">What has to happen</div><h2>Next steps</h2><p class="muted">In order of value for the paper.</p></header>
+  <div class="steps">
+    <div class="step"><div><div class="t">Rebuild the ZedBoard bitstream and repeat the 50-case sweep</div><p>Brings the silicon result up to the current design. Scripts, vectors and the report are ready: about 40 minutes of build and 1 minute on the board.</p></div><span class="pill warn">Ready, needs the board</span></div>
+    
+    <div class="step"><div><div class="t">Time a CPU software-AAD baseline</div><p>Now the biggest open risk. European Heston COS pricing is cheap in software too; if one CPU core with AAD is close to 57.8 µs, the paper must argue throughput and energy rather than latency.</p></div><span class="pill crit">Open, critical</span></div>
+    <div class="step"><div><div class="t">Repeat the literature search before submission</div><p>Done once (docs/novelty_assessment.md). Repeat in Google Scholar, IEEE Xplore and the ACM Digital Library in the final month, and ask the guide about recent FPT, FPL, FCCM and HEART papers.</p></div><span class="pill info">Done once, repeat</span></div>
+    <div class="step"><div><div class="t">Close timing at 100 MHz</div><p>Use the DSP blocks' internal output registers (Vivado's 56 suggestions) and pipeline the 64-bit carry chains. Cycle counts change; bit-exactness does not.</p></div><span class="pill crit">Open</span></div>
+    <div class="step"><div><div class="t">Port the host steps to C and build the processor design</div><p>Bit-exact C for setup and finish, with a hand-written 64×64→128-bit multiply for the 32-bit ARM, then <span class="mono">bd_lite.tcl</span>: no PC in the loop.</p></div><span class="pill crit">Open</span></div>
+    <div class="step"><div><div class="t">Measure power properly</div><p>Simulated switching activity (SAIF) through Vivado, or a rail measurement on the board.</p></div><span class="pill crit">Open</span></div>
+    <div class="step"><div><div class="t">Merge into main</div><p>Open a pull request from <span class="mono">pipeline-shared-mult</span> once the board re-run passes.</p></div><span class="pill info">After step 1</span></div>
+  </div>
+</section>
+</main>
+</div>
+
+<footer>
+  <span>Every number traces to a file in the repository: <span class="mono">validation/results/</span>, <span class="mono">validation/figures/tables.md</span> and the Vivado reports in <span class="mono">validation/results/vivado/</span>.</span>
+  <span>Reproduce: <span class="mono">./verify_all.sh</span> · <span class="mono">python validation/run_gen_sweeps.py</span> · <span class="mono">python validation/make_figures.py</span>. Full write-up: <span class="mono">docs/report/greeks_engine_report.pdf</span>.</span>
+</footer>
+</div>

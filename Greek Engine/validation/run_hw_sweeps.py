@@ -70,8 +70,9 @@ def _pvec(c):
 
 def _refs(c, with_model=True):
     p, call = _pvec(c), bool(c["is_call"])
-    cos_g = ref.cos_greeks(p, call)
-    cos_v = {"price": ref.cos_price(p, call)}
+    # generation 1 prices calls directly; compare like with like
+    cos_g = ref.cos_greeks(p, call, parity=False)
+    cos_v = {"price": ref.cos_price(p, call, parity=False)}
     cos_v.update({o: cos_g[i] for o, i in GRAD_INDEX.items()})
     mod_v = {}
     if with_model:
@@ -150,14 +151,14 @@ def sweep_bump(rel_hs=(1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1)):
     for rh, b in zip(rel_hs, bump):
         for o in OUTPUTS:
             if o == "price":
-                fb = ref.cos_price(p0, True)
+                fb = ref.cos_price(p0, True, parity=False)
             else:  # double-precision central difference, same h, same frozen [a,b]
                 i = GRAD_INDEX[o]
                 h = b["h_" + PARAMS[i]]
                 pp, pm = list(p0), list(p0)
                 pp[i] += h
                 pm[i] -= h
-                fb = (ref.cos_price(pp, True, 128, ab) - ref.cos_price(pm, True, 128, ab)) / (2 * h)
+                fb = (ref.cos_price(pp, True, 128, ab, False) - ref.cos_price(pm, True, 128, ab, False)) / (2 * h)
             rows.append(dict(rel_h=rh, output=o, rtl_bump=b[o], ref_cos=cos_v[o], rtl_aad=aad[o],
                              cycles_bump=b["cycles"], cycles_aad=aad["cycles"], float_bump=fb))
     write_csv("bump.csv", rows)

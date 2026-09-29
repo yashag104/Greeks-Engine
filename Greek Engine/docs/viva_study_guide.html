@@ -114,42 +114,42 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 <main>
 <header class="top">
-  <div class="eyebrow">branch pipeline-shared-mult · commit 2a02ad2</div>
+  <div class="eyebrow">branch pipeline-shared-mult · updated 29 Sep 2026</div>
   <h1>Heston-COS AAD Greeks on FPGA</h1>
-  <p class="lede">Viva prep for the Greeks Engine. The Heston price and all nine sensitivities come from one forward and reverse-mode AAD pass in fixed-point RTL, compared against bump-and-reprice on the same hardware. The numbers on this page come from the repository and from re-running <code>verify_all.sh</code> (21/21 pass) and <code>pytest</code> (20/20 pass) on 22 Sep 2026.</p>
+  <p class="lede">Viva prep for the Greeks Engine. The Heston price and all nine sensitivities come from one forward and reverse-mode AAD pass in fixed-point RTL, compared against bump-and-reprice on the same hardware. The numbers on this page come from the repository, <code>verify_all.sh</code> (22/22 pass on 29 Sep 2026), the Vivado reports and the ZedBoard runs.</p>
 </header>
 
 <h2 id="ready"><span class="n">§0</span>Is it ready to run on the board?</h2>
 <div class="verdict">
-  <span class="big">Not yet</span>
-  <p>It's verified bit-exact in simulation and ready for a first Vivado run, but not for the board. Vivado has never been run on it, there's no Zynq system around the core, and the ARM-side host code exists only as a Python spec.</p>
+  <span class="big">Yes, it runs on a board</span>
+  <p>On 2026-09-29 a ZedBoard (xc7z020clg484-1) ran 50 evaluations back to back over JTAG and every output matched the emulator bit for bit. What remains is the ARM side: the host steps are still Python on the PC.</p>
 </div>
 
 <div class="tbl"><table>
 <thead><tr><th>Status</th><th>Item</th><th>Detail</th></tr></thead>
 <tbody>
-<tr><td><span class="chip ok">done</span></td><td>RTL correctness</td><td>Bit-exact against the emulator at the register level (1,254–1,993 checks per design) plus all outputs. Measured cycles equal the schedule's predictions.</td></tr>
+<tr><td><span class="chip ok">done</span></td><td>RTL correctness</td><td>Bit-exact against the emulator at the register level (1,213–1,962 checks per design) plus all outputs. Measured cycles equal the schedule's predictions.</td></tr>
 <tr><td><span class="chip ok">done</span></td><td>Host split</td><td>Host setup + FPGA loop + host finish equals the on-chip design, bit for bit (<code>host.py</code>).</td></tr>
-<tr><td><span class="chip gap">gap</span></td><td>Vivado</td><td>No Fmax, timing, real utilization or power. Area comes from Yosys only: z7h 45.5K LUT, 86% of the 7020's 53.2K (91% with SRLs), which is tight for place and route.</td></tr>
-<tr><td><span class="chip gap">gap</span></td><td>Board system</td><td>The flow is out-of-context only. There's no PS7 block design, FCLK/reset, XDC or <code>write_bitstream</code>.</td></tr>
-<tr><td><span class="chip gap">gap</span></td><td>Bus interface</td><td>The z7h AXI4-Stream wrapper takes one 1,624-bit beat (29 lanes × 56 bits) and returns 504 bits. AXI DMA maxes out at 1,024 bits. An AXI4-Lite register file is the natural fix.</td></tr>
-<tr><td><span class="chip gap">gap</span></td><td>ARM software</td><td>The 19 <code>hs_*</code> constants and the finish step exist only in Python (graph evaluator). They need a bit-exact C port. Running the Python on PYNQ would take milliseconds.</td></tr>
-<tr><td><span class="chip risk">risk</span></td><td>Timing</td><td>Single-stage 56×56 multiply (~12 DSP48E1), 113-bit rounding barrel shift + add in one cycle, CORDIC variable shift + add, 112-bit leading-one detectors. Expect well under 100 MHz until pipelined. <code>rtlgen.py</code> hard-codes the 4-stage multiplier.</td></tr>
-<tr><td><span class="chip ok">fixed</span></td><td>Vivado scripts</td><td>Clock now constrained before synthesis, the clock port is found for AXI tops, and a failed run no longer aborts the matrix. Fixed in this session; see the end of the page.</td></tr>
+<tr><td><span class="chip ok">done</span></td><td>Vivado</td><td>Routed out of context on xc7z020clg400-1: 36,499 LUT (68.6%), 72 DSP. The Yosys estimate of 86–91% LUT was pessimistic. Timing misses 100 MHz by 2.639 ns, so Fmax is about 79 MHz; the host-setup design's 4,572 FPGA cycles take 57.8 µs.</td></tr>
+<tr><td><span class="chip ok">done</span></td><td>Bus interface</td><td>The 1,456-bit AXI4-Stream beat is replaced by an AXI4-Lite register file (<code>wrappers.py lite</code>), bit-exact in simulation.</td></tr>
+<tr><td><span class="chip ok">done</span></td><td>Board system</td><td>JTAG-to-AXI block design (<code>zedboard/bd_jtag.tcl</code>), engine at 70 MHz with WNS +0.404 ns (about 72 MHz in context), 38,358 LUT. Bitstream built.</td></tr>
+<tr><td><span class="chip ok">done</span></td><td>On silicon</td><td>One vector, 9/9 outputs bit-exact vs the emulator (<code>validation/results/board_zedboard_2026-09-29.log</code>). Through the host finish step: price error 2e-6 against double-precision COS, every output ≤ 3.1% of its error bound (<code>validation/board_report.py</code>).</td></tr>
+<tr><td><span class="chip ok">done</span></td><td>Board sweep</td><td>50 cases back to back with no reset, 48 of them random over the verified domain with a seed the shifter ranges were not fitted on: 450/450 sums bit-exact, no <code>range_err</code>, 56.9 s. All 500 final outputs within their error bounds (worst 0.268). Run on the bitstream built before put-call parity; the parity design needs a new bitstream and a repeat.</td></tr>
+<tr><td><span class="chip gap">gap</span></td><td>ARM software</td><td>The 16 <code>hs_*</code> constants and the finish step exist only in Python. They need a bit-exact C port, with a hand-written 64×64→128 multiply, since the Zynq-7000 is 32-bit ARMv7.</td></tr>
+<tr><td><span class="chip ok">fixed</span></td><td>Call accuracy</td><td>Priced directly, calls had ~180× the rounding error of puts (worst price error 2.3e-3, a deep in-the-money long-dated call). Calls are now the put plus put-call parity, as the COS literature does it: worst 3.1e-5 over the same 22 calls against the integral reference, and every output improves.</td></tr>
 <tr><td><span class="chip risk">note</span></td><td>C++ “baseline”</td><td><code>hardware/cpp/heston_cos_aad.cpp</code> computes only the price, has no AAD, uses a different c₂ and payoff. Don't present it as a CPU comparison.</td></tr>
 </tbody></table></div>
 
 <h3>If asked “what's next”</h3>
 <ol>
-<li>Out-of-context Vivado run of <code>heston_aad_z7h</code> on xc7z020clg400-1 to get Fmax and real LUT/FF/DSP.</li>
-<li>Pipeline the multiplier and rounding stages if timing fails. Cycle counts change; bit-exactness doesn't.</li>
-<li>AXI4-Lite wrapper plus a PS7 block design, then a bitstream.</li>
-<li>Host setup and finish in C, checked against <code>host.py</code>.</li>
-<li>Run on a PYNQ-Z2 or Zybo Z7-20 and compare on-board outputs bit-exactly with the emulator. Measure power.</li>
+<li>Rebuild the ZedBoard bitstream for the put-call parity design and repeat the 50-case sweep.</li>
+<li>Pipeline the carry chains to close 100 MHz. Cycle counts change; bit-exactness doesn't.</li>
+<li>Host setup and finish in C on the ARM, checked against <code>host.py</code>, then the PS design (<code>bd_lite.tcl</code>).</li>
+<li>Activity-based (SAIF) power, or a board power measurement.</li>
 </ol>
 
 <h2 id="claim"><span class="n">§1</span>The one-sentence claim</h2>
-<p><strong>The price and all nine sensitivities come out of one forward and reverse-mode AAD pass in fixed-point FPGA hardware, using the COS Fourier method, compared head-to-head with bump-and-reprice on the same hardware.</strong> FPGA finance work has accelerated pricing (mostly Monte Carlo) or Greeks by bumping. This project puts AAD itself in hardware.</p>
+<p><strong>The price and all nine sensitivities come out of one forward and reverse-mode AAD pass in fixed-point FPGA hardware, using the COS Fourier method, compared head-to-head with bump-and-reprice on the same hardware.</strong> FPGA finance work has accelerated pricing (mostly Monte Carlo) or computed Greeks by re-running the pricer. To our knowledge this is the first FPGA implementation of adjoint differentiation for option Greeks, and the first FPGA COS pricer (<code>docs/novelty_assessment.md</code>).</p>
 
 <h2 id="finance"><span class="n">§2</span>Heston and the nine outputs</h2>
 <div class="eq">dS = r S dt + √v S dW₁
@@ -183,7 +183,7 @@ D = (κ − ρξiu − d)/ξ² · (1 − e^(−dT)) / (1 − g e^(−dT))
 V_k = 2K/(b − a) · (χ_k − ψ_k)          Σ' : the k = 0 term is weighted ½
 [a, b] = c1 ± 10√c2,   c2 = v0·T + θT/2  (simplified cumulant)</div>
 <ul>
-<li>χ and ψ are closed-form payoff integrals: the call is supported on [0, b], the put on [a, 0].</li>
+<li>χ and ψ are closed-form payoff integrals. The loop always prices the put (payoff on [a, 0]); a call is the put plus S0 − K·e<sup>−rT</sup> (put-call parity), added in the finish step with its derivatives. Priced directly, a call's e<sup>b</sup> terms cancel badly in fixed point.</li>
 <li>10√c2 is computed as 8√c2 + 2√c2, two shifts and an add.</li>
 <li><strong>[a, b] is held fixed when differentiating.</strong> This is the standard COS convention and the software reference does the same. The Greeks are those of the COS approximation with the range frozen, and the difference from the true model Greeks shows up in the separately reported “method error”.</li>
 <li>Why COS and not Monte Carlo: it's deterministic, needs no RNG, has a fixed trip count, and its terms are independent, which makes it a natural pipeline.</li>
@@ -193,7 +193,7 @@ V_k = 2K/(b − a) · (χ_k − ψ_k)          Σ' : the k = 0 term is weighted 
 <h3>Why reverse mode</h3>
 <p>Reverse mode gives every input's derivative for a small constant multiple of one evaluation, whatever the number of inputs (the cheap-gradient principle). Central-difference bumping needs 2n + 1 = 19 pricings for 9 inputs.</p>
 <h3>The structural insight: no global tape</h3>
-<p>The COS price is a <strong>sum of independent terms</strong> that share only per-evaluation constants. So the reverse sweep splits per term. Each term runs its forward pass and then its own adjoint sweep, and the per-term adjoints are accumulated. <strong>The tape is the pipeline's storage registers</strong> (443 register chains in z7h), which hold a term's forward values until its reverse sweep reads them.</p>
+<p>The COS price is a <strong>sum of independent terms</strong> that share only per-evaluation constants. So the reverse sweep splits per term. Each term runs its forward pass and then its own adjoint sweep, and the per-term adjoints are accumulated. <strong>The tape is the pipeline's storage registers</strong> (447 registers in 135 chains in z7h), which hold a term's forward values until its reverse sweep reads them.</p>
 <h3>Complex adjoints</h3>
 <p>For a holomorphic w = f(z), the adjoint is z̄ = conj(f′(z)) · w̄. That's why <code>heston.py</code> multiplies by <code>P.conj(...)</code> throughout.</p>
 <div class="eq">term = Re(φ · e^(−iua)) · wV = (φr·cos ua + φi·sin ua) · wV
@@ -204,7 +204,8 @@ seed   = w̄_φ = wV · (cos ua, sin ua)
 <h3>Chain rule after the loop (finish step)</h3>
 <div class="eq">x = ln(S0/K)          ⇒  ∂V/∂S0 = (∂V/∂x) / S0
 V_k is linear in K    ⇒  ∂V/∂K  = (V − ∂V/∂x) / K
-disc = e^(−rT)        ⇒  ∂V/∂r  = disc·Σ∂/∂r − T·V ,   ∂V/∂T = disc·Σ∂/∂T − r·V</div>
+disc = e^(−rT)        ⇒  ∂V/∂r  = disc·Σ∂/∂r − T·V ,   ∂V/∂T = disc·Σ∂/∂T − r·V
+call = put + S0 − K·disc   (and +1, −disc, +rK·disc, +TK·disc on delta, ∂/∂K, ∂/∂T, ∂/∂r)</div>
 
 <h2 id="history"><span class="n">§5</span>How the project got here</h2>
 <div class="tbl"><table>
@@ -227,7 +228,7 @@ bits lost  :  log₂( Σ_i |∂Y/∂v_i| · ε_i )</div>
 <li><strong>All ∂Y/∂v<sub>i</sub> come from one reverse sweep over the model graph</strong> (<code>Graph.error_bound</code>). That's AAD again (Linnainmaa 1976). The RTL's reverse sweep is part of the graph, so the same method bounds every Greek, not only the price.</li>
 <li>Local ε: 0.5 ULP for every rounded multiply, shift or constant. The CORDIC outputs are given 2 ULP in <code>ir.py</code>.</li>
 <li>Excluded, on purpose: second-order terms (O(2<sup>−2FL</sup>)), input quantization, overflow (checked separately), and COS method error (reported separately).</li>
-<li>Measured error / bound ≤ 0.21 for the FSM engine and ≤ 0.115 for the generated designs, so the bound always holds. The 1σ estimate tracks the measured error, and the error falls as 2<sup>−FL</sup> over FL = 16…40.</li>
+<li>Measured error / bound ≤ 0.21 for the FSM engine and ≤ 0.103 for the generated designs, so the bound always holds. The 1σ estimate tracks the measured error, and the error falls as 2<sup>−FL</sup> over FL = 16…40.</li>
 <li>AAD against bump in the same fixed-point format: bump error ≈ O(h²) truncation + O(ULP/h) cancellation, so the best h moves to 1e-2…1e-4. AAD beats the best h chosen per Greek by 5.6× to 690× (median about 220×), with no h to tune.</li>
 </ul>
 
@@ -261,17 +262,17 @@ bits lost  :  log₂( Σ_i |∂Y/∂v_i| · ε_i )</div>
 <div class="tbl"><table>
 <thead><tr><th>Part</th><th>AAD: mul / rot / vec</th><th>Price only: mul / rot / vec</th></tr></thead>
 <tbody>
-<tr><td>setup (once)</td><td class="num">77 / 0 / 0</td><td class="num">77 / 0 / 0</td></tr>
-<tr><td>term (×128)</td><td class="num">251 / 3 / 2</td><td class="num">127 / 3 / 2</td></tr>
-<tr><td>finish (once)</td><td class="num">28 / 0 / 0</td><td class="num">8 / 0 / 0</td></tr>
+<tr><td>setup (once)</td><td class="num">70 / 0 / 0</td><td class="num">70 / 0 / 0</td></tr>
+<tr><td>term (×128)</td><td class="num">250 / 3 / 2</td><td class="num">126 / 3 / 2</td></tr>
+<tr><td>finish (once)</td><td class="num">31 / 0 / 0</td><td class="num">9 / 0 / 0</td></tr>
 </tbody></table></div>
 
 <h2 id="sched"><span class="n">§8</span>The modulo schedule</h2>
 <p>Term k starts at S + k·II. A modulo reservation table ensures every term uses shared unit u at the same phase (t − S) mod II. II has a lower bound of max over resource classes of ⌈ops × busy / units⌉, then an ASAP list schedule is tried at that II and II is increased until it fits.</p>
 <div class="eq">cycles = S + (N − 1)·II + L + F + 2
-z7   (56-bit, 8 mul, iterative CORDIC):  113 + 127·32 + 506 + 46 + 2 = 4,731
+z7   (56-bit, 8 mul, iterative CORDIC):  113 + 127·32 + 506 + 48 + 2 = 4,733
 z7h  (setup/finish on the ARM)       :    0 + 127·32 + 506 +  0 + 2 = 4,572
-zu   (64-bit, 32 mul, pipelined)     :  113 + 127·8  + 423 + 45 + 2 = 1,599</div>
+zu   (64-bit, 32 mul, pipelined)     :  113 + 127·8  + 415 + 47 + 2 = 1,593</div>
 
 <figure>
 <div class="sv">
@@ -294,9 +295,9 @@ zu   (64-bit, 32 mul, pipelined)     :  113 + 127·8  + 423 + 45 + 2 = 1,599</di
 <tbody>
 <tr><td>CORDIC rotation</td><td class="num">3 × 32 cycles</td><td class="num">3</td><td class="num">32</td></tr>
 <tr><td>CORDIC vectoring</td><td class="num">2 × 32 cycles</td><td class="num">2</td><td class="num">32</td></tr>
-<tr><td>Multiplier</td><td class="num">251 × 1 cycle</td><td class="num">8</td><td class="num">⌈31.4⌉ = 32</td></tr>
+<tr><td>Multiplier</td><td class="num">250 × 1 cycle</td><td class="num">8</td><td class="num">⌈31.25⌉ = 32</td></tr>
 </tbody></table></div>
-<p>All three constraints meet at II = 32. The price-only pricer has the same CORDIC work, so it is also stuck at II = 32 with its multipliers half idle. The AAD reverse sweep fills those idle slots, which is why the Greeks cost only 1.04 pricings (4,731 vs 4,565 cycles). The zu config pipelines its CORDICs (one new op per cycle), so it's multiplier-bound instead: 251/32 gives II = 8.</p>
+<p>All three constraints meet at II = 32. The price-only pricer has the same CORDIC work, so it is also stuck at II = 32 with its multipliers half idle. The AAD reverse sweep fills those idle slots, which is why the Greeks cost only 1.04 pricings (4,733 vs 4,568 cycles). The zu config pipelines its CORDICs (one new op per cycle), so it's multiplier-bound instead: 250/32 gives II = 8.</p>
 <h3>Storage chains</h3>
 <p>A glue register holds its value for II cycles, until the next term overwrites it. A term value consumed later than that is copied down a register chain of ⌈(life + 1)/II⌉ registers. These chains are the tape.</p>
 
@@ -338,7 +339,7 @@ zu   (64-bit, 32 mul, pipelined)     :  113 + 127·8  + 423 + 45 + 2 = 1,599</di
 <li>CORDIC runs FL + 2 iterations with 6 guard bits. Rotation mode folds |z| &gt; π/2 by ±π and negates the result, and 1/K is pre-loaded into x. Vectoring handles x &lt; 0 with ±π. The iterative version is one unit reused; the pipelined version has one stage per iteration.</li>
 <li>All constants and ROM contents are emitted as integers by the same Python code the emulator uses, so the two agree by construction.</li>
 <li><strong>Narrow shifters and range_err:</strong> each data-dependent shift amount was measured over 150 random parameter sets and given only that range + 3. This cut LUTs from 90.6K to 59.0K. A sticky <code>range_err</code> flags any shift outside it. The ranges are empirical, not proven, and the flag is the safety net.</li>
-<li><strong>Host-setup (z7h):</strong> setup (77 mul) and finish (28 mul) move to the ARM. The FPGA takes 19 <code>hs_*</code> constants (see <code>heston_aad_z7h_host.json</code>) and returns 9 sums. LUTs drop from 59.0K to 45.5K with bit-identical results.</li>
+<li><strong>Host-setup (z7h):</strong> setup (70 mul) and finish (31 mul) move to the ARM. The FPGA takes 16 <code>hs_*</code> constants (see <code>heston_aad_z7h_host.json</code>) and returns 9 sums. LUTs drop from 59.0K to 45.5K (Yosys) with bit-identical results; Vivado measures 36.5K routed.</li>
 <li><strong>Bump wrapper:</strong> an FSM runs 19 sequential pricings on the price-only pricer, then computes (P⁺ − P⁻) · inv2h, with h and 1/(2h) supplied by the host, so there's no divider.</li>
 </ul>
 
@@ -347,29 +348,29 @@ zu   (64-bit, 32 mul, pipelined)     :  113 + 127·8  + 423 + 45 + 2 = 1,599</di
 <thead><tr><th>Design</th><th>AAD cycles</th><th>Bump cycles</th><th>Bump / AAD</th><th>Worst rel. error</th></tr></thead>
 <tbody>
 <tr><td>FSM engine (64-bit)</td><td class="num">433,779</td><td class="num">3,811,647</td><td class="num">8.8×</td><td>price 3e-7, Greeks ≤ 5.4e-5</td></tr>
-<tr><td>z7 (56-bit, 8 mul)</td><td class="num">4,731</td><td class="num">86,803</td><td class="num">18.3×</td><td>price 6.1e-7, Greeks ≤ 6.4e-5</td></tr>
-<tr><td>zu (64-bit, 32 mul)</td><td class="num">1,599</td><td class="num">19,505</td><td class="num">12.2×</td><td>price 5.9e-8, Greeks ≤ 6.0e-6</td></tr>
+<tr><td>z7 (56-bit, 8 mul)</td><td class="num">4,733</td><td class="num">86,860</td><td class="num">18.4×</td><td>price 6.1e-7, Greeks ≤ 1.2e-5</td></tr>
+<tr><td>zu (64-bit, 32 mul)</td><td class="num">1,593</td><td class="num">19,562</td><td class="num">12.3×</td><td>price 2.8e-8, Greeks ≤ 7.4e-7</td></tr>
 </tbody></table></div>
 <div class="tbl"><table>
 <thead><tr><th>Area (Yosys synth_xilinx)</th><th>LUT</th><th>FF</th><th>DSP</th><th>Fits?</th></tr></thead>
 <tbody>
 <tr><td>heston_aad_z7, full-range shifters</td><td class="num">90,648</td><td class="num">32,878</td><td class="num">96</td><td>no</td></tr>
 <tr><td>heston_aad_z7, measured ranges</td><td class="num">59,024</td><td class="num">32,731</td><td class="num">96</td><td>no, ~11% over</td></tr>
-<tr><td>heston_aad_z7h (host setup)</td><td class="num">45,504</td><td class="num">24,856</td><td class="num">96 / 220</td><td>yes, 91% LUT incl. SRL</td></tr>
+<tr><td>heston_aad_z7h (host setup)</td><td class="num">45,504</td><td class="num">24,856</td><td class="num">96 / 220</td><td>yes: Yosys 91% LUT; Vivado routed 68.6%</td></tr>
 <tr><td>heston_aad_zu</td><td class="num">108,330</td><td class="num">59,953</td><td class="num">512 DSP48E2</td><td>ZCU104: yes</td></tr>
 </tbody></table></div>
 
-<div class="callout"><p><strong>Expect this challenge on the 18×.</strong> Count the work: bumping takes 19 × 127 = 2,413 multiplies against AAD's 251, a ratio of about 9.6×. The 18× appears because the z7 pricer is CORDIC-bound and its multipliers sit half idle. At 4 multipliers both designs are multiplier-bound and the ratio is 10.1×. Say it before they do: the work advantage is ~10×, and this configuration turns it into 18×. A stronger bump baseline would interleave the 19 bumped pricings through one pipeline to fill the idle slots.</p></div>
-<p>Latency in seconds = cycles / Fmax, and Fmax is unknown until Vivado runs. For scale: 4,731 cycles is 47 µs at 100 MHz and 95 µs at 50 MHz.</p>
+<div class="callout"><p><strong>Expect this challenge on the 18×.</strong> Count the work: bumping takes 19 × 126 = 2,394 multiplies against AAD's 250, a ratio of about 9.6×. The 18× appears because the z7 pricer is CORDIC-bound and its multipliers sit half idle. At 4 multipliers both designs are multiplier-bound and the ratio is 10.1×. Say it before they do: the work advantage is ~10×, and this configuration turns it into 18×. A stronger bump baseline would interleave the 19 bumped pricings through one pipeline to fill the idle slots.</p></div>
+<p>Latency in seconds = cycles / Fmax. The routed Fmax is about 79 MHz out of context and 72 MHz in the ZedBoard design: the host-setup design's 4,572 cycles take 57.8 µs at 79.1 MHz and 65.3 µs at the board's 70 MHz; the fully on-chip z7's 4,733 would take 59.8 µs.</p>
 
 <h2 id="limits"><span class="n">§11</span>Limitations to state yourself</h2>
 <ul>
-<li>No Vivado results yet: Fmax, timing closure, power and energy are open.</li>
+<li>Timing misses 100 MHz by 2.6 ns (Fmax about 79 MHz); power is a vectorless estimate. The board results used the bitstream from before put-call parity.</li>
 <li>Verified domain: S0 = 100, K ∈ [60, 150], T ∈ [0.1, 3], r ∈ [0, 0.1], v0, θ ∈ [0.005, 0.25], κ ∈ [0.2, 6], ξ ∈ [0.1, 1], ρ ∈ [−0.95, 0.6]. Outside it, <code>range_err</code> is raised. Scale S0 and K together for other spot levels.</li>
 <li>[a, b] is held fixed when differentiating.</li>
 <li>Shift ranges come from sampling, not proof.</li>
 <li>No register sharing: every long-lived value has its own chain, which costs flip-flops.</li>
-<li>The reverse sweep in <code>heston.py</code> is written by hand. What's automated is the error-bound sweep, the scheduling and the RTL generation.</li>
+<li>The reverse sweep in <code>heston.py</code> is written by hand, as IR operations, not produced by an AD tool. What's automated is the error-bound sweep, the scheduling and the RTL generation. Say "adjoint (reverse-mode) differentiation" unless asked; if asked, say so plainly.</li>
 <li>Black-Scholes core is still at Q16.16 (price error ~5e-4).</li>
 <li>Heston Monte-Carlo AAD (on-chip RNG, path-wise tape) is future work.</li>
 </ul>
@@ -377,19 +378,19 @@ zu   (64-bit, 32 mul, pipelined)     :  113 + 127·8  + 423 + 45 + 2 = 1,599</di
 <h2 id="qa"><span class="n">§12</span>Likely viva questions</h2>
 <div class="qa-tools"><button type="button" id="openAll">Show all answers</button><button type="button" id="closeAll">Hide all answers</button></div>
 <div class="qa" id="qaList">
-<details><summary>Where is the AAD tape in your hardware?</summary><div class="a"><p>There's no global tape. The COS price is a sum of independent terms, so each term's reverse sweep needs only that term's forward values. Those are held in storage register chains in the pipeline (443 chains in z7h) until the sweep uses them.</p></div></details>
+<details><summary>Where is the AAD tape in your hardware?</summary><div class="a"><p>There's no global tape. The COS price is a sum of independent terms, so each term's reverse sweep needs only that term's forward values. Those are held in storage register chains in the pipeline (447 registers in 135 chains in z7h) until the sweep uses them.</p></div></details>
 <details><summary>Did the generator derive the adjoint code automatically?</summary><div class="a"><p>No. The reverse sweep is written by hand as IR operations in <code>heston.py</code> and verified against independent references. The generator automates the error-bound reverse sweep, scheduling, binding and RTL. Automatic source transformation from the forward graph is a natural next step.</p></div></details>
-<details><summary>How do you know the RTL is correct?</summary><div class="a"><p>Three links. (1) The RTL matches the fixed-point emulator bit-exactly at the register level for every setup and finish register, every register of terms 0–2, and all outputs, over 3–4 parameter sets. (2) The emulator's error against double precision always sits below a first-order bound, at ≤ 0.115 of it. (3) The double-precision code matches an independent reference: Richardson-extrapolated finite differences of a numpy COS implementation, and quadrature of the Fourier integral for method error.</p></div></details>
+<details><summary>How do you know the RTL is correct?</summary><div class="a"><p>Three links. (1) The RTL matches the fixed-point emulator bit-exactly at the register level for every setup and finish register, every register of terms 0–2, and all outputs, over 3–4 parameter sets. (2) The emulator's error against double precision always sits below a first-order bound, at ≤ 0.103 of it. (3) The double-precision code matches an independent reference: Richardson-extrapolated finite differences of a numpy COS implementation, and quadrature of the Fourier integral for method error.</p></div></details>
 <details><summary>Why is the error bound first order only? Is that rigorous?</summary><div class="a"><p>Products of two rounding errors are O(2<sup>−2FL</sup>). At FL ≥ 20 every first-order bound is far below 1 ULP-scaled, so these terms are negligible. It is a linearized bound: rigorous to first order, not an interval-arithmetic guarantee.</p></div></details>
 <details><summary>Why is measured error only ~10% of the bound?</summary><div class="a"><p>The worst-case bound assumes every rounding error has the sign that maximizes the output error. Real errors are roughly independent and partly cancel. The 1σ estimate, √(Σ(…)²/3), is the realistic prediction, and it matches the measurements.</p></div></details>
-<details><summary>Why 56-bit words on the Zynq-7020?</summary><div class="a"><p>The repository doesn't record the reason, so prepare your own. By the estimate in <code>sched.cost_estimate</code>, 56 and 64 bits both need 12 DSP48E1 per multiplier, so DSPs are not the reason. The saving is in glue logic: every add, mux, register and shifter is 8 bits narrower, which is what gets the LUT/FF count to fit. FL = 28 still gives ~6e-7 price error and ≤ 6.4e-5 on the Greeks. 48-bit would give ~1e-5.</p></div></details>
+<details><summary>Why 56-bit words on the Zynq-7020?</summary><div class="a"><p>The repository doesn't record the reason, so prepare your own. By the estimate in <code>sched.cost_estimate</code>, 56 and 64 bits both need 12 DSP48E1 per multiplier, so DSPs are not the reason. The saving is in glue logic: every add, mux, register and shifter is 8 bits narrower, which is what gets the LUT/FF count to fit. FL = 28 still gives ~6e-7 price error and ≤ 1.2e-5 on the Greeks. 48-bit would give ~1e-5.</p></div></details>
 <details><summary>Why no dividers?</summary><div class="a"><p>In the FSM engine, bit-serial dividers were 80% of the latency and dedicated area. Newton reciprocals turn a division into 6 multiplier uses, and those are shared resources the scheduler can place in idle slots. Each denominator is also inverted once and reused by the reverse sweep.</p></div></details>
-<details><summary>How is the 18× speedup fair?</summary><div class="a"><p>Be upfront. The intrinsic work ratio is ~9.6× (2,413 vs 251 multiplies). 18× reflects this configuration: the pricer is CORDIC-bound with idle multipliers, and AAD fills them. At 4 multipliers the ratio is 10.1×. A throughput-oriented bump baseline could interleave the 19 bumped pricings to use the idle slots.</p></div></details>
-<details><summary>What is II and what sets it?</summary><div class="a"><p>The initiation interval: cycles between the starts of consecutive terms. It is set by the most contended resource. On z7 the multipliers (251/8), CORDIC rotations (3 × 32 / 3) and vectorings (2 × 32 / 2) all give 32. On zu, with pipelined CORDICs, the multipliers set it: 251/32 gives 8.</p></div></details>
+<details><summary>How is the 18× speedup fair?</summary><div class="a"><p>Be upfront. The intrinsic work ratio is ~9.6× (2,394 vs 250 multiplies). 18× reflects this configuration: the pricer is CORDIC-bound with idle multipliers, and AAD fills them. At 4 multipliers the ratio is 10.1×. A throughput-oriented bump baseline could interleave the 19 bumped pricings to use the idle slots.</p></div></details>
+<details><summary>What is II and what sets it?</summary><div class="a"><p>The initiation interval: cycles between the starts of consecutive terms. It is set by the most contended resource. On z7 the multipliers (250/8), CORDIC rotations (3 × 32 / 3) and vectorings (2 × 32 / 2) all give 32. On zu, with pipelined CORDICs, the multipliers set it: 250/32 gives 8.</p></div></details>
 <details><summary>What happens with inputs outside the verified domain?</summary><div class="a"><p>A barrel shifter would receive a shift amount outside its measured range. The sticky <code>range_err</code> output is raised, and the AXI wrapper forwards it as <code>m_axis_tuser</code>. It's tested at T = 0.01. The result is flagged as invalid instead of being silently wrong.</p></div></details>
 <details><summary>Why hold [a, b] fixed? Doesn't that make the Greeks wrong?</summary><div class="a"><p>It's the standard COS convention, and the software reference uses it too. The Greeks are exact derivatives of the COS approximation with a frozen range. Their distance from the true model Greeks is part of the method error, measured separately against Fourier-integral quadrature (<code>fig2_accuracy_sweep</code>).</p></div></details>
 <details><summary>What limits Fmax, and how would you fix it?</summary><div class="a"><p>The single-register 56×56 multiply built from ~12 cascaded DSP48E1, the 113-bit rounding barrel shift plus increment in one stage, the CORDIC variable shift plus add, and 112-bit leading-one detection. The fix is more pipeline stages in the multiplier and shifter. The scheduler already takes the latency as a parameter; <code>rtlgen.py</code> would need to emit the extra stages. Bit-exactness doesn't change, only cycle counts.</p></div></details>
-<details><summary>Why move setup and finish to the ARM?</summary><div class="a"><p>They run once per evaluation (77 + 28 multiplies) but cost dedicated glue logic. Moving them cut LUTs from 59.0K to 45.5K, which is what makes the design fit the 7020. <code>host.py</code> is the bit-exact spec, and host + FPGA equals the on-chip design exactly. A C port for the ARM still has to be written.</p></div></details>
+<details><summary>Why move setup and finish to the ARM?</summary><div class="a"><p>They run once per evaluation (70 + 31 multiplies) but cost dedicated glue logic. Moving them cut LUTs from 59.0K to 45.5K, which is what makes the design fit the 7020. <code>host.py</code> is the bit-exact spec, and host + FPGA equals the on-chip design exactly. A C port for the ARM still has to be written.</p></div></details>
 <details><summary>What did the precision audit of the FSM engine find?</summary><div class="a"><p>Eleven defects. Headline ones: every constant truncated to 16 fractional bits (φ(0) = 0.999977); an exp using floor instead of round in range reduction; the outer COS loop at Q16.16 (price 0.8% high); the complex divide forming |b|² unscaled; floor rounding giving a −0.5 ULP bias per op summed over 128 terms; low-frequency cancellation in complex sqrt; a behavioral “/” that would synthesize a huge divider.</p></div></details>
 <details><summary>Why is AAD more accurate than bump-and-reprice in fixed point?</summary><div class="a"><p>Bump error is truncation O(h²) plus cancellation O(ULP/h). In fixed point the ULP is large, so the best h moves up to 1e-2…1e-4 and the error floor rises to 5e-7…5.5e-5. AAD has no h. Its error is just the propagated rounding, 9e-10…1.6e-6: 5.6× to 690× better than the best h chosen per Greek.</p></div></details>
 <details><summary>How are ∂V/∂S0 and ∂V/∂K obtained without adjoints for S0 and K?</summary><div class="a"><p>S0 and K enter the loop only through x = ln(S0/K) and the linear factor K in V<sub>k</sub>. So ∂V/∂S0 = (∂V/∂x)/S0 and ∂V/∂K = (V − ∂V/∂x)/K, both computed in the finish step.</p></div></details>
@@ -413,7 +414,7 @@ zu   (64-bit, 32 mul, pipelined)     :  113 + 127·8  + 423 + 45 + 2 = 1,599</di
 <tr><td><code>hardware/verilog/*.v</code></td><td>Gen-1 FSM engine and arithmetic library; Black-Scholes core</td></tr>
 <tr><td><code>validation/precision/heston_rtl_model.py</code></td><td>Operation-by-operation error model of the FSM engine</td></tr>
 <tr><td><code>validation/reference/heston_reference.py</code></td><td>Double-precision COS reference and quadrature reference</td></tr>
-<tr><td><code>verify_all.sh</code></td><td>21 checks, about 3 minutes</td></tr>
+<tr><td><code>verify_all.sh</code></td><td>22 checks, about 4 minutes</td></tr>
 </tbody></table></div>
 <p class="kbd">Vivado script fixes made alongside this page: <code>synth_impl.tcl</code> now creates the clock in an XDC read before <code>synth_design</code> and detects <code>clk</code> or <code>aclk</code>; <code>make_all.sh</code> records a failed run and continues.</p>
 </main>
