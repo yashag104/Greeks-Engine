@@ -34,11 +34,15 @@ exists yet (section 6).
 
 Use:
 
-> To our knowledge, this is the first FPGA implementation of adjoint algorithmic
-> differentiation (AAD) for option Greeks, and the first FPGA implementation of the
-> COS method. Because the COS pricer's operation graph does not depend on its
+> To our knowledge, this is the first FPGA implementation of adjoint (reverse-mode)
+> differentiation for option Greeks, and the first FPGA implementation of the COS
+> method. Because the COS pricer's operation graph does not depend on its
 > inputs, the adjoint sweep is compiled into a statically scheduled fixed-point
 > datapath with no runtime tape.
+
+"AAD" is fine in finance usage, but the adjoint here is hand-derived as IR
+operations, not produced by an AD tool (section 6, point 4): write "adjoint
+differentiation" in the claim sentence, or automate the reverse sweep first.
 
 Do not use:
 
@@ -146,9 +150,17 @@ FPGA + AD + Greeks.
    core with software AAD takes a similar time to 57.8 µs, the latency argument
    fails and the paper must argue throughput and energy (replicated engines, joules
    per Greek set). Measure it before writing the results section.
-4. **"Your Greeks freeze the truncation range."** Standard COS convention; state it
+4. **"Is this algorithmic differentiation, or a hand-written adjoint?"** In this
+   project the reverse sweep is written by hand as IR operations in
+   `hardware/gen/heston.py`; no AD tool derives it. In finance "AAD" usually names
+   the adjoint method however it is produced, but a reviewer from the AD community
+   will object to "algorithmic". Either say "adjoint (reverse-mode) differentiation"
+   and state that the adjoint is hand-derived and verified, or make the generator
+   derive the reverse sweep from the forward graph (a source transformation over
+   the IR). The second would strengthen N1 and the generality answer to point 2.
+5. **"Your Greeks freeze the truncation range."** Standard COS convention; state it
    and report distance to the Fourier-integral Greeks as method error.
-5. **"50 cases is a sample."** It is; the emulator equivalence and the bound carry
+6. **"50 cases is a sample."** It is; the emulator equivalence and the bound carry
    the generality, and the board confirms the emulator.
 
 ## 7. Limits of this check, and what to do before submission
