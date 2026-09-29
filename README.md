@@ -38,8 +38,12 @@ Requirements: Icarus Verilog 12, Python 3 with the packages in `software/require
 | 64-bit config (32 shared multipliers) | 1,593 | 19,562 (12.3×) | price 3e-8, Greeks ≤ 7e-7 |
 | first-generation FSM engine | 433,779 | 3,811,647 | price 3e-7, Greeks ≤ 5e-5 |
 
-Area (Yosys `synth_xilinx` estimates; Vivado runs pending):
-Zynq-7020 host-setup design 45.5K LUT / 24.9K FF / 96 DSP (fits the 7020);
-64-bit design 108K LUT / 60K FF / 512 DSP48E2 (fits a ZCU104).
+Implementation (Vivado 2025.2): the Zynq-7020 host-setup design routes at 36.5K LUT
+(68.6%) / 72 DSP, Fmax about 79 MHz (57.8 µs per evaluation). On a ZedBoard at 70 MHz,
+50 random cases ran bit-exact against the emulator. The 64-bit design is estimated by
+Yosys at 108K LUT / 60K FF / 512 DSP48E2 (fits a ZCU104).
+
+Status at a glance: `Greek Engine/dashboard.html`. Full write-up:
+`Greek Engine/docs/report/greeks_engine_report.pdf` (source: `docs/report/make_report.py`).
 
 Details and limitations: `Greek Engine/docs/architecture.md`.
