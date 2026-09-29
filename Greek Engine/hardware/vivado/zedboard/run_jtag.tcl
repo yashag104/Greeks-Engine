@@ -12,21 +12,28 @@
 #
 # Prerequisites: board powered, JTAG (USB) connected, JP7-JP11 set to JTAG
 # boot, and bd_jtag.tcl already run to produce the bitstream.
+#
+# Also runs from the Vivado GUI Tcl console (cd to this folder, then
+# `source run_jtag.tcl`), reusing a Hardware Manager connection if one is open.
 # ============================================================================
 set here [file dirname [file normalize [info script]]]
+# Stop with a Tcl error, not `exit`: from the GUI console `exit` would quit
+# Vivado itself. In batch mode an uncaught error ends the run just the same.
+proc stop {} { error "run_jtag.tcl stopped; see the messages above" }
+if {![info exists argv]} { set argv {} }
 if {[llength $argv] > 0} {
   set base [lindex $argv 0]
 } elseif {[file exists "$here/base_addr.txt"]} {
   set fp [open "$here/base_addr.txt"]; set base [string trim [read $fp]]; close $fp
 } else {
-  puts "ERROR: no base address given and no base_addr.txt; run bd_jtag.tcl first"; exit 1
+  puts "ERROR: no base address given and no base_addr.txt; run bd_jtag.tcl first"; stop
 }
 set bit  [expr {[llength $argv] > 1 ? [lindex $argv 1] \
                 : "$here/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper.bit"}]
 set vec  "$here/../../gen/build/heston_aad_z7h_lite_vector.tcl"
 
 foreach f [list $bit $vec] {
-  if {![file exists $f]} { puts "ERROR: missing $f"; exit 1 }
+  if {![file exists $f]} { puts "ERROR: missing $f"; stop }
 }
 source $vec
 puts "INFO: base 0x[format %08x $base] ; [llength $VEC_WRITES] input words ; [llength $VEC_EXPECT] outputs"
@@ -49,9 +56,16 @@ proc axi_r {off} {
 
 # ---- connect and program ---------------------------------------------------
 open_hw_manager
-connect_hw_server -quiet
-open_hw_target
-set dev [lindex [get_hw_devices] 0]
+if {[llength [get_hw_servers -quiet]] == 0} { connect_hw_server -quiet }
+if {[llength [get_hw_devices -quiet]] == 0} { open_hw_target }
+# The Zynq JTAG chain is arm_dap_0 first, then the FPGA (xc7z020_1): select
+# the FPGA by name, not by position.
+set devs [get_hw_devices -quiet xc7z*]
+if {[llength $devs] == 0} {
+  puts "ERROR: no xc7z FPGA on the JTAG chain; found: [get_hw_devices -quiet]"
+  stop
+}
+set dev [lindex $devs 0]
 current_hw_device $dev
 puts "INFO: device [get_property PART $dev]"
 set_property PROGRAM.FILE $bit $dev
@@ -62,7 +76,7 @@ set axis [get_hw_axis -quiet]
 if {[llength $axis] == 0} {
   puts "ERROR: no JTAG-to-AXI master found after programming."
   puts "       The bitstream in $bit does not contain jtag_axi, or programming failed."
-  exit 1
+  stop
 }
 set axi [lindex $axis 0]
 reset_hw_axi -quiet $axi
@@ -77,7 +91,7 @@ set rb [axi_r [lindex $first 0]]
 if {$rb != [lindex $first 1]} {
   puts "FAIL: readback 0x[format %08x $rb] != written 0x[format %08x [lindex $first 1]]"
   puts "      Wrong base address, or the design is not responding. Stopping."
-  exit 1
+  stop
 }
 puts "INFO: readback ok, wrote [llength $VEC_WRITES] words"
 
@@ -89,7 +103,7 @@ for {set i 0} {$i < 1000} {incr i} {
   set st [axi_r $VEC_STAT]
   if {$st & 1} break
 }
-if {!($st & 1)} { puts "FAIL: done never asserted (STAT=0x[format %08x $st])"; exit 1 }
+if {!($st & 1)} { puts "FAIL: done never asserted (STAT=0x[format %08x $st])"; stop }
 puts "INFO: done after [expr {$i + 1}] status polls"
 if {$st & 2} { puts "FAIL: range_err set for an in-domain case"; incr errors }
 
