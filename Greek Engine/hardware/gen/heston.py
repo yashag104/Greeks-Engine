@@ -49,7 +49,6 @@ def build_setup(g):
     s["tkb"] = g.mul(K, yb, fl, e=g.add(eb, g.const(1, 0)))               # 2K/(b-a)
     s["kpi"] = g.mul(bma, g.const(1 / P.PI_DEC, g.mf), fl)                 # (b-a)/pi
     s["exp_a"] = P.exp(g, s["a"])
-    s["exp_b"] = P.exp(g, s["b"])
     # characteristic-function constants
     s["rho_xi"] = g.mul(rho, xi)
     s["xi_sq"] = g.mul(xi, xi)
@@ -76,17 +75,20 @@ def term(g, s, k, greeks=True):
     u = g.mul(k, s["pob"], fl)                       # k integer: exact
     cu, su = P.cos_sin(g, g.mul(u, s["a"]))
     k0 = g.eq0(k)
-    kodd = g.bit0(k)
     u2 = g.mul(u, u)
     yd, ed = P.recip(g, g.add(one, u2))
     usu = g.mul(u, su)
     inv_kp = g.mul(s["kpi"], g.rom("inv_k", k, mf), fl)
     s_ikp = g.mul(inv_kp, su)
-    chi_c = g.mul(g.add(g.sub(g.mux(kodd, g.neg(s["exp_b"]), s["exp_b"]), cu), usu), yd, fl, e=ed)
+    # Always the put payoff; calls come from put-call parity in the finish step.
+    # A call's coefficients carry e^b, which over a wide [a, b] grows large and
+    # then cancels: over 50 random in-domain calls the direct call's fixed-point
+    # price error was up to 2.3e-3 (median 4.8e-5), the put + parity's 3.1e-5
+    # (median 5.4e-7), against the integral reference. Fang & Oosterlee price
+    # calls this way for the same reason in floating point.
     chi_p = g.mul(g.sub(g.sub(cu, s["exp_a"]), usu), yd, fl, e=ed)
-    psi_c = g.mux(k0, s["b"], s_ikp)
     psi_p = g.mux(k0, g.neg(s["a"]), g.neg(s_ikp))
-    diff = g.mux(s["is_call"], g.sub(chi_c, psi_c), g.sub(psi_p, chi_p))
+    diff = g.sub(psi_p, chi_p)
     V = g.mul(s["tkb"], diff)
     wV = g.mux(k0, g.scale(V, g.const(-1, 0), fl), V)
     seed = (g.mul(wV, cu), g.mul(wV, su))
@@ -200,12 +202,22 @@ def term(g, s, k, greeks=True):
     return outs
 
 
+def parity(g, s, disc, out):
+    """put -> call where is_call: C = P + S0 - K e^{-rT}, and its derivatives
+    in S0, K, T, r. The Heston-parameter sensitivities are the put's."""
+    Kd = g.mul(s["K"], disc)
+    add = {"price": g.sub(s["S0"], Kd), "delta": g.const(1), "strike_sens": g.neg(disc),
+           "theta_greek": g.mul(s["r"], Kd), "rho_greek": g.mul(s["T"], Kd)}
+    return {o: (g.mux(s["is_call"], g.add(v, add[o]), v) if o in add else v) for o, v in out.items()}
+
+
 def build_finish(g, s, greeks=True):
     g.part = "finish"
     fl = g.fl
     if not greeks:
         acc_price = g.inp("acc_price")
-        return {"price": g.mul(P.exp(g, g.neg(s["rT"])), acc_price)}
+        disc = P.exp(g, g.neg(s["rT"]))
+        return parity(g, s, disc, {"price": g.mul(disc, acc_price)})
     acc = {n: g.inp("acc_" + n) for n in ACC}
     r, T, S0 = s["r"], s["T"], s["S0"]
     disc = P.exp(g, g.neg(s["rT"]))
@@ -219,7 +231,7 @@ def build_finish(g, s, greeks=True):
     yS, eS = P.recip(g, S0)
     out["delta"] = g.mul(adjx, yS, fl, e=eS)
     out["strike_sens"] = g.mul(g.sub(out["price"], adjx), s["recipK"][0], fl, e=s["recipK"][1])
-    return out
+    return parity(g, s, disc, out)
 
 
 OUTPUTS = ["price", "delta", "strike_sens", "theta_greek", "rho_greek", "vega",
@@ -285,7 +297,7 @@ def build_finish_from(g, s, acc):
     yS, eS = P.recip(g, S0)
     out["delta"] = g.mul(adjx, yS, fl, e=eS)
     out["strike_sens"] = g.mul(g.sub(out["price"], adjx), s["recipK"][0], fl, e=s["recipK"][1])
-    return out
+    return parity(g, s, disc, out)
 
 
 def quantize_inputs(params, is_call, fl):
