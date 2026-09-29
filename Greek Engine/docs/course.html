@@ -141,8 +141,8 @@ closed-form price, so the price is computed by a numerical method (we use the Fo
 <strong>bump-and-reprice</strong>: nudge each parameter, price again, take a difference. For
 <em>n</em> Greeks that costs <em>n</em>+1 pricings and it is numerically poor. The better way is
 <strong>reverse-mode algorithmic differentiation (AAD)</strong>, which gets all <em>n</em> Greeks from
-<em>one</em> backward sweep over the pricing computation. AAD is standard in software. Nobody had
-built it as a hardware datapath. That is what this project is: a generator that takes the Heston-COS
+<em>one</em> backward sweep over the pricing computation. AAD is standard in software; to our knowledge it had
+not been built as an FPGA datapath for option Greeks (checked in <span class="mono">docs/novelty_assessment.md</span>). That is what this project is: a generator that takes the Heston-COS
 price <em>and its adjoint sweep</em> as a single operation graph and emits a fixed-point,
 resource-shared, modulo-scheduled Verilog datapath that produces the price and nine sensitivities in
 4,733 clock cycles on a Zynq-7020-sized design — where bump-and-reprice on the identical hardware
@@ -1325,7 +1325,7 @@ evidence that the error model is right, because a bound that is merely loose cou
 wrong reasons.</p>
 
 <p>Over the 21-case grid: <strong>measured error / bound ≤ 0.21 for all 210 (case, output)
-pairs.</strong> For the generated generation-2 datapaths the corresponding ratio is ≤ 0.115.</p>
+pairs.</strong> For the generated generation-2 datapaths the corresponding ratio is ≤ 0.103.</p>
 
 <div class="note"><p><strong>The sentence for the paper.</strong> At Q32.32 the first-order bound
 shows at most 16.5 bits lost on the price over the test grid (14.5 at the base point: bound 5.2e-6,
@@ -1424,7 +1424,7 @@ confirming the error is quantisation and not a defect.</dd>
 <dt>Question</dt><dd>A bound that is never violated but 10<sup>6</sup>× too loose is useless.</dd>
 <dt>Method</dt><dd>Compute measured error / bound for all (case, output) pairs.</dd>
 <dt>Result</dt><dd>Generation 1, Q32.32: ratio ≤ <strong>0.21</strong> across all 210 pairs.
-Generated designs: ≤ <strong>0.115</strong>. Never violated; within one order of magnitude.
+Generated designs: ≤ <strong>0.103</strong>. Never violated; within one order of magnitude.
 <span class="chip ok">PASS</span> Figure: <span class="mono">fig3_bound_tightness</span>.</dd>
 <dt>Why it matters</dt><dd>Converts the accuracy claim from "we measured 21 cases" into "we have a
 per-Greek certificate, and here is the evidence it is not vacuous".</dd>
@@ -1800,6 +1800,10 @@ elimination possible is a property of the <em>numerical method</em>, not of AAD:
 COS was chosen over Monte Carlo, whose graph genuinely does depend on the random path. The novelty is
 in noticing that the pricing-method choice and the differentiation-implementation choice are
 coupled.</dd>
+<dt>Prior art</dt><dd>A static adjoint of a fixed graph is not new in itself: source-transformation AD
+tools emit tape-free adjoints for straight-line code, and neural-network training hardware runs a fixed
+backward graph. The contribution is seeing that the COS pricer has such a graph, and compiling its adjoint
+into a scheduled fixed-point datapath; claim that, not the technique.</dd>
 <dt>Evidence</dt><dd>E2 — the generated RTL is bit-exact against the emulator at every register, for
 five designs, with no tape anywhere in the netlist. E8 — 4,733 cycles versus generation 1's tape-ish
 FSM at 433,779.</dd>
@@ -1864,8 +1868,12 @@ differentiation of a pricer; the validation method is reverse-mode differentiati
 of the hardware that does it. The reason it is affordable is exactly the reason AAD is affordable in
 the first place — thousands of internal nodes, one output, so reverse mode gets all the sensitivities
 in one sweep. Nobody would attempt this bound with finite differences.</dd>
+<dt>Prior art</dt><dd>The method is old, and the paper must say so: reverse mode was introduced by Linnainmaa
+(BIT, 1976) precisely to expand accumulated rounding error, and Gaffar, Mencer, Luk et al. (FPT 2002) used AD
+to choose FPGA bit widths. What is new is the application: bounding every Greek of a datapath that itself
+performs the adjoint, validated against bit-exact RTL.</dd>
 <dt>Evidence</dt><dd>E5 — measured error / bound ≤ 0.21 over all 210 (case, output) pairs for
-generation 1 and ≤ 0.115 for the generated designs. E6 — the 1σ form of the same expression predicts
+generation 1 and ≤ 0.103 for the generated designs. E6 — the 1σ form of the same expression predicts
 the measured error across FL = 16…40, which is what shows the model is right rather than merely
 conservative.</dd>
 </dl>
@@ -1926,14 +1934,16 @@ property of the number format.</dd>
 </dl>
 </div>
 
-<div class="callout"><p><strong>The one claim to be careful with.</strong> "First hardware
-implementation of AAD for option Greeks" rests on a literature search, and
-<span class="mono">docs/05_literature_review.md</span> flags the Weiss et al. (2016) FPGA-Heston
-citation as <em>not verified</em> — a September 2026 search did not locate a matching paper. Before
-the paper claims priority, that citation must be resolved, and the search repeated for recent
-preprints. The technically safer formulation is a claim about <em>what</em> was built —
-"a statically scheduled, tape-free hardware datapath for reverse-mode AAD, with a per-Greek error
-bound" — which is defensible on its own terms regardless of who was first.</p></div>
+<div class="callout"><p><strong>The priority claim, after checking.</strong> A full literature check
+(September 2026, <span class="mono">docs/novelty_assessment.md</span>) found no published FPGA or custom-datapath
+implementation of AAD for option Greeks, and no FPGA implementation of the COS method. It covered the 2024
+survey of 99 FPGA option-pricing studies (which never mentions differentiation or Fourier methods), the 2024
+review of AAD in finance by Capriotti and Giles (which cites no hardware AAD), AMD's Vitis finance library
+(Heston Greeks by finite differences) and the FPGA Greeks papers of Klaisoongnoen et al. (no adjoints). The
+"Weiss et al. 2016" citation matched no real paper and has been removed. Say "to our knowledge, the first FPGA
+implementation of AAD for option Greeks". Do not say "first hardware reverse-mode AD": every neural-network
+training accelerator runs backpropagation. And cite Capriotti's patent on an adjoint Greeks "simulating
+machine" (software on general-purpose computers).</p></div>
 
 <h2 id="next"><span class="n">17</span>What has to happen next</h2>
 
