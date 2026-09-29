@@ -20,15 +20,23 @@ set here [file dirname [file normalize [info script]]]
 # Stop with a Tcl error, not `exit`: from the GUI console `exit` would quit
 # Vivado itself. In batch mode an uncaught error ends the run just the same.
 proc stop {} { error "run_jtag.tcl stopped; see the messages above" }
+# In the GUI, argv is one global shared by everything sourced in the session,
+# so a leftover value (bd_jtag.tcl's clock, 70) was once taken as the base
+# address: 0x46. Only a hex literal is accepted as an address.
 if {![info exists argv]} { set argv {} }
-if {[llength $argv] > 0} {
+if {[regexp {^0[xX][0-9a-fA-F]+$} [lindex $argv 0]]} {
   set base [lindex $argv 0]
+  puts "INFO: base address from argv"
 } elseif {[file exists "$here/base_addr.txt"]} {
   set fp [open "$here/base_addr.txt"]; set base [string trim [read $fp]]; close $fp
+  puts "INFO: base address from base_addr.txt"
 } else {
   puts "ERROR: no base address given and no base_addr.txt; run bd_jtag.tcl first"; stop
 }
-set bit  [expr {[llength $argv] > 1 ? [lindex $argv 1] \
+if {$base % 4096 != 0} {
+  puts "ERROR: base address $base is not 4 KB aligned; the engine's register map is 4 KB"; stop
+}
+set bit  [expr {[llength $argv] > 1 && [file exists [lindex $argv 1]] ? [lindex $argv 1] \
                 : "$here/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper.bit"}]
 set vec  "$here/../../gen/build/heston_aad_z7h_lite_vector.tcl"
 
@@ -51,7 +59,14 @@ proc axi_r {off} {
   run_hw_axi -quiet _r
   set v [get_property DATA [get_hw_axi_txns _r]]
   delete_hw_axi_txn [get_hw_axi_txns _r]
-  return [expr {0x$v}]
+  # -quiet hides a failed transaction; an empty DATA is how it shows up
+  if {$v eq ""} {
+    puts "ERROR: AXI read at 0x[format %08x [expr {$base + $off}]] returned no data"
+    puts "       (bus error: wrong base address, or the engine is not responding)"
+    stop
+  }
+  # braced expr cannot splice "0x" onto $v (a parse error, not a bad value)
+  return [scan $v %x]
 }
 
 # ---- connect and program ---------------------------------------------------
@@ -80,6 +95,10 @@ if {[llength $axis] == 0} {
 }
 set axi [lindex $axis 0]
 reset_hw_axi -quiet $axi
+# a run that stopped mid-transaction leaves _w/_r behind in a GUI session;
+# create_hw_axi_txn -quiet would then silently reuse the stale one
+set old [get_hw_axi_txns -quiet]
+if {[llength $old]} { delete_hw_axi_txn -quiet $old }
 
 # ---- drive one evaluation --------------------------------------------------
 set errors 0
