@@ -1,7 +1,7 @@
 {
   "design": {
     "design_info": {
-      "boundary_crc": "0xF0FA1C467A3B8A77",
+      "boundary_crc": "0xF0FA1C467209EAF9",
       "design_src": "SBD",
       "device": "xc7z020clg484-1",
       "name": "bd_6262",
@@ -65,7 +65,7 @@
             "value_src": "auto_prop"
           },
           "FREQ_HZ": {
-            "value": "100000000",
+            "value": "70000000",
             "value_src": "ip_prop"
           },
           "HAS_BRESP": {
@@ -212,7 +212,7 @@
             "value_src": "default"
           },
           "FREQ_HZ": {
-            "value": "100000000",
+            "value": "70000000",
             "value_src": "ip_prop"
           },
           "HAS_BRESP": {
@@ -332,7 +332,7 @@
             "value_src": "ip_prop"
           },
           "FREQ_HZ": {
-            "value": "100000000",
+            "value": "70000000",
             "value_src": "ip_prop"
           },
           "FREQ_TOLERANCE_HZ": {
