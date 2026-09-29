@@ -1,6 +1,6 @@
 """Datasets for the generated shared-multiplier architecture (hardware/gen).
 
-    python run_gen_sweeps.py            # -> results/gen_cycles.csv, results/gen_bump.csv
+    python run_gen_sweeps.py   # -> results/gen_cycles.csv, gen_bump.csv, gen_accuracy.csv
 
 gen_cycles.csv  cycles per evaluation vs number of shared multipliers, for the
                 AAD engine (price + 9 sensitivities) and the bump-and-reprice
@@ -11,6 +11,9 @@ gen_cycles.csv  cycles per evaluation vs number of shared multipliers, for the
                 measured count is 19 * (pricer + 3) + 11.
 gen_bump.csv    bump-and-reprice error vs bump size on the generated pricer
                 (bit-accurate emulator == RTL), against AAD on the same config.
+gen_accuracy.csv  both AAD configs over the 21-case grid of run_hw_sweeps.py:
+                fixed point (== RTL), the same algorithm in float, the COS
+                reference, and the first-order error bound with its 1-sigma form.
 """
 import csv
 import os
@@ -24,6 +27,8 @@ import heston as H  # noqa: E402
 import heston_reference as ref  # noqa: E402
 from sched import Config, cost_estimate, schedule  # noqa: E402
 from wrappers import SENS, bump_emulate  # noqa: E402
+import check_accuracy as C  # noqa: E402
+from run_hw_sweeps import accuracy_cases  # noqa: E402
 
 RES = os.path.join(HERE, "results")
 CONFIGS = {"z7": dict(wl=56, fl=28, crot=3, cvec=2, pipe=False, mults=8),
@@ -83,6 +88,21 @@ def bump_sweep(rel_hs=(1e-8, 1e-7, 1e-6, 1e-5, 1e-4, 1e-3, 1e-2, 1e-1)):
     write("gen_bump.csv", rows)
 
 
+def accuracy_sweep():
+    rows = []
+    for fam, c in CONFIGS.items():
+        g_out = H.unrolled(c["wl"], c["fl"])
+        for case in accuracy_cases():
+            p = [case[n] for n in H.PARAMS]
+            res, novf = C.run(p, bool(case["is_call"]), c["fl"], g_out)
+            assert novf == 0, (fam, case["name"])
+            for o, fx, fl_, rv, b, sg in res:
+                rows.append(dict(design="heston_aad_" + fam, wl=c["wl"], fl=c["fl"], case=case["name"], output=o,
+                                 fixed=fx, float_alg=fl_, ref_cos=rv, bound=b, sigma=sg))
+    write("gen_accuracy.csv", rows)
+
+
 if __name__ == "__main__":
     cycles_sweep()
     bump_sweep()
+    accuracy_sweep()
