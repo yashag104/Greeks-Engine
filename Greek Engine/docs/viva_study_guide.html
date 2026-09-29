@@ -122,7 +122,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 <h2 id="ready"><span class="n">§0</span>Is it ready to run on the board?</h2>
 <div class="verdict">
   <span class="big">Yes, it runs on a board</span>
-  <p>On 2026-09-29 a ZedBoard (xc7z020clg484-1) ran one evaluation over JTAG and all 9 outputs matched the emulator bit for bit. What remains is breadth (many cases, not one) and the ARM side (the host steps are still Python on the PC).</p>
+  <p>On 2026-09-29 a ZedBoard (xc7z020clg484-1) ran 50 evaluations back to back over JTAG and every output matched the emulator bit for bit. What remains is the ARM side: the host steps are still Python on the PC.</p>
 </div>
 
 <div class="tbl"><table>
@@ -134,7 +134,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 <tr><td><span class="chip ok">done</span></td><td>Bus interface</td><td>The 1,624-bit AXI4-Stream beat is replaced by an AXI4-Lite register file (<code>wrappers.py lite</code>), bit-exact in simulation.</td></tr>
 <tr><td><span class="chip ok">done</span></td><td>Board system</td><td>JTAG-to-AXI block design (<code>zedboard/bd_jtag.tcl</code>), engine at 70 MHz with WNS +0.404 ns (about 72 MHz in context), 38,358 LUT. Bitstream built.</td></tr>
 <tr><td><span class="chip ok">done</span></td><td>On silicon</td><td>One vector, 9/9 outputs bit-exact vs the emulator (<code>validation/results/board_zedboard_2026-09-29.log</code>). Through the host finish step: price error 2e-6 against double-precision COS, every output ≤ 3.1% of its error bound (<code>validation/board_report.py</code>).</td></tr>
-<tr><td><span class="chip gap">next</span></td><td>Board sweep</td><td>50 cases back to back (<code>run_board.bat sweep</code>), 48 of them random over the verified domain with a seed the shifter ranges were not fitted on. Passes in simulation; not yet run on the board.</td></tr>
+<tr><td><span class="chip ok">done</span></td><td>Board sweep</td><td>50 cases back to back with no reset, 48 of them random over the verified domain with a seed the shifter ranges were not fitted on: 450/450 sums bit-exact, no <code>range_err</code>, 56.9 s. All 500 final outputs within their error bounds (worst 0.268).</td></tr>
 <tr><td><span class="chip gap">gap</span></td><td>ARM software</td><td>The 19 <code>hs_*</code> constants and the finish step exist only in Python. They need a bit-exact C port, with a hand-written 64×64→128 multiply, since the Zynq-7000 is 32-bit ARMv7.</td></tr>
 <tr><td><span class="chip risk">risk</span></td><td>Call accuracy</td><td>Over 50 random cases, fixed-point rounding error on calls is about 180× that on puts (median 4.8e-5 vs 2.6e-7 on price; worst 2.3e-3, a deep in-the-money long-dated call). Always within the error bound, but pricing calls through put-call parity, as the COS literature does, is the likely fix.</td></tr>
 <tr><td><span class="chip risk">note</span></td><td>C++ “baseline”</td><td><code>hardware/cpp/heston_cos_aad.cpp</code> computes only the price, has no AAD, uses a different c₂ and payoff. Don't present it as a CPU comparison.</td></tr>
@@ -142,7 +142,6 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 <h3>If asked “what's next”</h3>
 <ol>
-<li>Run the 50-case board sweep and publish it with <code>board_report.py</code>.</li>
 <li>Price calls through put-call parity and measure whether the call error drops to the put level.</li>
 <li>Pipeline the carry chains to close 100 MHz. Cycle counts change; bit-exactness doesn't.</li>
 <li>Host setup and finish in C on the ARM, checked against <code>host.py</code>, then the PS design (<code>bd_lite.tcl</code>).</li>

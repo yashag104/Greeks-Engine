@@ -177,18 +177,23 @@ bring-up designs run the engine at 70 MHz for margin.
   checkpoints after placement, `impl_from_dcp.tcl` resumes from a checkpoint, and
   `run_native.bat` runs the flow outside WSL). Power is vectorless; activity-based
   (SAIF) power is still open.
-- **On silicon: one test vector, bit-exact (2026-09-29).** The AXI4-Stream wrappers are
+- **On silicon: 50 cases, bit-exact (2026-09-29).** The AXI4-Stream wrappers are
   up to 1,624 bits wide, which no Zynq PS-PL port can carry, so `wrappers.py lite`
   generates an AXI4-Lite register file (bit-exact, in `verify_all.sh`). On a ZedBoard
   (xc7z020clg484-1), `zedboard/bd_jtag.tcl` puts it behind a JTAG-to-AXI master at
   70 MHz (WNS +0.404 ns, so ~72 MHz in context against ~79 MHz out of context; 38,358
   LUT, 72 DSP). `run_jtag.tcl` wrote the 56 input words, started the engine, saw done
   on the first status poll, and read back all 9 outputs **bit-exact against the
-  emulator**. Log: `validation/results/board_zedboard_2026-09-29.log`. Open: this is a
-  single vector; a sweep over the verified domain, and the PS design (`bd_lite.tcl`,
-  which needs a C port of the host setup), are not yet run.
+  emulator**. Log: `validation/results/board_zedboard_2026-09-29.log`. A sweep then
+  ran 50 cases back to back with no reset between them (the 2 fixed cases plus 48
+  random draws over the verified domain, seed 2026, not the seed the shifter ranges
+  were fitted on; 22 calls, 28 puts): 450/450 sums bit-exact, `range_err` never set,
+  56.9 s in all, almost all of it JTAG register traffic. Through the host finish step
+  all 500 outputs equal the emulator's, and the worst is 0.268 of its error bound
+  (`validation/board_report.py`; `results/board_sweep_*`). Open: the PS design
+  (`bd_lite.tcl`), which needs a C port of the host setup and finish.
 - **Calls lose more precision than puts.** Over 50 random in-domain cases (the board
-  sweep set, emulated), fixed-point rounding error on price is a median 4.8e-5 for
+  sweep set; the board results are identical), fixed-point rounding error on price is a median 4.8e-5 for
   calls against 2.6e-7 for puts, worst 2.3e-3 (K = 61, T = 2.9, high variance). It is
   within the first-order bound in every case (worst 0.27 of it), so the bound is
   sound; the cause is the call payoff's coefficients growing like e^b over a wide
