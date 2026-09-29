@@ -138,10 +138,10 @@ foreach e $VEC_EXPECT {
   set raw [expr {(($hi & ((1 << ($VEC_WL - 32)) - 1)) << 32) | $lo}]
   if {$raw >= $sign} { set raw [expr {$raw - $mod}] }
   if {$raw != $want} {
-    puts [format "FAIL %-12s got %d want %d (diff %d)" $name $raw $want [expr {$raw - $want}]]
+    puts [format "FAIL %-12s got %ld want %ld (diff %ld)" $name $raw $want [expr {$raw - $want}]]
     incr errors
   } else {
-    puts [format "  ok %-12s %d  (%.10f)" $name $raw [expr {double($raw) / (1 << $VEC_FL)}]]
+    puts [format "  ok %-12s %ld  (%.10f)" $name $raw [expr {double($raw) / (1 << $VEC_FL)}]]
   }
 }
 
