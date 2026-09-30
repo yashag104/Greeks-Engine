@@ -298,6 +298,20 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     </table>
   </div>
   <p class="caption">II is the initiation interval: cycles between the starts of consecutive COS terms. On the Zynq-7020 design, 8 multipliers, 3 CORDIC rotators and 2 vectorers all give II = 32, so a 16th multiplier buys only 2%. Each term costs 250 multiplies, 3 CORDIC rotations and 2 vectorings. The bump advantage beyond the ~9.6× work ratio comes from the idle multiplier slots AAD fills.</p>
+  <h3>Against a CPU</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Price + 9 Greeks</th><th class="num">µs per evaluation</th><th class="num">Cost vs one price</th><th class="num">Evaluations / s</th></tr></thead>
+      <tbody>
+        <tr><td>CPU, price only (1 core)</td><td class="num">17.2</td><td class="num">1×</td><td class="num">—</td></tr>
+        <tr><td>CPU, bump-and-reprice (1 core)</td><td class="num">257.6</td><td class="num">15×</td><td class="num">—</td></tr>
+        <tr><td>CPU, AAD with CoDiPack (1 core)</td><td class="num">114.9</td><td class="num">6.7×</td><td class="num">23,100 on 4 cores</td></tr>
+        <tr><td>CPU, forward mode (1 core)</td><td class="num">91.5</td><td class="num">5.3×</td><td class="num">33,900 on 4 cores</td></tr>
+        <tr class="hi"><td>FPGA, one engine, ZedBoard 70 MHz</td><td class="num">65.3</td><td class="num">1.04×</td><td class="num">15,300</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">Intel Core i5-1155G7 laptop CPU, same algorithm in C++ double precision, g++ -O3 -march=native; all methods match the reference (AAD to 1.3e-10). The FPGA is 1.4× faster than the best software method on one core and uses an estimated 16–37× less energy per evaluation (CPU power not measured; FPGA power is Vivado's estimate), but four CPU cores give 2.2× more throughput. The CPU also prices faster on its own: the FPGA's lead is entirely that its Greeks cost 1.04 pricings instead of 5–7. <span class="mono">validation/cpu_baseline/</span></p>
 </section>
 
 <!-- ============================================================ ACCURACY -->
@@ -423,7 +437,8 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   <div class="steps">
     <div class="step"><div><div class="t">Rebuild the ZedBoard bitstream and repeat the 50-case sweep</div><p>Brings the silicon result up to the current design. Scripts, vectors and the report are ready: about 40 minutes of build and 1 minute on the board.</p></div><span class="pill warn">Ready, needs the board</span></div>
     
-    <div class="step"><div><div class="t">Time a CPU software-AAD baseline</div><p>Now the biggest open risk. European Heston COS pricing is cheap in software too; if one CPU core with AAD is close to 57.8 µs, the paper must argue throughput and energy rather than latency.</p></div><span class="pill crit">Open, critical</span></div>
+    <div class="step"><div><div class="t">Time a CPU software-AAD baseline</div><p>Done 30 Sep: the FPGA wins latency (1.4–1.8×), Greeks overhead (1.04× vs 5.3–6.7×) and estimated energy (16–37×); four CPU cores win throughput (2.2×). Frame the paper on latency, overhead and energy.</p></div><span class="pill good">Done</span></div>
+    <div class="step"><div><div class="t">Derive the adjoint automatically</div><p>Make the generator produce the reverse sweep from the forward graph, so the tool is a compiler for fixed-point AAD datapaths and a second model costs little.</p></div><span class="pill warn">Next</span></div>
     <div class="step"><div><div class="t">Repeat the literature search before submission</div><p>Done once (docs/novelty_assessment.md). Repeat in Google Scholar, IEEE Xplore and the ACM Digital Library in the final month, and ask the guide about recent FPT, FPL, FCCM and HEART papers.</p></div><span class="pill info">Done once, repeat</span></div>
     <div class="step"><div><div class="t">Close timing at 100 MHz</div><p>Use the DSP blocks' internal output registers (Vivado's 56 suggestions) and pipeline the 64-bit carry chains. Cycle counts change; bit-exactness does not.</p></div><span class="pill crit">Open</span></div>
     <div class="step"><div><div class="t">Port the host steps to C and build the processor design</div><p>Bit-exact C for setup and finish, with a hand-written 64×64→128-bit multiply for the 32-bit ARM, then <span class="mono">bd_lite.tcl</span>: no PC in the loop.</p></div><span class="pill crit">Open</span></div>

@@ -145,11 +145,13 @@ FPGA + AD + Greeks.
    graph, so the same generator would handle another model or payoff; and the
    hardware result (1.04 pricings) is about cost, not about whether a gradient
    exists. Say this directly.
-3. **"How fast is this against a CPU?"** Unanswered, and the most serious gap. A
-   European Heston COS price with 128 terms is also cheap in software; if one CPU
-   core with software AAD takes a similar time to 57.8 µs, the latency argument
-   fails and the paper must argue throughput and energy (replicated engines, joules
-   per Greek set). Measure it before writing the results section.
+3. **"How fast is this against a CPU?"** Measured 30 Sep 2026
+   (`docs/architecture.md` §4.6): one laptop core needs 91.5 µs (forward mode) or
+   114.9 µs (CoDiPack AAD) against 65.3 µs on the board, so the FPGA wins latency
+   by 1.4–1.8×; four cores out-throughput one FPGA engine by about 2.2×; energy per
+   evaluation is an estimated 16–37× lower on the FPGA. The CPU prices alone faster
+   (17 µs); the FPGA's lead is the 1.04× Greeks overhead against 5.3–6.7×. Argue
+   latency, Greeks overhead and energy, not throughput.
 4. **"Is this algorithmic differentiation, or a hand-written adjoint?"** In this
    project the reverse sweep is written by hand as IR operations in
    `hardware/gen/heston.py`; no AD tool derives it. In finance "AAD" usually names

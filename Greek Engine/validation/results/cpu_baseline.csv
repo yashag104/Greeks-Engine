@@ -1,0 +1,21 @@
+cpu,11th Gen Intel(R) Core(TM) i5-1155G7 @ 2.50GHz
+compiler,g++ (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+logical_cores,8
+
+method,us_per_eval_one_core,max_rel_diff_vs_reference
+price,17.204,1.7e-13
+bump,257.597,1.3e-09
+aad,114.901,1.3e-10
+fwdvec,91.451,1.3e-10
+fpga_70MHz,65.314,
+fpga_79.1MHz,57.800,
+
+method,processes,evals_per_s
+aad,1,8351
+aad,2,14679
+aad,4,20193
+aad,8,23080
+fwdvec,1,10087
+fwdvec,2,17231
+fwdvec,4,24905
+fwdvec,8,33893
