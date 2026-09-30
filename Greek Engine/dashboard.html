@@ -227,7 +227,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       <tbody>
         <tr class="hi"><td>Cycles, price + 9 Greeks</td><td class="num">4,733</td><td>Generation 1, hand-written FSM: 433,779</td><td class="better">92× fewer</td><td><span class="pill info">Simulation</span></td></tr>
         <tr><td>Cycles, same hardware</td><td class="num">4,733</td><td>Bump-and-reprice (19 pricings): 86,860</td><td class="better">18.4× fewer</td><td><span class="pill info">Simulation</span></td></tr>
-        <tr class="hi"><td>Cost of 9 Greeks, as multiples of one price</td><td class="num">1.04×</td><td>Generation 1: 2.16×. CPU AAD: 6.7×. CPU forward mode: 5.3×</td><td class="better">Greeks nearly free</td><td><span class="pill info">Simulation</span> <span class="pill info">CPU</span></td></tr>
+        <tr class="hi"><td>Cost of 9 Greeks, as multiples of one price<br><span class="muted" style="font-size:.8rem">"One price" = computing only the option price, no Greeks, on the same hardware: 4,568 cycles. With all 9 Greeks: 4,733 cycles, only 165 more.</span></td><td class="num">1.04×</td><td>Generation 1: 2.16×. CPU AAD: 6.7×. CPU forward mode: 5.3×</td><td class="better">Greeks nearly free</td><td><span class="pill info">Simulation</span> <span class="pill info">CPU</span></td></tr>
         <tr><td>Same, 64-bit configuration</td><td class="num">1.55×</td><td>Multipliers bind there, so the adjoint costs II</td><td>Condition stated</td><td><span class="pill info">Simulation</span></td></tr>
         <tr class="hi"><td>Latency, price + 9 Greeks</td><td class="num">65.3 µs (board, 70 MHz)<br>57.8 µs (routed Fmax 79.1 MHz)</td><td>One CPU core: forward mode 91.5 µs, AAD 114.9 µs, bump 257.6 µs</td><td class="better">1.4× / 1.8× / 3.9× faster</td><td><span class="pill info">Vivado</span> <span class="pill info">CPU</span></td></tr>
         <tr class="hi"><td>Energy per evaluation</td><td class="num">≈ 22 µJ</td><td>CPU ≈ 0.35–0.83 mJ</td><td class="better">≈ 16–37× less</td><td><span class="pill warn">Estimate</span></td></tr>
@@ -241,7 +241,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       </tbody>
     </table>
   </div>
-  <p class="caption">Energy: FPGA 0.341 W (Vivado vectorless estimate for the whole board design, including 0.121 W of clock generator) × 65.3 µs. CPU power could not be measured under WSL; the range uses the Intel Core i5-1155G7's 12–28 W configurable power at its measured full-load throughput. Generation 1 was never routed, so it is compared in cycles only. The CPU runs the identical algorithm in C++ double precision with g++ -O3 -march=native, AAD by CoDiPack.</p>
+  <p class="caption">Energy: FPGA 0.341 W × 65.3 µs = 22.3 µJ. The 0.341 W is Vivado's power report for the built design (the Power screenshot): a prediction from the placed logic and an assumed switching rate ("vectorless", confidence Medium), not a reading from the board; it includes 0.121 W of clock generator. CPU power could not be measured under WSL; the range uses the Intel Core i5-1155G7's 12–28 W configurable power at its measured full-load throughput. Generation 1 was never routed, so it is compared in cycles only. The CPU runs the identical algorithm in C++ double precision with g++ -O3 -march=native, AAD by CoDiPack.</p>
 
   <div class="cols">
     <div class="card">
