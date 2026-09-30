@@ -188,6 +188,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   <a href="#gen1">Generation 1</a>
   <a href="#limits">Known limits</a>
   <a href="#next">Next steps</a>
+  <a href="#docs">Documents</a>
 </nav>
 
 <main>
@@ -430,11 +431,33 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     <div class="step"><div><div class="t">Merge into main</div><p>Open a pull request from <span class="mono">pipeline-shared-mult</span> once the board re-run passes.</p></div><span class="pill info">After step 1</span></div>
   </div>
 </section>
+<!-- ============================================================ DOCUMENTS -->
+<section id="docs">
+  <header><div class="eyebrow">Everything in one place</div><h2>Documents</h2><p class="muted">Pages open in the browser; files open on GitHub, which renders the PDF and Markdown.</p></header>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Document</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://claude.ai/artifact/TfsL5nqmM2wBGDQS7udL85" target="_blank" rel="noopener">Course</a></td><td>The whole project from basics: finance, COS, AAD, the generator, precision, every experiment</td></tr>
+        <tr><td><a href="https://claude.ai/artifact/G15DevL4ShygS5Np42vAqD" target="_blank" rel="noopener">Viva study guide</a></td><td>Readiness, results, limitations and likely examiner questions with answers</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/report/greeks_engine_report.pdf" target="_blank" rel="noopener">Project report (PDF)</a></td><td>14-page report: motivation, related work, architecture, results, limits, next steps</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/novelty_assessment.md" target="_blank" rel="noopener">Novelty assessment</a></td><td>The literature check: every source, the verdict per claim, recommended wording, reviewer questions</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/05_literature_review.md" target="_blank" rel="noopener">Literature review</a></td><td>Verified prior work and positioning</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/architecture.md" target="_blank" rel="noopener">Architecture and results</a></td><td>Hardware design and measured results</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/precision_bound.md" target="_blank" rel="noopener">Precision bound</a></td><td>The fixed-point error analysis</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/validation/figures/tables.md" target="_blank" rel="noopener">Result tables</a></td><td>All tables generated from the result files</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/validation/results/board_sweep_zedboard_2026-09-29.log" target="_blank" rel="noopener">Board sweep log</a> · <a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/validation/results/board_sweep_report_2026-09-29.csv" target="_blank" rel="noopener">report</a></td><td>The 50-case ZedBoard run and its accuracy report</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/validation/results/vivado/Block_design.pdf" target="_blank" rel="noopener">Block design (PDF)</a></td><td>The ZedBoard system diagram</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/tree/pipeline-shared-mult" target="_blank" rel="noopener">Repository</a></td><td>All code, branch pipeline-shared-mult</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
 </main>
 </div>
 
 <footer>
   <span>Every number traces to a file in the repository: <span class="mono">validation/results/</span>, <span class="mono">validation/figures/tables.md</span> and the Vivado reports in <span class="mono">validation/results/vivado/</span>.</span>
-  <span>Reproduce: <span class="mono">./verify_all.sh</span> · <span class="mono">python validation/run_gen_sweeps.py</span> · <span class="mono">python validation/make_figures.py</span>. Full write-up: <span class="mono">docs/report/greeks_engine_report.pdf</span>.</span>
+  <span>Reproduce: <span class="mono">./verify_all.sh</span> · <span class="mono">python validation/run_gen_sweeps.py</span> · <span class="mono">python validation/make_figures.py</span>. Full write-up: <a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/report/greeks_engine_report.pdf" target="_blank" rel="noopener">project report (PDF)</a>.</span>
 </footer>
 </div>
