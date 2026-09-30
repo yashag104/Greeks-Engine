@@ -411,6 +411,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     <div class="limit"><b>Host steps run on the PC</b><p>Setup and finish are Python on the PC, not C on the ARM. The processor-based design exists as a script but is not built.</p></div>
     <div class="limit"><b>Power is an estimate</b><p>Vectorless, 12.5% toggle rate. No simulated-activity (SAIF) figure or board measurement yet.</p></div>
     <div class="limit"><b>Priority is "to our knowledge"</b><p>No FPGA AAD for Greeks found in a 99-study FPGA survey, the 2024 AAD review, AMD's finance library or FPGA Greeks papers. Unpublished industry work cannot be excluded, and reverse mode itself runs in every ML training accelerator.</p></div>
+    <div class="limit"><b>The adjoint is hand-written</b><p>The reverse sweep is written as IR operations and verified, not derived by an AD tool. Say "adjoint differentiation" in the claim, or automate the sweep.</p></div>
     <div class="limit"><b>Bounded input domain</b><p>Verified for S₀ = 100, K 60–150, T 0.1–3, and ranges for each model parameter. Outside it the hardware raises <span class="mono">range_err</span> instead of returning a wrong value.</p></div>
   </div>
 </section>
