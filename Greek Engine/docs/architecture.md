@@ -166,6 +166,37 @@ The design fits and routes but does not close at 100 MHz. The failing paths are 
 carry chains; pipelining them, or running at ≤ 79 MHz, are the options. The ZedBoard
 bring-up designs run the engine at 70 MHz for margin.
 
+### 4.6 Against a CPU (measured 30 Sep 2026)
+
+`validation/cpu_baseline/`: the same algorithm (COS, 128 terms, puts with calls by
+parity, frozen [a, b]) in C++ double precision, g++ 13 -O3 -march=native, on an
+Intel Core i5-1155G7 laptop CPU (4 cores, 8 threads). AAD by CoDiPack v2.3.2, a
+standard taped reverse-mode tool; forward mode computes all 9 directions in one
+pass. Every method matches the Python reference at the base case (AAD to 1.3e-10
+relative). Results in `validation/results/cpu_baseline.csv`.
+
+| price + 9 Greeks | µs per evaluation, one core | cost relative to one price |
+|---|---|---|
+| CPU, price only | 17.2 | 1× |
+| CPU, bump-and-reprice (19 pricings) | 257.6 | 15× |
+| CPU, AAD (CoDiPack reverse) | 114.9 | 6.7× |
+| CPU, forward mode, 9 directions | 91.5 | 5.3× |
+| **FPGA, ZedBoard at 70 MHz** | **65.3** | **1.04×** |
+| FPGA at the routed 79.1 MHz | 57.8 | 1.04× |
+
+- **Latency:** the FPGA is 1.4× faster than the best software method (1.6× at
+  79 MHz) and 1.8× faster than taped AAD, on one core.
+- **Throughput:** four cores running 8 processes reach 33,900 evaluations/s
+  (forward mode) against 15,300 for one FPGA engine. The CPU wins by about 2.2×.
+- **Energy (estimate):** the FPGA board design is 0.341 W (vectorless, including
+  the clock generator), about 22 µJ per evaluation. CPU power could not be
+  measured under WSL; at the part's 12–28 W configurable power and its measured
+  throughput, 0.35–0.8 mJ per evaluation, so roughly 16–37× more.
+- **Where the advantage comes from:** pricing alone is faster on the CPU (17 µs
+  against about 65 µs for 4,568 cycles at 70 MHz). The FPGA's lead is entirely in
+  the Greeks costing 1.04 pricings instead of 5–7. The paper should argue latency,
+  Greeks overhead and energy per Greek set, not throughput.
+
 ## 5. Limitations and open items
 
 - **Timing does not close at 100 MHz** (§4.5): WNS −2.639 ns, Fmax ≈ 79 MHz. Routing
