@@ -435,6 +435,9 @@ bullets([
     "work, and should be repeated in Google Scholar, IEEE Xplore and the ACM Digital Library before submission.",
     "<b>Bounded input domain:</b> S<sub>0</sub> = 100, K 60–150, T 0.1–3, r 0–0.1, v<sub>0</sub> and θ 0.005–0.25, "
     "κ 0.2–6, ξ 0.1–1, ρ −0.95–0.6. Outside it the hardware raises range_err.",
+    "<b>The adjoint is hand-written.</b> The reverse sweep is written as operations in the IR "
+    "(hardware/gen/heston.py) and verified bit-exact and against independent references, but no AD tool derives "
+    "it. The paper should say \"adjoint differentiation\" in its claim, or the generator should derive the sweep.",
     "<b>Greeks hold the truncation range fixed</b> when differentiating, the standard COS convention; their distance "
     "from the model's true Greeks is part of the method error.",
 ])

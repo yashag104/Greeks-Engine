@@ -390,7 +390,10 @@ requires one characteristic-function evaluation.</p>
 
 ψ_k(c,d) = (b−a)/(kπ) · [ sin(u_k(d−a)) − sin(u_k(c−a)) ],   ψ_0 = d − c</div>
 
-<p>For a put, V<sub>k</sub> = (2/(b−a))·K·[ψ<sub>k</sub>(a,0) − χ<sub>k</sub>(a,0)]. Note the two
+<p>For a put, V<sub>k</sub> = (2/(b−a))·K·[ψ<sub>k</sub>(a,0) − χ<sub>k</sub>(a,0)]. <strong>The hardware
+only ever uses the put formula</strong>: a call is the put plus S₀ − K·e<sup>−rT</sup> (put-call parity),
+added after the loop. The call's e<sup>b</sup> terms grow large over a wide [a,b] and then cancel, which
+cost up to 2.3e-3 on the price in fixed point (§12, E14). Note the two
 structural facts the hardware exploits: χ needs a reciprocal of (1+u<sub>k</sub>²), and ψ needs 1/k.
 Both become ROM lookups or Newton reciprocals later; neither needs a divider.</p>
 
@@ -418,14 +421,14 @@ comparison is self-consistent. It is a known approximation, not an oversight.</p
 <ol>
 <li><strong>N is fixed at design time</strong> (N = 128). Fixed loop trip count → a schedule can be
 computed offline.</li>
-<li><strong>No branching.</strong> Call vs put is a mux on already-computed values, not a different
-code path.</li>
+<li><strong>No branching.</strong> The loop always prices the put; a call is derived from it by
+put-call parity after the loop, a mux on already-computed values rather than a different code path.</li>
 <li><strong>No random numbers.</strong> Deterministic and bit-reproducible.</li>
 <li><strong>Terms are independent.</strong> Term <em>k</em> does not depend on term <em>k</em>−1.
 This is what allows software pipelining (section 10) — you can start term <em>k</em>+1 before term
 <em>k</em> finishes.</li>
 <li><strong>Everything that does not depend on k can be hoisted</strong> out of the loop into a
-once-per-evaluation setup — the truncation range, 1/K, π/(b−a), e^a, e^b, ρξ, ξ², κ², 1/ξ², κθ/ξ².</li>
+once-per-evaluation setup — the truncation range, 1/K, π/(b−a), e^a, ρξ, ξ², κ², 1/ξ², κθ/ξ².</li>
 </ol>
 
 <p>Point 4 is the one that ends up mattering most, and point 5 is what makes the host-split variant
@@ -570,7 +573,7 @@ of the hardware did with a BRAM.</p>
 
 <p>A tape is the right answer when the graph is discovered at runtime. <strong>Our graph is not.</strong>
 The COS method's operation sequence is identical for every input — same 128 terms, same operations,
-same order, with call/put resolved by a mux rather than a branch. So the tape is the same every time,
+same order, with calls derived from puts by put-call parity after the loop. So the tape is the same every time,
 which means it does not need to exist at runtime at all: it can be unrolled symbolically when the
 hardware is generated, and become wires and registers.</p>
 
@@ -715,7 +718,7 @@ engine.</li>
 </ol>
 
 <p>It also gives the paper an honest "naive hardware AAD" datapoint: 433,779 cycles. Generation 2 is
-92× faster than that on the same board class, and 271× faster in the 64-bit configuration.</p>
+92× faster than that on the same board class, and 272× faster in the 64-bit configuration.</p>
 
 <h2 id="gen2"><span class="n">07</span>The generator: one description, five artifacts</h2>
 
@@ -741,16 +744,17 @@ engine.</li>
 <ol>
 <li><strong>The golden model cannot drift.</strong> The emulator and the RTL are produced from the
 same graph, so "bit-exact against the reference" is a property that can be checked at
-<em>every register on every cycle</em> — 1,254 to 1,993 individual checks per design — rather than
+<em>every register on every cycle</em> — 1,213 to 1,962 individual checks per design — rather than
 just at the outputs.</li>
 <li><strong>The error bound is computed on the same graph</strong> that becomes hardware, not on a
 separate model of it.</li>
 <li><strong>Design-space exploration is a loop.</strong> Word length, fractional length, multiplier
 count, CORDIC count and style, and host-split are all parameters. The cycles-vs-multipliers table in
 section 14 is one script, twelve configurations.</li>
-<li><strong>A fused forward+reverse graph is not writable by hand.</strong> The reverse sweep of the
-Heston characteristic function is ~250 multiplies of conjugates and reused reciprocals. Deriving and
-scheduling that manually, in fixed point, correctly, is not realistic.</li>
+<li><strong>A fused forward+reverse graph is not schedulable by hand.</strong> The reverse sweep is
+written once, by hand, as IR operations in <span class="mono">heston.py</span> (no AD tool derives it).
+But scheduling it together with the forward pass onto shared units, binding registers, and writing the
+RTL for ~250 multiplies per term, correctly and in fixed point, is not realistic by hand.</li>
 </ol>
 
 <h3>7.2 The IR</h3>
@@ -767,10 +771,11 @@ dedicated logic. This split is the whole basis of the cost model: <strong>the cu
 is the multiplier slot and the CORDIC slot</strong>, and the scheduler's job is to spend that currency
 well.</p>
 
-<p>After construction, <span class="mono">ir.simplify</span> runs constant folding and common
-sub-expression elimination over the fused graph. This is where reciprocal reuse across the
-forward/reverse boundary (section 9.4) actually gets found — it is not hand-written, it falls out of
-CSE on a graph where the forward and reverse passes are present simultaneously.</p>
+<p>After construction, <span class="mono">ir.simplify</span> folds negations into add, sub and the
+multipliers' negate flag, and removes dead nodes. It does <em>not</em> eliminate common subexpressions.
+Reciprocal reuse across the forward/reverse boundary (section 9.4) comes from how the reverse sweep is
+written: it refers directly to the forward pass's reciprocal nodes, which is possible because both
+passes live in one graph.</p>
 
 <h2 id="prims"><span class="n">08</span>Divider-free arithmetic: turning latency into multiplier slots</h2>
 
@@ -981,8 +986,8 @@ forward quantity") turns into silicon.</p>
 
 <p>The forward characteristic function computes several complex divisions. Its adjoint sweep needs
 the reciprocals of the same denominators — because ∂(a/b)/∂a = 1/b and ∂(a/b)/∂b = −a/b². Since
-forward and reverse are nodes in <em>one</em> graph, common sub-expression elimination finds this
-automatically. Each denominator is inverted exactly once and used by both passes:</p>
+forward and reverse are nodes in <em>one</em> graph, the hand-written reverse sweep simply uses the
+forward pass's reciprocal nodes. Each denominator is inverted exactly once and used by both passes:</p>
 
 <div class="eq">1/den        forward: g = num/den        reverse: a_num, a_den
 g/den        reverse only (the −a/b² term)
@@ -1001,8 +1006,9 @@ already-computed reciprocal.</p>
 <div class="note"><p><strong>Why this is a hardware result and not a software one.</strong> In
 software, recomputing a reciprocal costs one division instruction and you would not think about it.
 Here a complex reciprocal is ~10 of the 250 multiplier slots in a term, and the term's slot budget is
-what sets II, which sets the entire latency. Fusing the graphs before scheduling is what makes the
-saving visible to the tool at all.</p></div>
+what sets II, which sets the entire latency. Writing both passes into one graph is what lets the
+reverse sweep reuse forward reciprocals, and scheduling them together is what turns the saving into a
+shorter II.</p></div>
 
 <h3>9.5 Hoisting: the setup / term / finish split</h3>
 
@@ -1011,9 +1017,9 @@ saving visible to the tool at all.</p></div>
 <div class="tbl"><table>
 <thead><tr><th>Part</th><th>Runs</th><th>Contents</th></tr></thead>
 <tbody>
-<tr><td class="num">setup</td><td>once</td><td>1/K, x = ln(S₀/K), c1, c2, a, b, π/(b−a), 2K/(b−a), (b−a)/π, e^a, e^b, ρξ, ξ², κ², 1/ξ², κθ/ξ², rT</td></tr>
+<tr><td class="num">setup</td><td>once</td><td>1/K, x = ln(S₀/K), c1, c2, a, b, π/(b−a), 2K/(b−a), (b−a)/π, e^a, ρξ, ξ², κ², 1/ξ², κθ/ξ², rT</td></tr>
 <tr><td class="num">term</td><td>128×</td><td>V<sub>k</sub>, φ(u<sub>k</sub>), the reverse sweep, adjoint normalisation, accumulate 9 sums</td></tr>
-<tr><td class="num">finish</td><td>once</td><td>discount e^(−rT), the r/T discount chain-rule terms, ∂V/∂S₀ and ∂V/∂K</td></tr>
+<tr><td class="num">finish</td><td>once</td><td>discount e^(−rT), the r/T discount chain-rule terms, ∂V/∂S₀ and ∂V/∂K, and put-call parity for calls</td></tr>
 </tbody></table></div>
 
 <p>The last two outputs deserve a note, because they are chain-rule bookkeeping rather than adjoints
@@ -1022,7 +1028,9 @@ that come out of the sweep directly:</p>
 <div class="eq">theta_greek = disc·acc_T + (−r·disc)·acc_price      (T appears in the discount too)
 rho_greek   = disc·acc_r + (−T·disc)·acc_price      (so does r)
 delta       = (disc·acc_x) / S₀                     (x = ln(S₀/K), so ∂x/∂S₀ = 1/S₀)
-strike_sens = (price − disc·acc_x) / K              (K enters through x AND through V_k ∝ K)</div>
+strike_sens = (price − disc·acc_x) / K              (K enters through x AND through V_k ∝ K)
+if call:  price += S₀ − K·disc ;  delta += 1 ;  strike_sens −= disc
+          theta_greek += r·K·disc ;  rho_greek += T·K·disc      (put-call parity)</div>
 
 <h2 id="sched"><span class="n">10</span>Modulo scheduling: why all nine Greeks cost 1.04 pricings</h2>
 
@@ -1209,12 +1217,15 @@ the ARM:</p>
 <tr><td><strong><span class="mono">heston_aad_z7h</span></strong> (host split)</td><td class="num">45,504</td><td class="num">2,922</td><td class="num">24,856</td><td class="num">96</td><td><strong>yes: 91&nbsp;% LUT incl. SRL, 23&nbsp;% FF, 44&nbsp;% DSP</strong></td></tr>
 </tbody></table></div>
 
-<p>The FPGA then exposes 19 extra input ports <span class="mono">hs_*</span> carrying the
+<p>These are Yosys estimates. Vivado later measured the host-split design at 36,499 LUT (68.6&nbsp;%) and
+72 DSP after routing (§15.3, E13): comfortably inside the 7020.</p>
+
+<p>The FPGA then exposes 16 extra input ports <span class="mono">hs_*</span> carrying the
 pre-computed constants, and outputs the nine undiscounted sums <span class="mono">sum_*</span>
 instead of finished Greeks. <span class="mono">hardware/gen/host.py</span> is the bit-exact
 specification of both host steps, and <span class="mono">heston_aad_z7h_host.json</span> documents
 what each port holds and in what format — including irregular ones like
-<span class="mono">hs_260</span> at 53 fractional bits and <span class="mono">hs_261</span> at 0.</p>
+<span class="mono">hs_234</span> at 53 fractional bits and <span class="mono">hs_235</span> at 0.</p>
 
 <p>The correctness requirement is strict and is tested: <strong>host setup + FPGA loop + host finish
 must be bit-identical to the fully on-chip design</strong> (experiment E11). It is.</p>
@@ -1337,9 +1348,8 @@ computed per parameter set in 0.1 s by the same adjoint machinery the hardware i
 <h2 id="experiments"><span class="n">14</span>Every experiment, and why each one exists</h2>
 
 <p class="lead-in">Each experiment below is stated as a question, a method, a result, and what it
-buys. Thirteen of them run in <span class="mono">./verify_all.sh</span> (21 named checks, ~3 minutes);
-the rest are sweeps in <span class="mono">validation/</span>. One is not yet run, and is marked
-accordingly.</p>
+buys. Most run in <span class="mono">./verify_all.sh</span> (22 named checks, ~4 minutes); the rest are
+sweeps in <span class="mono">validation/</span>, Vivado runs and ZedBoard runs.</p>
 
 <div class="card">
 <h3>E1 — Are the arithmetic primitives correct to sub-ULP?</h3>
@@ -1364,7 +1374,7 @@ values fed into the error bound (§13.1). Without this the bound rests on assump
 bit-identical to the emulator".</dd>
 <dt>Method</dt><dd><span class="mono">gen_tb.py</span> emits a self-checking testbench that probes
 every setup and finish register, and every register of terms 0–2 at its valid cycle —
-<strong>1,254 to 1,993 checks per design</strong> — plus all ten outputs for three parameter sets.
+<strong>1,213 to 1,962 checks per design</strong> — plus all ten outputs for three parameter sets.
 Run for five designs: z7, zu, z7h, and both price-only pricers.</dd>
 <dt>Result</dt><dd>Bit-exact, all five designs. <span class="chip ok">PASS</span> Also checked
 bit-exact on 48-bit/4-multiplier, 64-bit/16-multiplier and 60-bit/64-multiplier configurations
@@ -1567,7 +1577,7 @@ correctness hazard. It also propagates: the AXI wrapper exposes it on
 <h3>E11 — Is the host split bit-identical to the on-chip design?</h3>
 <dl>
 <dt>Question</dt><dd>The Zynq-7020 result depends entirely on the split being exact, not approximate.</dd>
-<dt>Method</dt><dd><span class="mono">python host.py</span>: compute the 19
+<dt>Method</dt><dd><span class="mono">python host.py</span>: compute the 16
 <span class="mono">hs_*</span> constants in fixed point on the host, run the FPGA loop, apply the host
 finish, and compare every output to the fully on-chip emulation.</dd>
 <dt>Result</dt><dd>host setup + FPGA sums + host finish == on-chip outputs, exactly.
@@ -1675,7 +1685,7 @@ Two earlier attempts in that log failed on bugs in the test script, not the hard
 <strong>Sweep:</strong> 50 cases back to back with no reset (2 fixed, 48 random over the verified
 domain from a seed the shifter ranges were not fitted on; 22 calls, 28 puts). 450/450 sums bit-exact,
 <span class="mono">range_err</span> never set, 56.9&nbsp;s in all, nearly all of it JTAG traffic
-against 68&nbsp;&micro;s of compute per case. After the host finish step, all 500 outputs equal the
+against about 65&nbsp;&micro;s of compute per case. After the host finish step, all 500 outputs equal the
 emulator's and the worst sits at 0.268 of its error bound
 (<span class="mono">validation/board_report.py</span>, <span class="mono">results/board_sweep_*</span>).
 <span class="chip gap">RE-RUN</span> These runs used the bitstream built before calls were priced through
@@ -1758,7 +1768,7 @@ fractional bits.</p>
 <p>The headline correction: the Zynq-7020 fit is <strong>comfortable, not marginal</strong>. Every
 earlier statement built on the 91&nbsp;% figure — including the whole "if Vivado disagrees, fall back
 to 48-bit words" discussion — was resting on a generic-mapping estimate that overstated LUTs by
-28&nbsp;% and DSPs by a third. Routed utilisation may differ slightly; that is E13.</p>
+28&nbsp;% and DSPs by a third. After routing (E13): 36,499 LUT (68.6&nbsp;%), 28,559 FF, 72 DSP.</p>
 
 <h3>15.4 Not yet obtained</h3>
 
@@ -1768,7 +1778,8 @@ to 48-bit words" discussion — was resting on a generic-mapping estimate that o
 <tr><td>Timing closure at 100&nbsp;MHz</td><td>Quoting 100&nbsp;MHz rather than 79&nbsp;MHz</td><td>Pipelining the 64-bit carry chains (E13)</td></tr>
 <tr><td>Power from simulated activity (SAIF)</td><td>A defensible energy number; <span class="mono">fig7</span></td><td>A SAIF flow; vectorless is in E13</td></tr>
 <tr><td>Host steps on the ARM (C port), PS design</td><td>A self-contained system with no PC in the loop</td><td>A C port of <span class="mono">host.py</span>, then <span class="mono">bd_lite.tcl</span></td></tr>
-<tr><td>Comparison to published FPGA-finance numbers</td><td>Positioning</td><td>Fmax; and verifying the Weiss citation</td></tr>
+<tr><td>CPU software-AAD baseline, in µs</td><td>Placing 57.8&nbsp;µs against a CPU; the main open risk</td><td>Timing a software AAD run of the same pricer</td></tr>
+<tr><td>Silicon result for the put-call parity design</td><td>Bringing E14 up to the current RTL</td><td>A new bitstream and a repeat of the sweep</td></tr>
 </tbody></table></div>
 
 <h2 id="novelty"><span class="n">16</span>Novelty, explained from basics</h2>
@@ -1786,7 +1797,7 @@ every operation and its local partials into a growing list, and the backward pas
 in reverse. Every AAD library works this way, because in general a program's execution path depends
 on its inputs, so the graph is only known at runtime.</dd>
 <dt>The claim</dt><dd>For a Fourier-cosine pricer the graph is <em>input-independent</em> — same 128
-terms, same operations, same order, call versus put resolved by a multiplexer rather than a branch.
+terms, same operations, same order, with calls derived from puts by parity after the loop.
 So the tape does not need to exist at runtime. We unroll the adjoint sweep symbolically at generation
 time and fuse it into the forward graph, producing a single static dataflow graph that is then
 scheduled onto shared arithmetic. There is no tape memory, no write port, no replay sequencer, and no
@@ -1839,13 +1850,13 @@ table: on the 64-bit configuration, where multipliers <em>are</em> the binding r
 −a/b², ∂exp(a)/∂a = exp(a). In software this is a footnote.</dd>
 <dt>The claim</dt><dd>In a divider-free design a complex reciprocal costs about ten of the 250
 multiplier slots in a term, and the term's slot budget is what sets II, which sets the entire
-latency. Because forward and reverse are nodes in one graph, ordinary common-subexpression
-elimination finds this reuse automatically: each denominator is inverted exactly once and serves both
+latency. Because forward and reverse are nodes in one graph, the reverse sweep references the forward
+pass's reciprocals directly: each denominator is inverted exactly once and serves both
 passes — 1/den, g/den, 1/omg, ratio/omg, 1/omge, dratio/omge. And 1/ratio is not a fourth reciprocal
 at all, but omg·(1/omge): a complex multiply, four slots instead of ten.</dd>
 <dt>Why it is not obvious</dt><dd>The saving is invisible unless three choices are made first: no
-dividers (so reciprocals are expensive in the shared currency), fused graphs (so CSE can see across
-the forward/reverse boundary), and resource-constrained scheduling (so slot count maps to latency).
+dividers (so reciprocals are expensive in the shared currency), fused graphs (so the reverse sweep can
+reference forward nodes), and resource-constrained scheduling (so slot count maps to latency).
 Any one of them missing and this is a micro-optimisation rather than an architectural result.</dd>
 <dt>Evidence</dt><dd>The per-term bill of 250 multiplies (§8.7), which is what II is computed from,
 and the schedule verification in E3.</dd>
@@ -1910,7 +1921,7 @@ double-precision evaluation, the first-order error bound, the measured shift ran
 synthesisable Verilog. They cannot drift.</dd>
 <dt>Why it matters more than it sounds</dt><dd>It changes what "verified" can mean. Because the RTL
 and the golden model come from one source, the testbench can check every register at the cycle it
-becomes valid — 1,254 to 1,993 checks per design — rather than comparing ten outputs. And every
+becomes valid — 1,213 to 1,962 checks per design — rather than comparing ten outputs. And every
 property proved about the emulator is thereby a property of the hardware.</dd>
 <dt>Evidence</dt><dd>E2, plus the <span class="mono">verify_all.sh</span> check that the committed
 <span class="mono">hardware/verilog/gen/*.v</span> is byte-identical to fresh generator output.</dd>
@@ -1979,10 +1990,11 @@ python ../../validation/make_figures.py  # adds fig6_resources, fig7_energy_late
 <h3>17.2 Then, in order</h3>
 
 <ol>
-<li><strong>Build and test the ZedBoard JTAG design</strong>
-(<span class="mono">zedboard\run_board.bat build</span>, then <span class="mono">test</span>). The route
-confirmed the fits-a-7020 claim (Fmax &asymp; 79&nbsp;MHz); running on silicon is now the
-highest-information action.</li>
+<li><strong>Rebuild the ZedBoard bitstream for the put-call parity design and repeat the 50-case sweep</strong>
+(<span class="mono">zedboard\run_board.bat build</span>, then <span class="mono">sweep</span>). The first
+bitstream already ran 50 cases bit-exact (E14).</li>
+<li><strong>Time a CPU software-AAD baseline.</strong> If one CPU core is close to 57.8&nbsp;µs, the paper
+must argue throughput and energy rather than latency.</li>
 <li><strong>Parse and plot.</strong> <span class="mono">fig6</span> and <span class="mono">fig7</span>
 are already wired and waiting on <span class="mono">vivado.csv</span>.</li>
 <li><strong>Decide on 100&nbsp;MHz.</strong> Placement fits; timing misses by 2.6&nbsp;ns on 64-bit
@@ -2012,7 +2024,9 @@ comparison table.</li>
 <h3>17.4 Paper-side work</h3>
 
 <ul>
-<li>Resolve the Weiss et al. citation (§16 callout) and repeat the priority search.</li>
+<li>Cite the prior art in <span class="mono">docs/novelty_assessment.md</span>, and repeat the priority
+search in Google Scholar, IEEE Xplore and the ACM Digital Library before submission.</li>
+<li>Say plainly that the adjoint is hand-written as IR operations, or make the generator derive it.</li>
 <li>Decide whether to move the Black-Scholes core from Q16.16 to the parameterised library, or to cut
 it from the paper.</li>
 <li>State explicitly which power number is quoted (vectorless or SAIF-based).</li>
@@ -2035,7 +2049,9 @@ finds them first.</p>
 <tr><td>Verified input domain is bounded; outside it <span class="mono">range_err</span> fires</td><td><span class="chip risk">BY DESIGN</span></td><td>Must be stated as a limitation, not hidden</td></tr>
 <tr><td>Truncation range [a,b] held fixed when differentiating</td><td><span class="chip risk">CONVENTION</span></td><td>Standard COS practice; the software reference does the same</td></tr>
 <tr><td>Register sharing across values not implemented</td><td><span class="chip gap">OPEN</span></td><td>Largest remaining FF/LUT saving</td></tr>
-<tr><td>"First in hardware" rests on an unverified citation</td><td><span class="chip gap">OPEN</span></td><td>Resolve, or reframe around what was built</td></tr>
+<tr><td>Priority claim</td><td><span class="chip ok">CHECKED</span></td><td>No prior FPGA AAD for Greeks found; say "to our knowledge" and cite the prior art (<span class="mono">docs/novelty_assessment.md</span>)</td></tr>
+<tr><td>No CPU baseline in seconds</td><td><span class="chip gap">OPEN</span></td><td>Time software AAD on the same pricer; the main significance risk</td></tr>
+<tr><td>The adjoint is hand-written, not derived by an AD tool</td><td><span class="chip risk">STATE IT</span></td><td>Say "adjoint differentiation", or automate the reverse sweep</td></tr>
 <tr><td>The 1.04× Greeks claim is configuration-dependent (1.55× on zu)</td><td><span class="chip risk">STATE IT</span></td><td>Report both, with the II analysis that explains why</td></tr>
 <tr><td>Black-Scholes core still Q16.16, price error ~5e-4</td><td><span class="chip gap">OPEN</span></td><td>Port to the parameterised library, or drop from the paper</td></tr>
 <tr><td>MATLAB and C++ trees are stale and unexercised</td><td><span class="chip gap">OPEN</span></td><td>Refresh or remove</td></tr>
