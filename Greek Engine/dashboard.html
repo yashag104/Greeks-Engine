@@ -144,6 +144,12 @@ tr:last-child td { border-bottom: 0; }
 tr.hi td { background: var(--accent-soft); font-weight: 600; }
 .better { color: var(--good); font-weight: 600; }
 .caption { font-size: 0.85rem; color: var(--muted); max-width: 90ch; }
+#review td { white-space: normal; vertical-align: top; }
+#review td:first-child { min-width: 11em; }
+#review td.num { min-width: 8.5em; }
+#review td:nth-child(3) { min-width: 16em; }
+#review td .pill { margin: 1px 0; }
+#review .card ul, #review .card ol { padding-left: 1.2em; }
 
 /* ---- next steps */
 .steps { display: grid; gap: 10px; counter-reset: step; }
@@ -177,6 +183,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 <div class="layout">
 <nav class="index" aria-label="Sections">
   <a href="#summary">Summary</a>
+  <a href="#review">Results in context</a>
   <a href="#motivation">Motivation</a>
   <a href="#aim">Aim and claims</a>
   <a href="#work">Work done</a>
@@ -202,6 +209,73 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     <div class="kpi"><div class="l">On silicon</div><div class="v">50<small>/50</small></div><div class="d">random cases bit-exact on a ZedBoard, run back to back: 450 of 450 results identical to the emulator.</div></div>
     <div class="kpi"><div class="l">Error vs guarantee</div><div class="v">≤ 0.103</div><div class="d">worst measured error as a fraction of the first-order bound, all 10 outputs, 21-case grid (must stay ≤ 1).</div></div>
     <div class="kpi"><div class="l">Fits a Zynq-7020</div><div class="v">72<small>% LUT</small></div><div class="d">ZedBoard build: 38,358 LUT, 72 of 220 DSP, timing met at 70 MHz (WNS +0.404 ns).</div></div>
+  </div>
+</section>
+
+<!-- ============================================================ REVIEW -->
+<section id="review">
+  <header><div class="eyebrow">For review</div><h2>Results in context</h2><p class="muted">Every figure with what it is compared against and how it was obtained. Status: <span class="pill good">Silicon</span> measured on the ZedBoard, <span class="pill info">Simulation</span> cycle-exact RTL simulation or its bit-identical emulator, <span class="pill info">Vivado</span> implementation reports, <span class="pill info">CPU</span> measured on a laptop CPU, <span class="pill warn">Estimate</span> not measured.</p></header>
+
+  <div class="card">
+    <h3>The contribution in one sentence</h3>
+    <p>To our knowledge, the first FPGA implementation of adjoint (reverse-mode) differentiation for option Greeks, and the first FPGA implementation of the COS method: a generated fixed-point datapath for the Heston model that returns the price and nine sensitivities in one forward and reverse pass, with a guaranteed error bound on every output, bit-exact on a Zynq-7020.</p>
+  </div>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Measure</th><th>This work</th><th>Compared with</th><th>Result</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr class="hi"><td>Cycles, price + 9 Greeks</td><td class="num">4,733</td><td>Generation 1, hand-written FSM: 433,779</td><td class="better">92× fewer</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr><td>Cycles, same hardware</td><td class="num">4,733</td><td>Bump-and-reprice (19 pricings): 86,860</td><td class="better">18.4× fewer</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr class="hi"><td>Cost of 9 Greeks, as multiples of one price</td><td class="num">1.04×</td><td>Generation 1: 2.16×. CPU AAD: 6.7×. CPU forward mode: 5.3×</td><td class="better">Greeks nearly free</td><td><span class="pill info">Simulation</span> <span class="pill info">CPU</span></td></tr>
+        <tr><td>Same, 64-bit configuration</td><td class="num">1.55×</td><td>Multipliers bind there, so the adjoint costs II</td><td>Condition stated</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr class="hi"><td>Latency, price + 9 Greeks</td><td class="num">65.3 µs (board, 70 MHz)<br>57.8 µs (routed Fmax 79.1 MHz)</td><td>One CPU core: forward mode 91.5 µs, AAD 114.9 µs, bump 257.6 µs</td><td class="better">1.4× / 1.8× / 3.9× faster</td><td><span class="pill info">Vivado</span> <span class="pill info">CPU</span></td></tr>
+        <tr class="hi"><td>Energy per evaluation</td><td class="num">≈ 22 µJ</td><td>CPU ≈ 0.35–0.83 mJ</td><td class="better">≈ 16–37× less</td><td><span class="pill warn">Estimate</span></td></tr>
+        <tr><td>Throughput</td><td class="num">15,300 / s (one engine)</td><td>Four CPU cores: 33,900 / s</td><td style="color:var(--crit);font-weight:600">CPU 2.2× higher</td><td><span class="pill info">CPU</span></td></tr>
+        <tr class="hi"><td>Accuracy vs double precision (21 cases)</td><td class="num">price 6.1e-7<br>Greeks ≤ 1.2e-5</td><td>Relative error, Zynq-7020 design</td><td>—</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr><td>Guaranteed error bound</td><td class="num">≤ 0.103 of bound</td><td>Worst measured error ÷ bound, every output, 21 cases (0.268 on the 50-case board sweep)</td><td class="better">Never violated</td><td><span class="pill info">Simulation</span> <span class="pill good">Silicon</span></td></tr>
+        <tr><td>Accuracy vs bump-and-reprice</td><td class="num">32–560× more accurate</td><td>Best bump size chosen in hindsight for each Greek (median 145×), base case, same pricer</td><td class="better">No bump size to tune</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr><td>Call pricing accuracy</td><td class="num">3.1e-5</td><td>Before put-call parity: 2.3e-3 (worst of 22 calls, vs integral reference)</td><td class="better">75× smaller</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr class="hi"><td>Correct on silicon</td><td class="num">450 / 450 bit-exact</td><td>50 random cases back to back, ZedBoard, no range errors</td><td class="better">Matches the model exactly</td><td><span class="pill good">Silicon</span></td></tr>
+        <tr><td>Area</td><td class="num">38,358 LUT (72%)<br>72 of 220 DSP</td><td>Generation 1: 159 separate 64×64 multipliers, over 1,000 DSP; could not fit</td><td class="better">Fits a Zynq-7020</td><td><span class="pill info">Vivado</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">Energy: FPGA 0.341 W (Vivado vectorless estimate for the whole board design, including 0.121 W of clock generator) × 65.3 µs. CPU power could not be measured under WSL; the range uses the Intel Core i5-1155G7's 12–28 W configurable power at its measured full-load throughput. Generation 1 was never routed, so it is compared in cycles only. The CPU runs the identical algorithm in C++ double precision with g++ -O3 -march=native, AAD by CoDiPack.</p>
+
+  <div class="cols">
+    <div class="card">
+      <h3>What we claim</h3>
+      <ul>
+        <li><b>To our knowledge, the first FPGA implementation of adjoint differentiation for option Greeks</b>, and of the COS method. Checked against a 2024 survey of 99 FPGA option-pricing studies, the 2024 review of AAD in finance, AMD's FPGA finance library and the closest FPGA Greeks papers.</li>
+        <li><b>A static adjoint datapath with no tape</b>, possible because the COS pricer runs the same operations for every input.</li>
+        <li><b>Greeks for 1.04 pricings</b> on the Zynq-7020 design, and 1.55× where multipliers are the bottleneck; both stated.</li>
+        <li><b>A first-order error bound for every Greek</b>, validated against bit-exact RTL: the method is Linnainmaa's (1976), the application to an adjoint datapath is new.</li>
+        <li><b>Bit-exact agreement on silicon</b> for 50 random cases.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>What we do not claim</h3>
+      <ul>
+        <li>The first reverse-mode differentiation in hardware: every neural-network training accelerator runs backpropagation.</li>
+        <li>A new error-analysis method, or new arithmetic algorithms (Newton, Tang, CORDIC are standard).</li>
+        <li>Higher throughput than a CPU: four laptop cores give 2.2× more.</li>
+        <li>Faster pricing alone: a CPU core prices in 17.2 µs; the FPGA's lead is in the Greeks.</li>
+        <li>Speed-ups over published FPGA Greeks work: it solves a different problem (Monte Carlo with early exercise).</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Raise these before being asked</h3>
+    <ol>
+      <li>Energy is an estimate on both sides; no power was measured.</li>
+      <li>The silicon results used the bitstream from before put-call parity; the rebuild and repeat are pending.</li>
+      <li>Timing closes at about 79 MHz, not 100 MHz; the board runs at 70 MHz.</li>
+      <li>The reverse sweep is written by hand as IR operations; making the generator derive it is the next task.</li>
+      <li>"First" is "to our knowledge": unpublished industry work cannot be excluded.</li>
+      <li>The host steps (setup and finish) still run on the PC, not the Zynq's ARM cores.</li>
+    </ol>
   </div>
 </section>
 
