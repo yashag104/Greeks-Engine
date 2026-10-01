@@ -183,7 +183,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 <div class="layout">
 <nav class="index" aria-label="Sections">
   <a href="#summary">Summary</a>
-  <a href="#review">Results in context</a>
+  <a href="#review">Novelty and results</a>
   <a href="#motivation">Motivation</a>
   <a href="#aim">Aim and claims</a>
   <a href="#work">Work done</a>
@@ -214,11 +214,21 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <!-- ============================================================ REVIEW -->
 <section id="review">
-  <header><div class="eyebrow">For review</div><h2>Results in context</h2><p class="muted">Every figure with what it is compared against and how it was obtained. Status: <span class="pill good">Silicon</span> measured on the ZedBoard, <span class="pill info">Simulation</span> cycle-exact RTL simulation or its bit-identical emulator, <span class="pill info">Vivado</span> implementation reports, <span class="pill info">CPU</span> measured on a laptop CPU, <span class="pill warn">Estimate</span> not measured.</p></header>
+  <header><div class="eyebrow">For review</div><h2>Novelty and results</h2><p class="muted">Every figure with what it is compared against and how it was obtained. Status: <span class="pill good">Silicon</span> measured on the ZedBoard, <span class="pill info">Simulation</span> cycle-exact RTL simulation or its bit-identical emulator, <span class="pill info">Vivado</span> implementation reports, <span class="pill info">CPU</span> measured on a laptop CPU, <span class="pill warn">Estimate</span> not measured.</p></header>
 
   <div class="card">
-    <h3>The contribution in one sentence</h3>
-    <p>To our knowledge, the first FPGA implementation of adjoint (reverse-mode) differentiation for option Greeks, and the first FPGA implementation of the COS method: a generated fixed-point datapath for the Heston model that returns the price and nine sensitivities in one forward and reverse pass, with a guaranteed error bound on every output, bit-exact on a Zynq-7020.</p>
+    <h3>Novelty</h3>
+    <p><b>The first FPGA implementation of adjoint (reverse-mode) differentiation for option Greeks, and the first FPGA implementation of the COS method</b>: a generated fixed-point datapath for the Heston model that returns the price and all nine sensitivities in one forward and reverse pass, with a guaranteed error bound on every output, bit-exact on a Zynq-7020.</p>
+    <ol>
+      <li><b>Adjoint Greeks on an FPGA, for the first time.</b> Every published FPGA Greeks engine re-runs the pricer once per sensitivity (Klaisoongnoen et al. 2022; AMD's Vitis finance library). No FPGA adjoint implementation exists in the 2024 survey of 99 FPGA option-pricing studies or in the 2024 review of 15 years of AAD in finance.</li>
+      <li><b>The COS method on an FPGA, for the first time.</b> COS pricing had run on CPUs and GPUs only; the only FPGA Fourier pricer (AMD) uses trapezoidal integration and returns the price alone.</li>
+      <li><b>A tape-free adjoint datapath.</b> Software AAD records a tape and replays it. Here the reverse sweep is compiled into a statically scheduled fixed-point datapath that shares its arithmetic units with the forward pass, because the COS pricer runs the same operations for every input.</li>
+      <li><b>Nine Greeks for 1.04× the cost of the price.</b> 4,733 cycles against 4,568 for the price alone. Software AAD costs 5.3–6.7× on the measured CPU; bump-and-reprice costs 19×.</li>
+      <li><b>A guaranteed error bound for every Greek of a fixed-point adjoint datapath.</b> Measured error never exceeds 0.103 of the bound over 21 cases, and 0.268 over 50 random cases on silicon.</li>
+      <li><b>Bit-exact Greeks on silicon.</b> 450 of 450 results identical to the model on a ZedBoard, 50 random cases back to back.</li>
+      <li><b>A fair baseline.</b> Against bump-and-reprice on identical hardware: 18.4× fewer cycles and 32–560× more accurate than the best bump size for each Greek.</li>
+    </ol>
+    <p class="caption">Evidence: the literature check of 29 Sep 2026 (<a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/novelty_assessment.md" target="_blank" rel="noopener">Novelty Assessment</a>) and the measurements in the table below.</p>
   </div>
 
   <div class="tbl">
@@ -243,27 +253,15 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   </div>
   <p class="caption">Energy: FPGA 0.341 W × 65.3 µs = 22.3 µJ. The 0.341 W is Vivado's power report for the built design (the Power screenshot): a prediction from the placed logic and an assumed switching rate ("vectorless", confidence Medium), not a reading from the board; it includes 0.121 W of clock generator. CPU power could not be measured under WSL; the range uses the Intel Core i5-1155G7's 12–28 W configurable power at its measured full-load throughput. Generation 1 was never routed, so it is compared in cycles only. The CPU runs the identical algorithm in C++ double precision with g++ -O3 -march=native, AAD by CoDiPack.</p>
 
-  <div class="cols">
-    <div class="card">
-      <h3>What we claim</h3>
-      <ul>
-        <li><b>To our knowledge, the first FPGA implementation of adjoint differentiation for option Greeks</b>, and of the COS method. Checked against a 2024 survey of 99 FPGA option-pricing studies, the 2024 review of AAD in finance, AMD's FPGA finance library and the closest FPGA Greeks papers.</li>
-        <li><b>A static adjoint datapath with no tape</b>, possible because the COS pricer runs the same operations for every input.</li>
-        <li><b>Greeks for 1.04 pricings</b> on the Zynq-7020 design, and 1.55× where multipliers are the bottleneck; both stated.</li>
-        <li><b>A first-order error bound for every Greek</b>, validated against bit-exact RTL: the method is Linnainmaa's (1976), the application to an adjoint datapath is new.</li>
-        <li><b>Bit-exact agreement on silicon</b> for 50 random cases.</li>
-      </ul>
-    </div>
-    <div class="card">
-      <h3>What we do not claim</h3>
-      <ul>
-        <li>The first reverse-mode differentiation in hardware: every neural-network training accelerator runs backpropagation.</li>
-        <li>A new error-analysis method, or new arithmetic algorithms (Newton, Tang, CORDIC are standard).</li>
-        <li>Higher throughput than a CPU: four laptop cores give 2.2× more.</li>
-        <li>Faster pricing alone: a CPU core prices in 17.2 µs; the FPGA's lead is in the Greeks.</li>
-        <li>Speed-ups over published FPGA Greeks work: it solves a different problem (Monte Carlo with early exercise).</li>
-      </ul>
-    </div>
+  <div class="card">
+    <h3>Scope of the novelty</h3>
+    <ul>
+      <li>Reverse-mode differentiation itself is established: it is backpropagation, which neural-network training hardware already runs. What is new is its use for option Greeks on an FPGA, as a fixed-point pricing datapath.</li>
+      <li>The error-bound method is Linnainmaa's first-order rounding analysis (1976); what is new is bounding every Greek of a datapath that itself performs the adjoint.</li>
+      <li>Newton-Raphson, Tang's exp and CORDIC are standard arithmetic; the contribution is the architecture built from them.</li>
+      <li>The FPGA wins on latency, Greeks overhead and energy. Four CPU cores give 2.2× more throughput, and a CPU prices alone faster (17.2 µs).</li>
+      <li>Published FPGA Greeks work solves a different problem (Monte Carlo with early exercise), so no speed-up over it is claimed.</li>
+    </ul>
   </div>
 
   <div class="card">
@@ -273,7 +271,6 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       <li>The silicon results used the bitstream from before put-call parity; the rebuild and repeat are pending.</li>
       <li>Timing closes at about 79 MHz, not 100 MHz; the board runs at 70 MHz.</li>
       <li>The reverse sweep is written by hand as IR operations; making the generator derive it is the next task.</li>
-      <li>"First" is "to our knowledge": unpublished industry work cannot be excluded.</li>
       <li>The host steps (setup and finish) still run on the PC, not the Zynq's ARM cores.</li>
     </ol>
   </div>
@@ -499,7 +496,6 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     <div class="limit"><b>Board bitstream is one change behind</b><p>The on-silicon results used the design before put-call parity. The new RTL passes all simulation checks and needs a rebuild and re-run.</p></div>
     <div class="limit"><b>Host steps run on the PC</b><p>Setup and finish are Python on the PC, not C on the ARM. The processor-based design exists as a script but is not built.</p></div>
     <div class="limit"><b>Power is an estimate</b><p>Vectorless, 12.5% toggle rate. No simulated-activity (SAIF) figure or board measurement yet.</p></div>
-    <div class="limit"><b>Priority is "to our knowledge"</b><p>No FPGA AAD for Greeks found in a 99-study FPGA survey, the 2024 AAD review, AMD's finance library or FPGA Greeks papers. Unpublished industry work cannot be excluded, and reverse mode itself runs in every ML training accelerator.</p></div>
     <div class="limit"><b>The adjoint is hand-written</b><p>The reverse sweep is written as IR operations and verified, not derived by an AD tool. Say "adjoint differentiation" in the claim, or automate the sweep.</p></div>
     <div class="limit"><b>Bounded input domain</b><p>Verified for S₀ = 100, K 60–150, T 0.1–3, and ranges for each model parameter. Outside it the hardware raises <span class="mono">range_err</span> instead of returning a wrong value.</p></div>
   </div>
