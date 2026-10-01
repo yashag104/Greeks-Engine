@@ -44,6 +44,7 @@
 % "why it is useful / what is new" boxes after each result
 \newcommand{\useful}[1]{\par\noindent\textbf{\textcolor{accent}{Why it is useful.}} #1\par}
 \newcommand{\novel}[1]{\par\noindent\textbf{\textcolor{accent}{What is new.}} #1\par}
+\newcommand{\rupee}{Rs\,}
 \newcommand{\hi}{\rowcolor{accentsoft}}
 
 \tikzset{
@@ -82,7 +83,9 @@ output. The engine returns the price and all nine Greeks in 4,733 clock cycles,
 only 1.04 times the cost of the price alone and 18.4 times fewer cycles than
 bump-and-reprice on the same hardware. It fits a Zynq-7020 FPGA, takes
 65.3\,$\mu$s per evaluation on a ZedBoard, and produced results bit-identical to
-the model on 50 random cases in silicon.
+the model on 50 random cases in silicon. In a case study hedging 12 short NIFTY
+call trades on a year of real market data, a hedge built from two of the engine's
+Greeks (delta and variance vega) left 39\% less risk than a Black--Scholes hedge.
 \end{abstract}
 
 \tableofcontents
@@ -115,6 +118,12 @@ Two ways exist to obtain Greeks from such a pricer:
 \end{itemize}
 Adjoint differentiation is standard in software. On FPGAs, every published Greeks
 engine still re-runs the pricer once per sensitivity~\cite{klai1,vitis}.
+
+Three separate layers are involved, and the project uses all three: the
+\textbf{Heston model} describes how the stock and its volatility move; the
+\textbf{COS method} computes the option price from that model; the \textbf{adjoint
+method} computes the Greeks by differentiating the COS computation. The Greeks are
+computed exactly from the model, not predicted.
 
 \subsection{What this project does}
 The Heston-COS price and its adjoint sweep are written once as an operation graph.
@@ -300,7 +309,10 @@ new one starts every 32, so about 16 terms share the arithmetic units at any tim
 \end{figure}
 
 \textbf{Precision.} The datapath uses 56-bit fixed-point words with 28 fractional
-bits, rounding to nearest at every step. Data-dependent shift amounts were measured
+bits, rounding to nearest at every step. An FPGA has no fixed word length: adders and
+multipliers are built at whatever width the design needs, and a 56$\times$56-bit
+multiplier is assembled from nine of the chip's 25$\times$18-bit DSP blocks (72 DSP
+blocks for the 8 multipliers). Section~\ref{sec:wl} shows why 56 bits. Data-dependent shift amounts were measured
 over the valid input range and the shifters built only that wide, which cut logic by
 35\%; any input that would exceed a measured range raises a \texttt{range\_err} flag
 instead of returning a wrong value.
@@ -459,6 +471,33 @@ safe for every Greek. On the Zynq-7020 design the adjoint Greeks are 32--560 tim
 more accurate than bump-and-reprice even with the best bump size chosen afterwards for
 each Greek (median 145 times), with nothing to tune.}
 
+\subsection{Accuracy against word length}
+\label{sec:wl}
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Word length (fraction bits)} & \textbf{Worst price error} & \textbf{Worst Greek error} & \textbf{Worst error $\div$ bound} & \textbf{Overflows}\\
+\midrule
+44-bit (16) & $1.5\times10^{-3}$ & $2.8\times10^{-1}$ & 0.167 & 0\\
+48-bit (20) & $1.8\times10^{-4}$ & $9.1\times10^{-3}$ & 0.121 & 0\\
+52-bit (24) & $5.0\times10^{-6}$ & $5.8\times10^{-4}$ & 0.113 & 0\\
+\hi 56-bit (28), this design & $6.1\times10^{-7}$ & $1.2\times10^{-5}$ & 0.103 & 0\\
+64-bit (32) & $2.8\times10^{-8}$ & $7.4\times10^{-7}$ & 0.099 & 0\\
+64-bit (36) & $1.2\times10^{-9}$ & $7.9\times10^{-8}$ & 0.150 & 0\\
+\bottomrule
+\end{tabular}}
+\caption{Worst relative error over the 21 parameter sets as the word length changes
+(\texttt{validation/results/wordlength\_sweep.csv}).}
+\end{table}
+
+\useful{Every four bits removed costs roughly 10--50 times in Greek accuracy. At 48 bits
+a Greek can be 1\% wrong and at 44 bits 28\% wrong, while 64 bits buys accuracy no risk
+desk needs at a higher hardware cost; 56 bits is the point where every Greek is good to
+five significant figures. The guaranteed bound held at every width, so it predicts this
+trade-off without building each design.}
+
 \subsection{Calls through put-call parity}
 \label{sec:parity}
 Priced directly, a call's COS coefficients contain $e^{b}$ for the upper truncation
@@ -575,6 +614,70 @@ software method on one core, 1.8 times faster than software adjoint differentiat
 throughput of one engine, so the FPGA's case is latency and energy per Greek set, and
 its advantage comes from the Greeks: pricing alone is faster on the CPU.}
 
+\subsection{Hedging on real market data}
+\label{sec:hedging}
+To see whether the engine's Greeks are worth having in practice, they were used to
+hedge real trades. Data are the NSE end-of-day futures and options files for NIFTY,
+September 2025 to September 2026 (268 trading days). Only real market prices were used:
+an option quote counts only if at least 50 contracts traded that day. Each day the
+Heston model was calibrated to these quotes across all monthly expiries at once; the
+model's prices were within 0.019\% of the index level in a typical day (median) and
+0.073\% at worst.
+
+Each of 12 trades sells 20 lots of an at-the-money call with 0.15--0.30 years to
+expiry, hedges with NIFTY futures, and buys the call back when 0.10 years remain. The
+hedge ratio comes from the bit-accurate model of the generated engine (identical to the
+hardware). Profit and loss counts the premium, the buy-back, the futures, brokerage,
+securities transaction tax, exchange, SEBI and stamp charges, GST, slippage, and 30\%
+income tax on profits. Four hedges were compared: none; the Black--Scholes delta at each
+day's implied volatility; the engine's Heston delta $\partial V/\partial S$; and the
+\emph{minimum-variance} delta
+\[
+  \Delta_{\mathrm{MV}} \;=\; \frac{\partial V}{\partial S} \;+\; \frac{\rho\,\xi}{S}\,\frac{\partial V}{\partial v_0},
+\]
+which also hedges the part of the variance move that is correlated with the index. It
+needs a second Greek, $\partial V/\partial v_0$, which the engine returns in the same pass.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Hedge (daily)} & \textbf{Spread of P\&L (std)} & \textbf{Mean P\&L} & \textbf{Worst trade}\\
+\midrule
+None & \rupee5.55\,L & +\rupee0.74\,L & $-$\rupee8.99\,L\\
+Black--Scholes delta & \rupee2.05\,L & $-$\rupee0.07\,L & $-$\rupee5.85\,L\\
+Heston delta, 56-bit engine & \rupee2.50\,L & $-$\rupee0.24\,L & $-$\rupee6.56\,L\\
+\hi Heston minimum-variance delta, 56-bit engine & \textbf{\rupee1.26\,L} & +\rupee0.18\,L & \textbf{$-$\rupee2.54\,L}\\
+\bottomrule
+\end{tabular}
+\caption{Hedging 12 short NIFTY call trades, after all charges and tax (L = lakh).}
+\label{tab:hedge}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/fig12_hedge_risk.png}\\[4pt]
+\includegraphics[width=\textwidth]{figures/fig13_hedge_pnl_per_trade.png}
+\caption{Top: risk left after each hedge, including rebalancing every 2 or 5 days and
+the 48- and 44-bit engines. Bottom: each trade's profit or loss.}
+\end{figure}
+
+The Heston delta on its own hedged worse than Black--Scholes. This is expected: it
+holds variance fixed, while on the index variance rises when the price falls. Adding
+the vega term corrects that and gave the lowest risk of all the hedges, 39\% below
+Black--Scholes, with a worst loss of \rupee2.54\,L instead of \rupee5.85\,L. With 12
+trades this is a case study, not a statistical result: the minimum-variance hedge lost
+less on 5 of the 12 trades, much of the gain comes from the worst trade, and a bootstrap
+gives about an 88\% chance that its risk is genuinely lower. Word length did not
+matter: deltas from 48-bit and 44-bit engines differ from the 56-bit ones by at most
+$1.7\times10^{-4}$ and $1.6\times10^{-3}$, below the resolution of whole futures lots;
+the 48-bit hedge traded exactly the same lots as the 56-bit one.
+
+\useful{The hedge that worked best uses two Greeks of the same option, delta and
+variance vega, which the engine produces together in one pass at the cost of about one
+price. For hedging, a 48-bit engine would be enough, which makes the design smaller.}
+
 \subsection{Improvement over the first generation}
 \begin{table}[H]
 \centering
@@ -625,14 +728,15 @@ Figure~\ref{fig:gantt}).
 30 Sep -- 1 Oct & CPU comparison; results dashboard and report & Done\\
 \midrule
 1--3 Oct & Rebuild the ZedBoard bitstream with put-call parity; repeat the 50-case sweep & Next\\
-2--10 Oct & Generator derives the reverse sweep automatically; re-verify all designs & Planned\\
+1--13 Oct & Hedging case study on real NIFTY data (first results, \S\ref{sec:hedging}); next: verify charges with a broker, more trades & In progress\\
 6--12 Oct & Power from simulated switching activity, and a board power measurement & Planned\\
-9--13 Oct & A second pricing model through the same generator & Planned\\
+
 13--15 Oct & Freeze results; regenerate all figures and tables & Planned\\
 13--22 Oct & Write the paper: introduction, related work, architecture, results & Planned\\
 22--27 Oct & Review with the supervisor; revisions & Planned\\
 26--28 Oct & Final literature re-check; proofreading & Planned\\
 \hi 29 Oct & \textbf{Paper complete} & Target\\
+After 29 Oct & Generator derives the reverse sweep automatically; a second pricing model & Next paper\\
 \bottomrule
 \end{tabularx}
 \caption{Project timeline.}
@@ -654,21 +758,20 @@ Figure~\ref{fig:gantt}).
   \ganttbar{6}{Silicon runs, parity, literature}{44}{45}{aad}
   \ganttbar{7}{CPU comparison, report}{46}{47}{aad}
   \ganttbar{8}{Bitstream rebuild, repeat sweep}{47}{49}{plan}
-  \ganttbar{9}{Automatic adjoint derivation}{48}{56}{plan}
+  \ganttbar{9}{Hedging study, real NIFTY data}{47}{59}{plan}
   \ganttbar{10}{Power measurement}{52}{58}{plan}
-  \ganttbar{11}{Second pricing model}{55}{59}{plan}
-  \ganttbar{12}{Freeze results, figures}{59}{61}{plan}
-  \ganttbar{13}{Write the paper}{59}{68}{plan}
-  \ganttbar{14}{Supervisor review, revisions}{68}{73}{plan}
-  \ganttbar{15}{Literature re-check, proofreading}{72}{74}{plan}
-  \node[diamond, fill=bump, inner sep=2.6pt] at (75.5,-16+0.35) {};
-  \node[font=\scriptsize\bfseries, anchor=east, text width=4.4cm, align=right] at (-1,-16+0.35) {Paper complete, 29 Oct};
-  \draw[ink] (0,-16.6) -- (76,-16.6);
+  \ganttbar{11}{Freeze results, figures}{59}{61}{plan}
+  \ganttbar{12}{Write the paper}{59}{68}{plan}
+  \ganttbar{13}{Supervisor review, revisions}{68}{73}{plan}
+  \ganttbar{14}{Literature re-check, proofreading}{72}{74}{plan}
+  \node[diamond, fill=bump, inner sep=2.6pt] at (75.5,-15+0.35) {};
+  \node[font=\scriptsize\bfseries, anchor=east, text width=4.4cm, align=right] at (-1,-15+0.35) {Paper complete, 29 Oct};
+  \draw[ink] (0,-15.6) -- (76,-15.6);
   \foreach \d/\t in {0/15 Aug, 17/1 Sep, 31/15 Sep, 47/1 Oct, 61/15 Oct, 75/29 Oct} {
-    \draw[ink] (\d+0.5,-16.6) -- ++(0,-0.2) node[below, font=\scriptsize] {\t};
-    \draw[rulec] (\d+0.5,-16.6) -- (\d+0.5,0.2);
+    \draw[ink] (\d+0.5,-15.6) -- ++(0,-0.2) node[below, font=\scriptsize] {\t};
+    \draw[rulec] (\d+0.5,-15.6) -- (\d+0.5,0.2);
   }
-  \draw[accent, thick, dashed] (47.5,-16.6) -- (47.5,0.6) node[above, font=\scriptsize, text=accent] {today, 1 Oct};
+  \draw[accent, thick, dashed] (47.5,-15.6) -- (47.5,0.6) node[above, font=\scriptsize, text=accent] {today, 1 Oct};
   \fill[aad] (5,1.4) rectangle ++(2.2,0.55); \node[font=\scriptsize, anchor=west] at (7.6,1.67) {done};
   \fill[plan] (16,1.4) rectangle ++(2.2,0.55); \node[font=\scriptsize, anchor=west] at (18.6,1.67) {planned};
 \end{tikzpicture}
