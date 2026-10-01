@@ -66,7 +66,7 @@ python sched.py           # schedule / estimate table
 `gen_tb.py` checks every setup and finish register, and every register of terms
 0–2 at the cycle its value becomes valid, against `heston.emulate`. It also
 checks all outputs for 3 parameter sets, and that `range_err` fires for an
-out-of-domain input (T = 0.01).
+out-of-domain input (T = 0.001).
 
 ## Interface
 

@@ -425,15 +425,15 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   <header><div class="eyebrow">Validation, 1 Oct</div><h2>10,500-input sweep</h2></header>
   <p>The 56-bit design on 6,000 uniform in-domain inputs, 500 in each of seven hard regimes (Feller violated, ρ near its limits, deep strikes, very short and long T, high ξ, very low variance) and 1,000 with one input outside the domain. Each case: bit-accurate model, error bound, reference, and the range check that raises <span class="mono">range_err</span>.</p>
   <div class="tbl"><table>
-    <thead><tr><th>Absolute error, 8,992 unflagged in-domain inputs</th><th class="num">Median</th><th class="num">99th pct.</th><th class="num">Worst</th></tr></thead>
+    <thead><tr><th>Absolute error, all 9,500 in-domain inputs</th><th class="num">Median</th><th class="num">99th pct.</th><th class="num">Worst</th></tr></thead>
     <tbody>
-      <tr><td>Price</td><td class="num">3.4e-7</td><td class="num">1.6e-5</td><td class="num">6.2e-5</td></tr>
-      <tr><td>Delta</td><td class="num">3.4e-9</td><td class="num">1.3e-7</td><td class="num">2.1e-6</td></tr>
-      <tr><td>Vega</td><td class="num">2.7e-7</td><td class="num">1.5e-5</td><td class="num">2.9e-4</td></tr>
-      <tr><td>∂V/∂θ</td><td class="num">1.9e-6</td><td class="num">1.1e-4</td><td class="num">3.2e-4</td></tr>
-      <tr><td>∂V/∂ξ</td><td class="num">6.4e-7</td><td class="num">2.4e-4</td><td class="num">1.2e-3</td></tr>
+      <tr><td>Price</td><td class="num">3.3e-7</td><td class="num">1.7e-5</td><td class="num">7.3e-5</td></tr>
+      <tr><td>Delta</td><td class="num">3.5e-9</td><td class="num">1.6e-7</td><td class="num">2.2e-6</td></tr>
+      <tr><td>Vega</td><td class="num">2.8e-7</td><td class="num">2.1e-5</td><td class="num">2.9e-4</td></tr>
+      <tr><td>∂V/∂θ</td><td class="num">2.0e-6</td><td class="num">1.1e-4</td><td class="num">3.7e-4</td></tr>
+      <tr><td>∂V/∂ξ</td><td class="num">5.9e-7</td><td class="num">2.5e-4</td><td class="num">1.3e-3</td></tr>
     </tbody></table></div>
-  <p class="caption"><b>The bound held in all 9,911 unflagged cases</b>, inside and outside the domain (worst 0.378 of the bound), no overflow. The worst case (ξ = 0.105, T = 0.17, large κθ) has ∂V/∂ξ off by 0.2%, all fixed-point rounding, inside its bound. Found: range_err also fires on 2.2% of uniform in-domain inputs and 55% of very-low-variance ones (ranges fitted on 150 samples); refit before the next bitstream. <span class="mono">validation/run_domain_sweep.py</span></p>
+  <p class="caption"><b>The bound held in all 10,482 unflagged cases</b>, inside and outside the domain (worst 0.378 of the bound), no overflow; the 18 flagged inputs were all outside the domain. At small ξ with large κθ, ∂V/∂ξ is off by up to 1.3e-3 (≤ 0.2%), all fixed-point rounding, inside its bound. The sweep exposed false range_err alarms on 25 in-domain inputs (very low variance, very short T); refitting the shift ranges at the domain edges removed all of them, and every design was regenerated and re-verified (22/22 checks). <span class="mono">validation/run_domain_sweep.py</span></p>
 </section>
 
 <section id="parity">

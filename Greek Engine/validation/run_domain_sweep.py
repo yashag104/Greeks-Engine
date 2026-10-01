@@ -2,6 +2,8 @@
 
     .venv/bin/python validation/run_domain_sweep.py [n_uniform] [n_per_regime] [n_outside]
     -> validation/results/domain_sweep.csv, domain_sweep_summary.csv
+    .venv/bin/python validation/run_domain_sweep.py --reflag
+    (recompute range_err for the flagged rows of an existing sweep)
 
 Every case runs the bit-accurate model of the whole evaluation (the unrolled
 graph: fixed-point values identical to the hardware's), the same algorithm in
@@ -85,19 +87,47 @@ def draw(rng, regime):
 _state = {}
 
 
-def flagged_by_range(dp, rmap, pv, call):
-    """True if any variable shift in setup, any term or finish leaves the range
-    the RTL was built for: exactly when the fully on-chip design raises range_err"""
+def rtl_checks(dp, rmap, cfg):
+    """the shift checks the generated RTL performs (rtlgen.emit_scale and the
+    multiplier units): a scale node is flagged below its fitted range, or above
+    it only if that range ends below the word width (beyond it the shifter
+    clamps and the rounded result is exactly 0); a multiplier unit checks the
+    union of the ranges of every operation bound to it, likewise.
+    Returns {node id: (lo, hi or None)}."""
+    import sched as S
     g = dp.g
-    var = RG.variable_nodes(g)
+    sch = S.schedule(dp, cfg)
+    width = {"W": g.wl, "D": 2 * g.wl}
+    checks, units = {}, {}
+    for n in RG.variable_nodes(g):
+        if n.op == "scale":
+            lo, hi = rmap[n.id]
+            cap = width.get(g.nodes[n.args[0]].width, g.wl) + 1
+            checks[n.id] = (lo, hi if hi < cap else None)
+        elif n.id in sch.unit:                   # (host-setup designs: setup/finish not on the FPGA)
+            units.setdefault(sch.unit[n.id], []).append(n)
+    for u, ops in units.items():
+        # every non-raw multiply on the unit contributes; fixed-shift ones a point
+        allops = [m for m in g.nodes if m.op == "mul" and sch.unit.get(m.id) == u and not m.attrs.get("raw")]
+        rs = [rmap[m.id] if len(m.args) == 3 else (RG.fixed_shift(g, m),) * 2 for m in allops]
+        ulo, uhi = min(r[0] for r in rs), max(r[1] for r in rs)
+        for n in ops:
+            checks[n.id] = (ulo, uhi if uhi < 2 * g.wl + 1 else None)
+    return checks
+
+
+def flagged_by_range(dp, checks, pv, call):
+    """True if the fully on-chip RTL would raise range_err for these inputs"""
+    g = dp.g
+    var = [n for n in RG.variable_nodes(g)]
     q = H.quantize_inputs(pv, call, g.fl)
 
     def out_of_range(vals, part):
         for n in var:
             if n.part == part:
                 sh = RG.fixed_shift(g, n) - vals[n.args[-1] if n.op == "mul" else n.args[1]]
-                lo, hi = rmap[n.id]
-                if not lo <= sh <= hi:
+                lo, hi = checks[n.id]
+                if sh < lo or (hi is not None and sh > hi):
                     return True
         return False
 
@@ -122,14 +152,16 @@ def flagged_by_range(dp, rmap, pv, call):
 def _init():
     _state["g_out"] = H.unrolled(WL, FL)
     _state["dp"] = H.Datapath(WL, FL)
-    _state["rmap"] = RG.get(_state["dp"], BUILD)
+    import sched as S
+    cfg = S.Config(wl=WL, fl=FL, mults=8, crot=3, cvec=2, cordic_pipelined=False)   # heston_aad_z7
+    _state["checks"] = rtl_checks(_state["dp"], RG.get(_state["dp"], BUILD), cfg)
 
 
 def run_case(args):
     i, regime, p, call = args
     pv = [p[n] for n in H.PARAMS]
     try:
-        flagged = flagged_by_range(_state["dp"], _state["rmap"], pv, call)
+        flagged = flagged_by_range(_state["dp"], _state["checks"], pv, call)
         rows, novf = C.run(pv, call, FL, _state["g_out"])
     except Exception as e:                       # e.g. a math domain error outside the domain
         return dict(case=i, regime=regime, which=p.get("_which", ""), is_call=int(call), flagged=-1,
@@ -142,7 +174,38 @@ def run_case(args):
     return out
 
 
+def _reflag(r):
+    pv = [float(r[n]) for n in H.PARAMS]
+    return r["case"], int(flagged_by_range(_state["dp"], _state["checks"], pv, r["is_call"] == "1"))
+
+
+def reflag():
+    """recompute range_err for the rows of an existing domain_sweep.csv that were
+    flagged (a row the check passed stays passed: the RTL is no stricter)"""
+    path = os.path.join(HERE, "results", "domain_sweep.csv")
+    res = list(csv.DictReader(open(path)))
+    todo = [r for r in res if r["flagged"] == "1"]
+    with mp.Pool(max(1, (os.cpu_count() or 2) - 2), initializer=_init) as pool:
+        new = dict(pool.map(_reflag, todo, chunksize=4))
+    for r in res:
+        if r["case"] in new:
+            r["flagged"] = str(new[r["case"]])
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=list(res[0]))
+        w.writeheader()
+        w.writerows(res)
+    for r in res:
+        for k in r:
+            if k.startswith(("err_", "ratio_")) and r[k] != "":
+                r[k] = float(r[k])
+        r["flagged"], r["overflows"] = int(r["flagged"]), int(r["overflows"])
+    print("re-flagged %d rows: %d still flagged" % (len(todo), sum(new.values())))
+    summarise(res)
+
+
 def main():
+    if sys.argv[1:] == ["--reflag"]:
+        return reflag()
     n_uniform = int(sys.argv[1]) if len(sys.argv) > 1 else 6000
     n_regime = int(sys.argv[2]) if len(sys.argv) > 2 else 500
     n_out = int(sys.argv[3]) if len(sys.argv) > 3 else 1000

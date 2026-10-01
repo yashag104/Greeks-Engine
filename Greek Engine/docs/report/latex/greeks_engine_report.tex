@@ -466,29 +466,30 @@ error bound, the reference, and the same range check that raises the hardware's
 \toprule
 \textbf{Output (absolute error)} & \textbf{Median} & \textbf{99th percentile} & \textbf{Worst}\\
 \midrule
-Price & $3.4\times10^{-7}$ & $1.6\times10^{-5}$ & $6.2\times10^{-5}$\\
-Delta & $3.4\times10^{-9}$ & $1.3\times10^{-7}$ & $2.1\times10^{-6}$\\
-Vega $\partial V/\partial v_0$ & $2.7\times10^{-7}$ & $1.5\times10^{-5}$ & $2.9\times10^{-4}$\\
-$\partial V/\partial\theta$ & $1.9\times10^{-6}$ & $1.1\times10^{-4}$ & $3.2\times10^{-4}$\\
-$\partial V/\partial\xi$ & $6.4\times10^{-7}$ & $2.4\times10^{-4}$ & $1.2\times10^{-3}$\\
+Price & $3.3\times10^{-7}$ & $1.7\times10^{-5}$ & $7.3\times10^{-5}$\\
+Delta & $3.5\times10^{-9}$ & $1.6\times10^{-7}$ & $2.2\times10^{-6}$\\
+Vega $\partial V/\partial v_0$ & $2.8\times10^{-7}$ & $2.1\times10^{-5}$ & $2.9\times10^{-4}$\\
+$\partial V/\partial\theta$ & $2.0\times10^{-6}$ & $1.1\times10^{-4}$ & $3.7\times10^{-4}$\\
+$\partial V/\partial\xi$ & $5.9\times10^{-7}$ & $2.5\times10^{-4}$ & $1.3\times10^{-3}$\\
 \bottomrule
 \end{tabular}
-\caption{56-bit design, 8,992 in-domain inputs not flagged by \texttt{range\_err}.}
+\caption{56-bit design, all 9,500 in-domain inputs.}
 \end{table}
 
-No result exceeded its error bound in any of the 9,911 unflagged cases, inside or outside
-the domain (worst 0.378 of the bound), with no overflow. The 21-case grid understates
-the tail: the worst case, a short-maturity option with small vol-of-vol ($\xi=0.105$) and
-large $\kappa\theta$, has $\partial V/\partial\xi$ wrong by $1.2\times10^{-3}$ on a value of
-$-0.563$ (0.2\%), all of it fixed-point rounding and inside its bound of
-$8.8\times10^{-3}$. Two limits were found: \texttt{range\_err} also fires on 2.2\% of
-uniform in-domain inputs and 55\% of very-low-variance ones, because the shift ranges
-were fitted on only 150 samples; and small $\xi$ is the weak corner of 56 bits.
+No result exceeded its error bound in any of the 10,482 unflagged cases, inside or
+outside the domain (worst 0.378 of the bound), with no overflow; the 18 flagged inputs
+were all outside the domain. The 21-case grid understates the tail: at small vol-of-vol
+($\xi\approx0.1$) with large $\kappa\theta$, $\partial V/\partial\xi$ is off by up to
+$1.3\times10^{-3}$ (at most 0.2\% relative), all of it fixed-point rounding and inside
+its bound. The sweep also exposed false alarms: \texttt{range\_err} fired on 25
+in-domain inputs at very low variance and very short maturity, where two normalization
+shifts went one step past their fitted range. Fitting the ranges on extra samples at
+the ten edges of the domain widened 50 of 113 shifters by 1--4 steps and removed every
+in-domain flag; all designs were regenerated and pass their bit-exact testbenches.
 
 \useful{The error bound is reliable over ten thousand inputs, including the hard regimes:
 every result the hardware does not flag is within its computed bound, so a user knows
-each Greek's accuracy before using it. The sweep also shows exactly what to fix: refit
-the shift ranges on a larger sample before the next bitstream.}
+each Greek's accuracy before using it, and no valid input is now rejected.}
 
 \useful{Every Greek is accurate to at least five significant figures, and each
 comes with a bound computed in 0.1\,s per parameter set that the hardware error
@@ -834,7 +835,8 @@ Figure~\ref{fig:gantt}).
 3--5 Oct & Rebuild the ZedBoard bitstream with put-call parity and refitted ranges; repeat the 50-case sweep & Next\\
 1--13 Oct & Hedging case study on real NIFTY data (first results, \S\ref{sec:hedging}); next: verify charges with a broker, more trades & In progress\\
 1 Oct & Validation sweep over 10,500 inputs including hard regimes; latency accounting (host steps, configurations) & Done\\
-2--5 Oct & Refit the shift ranges on the sweep; CPU timings on an idle machine & Next\\
+1 Oct & Shift ranges refitted at the domain edges; all designs regenerated and re-verified & Done\\
+2--5 Oct & CPU timings on an idle machine & Next\\
 6--12 Oct & Power from simulated switching activity, a board power measurement, and CPU package power, for energy per Greek set on both sides & Planned\\
 
 13--15 Oct & Freeze results; regenerate all figures and tables & Planned\\

@@ -75,7 +75,7 @@ host + FPGA is bit-identical to the fully on-chip design.
 | FSM engine: AAD, price-only, AXI; Black-Scholes | self-checking testbenches vs reference |
 | generated AAD (Zynq-7020, 64-bit, host-setup), price-only pricers | every setup/finish register and every register of terms 0–2 at the cycle it becomes valid (1,254–1,993 checks) + all outputs for 3 parameter sets, **bit-exact** vs the emulator |
 | schedule | measured cycles = predicted cycles, every configuration |
-| `range_err` | stays 0 in-domain, raised for T = 0.01 |
+| `range_err` | stays 0 in-domain (also over the 9,500 in-domain sweep inputs), raised for T = 0.001 |
 | AXI4-Stream wrappers | bit-exact round trip, backpressure, return to idle |
 | bump-and-reprice wrappers | bit-exact vs emulated 19 pricings |
 | host split | host setup + FPGA sums + host finish == on-chip outputs |
@@ -124,23 +124,32 @@ Each case runs the bit-accurate model, the error bound and the COS reference, an
 checks every variable shift against the ranges the RTL was built for (= range_err).
 `results/domain_sweep.csv`, `domain_sweep_summary.csv`.
 
-- **The bound held in every case.** Of 9,911 unflagged results (8,992 in the
-  domain, 919 outside it), none exceeded its bound; the worst was 0.378 of it. No overflow, no failed evaluation. Outside the
-  domain, every result was either flagged or within its bound.
-- **Absolute error, 8,992 unflagged in-domain cases** (median / 99th percentile /
-  worst): price 3.4e-7 / 1.6e-5 / 6.2e-5; delta 3.4e-9 / 1.3e-7 / 2.1e-6;
-  vega 2.7e-7 / 1.5e-5 / 2.9e-4; ∂V/∂θ 1.9e-6 / 1.1e-4 / 3.2e-4; ∂V/∂ξ
-  6.4e-7 / 2.4e-4 / 1.2e-3. The 21-case grid above understates the tail: the worst
-  case (K = 115.8, T = 0.17, κ = 4.95, θ = 0.244, ξ = 0.105) has ∂V/∂ξ wrong by
-  1.2e-3 on a value of −0.563 (0.2%), all of it fixed-point rounding (the
-  double-precision algorithm agrees with the reference to 3e-6) and inside its
-  bound of 8.8e-3. Small ξ with large κθ/ξ² is the weak corner of 56 bits.
-- **range_err fires inside the domain.** 130 of 6,000 uniform cases (2.2%) and 277
-  of 500 low-variance cases (55%) were flagged, mostly at long T, small v0 or θ,
-  large κ and large ξ. The shift ranges were fitted on 150 samples plus a margin of
-  3; flagged results are safe (the hardware reports them) but unusable. Refitting
-  the ranges over this sweep, before the parity bitstream is rebuilt, would remove
-  most of these at a small LUT cost.
+- **The bound held in every case.** Of 10,482 unflagged results (all 9,500 in the
+  domain, 982 of the 1,000 outside it), none exceeded its bound; the worst was
+  0.378 of it. No overflow, no failed evaluation. The 18 flagged inputs were all
+  outside the domain.
+- **Absolute error, 9,500 in-domain cases** (median / 99th percentile / worst):
+  price 3.3e-7 / 1.7e-5 / 7.3e-5; delta 3.5e-9 / 1.6e-7 / 2.2e-6; vega 2.8e-7 /
+  2.1e-5 / 2.9e-4; ∂V/∂θ 2.0e-6 / 1.1e-4 / 3.7e-4; ∂V/∂ξ 5.9e-7 / 2.5e-4 / 1.3e-3.
+  The 21-case grid above understates the tail. The largest relative error is at
+  small ξ with large κθ: K = 115.8, T = 0.17, κ = 4.95, θ = 0.244, ξ = 0.105 has
+  ∂V/∂ξ wrong by 1.2e-3 on a value of −0.563 (0.2%); the largest absolute error,
+  1.3e-3 on −1.42 (0.09%), is at K = 138.6, ξ = 0.11. Both are fixed-point
+  rounding (the double-precision algorithm agrees with the reference to 6e-6) and
+  inside their bounds (8.8e-3, 9.9e-3). Small ξ is the weak corner of 56 bits.
+- **range_err: fixed false alarms.** The first pass flagged 2.2% of uniform and 55%
+  of very-low-variance inputs, but its check was stricter than the RTL (the RTL
+  clamps shifts beyond the word width, where the rounded result is exactly 0, and
+  a multiplier unit checks the union of its operations' ranges). With the check
+  made identical to the RTL, 25 in-domain inputs remained, all from two
+  normalization shifts one step past their range at very low variance and very
+  short T. `ranges.py` now fits the ranges on 150 uniform samples plus 40 at each
+  of ten domain edges (seeds independent of the sweep's): 50 of 113 ranges widen
+  by 1 to 4 steps, about 37 more shifter-select bits in total (LUT cost to be
+  measured in Vivado), and **no in-domain input is flagged**. T = 0.01 is no longer
+  flagged and is computed within its bound (0.115 of it), so the testbench's
+  out-of-domain probe is now T = 0.001. All designs regenerated; `verify_all.sh`
+  passes (22/22).
 
 ### 4.3 Area (Yosys `synth_xilinx`, generic mapping)
 
