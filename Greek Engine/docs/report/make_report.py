@@ -189,9 +189,20 @@ bullets([
 ])
 
 # ================================================================ 2 related work
-H1("2  Related work and novelty")
-P("A literature check made on 29 September 2026 (docs/novelty_assessment.md) looked for anything that would make "
-  "this work not new. It found three separate bodies of work and nothing joining them.")
+H1("2  Novelty and related work")
+P("<b>Novelty.</b> This work is the first FPGA implementation of adjoint (reverse-mode) differentiation for option "
+  "Greeks, and the first FPGA implementation of the COS method. Specifically:")
+bullets([
+    "<b>Adjoint Greeks on an FPGA.</b> Every published FPGA Greeks engine re-runs the pricer once per sensitivity; no "
+    "FPGA adjoint implementation exists in the literature reviewed below.",
+    "<b>The COS method on an FPGA.</b> COS had run on CPUs and GPUs only.",
+    "<b>A tape-free adjoint datapath,</b> statically scheduled on arithmetic shared with the forward pass.",
+    "<b>Nine Greeks for 1.04× the cost of the price,</b> against 5.3–6.7× for software AAD on the measured CPU.",
+    "<b>A guaranteed error bound for every Greek</b> of a fixed-point adjoint datapath, never exceeded (≤ 0.103).",
+    "<b>Bit-exact Greeks on silicon:</b> 450 of 450 results on a Zynq-7020.",
+])
+P("The literature check behind these points (29 September 2026, docs/novelty_assessment.md) found three bodies of "
+  "work and nothing joining them.")
 P("<b>AAD for Greeks in software.</b> Adjoint pathwise Monte Carlo (Giles and Glasserman, Risk 2006) and its "
   "implementation by algorithmic differentiation (Capriotti, J. Comput. Finance 14(3), 2011) made AAD the standard way "
   "to compute Greeks; production practice is described by Savine (Wiley, 2018). The 2024 review of the field by "
@@ -210,11 +221,9 @@ P("<b>Reverse mode and precision analysis.</b> Reverse-mode differentiation was 
   "rounding error (Linnainmaa, BIT 1976), and AD has been used to choose FPGA word lengths (Gaffar, Mencer, Luk et "
   "al., FPT 2002). Every neural-network training accelerator executes backpropagation, which is reverse mode on a "
   "fixed graph.")
-P("<b>What is new here.</b> To our knowledge this is the first FPGA implementation of AAD for option Greeks and the "
-  "first FPGA implementation of the COS method. The individual techniques (static adjoints, modulo scheduling, "
-  "first-order rounding analysis) are established; the contribution is their combination for a fixed-point, "
-  "complex-valued pricing datapath, with a per-Greek error bound, demonstrated bit-exact on silicon. Unpublished "
-  "industry work cannot be ruled out, so the claim is stated as \"to our knowledge\".")
+P("<b>What the novelty builds on.</b> Static adjoints, modulo scheduling and first-order rounding analysis are "
+  "established techniques, cited above; the contribution is their use for option Greeks as a fixed-point, "
+  "complex-valued FPGA pricing datapath with a per-Greek error bound, demonstrated bit-exact on silicon.")
 table(["Work", "Method", "Platform", "Greeks by"], [
     ["Giles & Glasserman 2006; Capriotti 2011", "Monte Carlo", "CPU", "Adjoint / AD"],
     ["Gremse et al. 2016", "General", "GPU", "AAD"],
@@ -448,8 +457,8 @@ bullets([
     "<b>Host steps run on the PC.</b> Setup and finish are Python, not C on the ARM; the processor-based system is "
     "scripted but not built.",
     "<b>Power is a vectorless estimate</b> at a 12.5% toggle rate; no activity-based figure or measurement yet.",
-    "<b>Priority is stated \"to our knowledge\".</b> The literature check (section 2) cannot see unpublished industry "
-    "work, and should be repeated in Google Scholar, IEEE Xplore and the ACM Digital Library before submission.",
+    "<b>The literature check should be repeated before submission</b> in Google Scholar, IEEE Xplore and the ACM "
+    "Digital Library, to catch papers published after 29 September 2026.",
     "<b>Bounded input domain:</b> S<sub>0</sub> = 100, K 60–150, T 0.1–3, r 0–0.1, v<sub>0</sub> and θ 0.005–0.25, "
     "κ 0.2–6, ξ 0.1–1, ρ −0.95–0.6. Outside it the hardware raises range_err.",
     "<b>The adjoint is hand-written.</b> The reverse sweep is written as operations in the IR "

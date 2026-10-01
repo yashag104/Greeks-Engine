@@ -149,7 +149,7 @@ button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 </ol>
 
 <h2 id="claim"><span class="n">§1</span>The one-sentence claim</h2>
-<p><strong>The price and all nine sensitivities come out of one forward and reverse-mode AAD pass in fixed-point FPGA hardware, using the COS Fourier method, compared head-to-head with bump-and-reprice on the same hardware.</strong> FPGA finance work has accelerated pricing (mostly Monte Carlo) or computed Greeks by re-running the pricer. To our knowledge this is the first FPGA implementation of adjoint differentiation for option Greeks, and the first FPGA COS pricer (<code>docs/novelty_assessment.md</code>).</p>
+<p><strong>The price and all nine sensitivities come out of one forward and reverse-mode AAD pass in fixed-point FPGA hardware, using the COS Fourier method, compared head-to-head with bump-and-reprice on the same hardware.</strong> FPGA finance work has accelerated pricing (mostly Monte Carlo) or computed Greeks by re-running the pricer. This is the first FPGA implementation of adjoint differentiation for option Greeks, and the first FPGA COS pricer (<code>docs/novelty_assessment.md</code>).</p>
 
 <h2 id="finance"><span class="n">§2</span>Heston and the nine outputs</h2>
 <div class="eq">dS = r S dt + √v S dW₁

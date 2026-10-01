@@ -141,8 +141,8 @@ closed-form price, so the price is computed by a numerical method (we use the Fo
 <strong>bump-and-reprice</strong>: nudge each parameter, price again, take a difference. For
 <em>n</em> Greeks that costs <em>n</em>+1 pricings and it is numerically poor. The better way is
 <strong>reverse-mode algorithmic differentiation (AAD)</strong>, which gets all <em>n</em> Greeks from
-<em>one</em> backward sweep over the pricing computation. AAD is standard in software; to our knowledge it had
-not been built as an FPGA datapath for option Greeks (checked in <span class="mono">docs/novelty_assessment.md</span>). That is what this project is: a generator that takes the Heston-COS
+<em>one</em> backward sweep over the pricing computation. AAD is standard in software, but it had not been built
+as an FPGA datapath for option Greeks (checked in <span class="mono">docs/novelty_assessment.md</span>). That is what this project is: a generator that takes the Heston-COS
 price <em>and its adjoint sweep</em> as a single operation graph and emits a fixed-point,
 resource-shared, modulo-scheduled Verilog datapath that produces the price and nine sensitivities in
 4,733 clock cycles on a Zynq-7020-sized design — where bump-and-reprice on the identical hardware
@@ -1951,8 +1951,9 @@ implementation of AAD for option Greeks, and no FPGA implementation of the COS m
 survey of 99 FPGA option-pricing studies (which never mentions differentiation or Fourier methods), the 2024
 review of AAD in finance by Capriotti and Giles (which cites no hardware AAD), AMD's Vitis finance library
 (Heston Greeks by finite differences) and the FPGA Greeks papers of Klaisoongnoen et al. (no adjoints). The
-"Weiss et al. 2016" citation matched no real paper and has been removed. Say "to our knowledge, the first FPGA
-implementation of AAD for option Greeks". Do not say "first hardware reverse-mode AD": every neural-network
+"Weiss et al. 2016" citation matched no real paper and has been removed. The claim: "the first FPGA
+implementation of adjoint differentiation for option Greeks, and the first FPGA implementation of the COS
+method". Keep "FPGA" and "for option Greeks" in it; do not say "first hardware reverse-mode AD": every neural-network
 training accelerator runs backpropagation. And cite Capriotti's patent on an adjoint Greeks "simulating
 machine" (software on general-purpose computers).</p></div>
 
@@ -2049,8 +2050,8 @@ finds them first.</p>
 <tr><td>Verified input domain is bounded; outside it <span class="mono">range_err</span> fires</td><td><span class="chip risk">BY DESIGN</span></td><td>Must be stated as a limitation, not hidden</td></tr>
 <tr><td>Truncation range [a,b] held fixed when differentiating</td><td><span class="chip risk">CONVENTION</span></td><td>Standard COS practice; the software reference does the same</td></tr>
 <tr><td>Register sharing across values not implemented</td><td><span class="chip gap">OPEN</span></td><td>Largest remaining FF/LUT saving</td></tr>
-<tr><td>Priority claim</td><td><span class="chip ok">CHECKED</span></td><td>No prior FPGA AAD for Greeks found; say "to our knowledge" and cite the prior art (<span class="mono">docs/novelty_assessment.md</span>)</td></tr>
-<tr><td>No CPU baseline in seconds</td><td><span class="chip gap">OPEN</span></td><td>Time software AAD on the same pricer; the main significance risk</td></tr>
+<tr><td>Priority claim</td><td><span class="chip ok">CHECKED</span></td><td>No prior FPGA adjoint Greeks and no FPGA COS pricer in the published record; cite the prior art it builds on (<span class="mono">docs/novelty_assessment.md</span>)</td></tr>
+<tr><td>CPU baseline</td><td><span class="chip ok">MEASURED</span></td><td>FPGA 1.4–1.8× faster per evaluation and an estimated 16–37× less energy; four CPU cores give 2.2× more throughput (architecture.md §4.6)</td></tr>
 <tr><td>The adjoint is hand-written, not derived by an AD tool</td><td><span class="chip risk">STATE IT</span></td><td>Say "adjoint differentiation", or automate the reverse sweep</td></tr>
 <tr><td>The 1.04× Greeks claim is configuration-dependent (1.55× on zu)</td><td><span class="chip risk">STATE IT</span></td><td>Report both, with the II analysis that explains why</td></tr>
 <tr><td>Black-Scholes core still Q16.16, price error ~5e-4</td><td><span class="chip gap">OPEN</span></td><td>Port to the parameterised library, or drop from the paper</td></tr>

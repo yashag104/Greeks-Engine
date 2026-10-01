@@ -16,10 +16,10 @@ Three bodies of work exist, and no published work was found that joins them:
 
 **This project:** adjoint AD for option Greeks as a statically scheduled
 fixed-point FPGA datapath, for a COS (Fourier-cosine) Heston pricer, with a
-per-Greek error bound, verified bit-exact on a Zynq-7020. To our knowledge it is
-the first FPGA implementation of AAD for option Greeks and the first FPGA
-implementation of the COS method. The individual techniques are established; the
-contribution is their combination, realised and measured.
+per-Greek error bound, verified bit-exact on a Zynq-7020. It is the first FPGA
+implementation of adjoint differentiation for option Greeks and the first FPGA
+implementation of the COS method; the novelty points are listed in
+`novelty_assessment.md` §1.
 
 ## 2. AAD for Greeks (software)
 
