@@ -81,9 +81,11 @@ generator turns it into a fixed-point, resource-shared, modulo-scheduled Verilog
 engine, together with a bit-accurate model and a guaranteed error bound for every
 output. The engine returns the price and all nine Greeks in 4,733 clock cycles,
 only 1.04 times the cost of the price alone and 18.4 times fewer cycles than
-bump-and-reprice on the same hardware. It fits a Zynq-7020 FPGA, takes
-65.3\,$\mu$s per evaluation on a ZedBoard, and produced results bit-identical to
-the model on 50 random cases in silicon. In a case study hedging 12 short NIFTY
+bump-and-reprice on the same hardware. It fits a Zynq-7020 FPGA; with setup and finish
+on the host, its loop takes 65.3\,$\mu$s per evaluation on a ZedBoard and produced
+results bit-identical to the model on 50 random cases in silicon. Hand-derived
+analytic Greeks on one laptop CPU core are faster (about 29\,$\mu$s); the engine's
+gains are the cost of its Greeks and a guaranteed bound on each. In a case study hedging 12 short NIFTY
 call trades on a year of real market data, a hedge built from two of the engine's
 Greeks (delta and variance vega) left 39\% less risk than a Black--Scholes hedge.
 \end{abstract}
@@ -333,7 +335,7 @@ is useful and what is new.
 \midrule
 Cycles, price + 9 Greeks & 4,733 & 92$\times$ fewer than the first-generation engine; 18.4$\times$ fewer than bump-and-reprice\\
 Cost of the 9 Greeks & 1.04 pricings & hand-derived software 1.9; AD tools 5.3--6.7; bump-and-reprice 19\\
-Latency on the ZedBoard & 65.3\,$\mu$s (57.8\,$\mu$s at 79\,MHz) & 1.4--3.9$\times$ faster than AD tools and bumping on one CPU core; 2.2$\times$ slower than hand-derived Greeks (29\,$\mu$s)\\
+Latency on the ZedBoard (loop only) & 65.3\,$\mu$s (57.8\,$\mu$s at 79\,MHz) & 1.4--3.9$\times$ faster than AD tools and bumping on one CPU core; 2.2$\times$ slower than hand-derived Greeks (29\,$\mu$s)\\
 Energy per evaluation & 22.3\,$\mu$J & about 6--30$\times$ less than the CPU (CPU power estimated)\\
 Accuracy (21 cases) & price $6.1\times10^{-7}$, Greeks $\le 1.2\times10^{-5}$ & relative to double precision\\
 Error bound & never exceeded ($\le 0.103$) & every output, every case\\
@@ -608,7 +610,9 @@ FPGA engine at the routed 79\,MHz & 57.8 & 1.04$\times$ & 17,300 (1 engine)\\
 \end{tabular}
 \caption{FPGA against CPU on the same algorithm. $^{*}$Added 1 October, measured while
 the laptop was also running another Vivado job; ratios use that run's price-only time
-(15.4\,$\mu$s); provisional until re-measured on an idle machine.}
+(15.4\,$\mu$s); provisional until re-measured on an idle machine. FPGA rows: the term
+loop of the host-setup design (4,572 cycles), excluding the host's setup and finish
+and the register transfers; the CPU rows include everything.}
 \end{table}
 
 The analytic method writes out by hand the derivative of the characteristic function
@@ -628,6 +632,52 @@ software and 5--7 for AD tools, a guaranteed error bound on every Greek, and ene
 about 22.3\,$\mu$J per evaluation (0.341\,W $\times$ 65.3\,$\mu$s) against an estimated
 0.13--0.68\,mJ for the CPU at its rated 12--28\,W, 6--30 times less. The CPU's power was
 not measured, so the energy figure is an estimate.}
+
+\subsection{Many strikes at once (design study)}
+\label{sec:chain}
+All strikes of one expiry share the COS grid, because the width of the truncation
+range does not involve the strike. Folding the payoff's phase into the characteristic
+function,
+\[
+  \Phi_k = \varphi(u_k)\,e^{-iu_k a} = \exp\!\big(C + v_0 D + iu_k(x-a)\big),
+\]
+where $x-a$ is the same for every strike. So $\Phi_k$ and its derivatives are shared:
+one forward pass and \emph{one reverse sweep per term serve every strike}, and each
+extra strike adds only its payoff coefficient and ten multiply-adds, 16 multiplies and
+one rotation per term against 234 multiplies and four CORDIC operations shared. This
+was built into the generator (\texttt{hardware/gen/chain.py}), scheduled and emulated,
+not yet built in hardware. On 8 strikes and 5 parameter sets every output's error is
+within 1.7 times that of the one-option engine.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}rrrrr@{}}
+\toprule
+& \multicolumn{2}{c}{\textbf{Zynq-7020 style (56-bit, 8 mult.)}} & \multicolumn{2}{c}{\textbf{64-bit, 32 mult.}}\\
+\textbf{Strikes} & \textbf{Cycles} & \textbf{Per strike} & \textbf{Cycles} & \textbf{Per strike}\\
+\midrule
+1 & 4,662 & 4,662 & 1,577 & 1,577\\
+2 & 4,907 & 2,454 & 1,707 & 854\\
+4 & 5,436 & 1,359 & 1,829 & 457\\
+8 & 8,701 & 1,088 & 2,089 & 261\\
+16 & 8,767 & 548 & 2,854 & 178\\
+32 & 12,860 & 402 & 4,892 & 153\\
+\bottomrule
+\end{tabular}
+\caption{Price and nine Greeks for a chain of strikes, from the scheduler. The Zynq-7020
+style rows use one iterative CORDIC rotator per few strikes; only about 2 strikes fit the
+Zynq-7020's logic.}
+\end{table}
+
+\useful{Sharing cuts the hardware cost of each further strike to about 7\% of one option,
+which is what calibration (all strikes of an expiry, with their gradients) needs. The
+same sharing applies to software: the analytic C++ method prices and differentiates 32
+strikes in 122.5\,$\mu$s on one loaded laptop core, 3.8\,$\mu$s per strike. On a
+Zynq-7020 at 70\,MHz two strikes take 70\,$\mu$s, so the CPU remains faster; a 64-bit
+UltraScale+ design would at best reach parity with a four-core laptop, on an assumed
+clock. The FPGA's case against a CPU is the cost and accuracy of its Greeks and,
+if measured, energy, not speed.}
 
 \subsection{Hedging on real market data}
 \label{sec:hedging}
@@ -741,10 +791,12 @@ Figure~\ref{fig:gantt}).
 25--27 Sep & AXI4-Lite interface, ZedBoard designs, first complete route (79\,MHz) & Done\\
 28--29 Sep & On silicon: one vector, then 50 cases bit-exact; put-call parity; literature check & Done\\
 30 Sep -- 1 Oct & CPU comparison; results dashboard and report & Done\\
+1 Oct & Hand-derived analytic and optimised bump CPU baselines; strike-chain design study (\S\ref{sec:chain}) & Done\\
 \midrule
 1--3 Oct & Rebuild the ZedBoard bitstream with put-call parity; repeat the 50-case sweep & Next\\
 1--13 Oct & Hedging case study on real NIFTY data (first results, \S\ref{sec:hedging}); next: verify charges with a broker, more trades & In progress\\
-6--12 Oct & Power from simulated switching activity, and a board power measurement & Planned\\
+2--5 Oct & Validation sweep over $10^5$ inputs including hard regimes; latency accounting (host steps, configurations); CPU timings on an idle machine & Planned\\
+6--12 Oct & Power from simulated switching activity, a board power measurement, and CPU package power, for energy per Greek set on both sides & Planned\\
 
 13--15 Oct & Freeze results; regenerate all figures and tables & Planned\\
 13--22 Oct & Write the paper: introduction, related work, architecture, results & Planned\\

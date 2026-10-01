@@ -21,7 +21,8 @@ The reverse sweep is therefore run once per term, seeded with Re(Phi_k)
 those of the single-option engine (heston.py); in fixed point they differ only
 by rounding.
 
-    python chain.py            # accuracy against the reference, cycles vs M
+    python chain.py   # accuracy against the reference and the one-option engine,
+                      # cycles against M -> validation/results/chain_sweep.csv
 """
 import math
 import os
@@ -101,11 +102,10 @@ def term(g, s, strikes, k):
         V = g.mul(sj["tkb"], g.sub(psi_p, chi_p))
         wV = g.mux(k0, g.scale(V, g.const(-1, 0), fl), V)
         outs[(j, "price")] = g.mul(phi[0], wV)
-        # undo the adjoint normalization once, on the coefficient, rather than on
-        # each of the nine products: one barrel shifter per strike instead of nine
-        wVs = g.scale(wV, nsh, fl)
+        # Descaling wV once instead of each product saves ~10% LUT (estimate) but
+        # doubled the error of vega, theta_sens and rho_corr on the 8-strike check.
         for name, node in adj.items():
-            outs[(j, name)] = g.mul(node, wVs)
+            outs[(j, name)] = g.scale(g.mul(node, wV), nsh, fl)
     return outs
 
 
@@ -219,15 +219,63 @@ def accuracy(M=8, wl=56, fl=28, shared=None, Ks=None):
     return rows, len(dp.g.overflows)
 
 
-if __name__ == "__main__":
+def sweep(Ms=(1, 2, 4, 8, 16, 32)):
+    """cycles for M strikes on the two reference configurations. Zynq-7020 style:
+    56-bit, 8 multipliers, iterative CORDIC, with as many rotators as keep the
+    multipliers the bound (one extra rotation per strike per term) and also with
+    today's 3. UltraScale+ style: 64-bit, 32 multipliers, pipelined CORDIC."""
     import sched as S
-    rows, novf = accuracy()
-    print("8-strike chain, 56-bit (FL 28), base Heston parameters, K = 80..120; overflows %d" % novf)
+    rows = []
+    for M in Ms:
+        for wl, fl in ((56, 28), (64, 32)):
+            dp = ChainDatapath(M, wl, fl)
+            ops = term_ops(dp)
+            if wl == 56:
+                need = max(3, math.ceil(ops["CROT"] * (fl + 4) / math.ceil(ops["MUL"] / 8)))
+                cfgs = [S.Config(wl=56, fl=28, mults=8, crot=n, cvec=2, cordic_pipelined=False)
+                        for n in sorted({3, min(need, ops["CROT"])})]
+            else:
+                cfgs = [S.Config(wl=64, fl=32, mults=32, crot=1, cvec=1, cordic_pipelined=True)]
+            for cfg in cfgs:
+                r = S.report(dp, cfg)
+                rows.append(dict(strikes=M, wl=wl, mults=cfg.mults, crot=cfg.crot, cvec=cfg.cvec,
+                                 pipe_cordic=int(cfg.cordic_pipelined), mul_per_term=ops["MUL"],
+                                 rot_per_term=ops["CROT"], ii=r["ii"], cycles=r["cycles"],
+                                 cycles_per_strike=round(r["cycles"] / M), lut_est=r["lut"], dsp=r["dsp"]))
+    return rows
+
+
+if __name__ == "__main__":
+    import csv
+    import random
+    rng = random.Random(7)
+    cases = [None] + [dict(S0=100, T=rng.uniform(.1, 3), r=rng.uniform(0, .1), v0=rng.uniform(.005, .25),
+                           kappa=rng.uniform(.2, 6), theta=rng.uniform(.005, .25), xi=rng.uniform(.1, 1),
+                           rho=rng.uniform(-.95, .6)) for _ in range(4)]
     worst = {}
-    for K, call, o, got, want, single in rows:
-        w = worst.setdefault(o, [0.0, 0.0])
-        w[0] = max(w[0], abs(got - want))
-        w[1] = max(w[1], abs(single - want))
-    print("%-12s %12s %12s" % ("output", "chain err", "single err"))
+    for shared in cases:
+        rows, novf = accuracy(8, shared=shared)
+        assert novf == 0
+        for K, call, o, got, want, single in rows:
+            w = worst.setdefault(o, [0.0, 0.0])
+            w[0] = max(w[0], abs(got - want))
+            w[1] = max(w[1], abs(single - want))
+    print("8-strike chains (K = 80..120), 56-bit, base case + 4 random parameter sets: worst absolute error")
+    print("%-12s %12s %12s" % ("output", "chain", "one option"))
     for o in H.OUTPUTS:
         print("%-12s %12.2e %12.2e" % (o, worst[o][0], worst[o][1]))
+    rows = sweep()
+    print()
+    keys = list(rows[0])
+    print(" ".join("%9s" % k[:9] for k in keys))
+    for r in rows:
+        print(" ".join("%9s" % r[k] for k in keys))
+    out = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "validation", "results", "chain_sweep.csv")
+    with open(out, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=keys)
+        w.writeheader()
+        w.writerows(rows)
+        f.write("\n# accuracy, 8 strikes, 56-bit, 5 parameter sets: output,chain_worst_abs_err,one_option_worst_abs_err\n")
+        for o in H.OUTPUTS:
+            f.write("# %s,%.2e,%.2e\n" % (o, worst[o][0], worst[o][1]))
+    print("wrote", os.path.normpath(out))

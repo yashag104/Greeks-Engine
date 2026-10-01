@@ -14,6 +14,8 @@
 //   ./heston_cpu check            base case: price and Greeks for each method
 //   ./heston_cpu time  <n>        n timed evaluations per method, one thread
 //   ./heston_cpu agree <n>        worst difference of each method from fwdvec
+//   ./heston_cpu chain <M> <n>    M-strike chains (m_chain): check against
+//                                 m_analytic, then time per chain
 //   ./heston_cpu run   <method> <n>   n evaluations of one method (for the
 //                                     multi-process throughput measurement)
 //
@@ -228,6 +230,85 @@ static void m_analytic(const double* p, bool call, double* out) {
   }
 }
 
+// ---- the analytic method for a strike chain: M strikes of one expiry share the
+// COS grid (b - a does not depend on K), and with the payoff's phase folded in,
+// Phi_k = phi(u_k) e^{-i u_k a} = exp(C + v0 D + i u_k (x - a)) and its
+// derivatives are the same for every strike (x - a = 10 sqrt(c2) - c). Per term,
+// the shared part forms Re(Phi) and the nine Re(dPhi) once; each strike adds its
+// payoff coefficient V_jk and ten multiply-adds. Same algorithm as
+// hardware/gen/chain.py. p = {S0, -, T, r, v0, kappa, theta, xi, rho};
+// out[10 * j + i] as m_analytic for strike j.
+static void m_chain(const double* p, const double* Ks, const char* calls, int M, double* out) {
+  const double S0 = p[0], T = p[2], r = p[3], v0 = p[4], kappa = p[5], theta = p[6], xi = p[7], rho = p[8];
+  const double xi2 = xi * xi, coef = kappa * theta / xi2;
+  // truncation range relative to x: c1 = x + c, half-width ten (as trunc_range)
+  const double c = (r - 0.5 * theta) * T + (1.0 - std::exp(-kappa * T)) / (2.0 * kappa) * (theta - v0);
+  const double ten = 10.0 * std::sqrt(std::max(v0 * T + 0.5 * theta * T, 1e-8));
+  const double bma = 2.0 * ten, xma = ten - c;
+  const C2 one{1.0, 0.0};
+  static std::vector<double> a, ea, s;
+  a.resize(M); ea.resize(M); s.assign(10 * M, 0.0);
+  for (int j = 0; j < M; ++j) { a[j] = std::log(S0 / Ks[j]) + c - ten; ea[j] = std::exp(a[j]); }
+  for (int k = 0; k < N_TERMS; ++k) {
+    const double u = k * PI / bma;
+    const C2 iu{0.0, u}, uu{u * u, u};
+    const C2 bb{kappa, -rho * xi * u};
+    const C2 d = csqrt_(bb * bb + cs(xi2, uu));
+    const C2 bpd = bb + d, bmd = bb - d;
+    const C2 ibpd2 = one / (bpd * bpd);
+    const C2 g = bmd / bpd;
+    const C2 e = cexp_(cs(-T, d));
+    const C2 ge = g * e, omge = one - ge, omg = one - g, ome = one - e;
+    const C2 iomge = one / omge, iomg = one / omg;
+    const C2 L = clog_(omge * iomg);
+    const C2 A = cs(T, bmd) - cs(2.0, L);
+    const C2 N = bmd * ome, Mm = cs(xi2, omge), iM = one / Mm;
+    const C2 D = N * iM;
+    const C2 Phi = cexp_(cs(r * T, iu) + cs(coef, A) + cs(v0, D) + cs(xma, iu));
+    auto dlog = [&](const C2& dbb, const C2& dd, double dT, double dxi, double dcoef) {
+      const C2 dg = cs(2.0, d * dbb - bb * dd) * ibpd2;
+      const C2 de = cs(-1.0, e * (cs(T, dd) + C2{dT * d.re, dT * d.im}));
+      const C2 dge = dg * e + g * de;
+      const C2 dL = dg * iomg - dge * iomge;
+      const C2 dA = cs(dT, bmd) + cs(T, dbb - dd) - cs(2.0, dL);
+      const C2 dN = (dbb - dd) * ome - bmd * de;
+      const C2 dM = cs(2.0 * xi * dxi, omge) - cs(xi2, dge);
+      const C2 dD = (dN - D * dM) * iM;
+      return cs(dcoef, A) + cs(coef, dA) + cs(v0, dD);
+    };
+    const C2 z{0.0, 0.0}, iD = one / d;
+    const C2 rho_u{0.0, -rho * u}, xi_u{0.0, -xi * u};
+    const C2 dl[9] = {one, iu, cs(r, iu) + dlog(z, z, 1.0, 0.0, 0.0), cs(T, iu), D,
+                      dlog({1.0, 0.0}, bb * iD, 0.0, 0.0, theta / xi2), cs(kappa / xi2, A),
+                      dlog(rho_u, (bb * rho_u + cs(xi, uu)) * iD, 0.0, 1.0, -2.0 * coef / xi),
+                      dlog(xi_u, bb * xi_u * iD, 0.0, 0.0, 0.0)};
+    double F[9];
+    for (int i = 0; i < 9; ++i) F[i] = (Phi * dl[i]).re;
+    const double w0 = (k == 0 ? 0.5 : 1.0) * (2.0 / bma), iu2 = 1.0 / (1.0 + u * u), ikp = (k == 0) ? 0.0 : bma / (k * PI);
+    for (int j = 0; j < M; ++j) {                      // per strike: V_jk and ten multiply-adds
+      const double cu = std::cos(u * a[j]), su = std::sin(u * a[j]);
+      const double chi = (cu - ea[j] - u * su) * iu2;
+      const double psi = (k == 0) ? -a[j] : -ikp * su;
+      const double w = w0 * Ks[j] * (psi - chi);
+      double* sj = &s[10 * j];
+      for (int i = 0; i < 9; ++i) sj[i] += w * F[i];
+    }
+  }
+  const double disc = std::exp(-r * T);
+  for (int j = 0; j < M; ++j) {
+    const double K = Ks[j], *sj = &s[10 * j];
+    double* o = &out[10 * j];
+    const double put = disc * sj[0];
+    o[0] = put;
+    o[1] = disc * sj[1] / S0;
+    o[2] = -disc * sj[1] / K + put / K;
+    o[3] = disc * sj[2] - r * put;
+    o[4] = disc * sj[3] - T * put;
+    for (int i = 4; i < 9; ++i) o[1 + i] = disc * sj[i];
+    if (calls[j]) { o[0] += S0 - K * disc; o[1] += 1.0; o[2] -= disc; o[3] += K * r * disc; o[4] += K * T * disc; }
+  }
+}
+
 // ---- bump-and-reprice made as cheap as the algorithm allows: central
 // differences, but the per-term pieces A and D (functions of T, kappa, xi, rho
 // only) are computed once and reused for the S0, K, r, v0 and theta bumps, which
@@ -346,6 +427,33 @@ int main(int argc, char** argv) {
       }
       std::printf("%s %.3e\n", m, worst);
     }
+    return 0;
+  }
+  if (!std::strcmp(mode, "chain")) {                    // M-strike chains: agreement with
+    int M = argc > 2 ? std::atoi(argv[2]) : 8;          // m_analytic, then time per chain
+    int n = argc > 3 ? std::atoi(argv[3]) : 500;
+    std::vector<double> P; std::vector<char> C; make_inputs(n, P, C);
+    std::vector<double> Ks(M), out(10 * M);
+    std::vector<char> calls(M);
+    for (int j = 0; j < M; ++j) { Ks[j] = 80.0 + 40.0 * j / std::max(M - 1, 1); calls[j] = Ks[j] >= 100.0; }
+    double worst = 0;
+    for (int i = 0; i < n; ++i) {
+      m_chain(&P[9 * i], Ks.data(), calls.data(), M, out.data());
+      for (int j = 0; j < M; ++j) {
+        double q[9], o[10]; std::memcpy(q, &P[9 * i], sizeof q); q[1] = Ks[j];
+        m_analytic(q, calls[j], o);
+        for (int t = 0; t < 10; ++t)
+          worst = std::max(worst, std::fabs(out[10 * j + t] - o[t]) / std::max(std::fabs(o[t]), 1.0));
+      }
+    }
+    double best = 1e30, sink = 0;
+    for (int rep = 0; rep < 5; ++rep) {
+      auto t0 = std::chrono::steady_clock::now();
+      for (int i = 0; i < n; ++i) { m_chain(&P[9 * i], Ks.data(), calls.data(), M, out.data()); sink += out[0]; }
+      best = std::min(best, std::chrono::duration<double, std::micro>(std::chrono::steady_clock::now() - t0).count() / n);
+    }
+    std::printf("chain M=%d %.3f us_per_chain %.3f us_per_strike worst_diff_vs_analytic %.1e (sink %.3g)\n",
+                M, best, best / M, worst, sink);
     return 0;
   }
   if (!std::strcmp(mode, "run")) {
