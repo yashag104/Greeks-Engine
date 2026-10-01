@@ -144,6 +144,12 @@ tr:last-child td { border-bottom: 0; }
 tr.hi td { background: var(--accent-soft); font-weight: 600; }
 .better { color: var(--good); font-weight: 600; }
 .caption { font-size: 0.85rem; color: var(--muted); max-width: 90ch; }
+#review td { white-space: normal; vertical-align: top; }
+#review td:first-child { min-width: 11em; }
+#review td.num { min-width: 8.5em; }
+#review td:nth-child(3) { min-width: 16em; }
+#review td .pill { margin: 1px 0; }
+#review .card ul, #review .card ol { padding-left: 1.2em; }
 
 /* ---- next steps */
 .steps { display: grid; gap: 10px; counter-reset: step; }
@@ -177,17 +183,21 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 <div class="layout">
 <nav class="index" aria-label="Sections">
   <a href="#summary">Summary</a>
+  <a href="#review">Novelty and results</a>
   <a href="#motivation">Motivation</a>
   <a href="#aim">Aim and claims</a>
   <a href="#work">Work done</a>
   <a href="#latency">Speed</a>
   <a href="#accuracy">Accuracy</a>
+  <a href="#sweep">10,500-input sweep</a>
   <a href="#parity">Put-call parity</a>
   <a href="#hardware">Vivado results</a>
   <a href="#silicon">On the board</a>
+  <a href="#hedging">Hedging on real data</a>
   <a href="#gen1">Generation 1</a>
   <a href="#limits">Known limits</a>
   <a href="#next">Next steps</a>
+  <a href="#docs">Documents</a>
 </nav>
 
 <main>
@@ -201,6 +211,70 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     <div class="kpi"><div class="l">On silicon</div><div class="v">50<small>/50</small></div><div class="d">random cases bit-exact on a ZedBoard, run back to back: 450 of 450 results identical to the emulator.</div></div>
     <div class="kpi"><div class="l">Error vs guarantee</div><div class="v">≤ 0.103</div><div class="d">worst measured error as a fraction of the first-order bound, all 10 outputs, 21-case grid (must stay ≤ 1).</div></div>
     <div class="kpi"><div class="l">Fits a Zynq-7020</div><div class="v">72<small>% LUT</small></div><div class="d">ZedBoard build: 38,358 LUT, 72 of 220 DSP, timing met at 70 MHz (WNS +0.404 ns).</div></div>
+  </div>
+</section>
+
+<!-- ============================================================ REVIEW -->
+<section id="review">
+  <header><div class="eyebrow">For review</div><h2>Novelty and results</h2><p class="muted">Every figure with what it is compared against and how it was obtained. Status: <span class="pill good">Silicon</span> measured on the ZedBoard, <span class="pill info">Simulation</span> cycle-exact RTL simulation or its bit-identical emulator, <span class="pill info">Vivado</span> implementation reports, <span class="pill info">CPU</span> measured on a laptop CPU, <span class="pill warn">Estimate</span> not measured.</p></header>
+
+  <div class="card">
+    <h3>Novelty</h3>
+    <p><b>The first FPGA implementation of adjoint (reverse-mode) differentiation for option Greeks, and the first FPGA implementation of the COS method</b>: a generated fixed-point datapath for the Heston model that returns the price and all nine sensitivities in one forward and reverse pass, with a guaranteed error bound on every output, bit-exact on a Zynq-7020.</p>
+    <ol>
+      <li><b>Adjoint Greeks on an FPGA, for the first time.</b> Every published FPGA Greeks engine re-runs the pricer once per sensitivity (Klaisoongnoen et al. 2022; AMD's Vitis finance library). No FPGA adjoint implementation exists in the 2024 survey of 99 FPGA option-pricing studies or in the 2024 review of 15 years of AAD in finance.</li>
+      <li><b>The COS method on an FPGA, for the first time.</b> COS pricing had run on CPUs and GPUs only; the only FPGA Fourier pricer (AMD) uses trapezoidal integration and returns the price alone.</li>
+      <li><b>A tape-free adjoint datapath.</b> Software AAD records a tape and replays it. Here the reverse sweep is compiled into a statically scheduled fixed-point datapath that shares its arithmetic units with the forward pass, because the COS pricer runs the same operations for every input.</li>
+      <li><b>Nine Greeks for 1.04× the cost of the price.</b> 4,733 cycles against 4,568 for the price alone. On the measured CPU, hand-derived Greeks cost 1.9×, AD tools 5.3–6.7×, and bump-and-reprice 19×.</li>
+      <li><b>A guaranteed error bound for every Greek of a fixed-point adjoint datapath.</b> Measured error never exceeds 0.103 of the bound over 21 cases, 0.378 over 10,500 inputs including hard regimes, and 0.268 over 50 random cases on silicon.</li>
+      <li><b>Bit-exact Greeks on silicon.</b> 450 of 450 results identical to the model on a ZedBoard, 50 random cases back to back.</li>
+      <li><b>A fair baseline.</b> Against bump-and-reprice on identical hardware: 18.4× fewer cycles and 32–560× more accurate than the best bump size for each Greek.</li>
+    </ol>
+    <p class="caption">Evidence: the literature check of 29 Sep 2026 (<a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/novelty_assessment.md" target="_blank" rel="noopener">Novelty Assessment</a>) and the measurements in the table below.</p>
+  </div>
+
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Measure</th><th>This work</th><th>Compared with</th><th>Result</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr class="hi"><td>Cycles, price + 9 Greeks</td><td class="num">4,733</td><td>Generation 1, hand-written FSM: 433,779</td><td class="better">92× fewer</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr><td>Cycles, same hardware</td><td class="num">4,733</td><td>Bump-and-reprice (19 pricings): 86,860</td><td class="better">18.4× fewer</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr class="hi"><td>Cost of 9 Greeks, as multiples of one price<br><span class="muted" style="font-size:.8rem">"One price" = computing only the option price, no Greeks, on the same hardware: 4,568 cycles. With all 9 Greeks: 4,733 cycles, only 165 more.</span></td><td class="num">1.04×</td><td>Generation 1: 2.16×. CPU AAD: 6.7×. CPU forward mode: 5.3×</td><td class="better">Greeks nearly free</td><td><span class="pill info">Simulation</span> <span class="pill info">CPU</span></td></tr>
+        <tr><td>Same, 64-bit configuration</td><td class="num">1.55×</td><td>Multipliers bind there, so the adjoint costs II</td><td>Condition stated</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr class="hi"><td>Latency, price + 9 Greeks</td><td class="num">65.3 µs (board, 70 MHz)<br>57.8 µs (routed Fmax 79.1 MHz)</td><td>One CPU core: analytic Greeks 29.3 µs*; forward mode 91.5 µs, AAD 114.9 µs, bump 257.6 µs</td><td><span style="color:var(--crit);font-weight:600">2.2× slower than analytic</span>; 1.4× / 1.8× / 3.9× faster than the others</td><td><span class="pill info">Vivado</span> <span class="pill info">CPU</span></td></tr>
+        <tr class="hi"><td>Energy per evaluation</td><td class="num">≈ 22 µJ</td><td>CPU (analytic) ≈ 0.13–0.68 mJ</td><td class="better">≈ 6–30× less</td><td><span class="pill warn">Estimate</span></td></tr>
+        <tr><td>Throughput</td><td class="num">15,300 / s (one engine)</td><td>Four CPU cores, analytic: 41,000–94,000 / s*</td><td style="color:var(--crit);font-weight:600">CPU 3–6× higher</td><td><span class="pill info">CPU</span></td></tr>
+        <tr class="hi"><td>Accuracy vs double precision (21 cases)</td><td class="num">price 6.1e-7<br>Greeks ≤ 1.2e-5</td><td>Relative error, Zynq-7020 design</td><td>—</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr><td>Guaranteed error bound</td><td class="num">≤ 0.103 of bound</td><td>Worst measured error ÷ bound, every output, 21 cases (0.378 over 10,500 inputs; 0.268 on the 50-case board sweep)</td><td class="better">Never violated</td><td><span class="pill info">Simulation</span> <span class="pill good">Silicon</span></td></tr>
+        <tr><td>Accuracy vs bump-and-reprice</td><td class="num">32–560× more accurate</td><td>Best bump size chosen in hindsight for each Greek (median 145×), base case, same pricer</td><td class="better">No bump size to tune</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr><td>Call pricing accuracy</td><td class="num">3.1e-5</td><td>Before put-call parity: 2.3e-3 (worst of 22 calls, vs integral reference)</td><td class="better">75× smaller</td><td><span class="pill info">Simulation</span></td></tr>
+        <tr class="hi"><td>Correct on silicon</td><td class="num">450 / 450 bit-exact</td><td>50 random cases back to back, ZedBoard, no range errors</td><td class="better">Matches the model exactly</td><td><span class="pill good">Silicon</span></td></tr>
+        <tr><td>Area</td><td class="num">38,358 LUT (72%)<br>72 of 220 DSP</td><td>Generation 1: 159 separate 64×64 multipliers, over 1,000 DSP; could not fit</td><td class="better">Fits a Zynq-7020</td><td><span class="pill info">Vivado</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">Energy: FPGA 0.341 W × 65.3 µs = 22.3 µJ. The 0.341 W is Vivado's power report for the built design (the Power screenshot): a prediction from the placed logic and an assumed switching rate ("vectorless", confidence Medium), not a reading from the board; it includes 0.121 W of clock generator. CPU power could not be measured under WSL; the range uses the Intel Core i5-1155G7's 12–28 W configurable power at the analytic method's measured throughput. * Analytic Greeks added 1 Oct, measured while the laptop also ran another Vivado job; provisional until re-measured on an idle machine. Generation 1 was never routed, so it is compared in cycles only. The CPU runs the identical algorithm in C++ double precision with g++ -O3 -march=native, AAD by CoDiPack.</p>
+
+  <div class="card">
+    <h3>Scope of the novelty</h3>
+    <ul>
+      <li>Reverse-mode differentiation itself is established: it is backpropagation, which neural-network training hardware already runs. What is new is its use for option Greeks on an FPGA, as a fixed-point pricing datapath.</li>
+      <li>The error-bound method is Linnainmaa's first-order rounding analysis (1976); what is new is bounding every Greek of a datapath that itself performs the adjoint.</li>
+      <li>Newton-Raphson, Tang's exp and CORDIC are standard arithmetic; the contribution is the architecture built from them.</li>
+      <li>Hand-derived analytic Greeks on one CPU core (29 µs) are faster than the FPGA (65 µs), and several cores give far more throughput. The FPGA wins on Greeks overhead (1.04 pricings against 1.9 for the best software), the per-Greek error bound and estimated energy, not on speed.</li>
+      <li>Published FPGA Greeks work solves a different problem (Monte Carlo with early exercise), so no speed-up over it is claimed.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>Raise these before being asked</h3>
+    <ol>
+      <li>Energy is an estimate on both sides; no power was measured.</li>
+      <li>The silicon results used the bitstream from before put-call parity; the rebuild and repeat are pending.</li>
+      <li>Timing closes at about 79 MHz, not 100 MHz; the board runs at 70 MHz.</li>
+      <li>The reverse sweep is written by hand as IR operations; making the generator derive it is the next task.</li>
+      <li>The host steps (setup and finish) still run on the PC, not the Zynq's ARM cores.</li>
+    </ol>
   </div>
 </section>
 
@@ -297,6 +371,24 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     </table>
   </div>
   <p class="caption">II is the initiation interval: cycles between the starts of consecutive COS terms. On the Zynq-7020 design, 8 multipliers, 3 CORDIC rotators and 2 vectorers all give II = 32, so a 16th multiplier buys only 2%. Each term costs 250 multiplies, 3 CORDIC rotations and 2 vectorings. The bump advantage beyond the ~9.6× work ratio comes from the idle multiplier slots AAD fills.</p>
+  <h3>Against a CPU</h3>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Price + 9 Greeks</th><th class="num">µs per evaluation</th><th class="num">Cost vs one price</th><th class="num">Evaluations / s</th></tr></thead>
+      <tbody>
+        <tr><td>CPU, price only (1 core)</td><td class="num">17.2</td><td class="num">1×</td><td class="num">—</td></tr>
+        <tr><td>CPU, bump-and-reprice (1 core)</td><td class="num">257.6</td><td class="num">15×</td><td class="num">—</td></tr>
+        <tr><td>CPU, AAD with CoDiPack (1 core)</td><td class="num">114.9</td><td class="num">6.7×</td><td class="num">23,100 on 4 cores</td></tr>
+        <tr><td>CPU, forward mode (1 core)</td><td class="num">91.5</td><td class="num">5.3×</td><td class="num">33,900 on 4 cores</td></tr>
+        <tr><td>CPU, optimised bump* (1 core)</td><td class="num">158.6</td><td class="num">10.3×</td><td class="num">—</td></tr>
+        <tr><td>CPU, hand-derived analytic Greeks* (1 core)</td><td class="num">29.3</td><td class="num">1.9×</td><td class="num">41,000–94,000 on 4 cores</td></tr>
+        <tr class="hi"><td>FPGA, one engine, ZedBoard 70 MHz</td><td class="num">65.3</td><td class="num">1.04×</td><td class="num">15,300</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">Intel Core i5-1155G7 laptop CPU, same algorithm in C++ double precision, g++ -O3 -march=native; all methods match the reference (AAD to 1.3e-10). The FPGA is faster than the general methods (1.4× forward mode, 1.8× CoDiPack AAD, 3.9× bump) but 2.2× slower than hand-derived analytic Greeks on one core, which compute the derivatives of the characteristic function written out by hand (as Cui et al. 2017). It uses an estimated 6–30× less energy per evaluation (CPU power not measured; FPGA power is Vivado's estimate). The optimised bump reuses the characteristic function where the bumped input does not enter it. * Added 1 Oct, provisional (laptop under load). <span class="mono">validation/cpu_baseline/</span></p>
+  <h3>Many strikes at once (design study, 1 Oct)</h3>
+  <p>All strikes of one expiry share the COS grid, so one characteristic function and <b>one reverse sweep per term serve every strike</b>; each extra strike costs 16 multiplies and one rotation per term (about 7% of one option). Built into the generator (<span class="mono">hardware/gen/chain.py</span>), scheduled and emulated with accuracy matching the one-option engine; not built in hardware. Zynq-7020 style: 2 strikes 4,907 cycles, 8 strikes 8,701 (1,088 per strike); 64-bit/32 multipliers: 32 strikes 4,892 cycles (153 per strike). <b>The CPU gains as much</b>: 32 strikes in 122.5 µs on one loaded core (3.8 µs per strike), against 35 µs per strike for 2 strikes on the Zynq-7020 at 70 MHz. Strike sharing does not give the FPGA a speed lead. <span class="mono">validation/results/chain_sweep.csv</span></p>
 </section>
 
 <!-- ============================================================ ACCURACY -->
@@ -329,6 +421,21 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 </section>
 
 <!-- ============================================================ PARITY -->
+<section id="sweep">
+  <header><div class="eyebrow">Validation, 1 Oct</div><h2>10,500-input sweep</h2></header>
+  <p>The 56-bit design on 6,000 uniform in-domain inputs, 500 in each of seven hard regimes (Feller violated, ρ near its limits, deep strikes, very short and long T, high ξ, very low variance) and 1,000 with one input outside the domain. Each case: bit-accurate model, error bound, reference, and the range check that raises <span class="mono">range_err</span>.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Absolute error, all 9,500 in-domain inputs</th><th class="num">Median</th><th class="num">99th pct.</th><th class="num">Worst</th></tr></thead>
+    <tbody>
+      <tr><td>Price</td><td class="num">3.3e-7</td><td class="num">1.7e-5</td><td class="num">7.3e-5</td></tr>
+      <tr><td>Delta</td><td class="num">3.5e-9</td><td class="num">1.6e-7</td><td class="num">2.2e-6</td></tr>
+      <tr><td>Vega</td><td class="num">2.8e-7</td><td class="num">2.1e-5</td><td class="num">2.9e-4</td></tr>
+      <tr><td>∂V/∂θ</td><td class="num">2.0e-6</td><td class="num">1.1e-4</td><td class="num">3.7e-4</td></tr>
+      <tr><td>∂V/∂ξ</td><td class="num">5.9e-7</td><td class="num">2.5e-4</td><td class="num">1.3e-3</td></tr>
+    </tbody></table></div>
+  <p class="caption"><b>The bound held in all 10,482 unflagged cases</b>, inside and outside the domain (worst 0.378 of the bound), no overflow; the 18 flagged inputs were all outside the domain. At small ξ with large κθ, ∂V/∂ξ is off by up to 1.3e-3 (≤ 0.2%), all fixed-point rounding, inside its bound. The sweep exposed false range_err alarms on 25 in-domain inputs (very low variance, very short T); refitting the shift ranges at the domain edges removed all of them, and every design was regenerated and re-verified (22/22 checks). <span class="mono">validation/run_domain_sweep.py</span></p>
+</section>
+
 <section id="parity">
   <header><div class="eyebrow">Improvement found on 29 Sep</div><h2>Calls through put-call parity</h2></header>
   <p>The 50-case board sweep showed calls carrying about 180× the rounding error of puts. A call's COS coefficients contain e<sup>b</sup>, which grows large over a wide truncation range and then cancels. The design now always computes the put and adds S₀ − K·e<sup>−rT</sup> and its derivatives on the host. Measured on the 22 calls of the sweep, against the independent Fourier-integral price:</p>
@@ -391,6 +498,27 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 </section>
 
 <!-- ============================================================ GEN 1 -->
+<section id="hedging">
+  <header><div class="eyebrow">Application, 1 Oct</div><h2>Hedging on real NIFTY data</h2></header>
+  <p>12 trades, Sep 2025 – Sep 2026: each sells 20 lots of an at-the-money NIFTY call and hedges daily with futures until 0.10 years remain. Heston is calibrated each day to real quotes only (at least 50 contracts traded), across all monthly expiries; the model's prices were within 0.019% of the index level in a typical day (median). Hedge ratios come from the bit-accurate engine model. Profit and loss is after brokerage, STT, exchange, SEBI and stamp charges, GST, slippage and 30% tax.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Hedge (daily)</th><th class="num">Spread of P&amp;L (std)</th><th class="num">Mean</th><th class="num">Worst trade</th></tr></thead>
+      <tbody>
+        <tr><td>None</td><td class="num">₹5.55 L</td><td class="num">+₹0.74 L</td><td class="num">−₹8.99 L</td></tr>
+        <tr><td>Black-Scholes delta</td><td class="num">₹2.05 L</td><td class="num">−₹0.07 L</td><td class="num">−₹5.85 L</td></tr>
+        <tr><td>Heston delta, 56-bit engine</td><td class="num">₹2.50 L</td><td class="num">−₹0.24 L</td><td class="num">−₹6.56 L</td></tr>
+        <tr class="hi"><td>Heston minimum-variance delta (delta + ρξ/S · ∂V/∂v₀), 56-bit engine</td><td class="num better">₹1.26 L</td><td class="num">+₹0.18 L</td><td class="num better">−₹2.54 L</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">The hedge using two of the engine's Greeks (delta and variance vega, produced together in one pass) left 39% less risk than Black-Scholes. Heston delta alone did worse than Black-Scholes, as expected: it ignores that index volatility rises when the price falls. With 12 trades this is a case study, not a statistical result (bootstrap ≈ 88%). 48-bit deltas traded exactly the same futures lots as 56-bit. Charge rates are settings still to be checked with a broker. <span class="mono">validation/hedging/</span></p>
+  <div class="figs">
+    <figure class="wide"><div class="plate"><img src="validation/hedging/results/figures/hedge_risk_by_strategy.png" alt="Bar chart of P&amp;L spread by hedging strategy; the minimum-variance Heston hedge is lowest"></div><figcaption><b>Risk left after each hedge</b>Lower is better.</figcaption></figure>
+    <figure class="wide"><div class="plate"><img src="validation/hedging/results/figures/hedge_pnl_per_trade.png" alt="P&amp;L of each of 12 trades for four hedging strategies"></div><figcaption><b>Each trade's profit or loss</b>After all charges and tax.</figcaption></figure>
+  </div>
+</section>
+
 <section id="gen1">
   <header><div class="eyebrow">Earlier results</div><h2>Generation 1: the hand-written FSM engine</h2><p class="muted">The first engine, 64-bit fixed point (Q32.32), established the error model and the bump-and-reprice comparison that generation 2 inherited.</p></header>
   <div class="figs">
@@ -410,7 +538,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     <div class="limit"><b>Board bitstream is one change behind</b><p>The on-silicon results used the design before put-call parity. The new RTL passes all simulation checks and needs a rebuild and re-run.</p></div>
     <div class="limit"><b>Host steps run on the PC</b><p>Setup and finish are Python on the PC, not C on the ARM. The processor-based design exists as a script but is not built.</p></div>
     <div class="limit"><b>Power is an estimate</b><p>Vectorless, 12.5% toggle rate. No simulated-activity (SAIF) figure or board measurement yet.</p></div>
-    <div class="limit"><b>Priority is "to our knowledge"</b><p>No FPGA AAD for Greeks found in a 99-study FPGA survey, the 2024 AAD review, AMD's finance library or FPGA Greeks papers. Unpublished industry work cannot be excluded, and reverse mode itself runs in every ML training accelerator.</p></div>
+    <div class="limit"><b>The adjoint is hand-written</b><p>The reverse sweep is written as IR operations and verified, not derived by an AD tool. Say "adjoint differentiation" in the claim, or automate the sweep.</p></div>
     <div class="limit"><b>Bounded input domain</b><p>Verified for S₀ = 100, K 60–150, T 0.1–3, and ranges for each model parameter. Outside it the hardware raises <span class="mono">range_err</span> instead of returning a wrong value.</p></div>
   </div>
 </section>
@@ -421,7 +549,8 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   <div class="steps">
     <div class="step"><div><div class="t">Rebuild the ZedBoard bitstream and repeat the 50-case sweep</div><p>Brings the silicon result up to the current design. Scripts, vectors and the report are ready: about 40 minutes of build and 1 minute on the board.</p></div><span class="pill warn">Ready, needs the board</span></div>
     
-    <div class="step"><div><div class="t">Time a CPU software-AAD baseline</div><p>Now the biggest open risk. European Heston COS pricing is cheap in software too; if one CPU core with AAD is close to 57.8 µs, the paper must argue throughput and energy rather than latency.</p></div><span class="pill crit">Open, critical</span></div>
+    <div class="step"><div><div class="t">Time a CPU software-AAD baseline</div><p>Done 30 Sep and 1 Oct. Hand-derived analytic Greeks on one CPU core (29 µs) beat the FPGA (65 µs); the FPGA beats AD tools and bumping. Frame the paper on Greeks overhead (1.04× vs 1.9× best software), the error bound and energy, not latency. Re-time on an idle laptop.</p></div><span class="pill good">Done</span></div>
+    <div class="step"><div><div class="t">Derive the adjoint automatically</div><p>Make the generator produce the reverse sweep from the forward graph, so the tool is a compiler for fixed-point AAD datapaths and a second model costs little.</p></div><span class="pill warn">Next</span></div>
     <div class="step"><div><div class="t">Repeat the literature search before submission</div><p>Done once (docs/novelty_assessment.md). Repeat in Google Scholar, IEEE Xplore and the ACM Digital Library in the final month, and ask the guide about recent FPT, FPL, FCCM and HEART papers.</p></div><span class="pill info">Done once, repeat</span></div>
     <div class="step"><div><div class="t">Close timing at 100 MHz</div><p>Use the DSP blocks' internal output registers (Vivado's 56 suggestions) and pipeline the 64-bit carry chains. Cycle counts change; bit-exactness does not.</p></div><span class="pill crit">Open</span></div>
     <div class="step"><div><div class="t">Port the host steps to C and build the processor design</div><p>Bit-exact C for setup and finish, with a hand-written 64×64→128-bit multiply for the 32-bit ARM, then <span class="mono">bd_lite.tcl</span>: no PC in the loop.</p></div><span class="pill crit">Open</span></div>
@@ -429,11 +558,33 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     <div class="step"><div><div class="t">Merge into main</div><p>Open a pull request from <span class="mono">pipeline-shared-mult</span> once the board re-run passes.</p></div><span class="pill info">After step 1</span></div>
   </div>
 </section>
+<!-- ============================================================ DOCUMENTS -->
+<section id="docs">
+  <header><div class="eyebrow">Everything in one place</div><h2>Documents</h2><p class="muted">Pages open in the browser; files open on GitHub, which renders the PDF and Markdown.</p></header>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Document</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://claude.ai/artifact/TfsL5nqmM2wBGDQS7udL85" target="_blank" rel="noopener">Course</a></td><td>The whole project from basics: finance, COS, AAD, the generator, precision, every experiment</td></tr>
+        <tr><td><a href="https://claude.ai/artifact/G15DevL4ShygS5Np42vAqD" target="_blank" rel="noopener">Viva study guide</a></td><td>Readiness, results, limitations and likely examiner questions with answers</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/report/greeks_engine_report.pdf" target="_blank" rel="noopener">Project report (PDF)</a></td><td>14-page report: motivation, related work, architecture, results, limits, next steps</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/novelty_assessment.md" target="_blank" rel="noopener">Novelty assessment</a></td><td>The literature check: every source, the verdict per claim, recommended wording, reviewer questions</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/05_literature_review.md" target="_blank" rel="noopener">Literature review</a></td><td>Verified prior work and positioning</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/architecture.md" target="_blank" rel="noopener">Architecture and results</a></td><td>Hardware design and measured results</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/precision_bound.md" target="_blank" rel="noopener">Precision bound</a></td><td>The fixed-point error analysis</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/validation/figures/tables.md" target="_blank" rel="noopener">Result tables</a></td><td>All tables generated from the result files</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/validation/results/board_sweep_zedboard_2026-09-29.log" target="_blank" rel="noopener">Board sweep log</a> · <a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/validation/results/board_sweep_report_2026-09-29.csv" target="_blank" rel="noopener">report</a></td><td>The 50-case ZedBoard run and its accuracy report</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/validation/results/vivado/Block_design.pdf" target="_blank" rel="noopener">Block design (PDF)</a></td><td>The ZedBoard system diagram</td></tr>
+        <tr><td><a href="https://github.com/yashag104/Greeks-Engine/tree/pipeline-shared-mult" target="_blank" rel="noopener">Repository</a></td><td>All code, branch pipeline-shared-mult</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
 </main>
 </div>
 
 <footer>
   <span>Every number traces to a file in the repository: <span class="mono">validation/results/</span>, <span class="mono">validation/figures/tables.md</span> and the Vivado reports in <span class="mono">validation/results/vivado/</span>.</span>
-  <span>Reproduce: <span class="mono">./verify_all.sh</span> · <span class="mono">python validation/run_gen_sweeps.py</span> · <span class="mono">python validation/make_figures.py</span>. Full write-up: <span class="mono">docs/report/greeks_engine_report.pdf</span>.</span>
+  <span>Reproduce: <span class="mono">./verify_all.sh</span> · <span class="mono">python validation/run_gen_sweeps.py</span> · <span class="mono">python validation/make_figures.py</span>. Full write-up: <a href="https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/docs/report/greeks_engine_report.pdf" target="_blank" rel="noopener">project report (PDF)</a>.</span>
 </footer>
 </div>

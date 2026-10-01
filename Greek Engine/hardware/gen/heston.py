@@ -60,40 +60,17 @@ def build_setup(g):
     return s
 
 
-def term(g, s, k, greeks=True):
-    """one COS term; k is an integer input node. Returns node dict.
-    greeks=False: forward pass only (the price-only pricer used by the
-    bump-and-reprice baseline)."""
-    g.part = "term"
-    fl, mf = g.fl, g.mf
-    T, r, v0, kappa, theta, xi, rho = (s[n] for n in ["T", "r", "v0", "kappa", "theta", "xi", "rho"])
-    one = g.const(1)
-    zero = g.const(0)
+CF_NODES = ("d num den inv_den gg negdT edT gedT omge omg inv_omg ratio logr br_ bi_ nxi2 ome inv_omge "
+            "dratio D phi t1r t1i").split()
+
+
+def cf_forward(g, s, u, u2, phase, one):
+    """characteristic-function forward pass for one term; phase multiplies iu in
+    the exponent (x = ln(S0/K) for one option; x - a for a shared strike chain);
+    one is the term's constant-1 node"""
+    fl = g.fl
+    T, r, v0, kappa = s["T"], s["r"], s["v0"], s["kappa"]
     ry, re_ = s["recip_xi_sq"]
-
-    # ---- payoff coefficient V_k and seed ----
-    u = g.mul(k, s["pob"], fl)                       # k integer: exact
-    cu, su = P.cos_sin(g, g.mul(u, s["a"]))
-    k0 = g.eq0(k)
-    u2 = g.mul(u, u)
-    yd, ed = P.recip(g, g.add(one, u2))
-    usu = g.mul(u, su)
-    inv_kp = g.mul(s["kpi"], g.rom("inv_k", k, mf), fl)
-    s_ikp = g.mul(inv_kp, su)
-    # Always the put payoff; calls come from put-call parity in the finish step.
-    # A call's coefficients carry e^b, which over a wide [a, b] grows large and
-    # then cancels: over 50 random in-domain calls the direct call's fixed-point
-    # price error was up to 2.3e-3 (median 4.8e-5), the put + parity's 3.1e-5
-    # (median 5.4e-7), against the integral reference. Fang & Oosterlee price
-    # calls this way for the same reason in floating point.
-    chi_p = g.mul(g.sub(g.sub(cu, s["exp_a"]), usu), yd, fl, e=ed)
-    psi_p = g.mux(k0, g.neg(s["a"]), g.neg(s_ikp))
-    diff = g.sub(psi_p, chi_p)
-    V = g.mul(s["tkb"], diff)
-    wV = g.mux(k0, g.scale(V, g.const(-1, 0), fl), V)
-    seed = (g.mul(wV, cu), g.mul(wV, su))
-
-    # ---- characteristic function, forward ----
     t1r = s["t1r"]
     t1i = g.mul(s["rho_xi"], u)
     us = (g.add(g.sub(s["kappa2"], g.mul(t1i, t1i)), g.mul(s["xi_sq"], u2)),
@@ -122,18 +99,21 @@ def term(g, s, k, greeks=True):
     dratio = P.cdiv_inv(g, ome, inv_omge)
     D = P.cmul(g, nxi2, dratio)
     e_r = g.add(C_r, g.mul(D[0], v0))
-    e_i = g.add(g.add(C_i, g.mul(D[1], v0)), g.mul(u, s["x"]))
+    e_i = g.add(g.add(C_i, g.mul(D[1], v0)), g.mul(u, phase))
     phi = P.cexp(g, (e_r, e_i))
+    return dict(zip(CF_NODES, (d, num, den, inv_den, gg, negdT, edT, gedT, omge, omg, inv_omg, ratio, logr,
+                                br_, bi_, nxi2, ome, inv_omge, dratio, D, phi, t1r, t1i)))
 
-    # price contribution
-    F = g.add(g.mul(phi[0], cu), g.mul(phi[1], su))
-    contrib = g.mul(F, wV)
-    if not greeks:
-        return {"price": contrib}
 
-    # ---- reverse sweep (normalized) ----
-    wn_r = g.add(g.mul(phi[0], seed[0], raw=True), g.mul(phi[1], seed[1], raw=True))
-    wn_i = g.sub(g.mul(phi[0], seed[1], raw=True), g.mul(phi[1], seed[0], raw=True))
+def cf_reverse(g, s, u, u2, cf, wn_r, wn_i):
+    """reverse sweep of the characteristic function, seeded by the raw adjoint
+    (wn_r, wn_i) of its exponent; returns the normalized adjoints of T, r, v0,
+    kappa, theta, xi, rho, x and the normalization shift sh (descale by -sh)"""
+    fl = g.fl
+    T, r, v0, kappa, theta, xi, rho = (s[n] for n in ["T", "r", "v0", "kappa", "theta", "xi", "rho"])
+    ry, re_ = s["recip_xi_sq"]
+    (d, num, den, inv_den, gg, negdT, edT, gedT, omge, omg, inv_omg, ratio, logr, br_, bi_, nxi2, ome,
+     inv_omge, dratio, D, phi, t1r, t1i) = (cf[n] for n in CF_NODES)
     sh = g.adj_shift(wn_r, wn_i, fl)
     ae = (g.scale(wn_r, sh, fl), g.scale(wn_i, sh, fl))
     aC, aDv0, aiux = ae, ae, ae[1]
@@ -194,10 +174,60 @@ def term(g, s, k, greeks=True):
     adj_xi = g.add(g.mul(a_xi_sq, g.shl(xi, 1)), g.mul(a_rho_xi, rho))
     adj_rho = g.mul(a_rho_xi, xi)
 
+    return dict(T=adj_T, r=adj_r, v0=adj_v0, kappa=adj_kappa, theta=adj_theta, xi=adj_xi, rho=adj_rho,
+                x=adj_x), sh
+
+
+def term(g, s, k, greeks=True):
+    """one COS term; k is an integer input node. Returns node dict.
+    greeks=False: forward pass only (the price-only pricer used by the
+    bump-and-reprice baseline)."""
+    g.part = "term"
+    fl, mf = g.fl, g.mf
+    T, r, v0, kappa, theta, xi, rho = (s[n] for n in ["T", "r", "v0", "kappa", "theta", "xi", "rho"])
+    one = g.const(1)
+    zero = g.const(0)
+    ry, re_ = s["recip_xi_sq"]
+
+    # ---- payoff coefficient V_k and seed ----
+    u = g.mul(k, s["pob"], fl)                       # k integer: exact
+    cu, su = P.cos_sin(g, g.mul(u, s["a"]))
+    k0 = g.eq0(k)
+    u2 = g.mul(u, u)
+    yd, ed = P.recip(g, g.add(one, u2))
+    usu = g.mul(u, su)
+    inv_kp = g.mul(s["kpi"], g.rom("inv_k", k, mf), fl)
+    s_ikp = g.mul(inv_kp, su)
+    # Always the put payoff; calls come from put-call parity in the finish step.
+    # A call's coefficients carry e^b, which over a wide [a, b] grows large and
+    # then cancels: over 50 random in-domain calls the direct call's fixed-point
+    # price error was up to 2.3e-3 (median 4.8e-5), the put + parity's 3.1e-5
+    # (median 5.4e-7), against the integral reference. Fang & Oosterlee price
+    # calls this way for the same reason in floating point.
+    chi_p = g.mul(g.sub(g.sub(cu, s["exp_a"]), usu), yd, fl, e=ed)
+    psi_p = g.mux(k0, g.neg(s["a"]), g.neg(s_ikp))
+    diff = g.sub(psi_p, chi_p)
+    V = g.mul(s["tkb"], diff)
+    wV = g.mux(k0, g.scale(V, g.const(-1, 0), fl), V)
+    seed = (g.mul(wV, cu), g.mul(wV, su))
+
+    # ---- characteristic function, forward ----
+    cf = cf_forward(g, s, u, u2, s["x"], one)
+    phi = cf["phi"]
+
+    # price contribution
+    F = g.add(g.mul(phi[0], cu), g.mul(phi[1], su))
+    contrib = g.mul(F, wV)
+    if not greeks:
+        return {"price": contrib}
+
+    # ---- reverse sweep (normalized) ----
+    wn_r = g.add(g.mul(phi[0], seed[0], raw=True), g.mul(phi[1], seed[1], raw=True))
+    wn_i = g.sub(g.mul(phi[0], seed[1], raw=True), g.mul(phi[1], seed[0], raw=True))
+    adj, sh = cf_reverse(g, s, u, u2, cf, wn_r, wn_i)
     nsh = g.neg(sh)
     outs = {"price": contrib}
-    for name, node in [("T", adj_T), ("r", adj_r), ("v0", adj_v0), ("kappa", adj_kappa),
-                       ("theta", adj_theta), ("xi", adj_xi), ("rho", adj_rho), ("x", adj_x)]:
+    for name, node in adj.items():
         outs[name] = g.scale(node, nsh, fl)
     return outs
 

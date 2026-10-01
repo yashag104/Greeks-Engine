@@ -75,7 +75,7 @@ host + FPGA is bit-identical to the fully on-chip design.
 | FSM engine: AAD, price-only, AXI; Black-Scholes | self-checking testbenches vs reference |
 | generated AAD (Zynq-7020, 64-bit, host-setup), price-only pricers | every setup/finish register and every register of terms 0–2 at the cycle it becomes valid (1,254–1,993 checks) + all outputs for 3 parameter sets, **bit-exact** vs the emulator |
 | schedule | measured cycles = predicted cycles, every configuration |
-| `range_err` | stays 0 in-domain, raised for T = 0.01 |
+| `range_err` | stays 0 in-domain (also over the 9,500 in-domain sweep inputs), raised for T = 0.001 |
 | AXI4-Stream wrappers | bit-exact round trip, backpressure, return to idle |
 | bump-and-reprice wrappers | bit-exact vs emulated 19 pricings |
 | host split | host setup + FPGA sums + host finish == on-chip outputs |
@@ -115,6 +115,41 @@ Worst relative error over the 21-case grid (S0 = 100, K 80–120, T 0.1–2,
 Against bump-and-reprice on the same pricer and word length, sweeping h from 1e-8
 to 1e-1, AAD is more accurate than the best h for every Greek
 (`fig10_gen_bump_vs_aad`). `fig11_gen_accuracy`.
+
+**Large sweep (1 Oct 2026, `validation/run_domain_sweep.py`).** 10,500 cases on the
+56-bit design: 6,000 uniform over the verified domain, 500 each in seven hard
+regimes (Feller condition violated, ρ near its limits, deep strikes, T ≤ 0.15,
+T ≥ 2.5, ξ ≥ 0.8, v0 and θ ≤ 0.01) and 1,000 with one input outside the domain.
+Each case runs the bit-accurate model, the error bound and the COS reference, and
+checks every variable shift against the ranges the RTL was built for (= range_err).
+`results/domain_sweep.csv`, `domain_sweep_summary.csv`.
+
+- **The bound held in every case.** Of 10,482 unflagged results (all 9,500 in the
+  domain, 982 of the 1,000 outside it), none exceeded its bound; the worst was
+  0.378 of it. No overflow, no failed evaluation. The 18 flagged inputs were all
+  outside the domain.
+- **Absolute error, 9,500 in-domain cases** (median / 99th percentile / worst):
+  price 3.3e-7 / 1.7e-5 / 7.3e-5; delta 3.5e-9 / 1.6e-7 / 2.2e-6; vega 2.8e-7 /
+  2.1e-5 / 2.9e-4; ∂V/∂θ 2.0e-6 / 1.1e-4 / 3.7e-4; ∂V/∂ξ 5.9e-7 / 2.5e-4 / 1.3e-3.
+  The 21-case grid above understates the tail. The largest relative error is at
+  small ξ with large κθ: K = 115.8, T = 0.17, κ = 4.95, θ = 0.244, ξ = 0.105 has
+  ∂V/∂ξ wrong by 1.2e-3 on a value of −0.563 (0.2%); the largest absolute error,
+  1.3e-3 on −1.42 (0.09%), is at K = 138.6, ξ = 0.11. Both are fixed-point
+  rounding (the double-precision algorithm agrees with the reference to 6e-6) and
+  inside their bounds (8.8e-3, 9.9e-3). Small ξ is the weak corner of 56 bits.
+- **range_err: fixed false alarms.** The first pass flagged 2.2% of uniform and 55%
+  of very-low-variance inputs, but its check was stricter than the RTL (the RTL
+  clamps shifts beyond the word width, where the rounded result is exactly 0, and
+  a multiplier unit checks the union of its operations' ranges). With the check
+  made identical to the RTL, 25 in-domain inputs remained, all from two
+  normalization shifts one step past their range at very low variance and very
+  short T. `ranges.py` now fits the ranges on 150 uniform samples plus 40 at each
+  of ten domain edges (seeds independent of the sweep's): 50 of 113 ranges widen
+  by 1 to 4 steps, about 37 more shifter-select bits in total (LUT cost to be
+  measured in Vivado), and **no in-domain input is flagged**. T = 0.01 is no longer
+  flagged and is computed within its bound (0.115 of it), so the testbench's
+  out-of-domain probe is now T = 0.001. All designs regenerated; `verify_all.sh`
+  passes (22/22).
 
 ### 4.3 Area (Yosys `synth_xilinx`, generic mapping)
 
@@ -166,8 +201,126 @@ The design fits and routes but does not close at 100 MHz. The failing paths are 
 carry chains; pipelining them, or running at ≤ 79 MHz, are the options. The ZedBoard
 bring-up designs run the engine at 70 MHz for margin.
 
+### 4.6 Against a CPU (measured 30 Sep 2026)
+
+`validation/cpu_baseline/`: the same algorithm (COS, 128 terms, puts with calls by
+parity, frozen [a, b]) in C++ double precision, g++ 13 -O3 -march=native, on an
+Intel Core i5-1155G7 laptop CPU (4 cores, 8 threads). AAD by CoDiPack v2.3.2, a
+standard taped reverse-mode tool; forward mode computes all 9 directions in one
+pass. Every method matches the Python reference at the base case (AAD to 1.3e-10
+relative). Results in `validation/results/cpu_baseline.csv`.
+
+| price + 9 Greeks | µs per evaluation, one core | cost relative to one price |
+|---|---|---|
+| CPU, price only | 17.2 | 1× |
+| CPU, bump-and-reprice (19 pricings) | 257.6 | 15× |
+| CPU, AAD (CoDiPack reverse) | 114.9 | 6.7× |
+| CPU, forward mode, 9 directions | 91.5 | 5.3× |
+| CPU, optimised bump (9 full pricings, characteristic function reused) * | 158.6 | 10.3× |
+| **CPU, hand-derived analytic Greeks, one pass** * | **29.3** | **1.9×** |
+| FPGA, ZedBoard at 70 MHz | 65.3 | 1.04× |
+| FPGA at the routed 79.1 MHz | 57.8 | 1.04× |
+
+\* Added 1 October 2026 (`analytic`, `bumpopt` in `heston_cpu.cpp`), measured on
+the same laptop while it was also running another Vivado job; cost ratios use the
+price-only time from the same run (15.4 µs). Provisional until `run_baseline.py` is
+re-run on an idle machine. Across five loaded runs the analytic method took
+28–37 µs, always under the FPGA's 65 µs. It agrees with forward mode to 1.0e-11 over
+2,000 random in-domain inputs.
+
+The analytic method writes out, by hand, the derivative of the characteristic
+function with respect to each input (chain rule through b, d, g and e, in the
+spirit of Cui et al. 2017) and accumulates all ten sums in one pass over the 128
+terms. It is the strongest software competitor and it changes the comparison:
+
+- **Latency:** one CPU core with hand-derived Greeks is about 2.2× faster than the
+  FPGA engine (29 µs against 65 µs). The FPGA is faster only than the general
+  methods: 1.4× faster than forward mode, 1.8× faster than taped AAD and 3.9×
+  faster than plain bump-and-reprice. The paper must not claim a latency
+  advantage over a CPU.
+- **Throughput:** the analytic method on 4 cores / 8 processes reached
+  41,000–94,000 evaluations/s on the loaded laptop, against 15,300 for one FPGA
+  engine.
+- **Energy (estimate):** the FPGA board design is 0.341 W (vectorless, including
+  the clock generator), about 22 µJ per evaluation. CPU power could not be
+  measured under WSL; at the part's 12–28 W configurable power and the analytic
+  method's throughput, about 0.13–0.68 mJ per evaluation, so roughly 6–30× more
+  than the FPGA. Energy per Greek set is the FPGA's remaining measured-or-estimated
+  advantage, and it rests on a CPU power estimate.
+- **Greeks overhead:** the FPGA's Greeks cost 1.04 pricings; the best hand-written
+  software costs 1.9, and general AD tools 5–7. The engine reaches this without
+  anyone deriving the derivatives of the characteristic function by hand.
+- **Optimised bump-and-reprice** (reusing the characteristic function for the S0,
+  K, r, v0 and theta bumps) costs 10.3 pricings on the CPU, against 15 for plain
+  bumping. The hardware advantage over bumping should therefore be quoted against
+  an optimised bump as well, not only the 18.4× against a plain one.
+
+### 4.7 Strike chains (design study, 1 Oct 2026: scheduled and emulated, not built)
+
+`hardware/gen/chain.py`. All strikes of one expiry share the COS grid, because
+b − a = 20·sqrt(c2) does not involve K. With the payoff's phase folded into the
+characteristic function, Φ_k = φ(u_k)·e^(−i u_k a) = exp(C + v0·D + i u_k (x − a)),
+and x − a = 10·sqrt(c2) − c is the same for every strike. So Φ_k, and with [a, b]
+frozen its derivatives in T, r, v0, κ, θ, ξ, ρ and x, are shared. One forward
+pass and **one reverse sweep per term, seeded with Re Φ_k, serve every strike**.
+Each strike adds its payoff coefficient V_jk (one CORDIC rotation, 5 multiplies)
+and ten multiply-adds: 16 multiplies and 1 rotation per strike per term, against
+234 multiplies, 2 rotations and 2 vectorings shared. `heston.term` was split into
+`cf_forward` / `cf_reverse` for this; the one-option graphs are unchanged (same
+nodes in the same order, checked by hashing every node).
+
+Accuracy (56-bit, 8 strikes K = 80–120, base case and 4 random parameter sets):
+every output's worst error is within 1.7× of the one-option engine's on the same
+inputs, for example price 6.1e-7 (one option 6.9e-7), ∂V/∂θ 4.8e-6 (4.3e-6).
+
+Cycles (`validation/results/chain_sweep.csv`):
+
+| strikes | Zynq-7020 style (56-bit, 8 mult., iterative CORDIC) | per strike | LUT (est.) | 64-bit, 32 mult., pipelined CORDIC | per strike | LUT (est.) |
+|---|---|---|---|---|---|---|
+| 1 | 4,662 (3 rot.) | 4,662 | 43.7K | 1,577 | 1,577 | 74K |
+| 2 | 4,907 (4 rot.) | 2,454 | 49.8K | 1,707 | 854 | 80K |
+| 4 | 5,436 (6 rot.) | 1,359 | 63.0K | 1,829 | 457 | 93K |
+| 8 | 8,701 (7 rot.) | 1,088 | 86.6K | 2,089 | 261 | 122K |
+| 16 | 8,767 (10 rot.) | 548 | 136K | 2,854 | 178 | 173K |
+| 32 | 12,860 (12 rot.) | 402 | 232K | 4,892 | 153 | 282K |
+
+(The Yosys-style estimate over-counts: it gives 43.7K for the one-strike design
+that Vivado placed in about 36.5–38.4K. On a Zynq-7020, 53.2K LUT, about 2 strikes
+fit, perhaps 4 after optimisation.)
+
+**The CPU gains as much.** The same sharing in the analytic C++ method
+(`m_chain` in `heston_cpu.cpp`, agreeing with the one-strike method to 1e-13):
+one core, loaded laptop (price-only 23.4 µs in the same runs, ~1.5× slower than
+idle): 1 strike 40.3 µs, 4 strikes 56.2 µs (14.0 per strike), 8 strikes 68.0 µs
+(8.5), 16 strikes 93.3 µs (5.8), 32 strikes 122.5 µs (3.8).
+
+- **Zynq-7020 at 70 MHz:** 2 strikes in 70 µs (35 µs per strike), 4 strikes in
+  78 µs (19 µs per strike) if they fit. One loaded CPU core does 14 µs per strike
+  at 4 strikes. The CPU stays faster.
+- **A 64-bit UltraScale+ design** (not built; clock unknown, LUT estimate only):
+  16 strikes in 2,854 cycles, 0.7 µs per strike at an assumed 250 MHz, 2.5 µs at
+  70 MHz. A 4-core laptop at 32 strikes is roughly 1 µs per strike. At best
+  parity, on unverified assumptions.
+- **What the study does give:** a hardware cost per extra strike of 16
+  multiplies and one rotation per term (about 7% of one option), with the adjoint
+  shared; and the honest conclusion that against a CPU running the best known
+  algorithm, the FPGA's case is not speed. Energy per strike, measured on both
+  sides, is the remaining comparison worth making.
+
 ## 5. Limitations and open items
 
+- **What the latency figures include.** Three configurations are quoted and must
+  not be mixed: `z7` (fully on-chip, 4,733 cycles, **never routed**, so its clock is
+  unknown and any µs figure for it borrows z7h's clock), `z7h` (host setup and
+  finish, FPGA term loop only, 4,572 cycles, routed: 79.1 MHz out of context, 70 MHz
+  on the ZedBoard) and `zu` (64-bit, 1,593 cycles, **Yosys estimate only, never
+  through Vivado**). The board figures 65.3 µs (70 MHz) and 57.8 µs (79.1 MHz) are
+  z7h's loop alone: they exclude the host's setup and finish (about 100 multiplies
+  plus a few exp, log and sqrt, in double precision on the ARM; not yet ported or
+  timed) and the AXI4-Lite transfers (51 input words, 9 sums back), which on the
+  ARM would take some microseconds and over JTAG took about a second per case. The
+  CPU figures include everything. Until the PS design (`bd_lite.tcl` with a C host
+  step) is timed, quote the FPGA number as "engine latency, excluding host steps".
 - **Timing does not close at 100 MHz** (§4.5): WNS −2.639 ns, Fmax ≈ 79 MHz. Routing
   was reached after three obstacles: Vivado ML Enterprise refused to launch without a
   licence (resolved by moving to ML Standard 2025.2); `read_verilog`, `read_xdc` and
