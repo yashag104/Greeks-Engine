@@ -97,6 +97,12 @@ def main():
         shutil.copyfile(os.path.join(ROOT, src), os.path.join(OUT, local))
     for local, (src, title) in MARKDOWN.items():
         open(os.path.join(OUT, local), "w", encoding="utf-8").write(md_page(src, title))
+    # LaTeX report: the source folder, and a zip ready to upload to Overleaf
+    tex_src = os.path.join(ROOT, "docs", "report", "latex")
+    tex_out = os.path.join(OUT, "Report (LaTeX)")
+    shutil.rmtree(tex_out, ignore_errors=True)
+    shutil.copytree(tex_src, tex_out)
+    shutil.make_archive(os.path.join(OUT, "Report (LaTeX) for Overleaf"), "zip", tex_src)
     for name in sorted(os.listdir(OUT)):
         p = os.path.join(OUT, name)
         print("%8.0f KB  %s" % (os.path.getsize(p) / 1024, name) if os.path.isfile(p) else "          %s/" % name)
