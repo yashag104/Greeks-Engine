@@ -183,6 +183,11 @@ FPGA + AD + Greeks.
    Greeks overhead (1.04 against 1.9 for the best software), the per-Greek error
    bound, energy per Greek set, and what a larger device with several engines or
    strike sharing would deliver; and measure CPU power before relying on energy.
+   Strike sharing (`architecture.md` §4.7) cuts the cost per extra strike to
+   about 7% of one option in hardware, but the same sharing makes the CPU 10×
+   cheaper per strike too (3.8 µs per strike at 32 strikes, one loaded core), and
+   pricing many strikes from one characteristic function is standard COS practice
+   (Fang & Oosterlee 2008). It is a design result, not a novelty claim.
 4. **"Is this algorithmic differentiation, or a hand-written adjoint?"** In this
    project the reverse sweep is written by hand as IR operations in
    `hardware/gen/heston.py`; no AD tool derives it. In finance "AAD" usually names

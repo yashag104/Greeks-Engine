@@ -75,6 +75,17 @@ def single_core(n=2000, runs=15):
     return best
 
 
+def chain(Ms=(1, 4, 8, 16, 32), runs=10):
+    """M-strike chains with the analytic method (best of several runs)"""
+    best = {}
+    for _ in range(runs):
+        for M in Ms:
+            f = subprocess.run([BIN, "chain", str(M), "300"], capture_output=True, text=True, check=True).stdout.split()
+            best[M] = min(best.get(M, 1e30), float(f[2]))
+            best.setdefault(("diff", M), f[6])
+    return best
+
+
 def agree(n=2000):
     out = subprocess.run([BIN, "agree", str(n)], capture_output=True, text=True, check=True).stdout
     return {l.split()[0]: float(l.split()[1]) for l in out.splitlines()}
@@ -106,6 +117,10 @@ def main():
     for m in METHODS:
         print("  %-8s %8.2f%s" % (m, lat[m], "   (price only)" if m == "price" else ""))
     print("  FPGA    %8.2f   (ZedBoard, 70 MHz)   %.2f at the routed 79.1 MHz" % (fpga_board, fpga_fmax))
+    ch = chain()
+    print("\nStrike chains, analytic, one core (microseconds per chain, per strike):")
+    for M in (1, 4, 8, 16, 32):
+        print("  M=%-3d %8.2f %8.2f   (agrees with one-strike analytic to %s)" % (M, ch[M], ch[M] / M, ch[("diff", M)]))
     rows = []
     print("\nThroughput, evaluations per second, independent processes:")
     for m in ("aad", "fwdvec", "analytic"):
@@ -123,6 +138,9 @@ def main():
         for m in METHODS:
             w.writerow([m, "%.3f" % lat[m], "%.1e" % worst[m], "%.1e" % agr[m] if m in agr else ""])
         w.writerow(["fpga_70MHz", "%.3f" % fpga_board, ""]); w.writerow(["fpga_79.1MHz", "%.3f" % fpga_fmax, ""])
+        w.writerow([]); w.writerow(["chain_strikes", "us_per_chain_one_core", "us_per_strike"])
+        for M in (1, 4, 8, 16, 32):
+            w.writerow([M, "%.3f" % ch[M], "%.3f" % (ch[M] / M)])
         w.writerow([]); w.writerow(["method", "processes", "evals_per_s"])
         for r in rows:
             w.writerow([r["method"], r["processes"], r["evals_per_s"]])

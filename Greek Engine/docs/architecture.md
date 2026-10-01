@@ -220,8 +220,72 @@ terms. It is the strongest software competitor and it changes the comparison:
   bumping. The hardware advantage over bumping should therefore be quoted against
   an optimised bump as well, not only the 18.4× against a plain one.
 
+### 4.7 Strike chains (design study, 1 Oct 2026: scheduled and emulated, not built)
+
+`hardware/gen/chain.py`. All strikes of one expiry share the COS grid, because
+b − a = 20·sqrt(c2) does not involve K. With the payoff's phase folded into the
+characteristic function, Φ_k = φ(u_k)·e^(−i u_k a) = exp(C + v0·D + i u_k (x − a)),
+and x − a = 10·sqrt(c2) − c is the same for every strike. So Φ_k, and with [a, b]
+frozen its derivatives in T, r, v0, κ, θ, ξ, ρ and x, are shared. One forward
+pass and **one reverse sweep per term, seeded with Re Φ_k, serve every strike**.
+Each strike adds its payoff coefficient V_jk (one CORDIC rotation, 5 multiplies)
+and ten multiply-adds: 16 multiplies and 1 rotation per strike per term, against
+234 multiplies, 2 rotations and 2 vectorings shared. `heston.term` was split into
+`cf_forward` / `cf_reverse` for this; the one-option graphs are unchanged (same
+nodes in the same order, checked by hashing every node).
+
+Accuracy (56-bit, 8 strikes K = 80–120, base case and 4 random parameter sets):
+every output's worst error is within 1.7× of the one-option engine's on the same
+inputs, for example price 6.1e-7 (one option 6.9e-7), ∂V/∂θ 4.8e-6 (4.3e-6).
+
+Cycles (`validation/results/chain_sweep.csv`):
+
+| strikes | Zynq-7020 style (56-bit, 8 mult., iterative CORDIC) | per strike | LUT (est.) | 64-bit, 32 mult., pipelined CORDIC | per strike | LUT (est.) |
+|---|---|---|---|---|---|---|
+| 1 | 4,662 (3 rot.) | 4,662 | 43.7K | 1,577 | 1,577 | 74K |
+| 2 | 4,907 (4 rot.) | 2,454 | 49.8K | 1,707 | 854 | 80K |
+| 4 | 5,436 (6 rot.) | 1,359 | 63.0K | 1,829 | 457 | 93K |
+| 8 | 8,701 (7 rot.) | 1,088 | 86.6K | 2,089 | 261 | 122K |
+| 16 | 8,767 (10 rot.) | 548 | 136K | 2,854 | 178 | 173K |
+| 32 | 12,860 (12 rot.) | 402 | 232K | 4,892 | 153 | 282K |
+
+(The Yosys-style estimate over-counts: it gives 43.7K for the one-strike design
+that Vivado placed in about 36.5–38.4K. On a Zynq-7020, 53.2K LUT, about 2 strikes
+fit, perhaps 4 after optimisation.)
+
+**The CPU gains as much.** The same sharing in the analytic C++ method
+(`m_chain` in `heston_cpu.cpp`, agreeing with the one-strike method to 1e-13):
+one core, loaded laptop (price-only 23.4 µs in the same runs, ~1.5× slower than
+idle): 1 strike 40.3 µs, 4 strikes 56.2 µs (14.0 per strike), 8 strikes 68.0 µs
+(8.5), 16 strikes 93.3 µs (5.8), 32 strikes 122.5 µs (3.8).
+
+- **Zynq-7020 at 70 MHz:** 2 strikes in 70 µs (35 µs per strike), 4 strikes in
+  78 µs (19 µs per strike) if they fit. One loaded CPU core does 14 µs per strike
+  at 4 strikes. The CPU stays faster.
+- **A 64-bit UltraScale+ design** (not built; clock unknown, LUT estimate only):
+  16 strikes in 2,854 cycles, 0.7 µs per strike at an assumed 250 MHz, 2.5 µs at
+  70 MHz. A 4-core laptop at 32 strikes is roughly 1 µs per strike. At best
+  parity, on unverified assumptions.
+- **What the study does give:** a hardware cost per extra strike of 16
+  multiplies and one rotation per term (about 7% of one option), with the adjoint
+  shared; and the honest conclusion that against a CPU running the best known
+  algorithm, the FPGA's case is not speed. Energy per strike, measured on both
+  sides, is the remaining comparison worth making.
+
 ## 5. Limitations and open items
 
+- **What the latency figures include.** Three configurations are quoted and must
+  not be mixed: `z7` (fully on-chip, 4,733 cycles, **never routed**, so its clock is
+  unknown and any µs figure for it borrows z7h's clock), `z7h` (host setup and
+  finish, FPGA term loop only, 4,572 cycles, routed: 79.1 MHz out of context, 70 MHz
+  on the ZedBoard) and `zu` (64-bit, 1,593 cycles, **Yosys estimate only, never
+  through Vivado**). The board figures 65.3 µs (70 MHz) and 57.8 µs (79.1 MHz) are
+  z7h's loop alone: they exclude the host's setup and finish (about 100 multiplies
+  plus a few exp, log and sqrt, in double precision on the ARM; not yet ported or
+  timed) and the AXI4-Lite transfers (51 input words, 9 sums back), which on the
+  ARM would take some microseconds and over JTAG took about a second per case. The
+  CPU figures include everything. Until the PS design (`bd_lite.tcl` with a C host
+  step) is timed, quote the FPGA number as "engine latency, excluding host steps".
 - **Timing does not close at 100 MHz** (§4.5): WNS −2.639 ns, Fmax ≈ 79 MHz. Routing
   was reached after three obstacles: Vivado ML Enterprise refused to launch without a
   licence (resolved by moving to ML Standard 2025.2); `read_verilog`, `read_xdc` and
