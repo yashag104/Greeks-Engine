@@ -1,0 +1,8 @@
+# Generated datapath, 21-case grid (run_hw_sweeps.accuracy_cases), check_accuracy.run on the unrolled graph, 30 Sep 2026
+word_length,fraction_bits,worst_price_rel_err,worst_greek_rel_err,worst_err_over_bound,overflows
+44,16,1.5e-03,2.8e-01,0.167,0
+48,20,1.8e-04,9.1e-03,0.121,0
+52,24,5.0e-06,5.8e-04,0.113,0
+56,28,6.1e-07,1.2e-05,0.103,0
+64,32,2.8e-08,7.4e-07,0.099,0
+64,36,1.2e-09,7.9e-08,0.150,0
