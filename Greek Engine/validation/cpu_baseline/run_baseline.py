@@ -7,7 +7,8 @@
    (fetched into build/ if missing; not committed).
 2. Checks every method's price and 9 Greeks at the base case against the
    project's double-precision reference (heston_reference.cos_price /
-   cos_greeks with parity=True, the algorithm the hardware implements).
+   cos_greeks with parity=True, the algorithm the hardware implements), and
+   every method against forward mode on 2,000 random in-domain inputs.
 3. Times each method on one core (best of 5 passes over 2,000 in-domain
    parameter sets), then measures throughput with 1..N concurrent processes
    (independent processes, so CoDiPack's global tape needs no thread safety).
@@ -29,7 +30,7 @@ import heston_reference as ref  # noqa: E402
 BUILD = os.path.join(HERE, "build")
 CODI = os.path.join(BUILD, "CoDiPack")
 BIN = os.path.join(BUILD, "heston_cpu")
-METHODS = ["price", "bump", "aad", "fwdvec"]
+METHODS = ["price", "bump", "bumpopt", "aad", "fwdvec", "analytic"]
 NAMES = ["price", "delta", "strike_sens", "theta_greek", "rho_greek", "vega",
          "kappa_sens", "theta_sens", "xi_sens", "rho_corr"]
 
@@ -62,8 +63,20 @@ def check():
     return worst
 
 
-def single_core(n=2000):
-    out = subprocess.run([BIN, "time", str(n)], capture_output=True, text=True, check=True).stdout
+def single_core(n=2000, runs=15):
+    """best of several runs, each itself the best of 5 passes: a laptop's other
+    work only ever slows a pass down, so the minimum is the cleanest figure"""
+    best = {}
+    for _ in range(runs):
+        out = subprocess.run([BIN, "time", str(n)], capture_output=True, text=True, check=True).stdout
+        for l in out.splitlines():
+            m, us = l.split()[0], float(l.split()[1])
+            best[m] = min(best.get(m, us), us)
+    return best
+
+
+def agree(n=2000):
+    out = subprocess.run([BIN, "agree", str(n)], capture_output=True, text=True, check=True).stdout
     return {l.split()[0]: float(l.split()[1]) for l in out.splitlines()}
 
 
@@ -81,18 +94,22 @@ def main():
     worst = check()
     print("\nCorrectness at the base case (max relative difference from the Python reference):")
     for m in METHODS:
-        print("  %-7s %.1e" % (m, worst[m]))
+        print("  %-8s %.1e" % (m, worst[m]))
+    agr = agree()
+    print("Worst difference from forward mode over 2,000 random in-domain inputs:")
+    for m, v in agr.items():
+        print("  %-8s %.1e" % (m, v))
     lat = single_core()
     fpga_board = FPGA["cycles"] / FPGA["mhz_board"]
     fpga_fmax = FPGA["cycles"] / FPGA["mhz_fmax"]
     print("\nOne core, microseconds per evaluation (price + 9 Greeks unless noted):")
     for m in METHODS:
-        print("  %-7s %8.2f%s" % (m, lat[m], "   (price only)" if m == "price" else ""))
+        print("  %-8s %8.2f%s" % (m, lat[m], "   (price only)" if m == "price" else ""))
     print("  FPGA    %8.2f   (ZedBoard, 70 MHz)   %.2f at the routed 79.1 MHz" % (fpga_board, fpga_fmax))
     rows = []
     print("\nThroughput, evaluations per second, independent processes:")
-    for m in ("aad", "fwdvec"):
-        n = 4000 if m != "bump" else 400
+    for m in ("aad", "fwdvec", "analytic"):
+        n = 4000 if m != "analytic" else 16000
         for procs in sorted({1, 2, 4, ncpu}):
             tp = throughput(m, procs, n)
             rows.append(dict(method=m, processes=procs, evals_per_s=round(tp)))
@@ -102,9 +119,9 @@ def main():
     with open(out, "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["cpu", cpu]); w.writerow(["compiler", ver]); w.writerow(["logical_cores", ncpu])
-        w.writerow([]); w.writerow(["method", "us_per_eval_one_core", "max_rel_diff_vs_reference"])
+        w.writerow([]); w.writerow(["method", "us_per_eval_one_core", "max_rel_diff_vs_reference", "worst_diff_vs_fwdvec_2000_inputs"])
         for m in METHODS:
-            w.writerow([m, "%.3f" % lat[m], "%.1e" % worst[m]])
+            w.writerow([m, "%.3f" % lat[m], "%.1e" % worst[m], "%.1e" % agr[m] if m in agr else ""])
         w.writerow(["fpga_70MHz", "%.3f" % fpga_board, ""]); w.writerow(["fpga_79.1MHz", "%.3f" % fpga_fmax, ""])
         w.writerow([]); w.writerow(["method", "processes", "evals_per_s"])
         for r in rows:

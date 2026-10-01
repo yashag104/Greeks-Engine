@@ -181,21 +181,44 @@ relative). Results in `validation/results/cpu_baseline.csv`.
 | CPU, bump-and-reprice (19 pricings) | 257.6 | 15× |
 | CPU, AAD (CoDiPack reverse) | 114.9 | 6.7× |
 | CPU, forward mode, 9 directions | 91.5 | 5.3× |
-| **FPGA, ZedBoard at 70 MHz** | **65.3** | **1.04×** |
+| CPU, optimised bump (9 full pricings, characteristic function reused) * | 158.6 | 10.3× |
+| **CPU, hand-derived analytic Greeks, one pass** * | **29.3** | **1.9×** |
+| FPGA, ZedBoard at 70 MHz | 65.3 | 1.04× |
 | FPGA at the routed 79.1 MHz | 57.8 | 1.04× |
 
-- **Latency:** the FPGA is 1.4× faster than the best software method (1.6× at
-  79 MHz) and 1.8× faster than taped AAD, on one core.
-- **Throughput:** four cores running 8 processes reach 33,900 evaluations/s
-  (forward mode) against 15,300 for one FPGA engine. The CPU wins by about 2.2×.
+\* Added 1 October 2026 (`analytic`, `bumpopt` in `heston_cpu.cpp`), measured on
+the same laptop while it was also running another Vivado job; cost ratios use the
+price-only time from the same run (15.4 µs). Provisional until `run_baseline.py` is
+re-run on an idle machine. Across five loaded runs the analytic method took
+28–37 µs, always under the FPGA's 65 µs. It agrees with forward mode to 1.0e-11 over
+2,000 random in-domain inputs.
+
+The analytic method writes out, by hand, the derivative of the characteristic
+function with respect to each input (chain rule through b, d, g and e, in the
+spirit of Cui et al. 2017) and accumulates all ten sums in one pass over the 128
+terms. It is the strongest software competitor and it changes the comparison:
+
+- **Latency:** one CPU core with hand-derived Greeks is about 2.2× faster than the
+  FPGA engine (29 µs against 65 µs). The FPGA is faster only than the general
+  methods: 1.4× faster than forward mode, 1.8× faster than taped AAD and 3.9×
+  faster than plain bump-and-reprice. The paper must not claim a latency
+  advantage over a CPU.
+- **Throughput:** the analytic method on 4 cores / 8 processes reached
+  41,000–94,000 evaluations/s on the loaded laptop, against 15,300 for one FPGA
+  engine.
 - **Energy (estimate):** the FPGA board design is 0.341 W (vectorless, including
   the clock generator), about 22 µJ per evaluation. CPU power could not be
-  measured under WSL; at the part's 12–28 W configurable power and its measured
-  throughput, 0.35–0.8 mJ per evaluation, so roughly 16–37× more.
-- **Where the advantage comes from:** pricing alone is faster on the CPU (17 µs
-  against about 65 µs for 4,568 cycles at 70 MHz). The FPGA's lead is entirely in
-  the Greeks costing 1.04 pricings instead of 5–7. The paper should argue latency,
-  Greeks overhead and energy per Greek set, not throughput.
+  measured under WSL; at the part's 12–28 W configurable power and the analytic
+  method's throughput, about 0.13–0.68 mJ per evaluation, so roughly 6–30× more
+  than the FPGA. Energy per Greek set is the FPGA's remaining measured-or-estimated
+  advantage, and it rests on a CPU power estimate.
+- **Greeks overhead:** the FPGA's Greeks cost 1.04 pricings; the best hand-written
+  software costs 1.9, and general AD tools 5–7. The engine reaches this without
+  anyone deriving the derivatives of the characteristic function by hand.
+- **Optimised bump-and-reprice** (reusing the characteristic function for the S0,
+  K, r, v0 and theta bumps) costs 10.3 pricings on the CPU, against 15 for plain
+  bumping. The hardware advantage over bumping should therefore be quoted against
+  an optimised bump as well, not only the 18.4× against a plain one.
 
 ## 5. Limitations and open items
 
