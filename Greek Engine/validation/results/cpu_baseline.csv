@@ -19,3 +19,13 @@ fwdvec,1,10087
 fwdvec,2,17231
 fwdvec,4,24905
 fwdvec,8,33893
+
+provisional (1 Oct 2026; laptop also running another Vivado job; best of 6 runs of 'heston_cpu time 2000'; rerun run_baseline.py on an idle machine for final figures)
+method,us_per_eval_one_core,worst_diff_vs_fwdvec_2000_inputs
+price,15.443,
+bump,253.691,2.0e-06
+bumpopt,158.640,2.0e-06
+aad,123.370,2.9e-12
+fwdvec,104.051,
+analytic,29.289,1.0e-11
+analytic throughput (8 processes; same loaded laptop),41157-94041 evals/s,

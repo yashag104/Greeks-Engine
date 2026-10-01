@@ -7,9 +7,13 @@
 //   bump      central finite differences, 19 pricings
 //   aad       reverse mode with CoDiPack (RealReverse, a taped AD tool)
 //   fwdvec    forward mode with CoDiPack, all 9 directions in one pass
+//   analytic  hand-derived derivatives of the characteristic function, one pass
+//   bumpopt   central differences reusing the characteristic function where the
+//             bumped input does not enter it (9 full passes instead of 19)
 //
 //   ./heston_cpu check            base case: price and Greeks for each method
 //   ./heston_cpu time  <n>        n timed evaluations per method, one thread
+//   ./heston_cpu agree <n>        worst difference of each method from fwdvec
 //   ./heston_cpu run   <method> <n>   n evaluations of one method (for the
 //                                     multi-process throughput measurement)
 //
@@ -149,12 +153,140 @@ static void m_fwdvec(const double* p, bool call, double* out) {
   for (int i = 0; i < 9; ++i) out[1 + i] = v.getGradient()[i];
 }
 
+// ---- hand-derived analytic Greeks (the strongest software competitor: no AD tool,
+// no tape). ln phi = C + v0 D + iu x with
+//   C = iu r T + (kappa theta / xi^2) A,  A = T (bb - d) - 2 L,  L = ln((1 - g e)/(1 - g)),
+//   D = (bb - d)(1 - e) / (xi^2 (1 - g e)).
+// Each parameter's derivative of ln phi is written out by the chain rule through
+// bb, d, g, e (in the spirit of Cui et al. 2017), so one pass over the 128 terms
+// gives the price and all 9 Greeks in plain double complex arithmetic.
+using C2 = Cx<double>;
+static inline C2 cs(double s, const C2& a) { return {s * a.re, s * a.im}; }
+
+static void m_analytic(const double* p, bool call, double* out) {
+  double a, b; trunc_range(p, a, b);
+  const double S0 = p[0], K = p[1], T = p[2], r = p[3], v0 = p[4], kappa = p[5], theta = p[6], xi = p[7], rho = p[8];
+  const double x = std::log(S0 / K), xi2 = xi * xi, coef = kappa * theta / xi2;
+  const double bma = b - a, ea = std::exp(a);
+  const C2 one{1.0, 0.0};
+  // sums over terms of c_k V_k Re[dphi e^{-iua}] for: price, x, T, r, v0, kappa, theta, xi, rho
+  double s[9] = {0};
+  for (int k = 0; k < N_TERMS; ++k) {
+    const double u = k * PI / bma, cu = std::cos(u * a), su = std::sin(u * a);
+    const C2 iu{0.0, u}, uu{u * u, u};
+    const C2 bb{kappa, -rho * xi * u};
+    const C2 d = csqrt_(bb * bb + cs(xi2, uu));
+    const C2 bpd = bb + d, bmd = bb - d;
+    const C2 ibpd2 = one / (bpd * bpd);
+    const C2 g = bmd / bpd;
+    const C2 e = cexp_(cs(-T, d));
+    const C2 ge = g * e, omge = one - ge, omg = one - g, ome = one - e;
+    const C2 iomge = one / omge, iomg = one / omg;
+    const C2 L = clog_(omge * iomg);
+    const C2 A = cs(T, bmd) - cs(2.0, L);
+    const C2 N = bmd * ome, M = cs(xi2, omge), iM = one / M;
+    const C2 D = N * iM;
+    const C2 phi = cexp_(cs(r * T, iu) + cs(coef, A) + cs(v0, D) + cs(x, iu));
+    // derivative of ln phi along one parameter, given the inputs' derivatives
+    auto dlog = [&](const C2& dbb, const C2& dd, double dT, double dxi, double dcoef) {
+      const C2 dg = cs(2.0, d * dbb - bb * dd) * ibpd2;
+      const C2 de = cs(-1.0, e * (cs(T, dd) + C2{dT * d.re, dT * d.im}));
+      const C2 dge = dg * e + g * de;
+      const C2 dL = dg * iomg - dge * iomge;
+      const C2 dA = cs(dT, bmd) + cs(T, dbb - dd) - cs(2.0, dL);
+      const C2 dN = (dbb - dd) * ome - bmd * de;
+      const C2 dM = cs(2.0 * xi * dxi, omge) - cs(xi2, dge);
+      const C2 dD = (dN - D * dM) * iM;
+      return cs(dcoef, A) + cs(coef, dA) + cs(v0, dD);
+    };
+    const C2 z{0.0, 0.0};
+    const C2 iD = one / d;
+    const C2 rho_u{0.0, -rho * u}, xi_u{0.0, -xi * u};
+    const C2 lT = cs(r, iu) + dlog(z, z, 1.0, 0.0, 0.0);
+    const C2 lk = dlog({1.0, 0.0}, bb * iD, 0.0, 0.0, theta / xi2);
+    const C2 lxi = dlog(rho_u, (bb * rho_u + cs(xi, uu)) * iD, 0.0, 1.0, -2.0 * coef / xi);
+    const C2 lrho = dlog(xi_u, bb * xi_u * iD, 0.0, 0.0, 0.0);
+    const C2 dl[9] = {one, iu, lT, cs(T, iu), D, lk, cs(kappa / xi2, A), lxi, lrho};
+    const double chi = (cu - ea - u * su) / (1.0 + u * u);
+    const double psi = (k == 0) ? -a : -(bma / (k * PI)) * su;
+    const double w = (k == 0 ? 0.5 : 1.0) * (2.0 / bma) * K * (psi - chi);
+    for (int j = 0; j < 9; ++j) {
+      const C2 f = phi * dl[j];
+      s[j] += w * (f.re * cu + f.im * su);
+    }
+  }
+  const double disc = std::exp(-r * T), put = disc * s[0];
+  out[0] = put;
+  out[1] = disc * s[1] / S0;                       // dx/dS0 = 1/S0
+  out[2] = -disc * s[1] / K + put / K;             // dx/dK = -1/K; V_k is linear in K
+  out[3] = disc * s[2] - r * put;
+  out[4] = disc * s[3] - T * put;
+  for (int j = 4; j < 9; ++j) out[1 + j] = disc * s[j];
+  if (call) {                                       // + S0 - K e^{-rT}
+    out[0] += S0 - K * disc; out[1] += 1.0; out[2] -= disc;
+    out[3] += K * r * disc; out[4] += K * T * disc;
+  }
+}
+
+// ---- bump-and-reprice made as cheap as the algorithm allows: central
+// differences, but the per-term pieces A and D (functions of T, kappa, xi, rho
+// only) are computed once and reused for the S0, K, r, v0 and theta bumps, which
+// then cost one complex exponential per term. Only the T, kappa, xi and rho bumps
+// re-run the characteristic function: 9 full passes instead of 19.
+struct Parts { C2 A[N_TERMS], D[N_TERMS]; };
+static void cf_parts(double T, double kappa, double xi, double rho, double bma, Parts& P) {
+  const C2 one{1.0, 0.0};
+  const double xi2 = xi * xi;
+  for (int k = 0; k < N_TERMS; ++k) {
+    const double u = k * PI / bma;
+    const C2 bb{kappa, -rho * xi * u};
+    const C2 d = csqrt_(bb * bb + cs(xi2, C2{u * u, u}));
+    const C2 g = (bb - d) / (bb + d), e = cexp_(cs(-T, d)), ge = g * e;
+    P.A[k] = cs(T, bb - d) - cs(2.0, clog_((one - ge) / (one - g)));
+    P.D[k] = cs(1.0 / xi2, (bb - d) * ((one - e) / (one - ge)));
+  }
+}
+static double price_from(const Parts& P, const double* p, bool call, double a, double b) {
+  const double S0 = p[0], K = p[1], T = p[2], r = p[3], v0 = p[4], kappa = p[5], theta = p[6], xi = p[7];
+  const double x = std::log(S0 / K), coef = kappa * theta / (xi * xi), bma = b - a, ea = std::exp(a);
+  double sum = 0.0;
+  for (int k = 0; k < N_TERMS; ++k) {
+    const double u = k * PI / bma, cu = std::cos(u * a), su = std::sin(u * a);
+    const C2 phi = cexp_(C2{0.0, u * (r * T + x)} + cs(coef, P.A[k]) + cs(v0, P.D[k]));
+    const double chi = (cu - ea - u * su) / (1.0 + u * u);
+    const double psi = (k == 0) ? -a : -(bma / (k * PI)) * su;
+    sum += (k == 0 ? 0.5 : 1.0) * (phi.re * cu + phi.im * su) * (2.0 / bma) * K * (psi - chi);
+  }
+  const double disc = std::exp(-r * T);
+  return disc * sum + (call ? S0 - K * disc : 0.0);
+}
+static void m_bumpopt(const double* p, bool call, double* out) {
+  double a, b; trunc_range(p, a, b);
+  static Parts base, alt;
+  cf_parts(p[2], p[5], p[7], p[8], b - a, base);
+  out[0] = price_from(base, p, call, a, b);
+  for (int i = 0; i < 9; ++i) {
+    double q[9]; std::memcpy(q, p, sizeof q);
+    double h = 1e-5 * std::max(std::fabs(p[i]), 1e-2);
+    const bool full = (i == 2 || i == 5 || i == 7 || i == 8);
+    q[i] = p[i] + h;
+    if (full) cf_parts(q[2], q[5], q[7], q[8], b - a, alt);
+    double up = price_from(full ? alt : base, q, call, a, b);
+    q[i] = p[i] - h;
+    if (full) cf_parts(q[2], q[5], q[7], q[8], b - a, alt);
+    double dn = price_from(full ? alt : base, q, call, a, b);
+    out[1 + i] = (up - dn) / (2 * h);
+  }
+}
+
 typedef void (*Method)(const double*, bool, double*);
 static Method pick(const char* m) {
   if (!std::strcmp(m, "price")) return m_price;
   if (!std::strcmp(m, "bump")) return m_bump;
   if (!std::strcmp(m, "aad")) return m_aad;
   if (!std::strcmp(m, "fwdvec")) return m_fwdvec;
+  if (!std::strcmp(m, "analytic")) return m_analytic;
+  if (!std::strcmp(m, "bumpopt")) return m_bumpopt;
   std::fprintf(stderr, "unknown method %s\n", m); std::exit(2);
 }
 
@@ -173,7 +305,7 @@ static void make_inputs(int n, std::vector<double>& P, std::vector<char>& call) 
 
 int main(int argc, char** argv) {
   const char* mode = argc > 1 ? argv[1] : "check";
-  const char* names[4] = {"price", "bump", "aad", "fwdvec"};
+  const char* names[6] = {"price", "bump", "bumpopt", "aad", "fwdvec", "analytic"};
   if (!std::strcmp(mode, "check")) {
     double base[9] = {100, 100, 1, 0.05, 0.04, 1.5, 0.04, 0.3, -0.9};
     for (const char* m : names) {
@@ -198,6 +330,21 @@ int main(int argc, char** argv) {
         best = std::min(best, us);
       }
       std::printf("%s %.3f us_per_eval (sink %.3g)\n", m, best, sink);
+    }
+    return 0;
+  }
+  if (!std::strcmp(mode, "agree")) {                    // worst difference from fwdvec, scaled
+    int n = argc > 2 ? std::atoi(argv[2]) : 2000;       // by each output's typical size
+    std::vector<double> P; std::vector<char> C; make_inputs(n, P, C);
+    for (const char* m : names) {
+      if (!std::strcmp(m, "price") || !std::strcmp(m, "fwdvec")) continue;
+      double worst = 0;
+      for (int i = 0; i < n; ++i) {
+        double o[10], f[10];
+        pick(m)(&P[9 * i], C[i], o); m_fwdvec(&P[9 * i], C[i], f);
+        for (int j = 0; j < 10; ++j) worst = std::max(worst, std::fabs(o[j] - f[j]) / std::max(std::fabs(f[j]), 1.0));
+      }
+      std::printf("%s %.3e\n", m, worst);
     }
     return 0;
   }

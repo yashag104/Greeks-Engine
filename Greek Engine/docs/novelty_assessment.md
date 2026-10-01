@@ -27,12 +27,18 @@ and its text searched; where only an abstract was reachable it says so.
    random cases on silicon.
 6. **Bit-exact Greeks on silicon.** 450 of 450 results identical to the model on a
    ZedBoard (Zynq-7020), 50 random cases back to back.
-7. **A fair baseline.** Bump-and-reprice on identical hardware: 18.4× more cycles,
-   and 32–560× less accurate than AAD even at the best bump size for each Greek.
+7. **Bump-and-reprice on identical hardware:** 18.4× more cycles, and 32–560× less
+   accurate than AAD even at the best bump size for each Greek. The hardware bump
+   runs 19 independent pricings; an optimised bump that reuses the characteristic
+   function needs about 10 pricings' worth of work (measured on the CPU, 10.3×), so
+   quote the hardware advantage against both.
 
-Against a CPU running the same algorithm, the FPGA is 1.4–1.8× faster per
-evaluation and uses an estimated 16–37× less energy; four CPU cores give 2.2× more
-throughput (`architecture.md` §4.6).
+Against a CPU running the same algorithm, the FPGA is 1.4–1.8× faster than the
+general AD methods, but **hand-derived analytic Greeks on one CPU core are about
+2.2× faster than the FPGA** (29 µs against 65 µs, provisional) and four cores give
+far more throughput. The FPGA's claims against a CPU are the Greeks overhead (1.04
+pricings against 1.9 for the best software) and an estimated 6–30× less energy per
+evaluation (`architecture.md` §4.6), not speed.
 
 ## 2. What the novelty builds on
 
@@ -156,17 +162,27 @@ FPGA + AD + Greeks.
    per-output error bound, and a financial workload whose alternative is
    bump-and-reprice. Cite a training accelerator to show awareness.
 2. **"Heston Greeks have an analytic form; why AAD?"** Cui et al. (2017) derive the
-   gradient of the Fourier price by hand. AAD derives it mechanically for any
-   graph, so the same generator would handle another model or payoff; and the
-   hardware result (1.04 pricings) is about cost, not about whether a gradient
-   exists. Say this directly.
-3. **"How fast is this against a CPU?"** Measured 30 Sep 2026
-   (`docs/architecture.md` §4.6): one laptop core needs 91.5 µs (forward mode) or
-   114.9 µs (CoDiPack AAD) against 65.3 µs on the board, so the FPGA wins latency
-   by 1.4–1.8×; four cores out-throughput one FPGA engine by about 2.2×; energy per
-   evaluation is an estimated 16–37× lower on the FPGA. The CPU prices alone faster
-   (17 µs); the FPGA's lead is the 1.04× Greeks overhead against 5.3–6.7×. Argue
-   latency, Greeks overhead and energy, not throughput.
+   gradient of the Fourier price by hand, and this project now measures that
+   approach (1 Oct 2026, `analytic` in `validation/cpu_baseline/heston_cpu.cpp`):
+   price and 9 Greeks in one pass at 1.9 pricings on a CPU. In this project the
+   hardware adjoint is also hand-written (point 4), so "AAD derives it
+   mechanically" is only true once the generator derives the reverse sweep. The
+   honest answer today: the hardware result is the cost, 1.04 pricings for all
+   Greeks with a guaranteed bound on each, against 1.9 for the best hand-written
+   software; and the IR adjoint is a general reverse-mode construction that a later
+   generator can produce automatically, while the analytic form is specific to
+   this characteristic function.
+3. **"How fast is this against a CPU?"** Measured 30 Sep and 1 Oct 2026
+   (`docs/architecture.md` §4.6). Hand-derived analytic Greeks on one laptop core
+   take about 29 µs (28–37 µs across runs on a loaded machine) against 65.3 µs on
+   the board, so **the CPU wins latency by about 2.2×** and throughput by more.
+   The FPGA beats only the general methods: forward mode (91.5 µs, 1.4×), CoDiPack
+   AAD (114.9 µs, 1.8×) and bump-and-reprice (257.6 µs, 3.9×). Energy per
+   evaluation is an estimated 6–30× lower on the FPGA, against a CPU power figure
+   that was not measured. Do not argue latency or throughput against a CPU. Argue
+   Greeks overhead (1.04 against 1.9 for the best software), the per-Greek error
+   bound, energy per Greek set, and what a larger device with several engines or
+   strike sharing would deliver; and measure CPU power before relying on energy.
 4. **"Is this algorithmic differentiation, or a hand-written adjoint?"** In this
    project the reverse sweep is written by hand as IR operations in
    `hardware/gen/heston.py`; no AD tool derives it. In finance "AAD" usually names

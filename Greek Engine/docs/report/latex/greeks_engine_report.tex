@@ -142,8 +142,9 @@ laptop CPU.
 \subsection{Novelty}
 \begin{enumerate}[label=\textbf{\arabic*.}]
   \item \textbf{The first FPGA implementation of adjoint (reverse-mode)
-  differentiation for option Greeks.} Every published FPGA Greeks engine re-runs
-  the pricer once per sensitivity~\cite{klai1,klai2,vitis}; the 2024 survey of 99
+  differentiation for option Greeks.} No published FPGA Greeks engine uses
+  adjoints~\cite{klai1,klai2,vitis}: the AMD library re-runs the pricer once per
+  sensitivity; the 2024 survey of 99
   FPGA option-pricing studies~\cite{survey} and the 2024 review of fifteen years of
   adjoint differentiation in finance~\cite{aadreview} contain no FPGA adjoint
   implementation.
@@ -156,8 +157,8 @@ laptop CPU.
   pricer performs the same operations for every input.
   \item \textbf{All nine Greeks for 1.04 times the cost of one price.} On the same
   hardware the price alone takes 4,568 cycles and the price with all nine Greeks
-  4,733. Software adjoint differentiation costs 5.3--6.7 pricings on the measured
-  CPU, and bump-and-reprice 19.
+  4,733. On the measured CPU, Greeks derived by hand cost 1.9 pricings, AD tools
+  5.3--6.7, and bump-and-reprice 19.
   \item \textbf{A guaranteed error bound for every Greek of a fixed-point adjoint
   datapath.} Measured error never exceeds 0.103 of the bound over 21 test cases, and
   the bound held on silicon.
@@ -331,9 +332,9 @@ is useful and what is new.
 \textbf{Measure} & \textbf{Result} & \textbf{Compared with}\\
 \midrule
 Cycles, price + 9 Greeks & 4,733 & 92$\times$ fewer than the first-generation engine; 18.4$\times$ fewer than bump-and-reprice\\
-Cost of the 9 Greeks & 1.04 pricings & software adjoint 5.3--6.7; bump-and-reprice 19\\
-Latency on the ZedBoard & 65.3\,$\mu$s (57.8\,$\mu$s at 79\,MHz) & 1.4--3.9$\times$ faster than one CPU core\\
-Energy per evaluation & 22.3\,$\mu$J & about 16--37$\times$ less than the CPU\\
+Cost of the 9 Greeks & 1.04 pricings & hand-derived software 1.9; AD tools 5.3--6.7; bump-and-reprice 19\\
+Latency on the ZedBoard & 65.3\,$\mu$s (57.8\,$\mu$s at 79\,MHz) & 1.4--3.9$\times$ faster than AD tools and bumping on one CPU core; 2.2$\times$ slower than hand-derived Greeks (29\,$\mu$s)\\
+Energy per evaluation & 22.3\,$\mu$J & about 6--30$\times$ less than the CPU (CPU power estimated)\\
 Accuracy (21 cases) & price $6.1\times10^{-7}$, Greeks $\le 1.2\times10^{-5}$ & relative to double precision\\
 Error bound & never exceeded ($\le 0.103$) & every output, every case\\
 On silicon & 450 / 450 bit-exact & 50 random cases\\
@@ -599,20 +600,34 @@ CPU, price only (1 core) & 17.2 & 1$\times$ & --\\
 CPU, bump-and-reprice (1 core) & 257.6 & 15$\times$ & --\\
 CPU, adjoint with CoDiPack (1 core) & 114.9 & 6.7$\times$ & 23,100 (4 cores)\\
 CPU, forward mode, 9 directions (1 core) & 91.5 & 5.3$\times$ & 33,900 (4 cores)\\
+CPU, optimised bump$^{*}$ (1 core) & 158.6 & 10.3$\times$ & --\\
+CPU, analytic Greeks$^{*}$ (1 core) & \textbf{29.3} & 1.9$\times$ & 41k--94k (4 cores)\\
 \hi FPGA engine, ZedBoard at 70\,MHz & \textbf{65.3} & \textbf{1.04$\times$} & 15,300 (1 engine)\\
 FPGA engine at the routed 79\,MHz & 57.8 & 1.04$\times$ & 17,300 (1 engine)\\
 \bottomrule
 \end{tabular}
-\caption{FPGA against CPU on the same algorithm.}
+\caption{FPGA against CPU on the same algorithm. $^{*}$Added 1 October, measured while
+the laptop was also running another Vivado job; ratios use that run's price-only time
+(15.4\,$\mu$s); provisional until re-measured on an idle machine.}
 \end{table}
 
-\useful{The FPGA returns the price and nine Greeks 1.4 times faster than the best
-software method on one core, 1.8 times faster than software adjoint differentiation and
-3.9 times faster than bump-and-reprice. It does so with about 22.3\,$\mu$J per evaluation
-(0.341\,W $\times$ 65.3\,$\mu$s) against 0.35--0.83\,mJ for the CPU at its rated
-12--28\,W, about 16--37 times less energy. Four CPU cores together give 2.2 times the
-throughput of one engine, so the FPGA's case is latency and energy per Greek set, and
-its advantage comes from the Greeks: pricing alone is faster on the CPU.}
+The analytic method writes out by hand the derivative of the characteristic function
+with respect to every input, in the spirit of Cui et al.~\cite{cui}, and accumulates the
+price and all nine Greeks in one pass over the 128 terms; it agrees with forward mode to
+$10^{-11}$ over 2,000 random inputs. The optimised bump-and-reprice reuses the
+characteristic function for the $S_0$, $K$, $r$, $v_0$ and $\theta$ bumps, so only nine
+of its pricings are full ones.
+
+\useful{The FPGA is faster than the general software methods: 1.4 times faster than
+forward mode, 1.8 times faster than adjoint differentiation with CoDiPack and 3.9 times
+faster than bump-and-reprice. It is not faster than the best hand-written software:
+analytic Greeks on one laptop core take about 29\,$\mu$s (28--37\,$\mu$s across runs),
+about 2.2 times faster than the engine, and several cores give far more throughput.
+What the engine keeps is the cost of its Greeks, 1.04 pricings against 1.9 for the best
+software and 5--7 for AD tools, a guaranteed error bound on every Greek, and energy:
+about 22.3\,$\mu$J per evaluation (0.341\,W $\times$ 65.3\,$\mu$s) against an estimated
+0.13--0.68\,mJ for the CPU at its rated 12--28\,W, 6--30 times less. The CPU's power was
+not measured, so the energy figure is an estimate.}
 
 \subsection{Hedging on real market data}
 \label{sec:hedging}
@@ -811,6 +826,9 @@ error,'' \emph{BIT Numerical Mathematics}, 16:146--160, 1976.
 \bibitem{codipack} M. Sagebaum, T. Albring and N. R. Gauger, ``High-performance
 derivative computations using CoDiPack,'' \emph{ACM Transactions on Mathematical
 Software}, 45(4), 2019.
+\bibitem{cui} Y. Cui, S. del Ba\~no Rollin and G. Germano, ``Full and fast calibration
+of the Heston stochastic volatility model,'' \emph{European Journal of Operational
+Research}, 263(2):625--638, 2017.
 \end{thebibliography}
 
 \end{document}

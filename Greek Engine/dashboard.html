@@ -192,6 +192,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   <a href="#parity">Put-call parity</a>
   <a href="#hardware">Vivado results</a>
   <a href="#silicon">On the board</a>
+  <a href="#hedging">Hedging on real data</a>
   <a href="#gen1">Generation 1</a>
   <a href="#limits">Known limits</a>
   <a href="#next">Next steps</a>
@@ -223,7 +224,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       <li><b>Adjoint Greeks on an FPGA, for the first time.</b> Every published FPGA Greeks engine re-runs the pricer once per sensitivity (Klaisoongnoen et al. 2022; AMD's Vitis finance library). No FPGA adjoint implementation exists in the 2024 survey of 99 FPGA option-pricing studies or in the 2024 review of 15 years of AAD in finance.</li>
       <li><b>The COS method on an FPGA, for the first time.</b> COS pricing had run on CPUs and GPUs only; the only FPGA Fourier pricer (AMD) uses trapezoidal integration and returns the price alone.</li>
       <li><b>A tape-free adjoint datapath.</b> Software AAD records a tape and replays it. Here the reverse sweep is compiled into a statically scheduled fixed-point datapath that shares its arithmetic units with the forward pass, because the COS pricer runs the same operations for every input.</li>
-      <li><b>Nine Greeks for 1.04× the cost of the price.</b> 4,733 cycles against 4,568 for the price alone. Software AAD costs 5.3–6.7× on the measured CPU; bump-and-reprice costs 19×.</li>
+      <li><b>Nine Greeks for 1.04× the cost of the price.</b> 4,733 cycles against 4,568 for the price alone. On the measured CPU, hand-derived Greeks cost 1.9×, AD tools 5.3–6.7×, and bump-and-reprice 19×.</li>
       <li><b>A guaranteed error bound for every Greek of a fixed-point adjoint datapath.</b> Measured error never exceeds 0.103 of the bound over 21 cases, and 0.268 over 50 random cases on silicon.</li>
       <li><b>Bit-exact Greeks on silicon.</b> 450 of 450 results identical to the model on a ZedBoard, 50 random cases back to back.</li>
       <li><b>A fair baseline.</b> Against bump-and-reprice on identical hardware: 18.4× fewer cycles and 32–560× more accurate than the best bump size for each Greek.</li>
@@ -239,9 +240,9 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
         <tr><td>Cycles, same hardware</td><td class="num">4,733</td><td>Bump-and-reprice (19 pricings): 86,860</td><td class="better">18.4× fewer</td><td><span class="pill info">Simulation</span></td></tr>
         <tr class="hi"><td>Cost of 9 Greeks, as multiples of one price<br><span class="muted" style="font-size:.8rem">"One price" = computing only the option price, no Greeks, on the same hardware: 4,568 cycles. With all 9 Greeks: 4,733 cycles, only 165 more.</span></td><td class="num">1.04×</td><td>Generation 1: 2.16×. CPU AAD: 6.7×. CPU forward mode: 5.3×</td><td class="better">Greeks nearly free</td><td><span class="pill info">Simulation</span> <span class="pill info">CPU</span></td></tr>
         <tr><td>Same, 64-bit configuration</td><td class="num">1.55×</td><td>Multipliers bind there, so the adjoint costs II</td><td>Condition stated</td><td><span class="pill info">Simulation</span></td></tr>
-        <tr class="hi"><td>Latency, price + 9 Greeks</td><td class="num">65.3 µs (board, 70 MHz)<br>57.8 µs (routed Fmax 79.1 MHz)</td><td>One CPU core: forward mode 91.5 µs, AAD 114.9 µs, bump 257.6 µs</td><td class="better">1.4× / 1.8× / 3.9× faster</td><td><span class="pill info">Vivado</span> <span class="pill info">CPU</span></td></tr>
-        <tr class="hi"><td>Energy per evaluation</td><td class="num">≈ 22 µJ</td><td>CPU ≈ 0.35–0.83 mJ</td><td class="better">≈ 16–37× less</td><td><span class="pill warn">Estimate</span></td></tr>
-        <tr><td>Throughput</td><td class="num">15,300 / s (one engine)</td><td>Four CPU cores: 33,900 / s</td><td style="color:var(--crit);font-weight:600">CPU 2.2× higher</td><td><span class="pill info">CPU</span></td></tr>
+        <tr class="hi"><td>Latency, price + 9 Greeks</td><td class="num">65.3 µs (board, 70 MHz)<br>57.8 µs (routed Fmax 79.1 MHz)</td><td>One CPU core: analytic Greeks 29.3 µs*; forward mode 91.5 µs, AAD 114.9 µs, bump 257.6 µs</td><td><span style="color:var(--crit);font-weight:600">2.2× slower than analytic</span>; 1.4× / 1.8× / 3.9× faster than the others</td><td><span class="pill info">Vivado</span> <span class="pill info">CPU</span></td></tr>
+        <tr class="hi"><td>Energy per evaluation</td><td class="num">≈ 22 µJ</td><td>CPU (analytic) ≈ 0.13–0.68 mJ</td><td class="better">≈ 6–30× less</td><td><span class="pill warn">Estimate</span></td></tr>
+        <tr><td>Throughput</td><td class="num">15,300 / s (one engine)</td><td>Four CPU cores, analytic: 41,000–94,000 / s*</td><td style="color:var(--crit);font-weight:600">CPU 3–6× higher</td><td><span class="pill info">CPU</span></td></tr>
         <tr class="hi"><td>Accuracy vs double precision (21 cases)</td><td class="num">price 6.1e-7<br>Greeks ≤ 1.2e-5</td><td>Relative error, Zynq-7020 design</td><td>—</td><td><span class="pill info">Simulation</span></td></tr>
         <tr><td>Guaranteed error bound</td><td class="num">≤ 0.103 of bound</td><td>Worst measured error ÷ bound, every output, 21 cases (0.268 on the 50-case board sweep)</td><td class="better">Never violated</td><td><span class="pill info">Simulation</span> <span class="pill good">Silicon</span></td></tr>
         <tr><td>Accuracy vs bump-and-reprice</td><td class="num">32–560× more accurate</td><td>Best bump size chosen in hindsight for each Greek (median 145×), base case, same pricer</td><td class="better">No bump size to tune</td><td><span class="pill info">Simulation</span></td></tr>
@@ -251,7 +252,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       </tbody>
     </table>
   </div>
-  <p class="caption">Energy: FPGA 0.341 W × 65.3 µs = 22.3 µJ. The 0.341 W is Vivado's power report for the built design (the Power screenshot): a prediction from the placed logic and an assumed switching rate ("vectorless", confidence Medium), not a reading from the board; it includes 0.121 W of clock generator. CPU power could not be measured under WSL; the range uses the Intel Core i5-1155G7's 12–28 W configurable power at its measured full-load throughput. Generation 1 was never routed, so it is compared in cycles only. The CPU runs the identical algorithm in C++ double precision with g++ -O3 -march=native, AAD by CoDiPack.</p>
+  <p class="caption">Energy: FPGA 0.341 W × 65.3 µs = 22.3 µJ. The 0.341 W is Vivado's power report for the built design (the Power screenshot): a prediction from the placed logic and an assumed switching rate ("vectorless", confidence Medium), not a reading from the board; it includes 0.121 W of clock generator. CPU power could not be measured under WSL; the range uses the Intel Core i5-1155G7's 12–28 W configurable power at the analytic method's measured throughput. * Analytic Greeks added 1 Oct, measured while the laptop also ran another Vivado job; provisional until re-measured on an idle machine. Generation 1 was never routed, so it is compared in cycles only. The CPU runs the identical algorithm in C++ double precision with g++ -O3 -march=native, AAD by CoDiPack.</p>
 
   <div class="card">
     <h3>Scope of the novelty</h3>
@@ -259,7 +260,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       <li>Reverse-mode differentiation itself is established: it is backpropagation, which neural-network training hardware already runs. What is new is its use for option Greeks on an FPGA, as a fixed-point pricing datapath.</li>
       <li>The error-bound method is Linnainmaa's first-order rounding analysis (1976); what is new is bounding every Greek of a datapath that itself performs the adjoint.</li>
       <li>Newton-Raphson, Tang's exp and CORDIC are standard arithmetic; the contribution is the architecture built from them.</li>
-      <li>The FPGA wins on latency, Greeks overhead and energy. Four CPU cores give 2.2× more throughput, and a CPU prices alone faster (17.2 µs).</li>
+      <li>Hand-derived analytic Greeks on one CPU core (29 µs) are faster than the FPGA (65 µs), and several cores give far more throughput. The FPGA wins on Greeks overhead (1.04 pricings against 1.9 for the best software), the per-Greek error bound and estimated energy, not on speed.</li>
       <li>Published FPGA Greeks work solves a different problem (Monte Carlo with early exercise), so no speed-up over it is claimed.</li>
     </ul>
   </div>
@@ -378,11 +379,13 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
         <tr><td>CPU, bump-and-reprice (1 core)</td><td class="num">257.6</td><td class="num">15×</td><td class="num">—</td></tr>
         <tr><td>CPU, AAD with CoDiPack (1 core)</td><td class="num">114.9</td><td class="num">6.7×</td><td class="num">23,100 on 4 cores</td></tr>
         <tr><td>CPU, forward mode (1 core)</td><td class="num">91.5</td><td class="num">5.3×</td><td class="num">33,900 on 4 cores</td></tr>
+        <tr><td>CPU, optimised bump* (1 core)</td><td class="num">158.6</td><td class="num">10.3×</td><td class="num">—</td></tr>
+        <tr><td>CPU, hand-derived analytic Greeks* (1 core)</td><td class="num">29.3</td><td class="num">1.9×</td><td class="num">41,000–94,000 on 4 cores</td></tr>
         <tr class="hi"><td>FPGA, one engine, ZedBoard 70 MHz</td><td class="num">65.3</td><td class="num">1.04×</td><td class="num">15,300</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="caption">Intel Core i5-1155G7 laptop CPU, same algorithm in C++ double precision, g++ -O3 -march=native; all methods match the reference (AAD to 1.3e-10). The FPGA is 1.4× faster than the best software method on one core and uses an estimated 16–37× less energy per evaluation (CPU power not measured; FPGA power is Vivado's estimate), but four CPU cores give 2.2× more throughput. The CPU also prices faster on its own: the FPGA's lead is entirely that its Greeks cost 1.04 pricings instead of 5–7. <span class="mono">validation/cpu_baseline/</span></p>
+  <p class="caption">Intel Core i5-1155G7 laptop CPU, same algorithm in C++ double precision, g++ -O3 -march=native; all methods match the reference (AAD to 1.3e-10). The FPGA is faster than the general methods (1.4× forward mode, 1.8× CoDiPack AAD, 3.9× bump) but 2.2× slower than hand-derived analytic Greeks on one core, which compute the derivatives of the characteristic function written out by hand (as Cui et al. 2017). It uses an estimated 6–30× less energy per evaluation (CPU power not measured; FPGA power is Vivado's estimate). The optimised bump reuses the characteristic function where the bumped input does not enter it. * Added 1 Oct, provisional (laptop under load). <span class="mono">validation/cpu_baseline/</span></p>
 </section>
 
 <!-- ============================================================ ACCURACY -->
@@ -477,6 +480,27 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 </section>
 
 <!-- ============================================================ GEN 1 -->
+<section id="hedging">
+  <header><div class="eyebrow">Application, 1 Oct</div><h2>Hedging on real NIFTY data</h2></header>
+  <p>12 trades, Sep 2025 – Sep 2026: each sells 20 lots of an at-the-money NIFTY call and hedges daily with futures until 0.10 years remain. Heston is calibrated each day to real quotes only (at least 50 contracts traded), across all monthly expiries; the model's prices were within 0.019% of the index level in a typical day (median). Hedge ratios come from the bit-accurate engine model. Profit and loss is after brokerage, STT, exchange, SEBI and stamp charges, GST, slippage and 30% tax.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Hedge (daily)</th><th class="num">Spread of P&amp;L (std)</th><th class="num">Mean</th><th class="num">Worst trade</th></tr></thead>
+      <tbody>
+        <tr><td>None</td><td class="num">₹5.55 L</td><td class="num">+₹0.74 L</td><td class="num">−₹8.99 L</td></tr>
+        <tr><td>Black-Scholes delta</td><td class="num">₹2.05 L</td><td class="num">−₹0.07 L</td><td class="num">−₹5.85 L</td></tr>
+        <tr><td>Heston delta, 56-bit engine</td><td class="num">₹2.50 L</td><td class="num">−₹0.24 L</td><td class="num">−₹6.56 L</td></tr>
+        <tr class="hi"><td>Heston minimum-variance delta (delta + ρξ/S · ∂V/∂v₀), 56-bit engine</td><td class="num better">₹1.26 L</td><td class="num">+₹0.18 L</td><td class="num better">−₹2.54 L</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="caption">The hedge using two of the engine's Greeks (delta and variance vega, produced together in one pass) left 39% less risk than Black-Scholes. Heston delta alone did worse than Black-Scholes, as expected: it ignores that index volatility rises when the price falls. With 12 trades this is a case study, not a statistical result (bootstrap ≈ 88%). 48-bit deltas traded exactly the same futures lots as 56-bit. Charge rates are settings still to be checked with a broker. <span class="mono">validation/hedging/</span></p>
+  <div class="figs">
+    <figure class="wide"><div class="plate"><img src="validation/hedging/results/figures/hedge_risk_by_strategy.png" alt="Bar chart of P&amp;L spread by hedging strategy; the minimum-variance Heston hedge is lowest"></div><figcaption><b>Risk left after each hedge</b>Lower is better.</figcaption></figure>
+    <figure class="wide"><div class="plate"><img src="validation/hedging/results/figures/hedge_pnl_per_trade.png" alt="P&amp;L of each of 12 trades for four hedging strategies"></div><figcaption><b>Each trade's profit or loss</b>After all charges and tax.</figcaption></figure>
+  </div>
+</section>
+
 <section id="gen1">
   <header><div class="eyebrow">Earlier results</div><h2>Generation 1: the hand-written FSM engine</h2><p class="muted">The first engine, 64-bit fixed point (Q32.32), established the error model and the bump-and-reprice comparison that generation 2 inherited.</p></header>
   <div class="figs">
@@ -507,7 +531,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   <div class="steps">
     <div class="step"><div><div class="t">Rebuild the ZedBoard bitstream and repeat the 50-case sweep</div><p>Brings the silicon result up to the current design. Scripts, vectors and the report are ready: about 40 minutes of build and 1 minute on the board.</p></div><span class="pill warn">Ready, needs the board</span></div>
     
-    <div class="step"><div><div class="t">Time a CPU software-AAD baseline</div><p>Done 30 Sep: the FPGA wins latency (1.4–1.8×), Greeks overhead (1.04× vs 5.3–6.7×) and estimated energy (16–37×); four CPU cores win throughput (2.2×). Frame the paper on latency, overhead and energy.</p></div><span class="pill good">Done</span></div>
+    <div class="step"><div><div class="t">Time a CPU software-AAD baseline</div><p>Done 30 Sep and 1 Oct. Hand-derived analytic Greeks on one CPU core (29 µs) beat the FPGA (65 µs); the FPGA beats AD tools and bumping. Frame the paper on Greeks overhead (1.04× vs 1.9× best software), the error bound and energy, not latency. Re-time on an idle laptop.</p></div><span class="pill good">Done</span></div>
     <div class="step"><div><div class="t">Derive the adjoint automatically</div><p>Make the generator produce the reverse sweep from the forward graph, so the tool is a compiler for fixed-point AAD datapaths and a second model costs little.</p></div><span class="pill warn">Next</span></div>
     <div class="step"><div><div class="t">Repeat the literature search before submission</div><p>Done once (docs/novelty_assessment.md). Repeat in Google Scholar, IEEE Xplore and the ACM Digital Library in the final month, and ask the guide about recent FPT, FPL, FCCM and HEART papers.</p></div><span class="pill info">Done once, repeat</span></div>
     <div class="step"><div><div class="t">Close timing at 100 MHz</div><p>Use the DSP blocks' internal output registers (Vivado's 56 suggestions) and pipeline the 64-bit carry chains. Cycle counts change; bit-exactness does not.</p></div><span class="pill crit">Open</span></div>
