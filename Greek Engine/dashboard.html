@@ -189,6 +189,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   <a href="#work">Work done</a>
   <a href="#latency">Speed</a>
   <a href="#accuracy">Accuracy</a>
+  <a href="#sweep">10,500-input sweep</a>
   <a href="#parity">Put-call parity</a>
   <a href="#hardware">Vivado results</a>
   <a href="#silicon">On the board</a>
@@ -225,7 +226,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       <li><b>The COS method on an FPGA, for the first time.</b> COS pricing had run on CPUs and GPUs only; the only FPGA Fourier pricer (AMD) uses trapezoidal integration and returns the price alone.</li>
       <li><b>A tape-free adjoint datapath.</b> Software AAD records a tape and replays it. Here the reverse sweep is compiled into a statically scheduled fixed-point datapath that shares its arithmetic units with the forward pass, because the COS pricer runs the same operations for every input.</li>
       <li><b>Nine Greeks for 1.04× the cost of the price.</b> 4,733 cycles against 4,568 for the price alone. On the measured CPU, hand-derived Greeks cost 1.9×, AD tools 5.3–6.7×, and bump-and-reprice 19×.</li>
-      <li><b>A guaranteed error bound for every Greek of a fixed-point adjoint datapath.</b> Measured error never exceeds 0.103 of the bound over 21 cases, and 0.268 over 50 random cases on silicon.</li>
+      <li><b>A guaranteed error bound for every Greek of a fixed-point adjoint datapath.</b> Measured error never exceeds 0.103 of the bound over 21 cases, 0.378 over 10,500 inputs including hard regimes, and 0.268 over 50 random cases on silicon.</li>
       <li><b>Bit-exact Greeks on silicon.</b> 450 of 450 results identical to the model on a ZedBoard, 50 random cases back to back.</li>
       <li><b>A fair baseline.</b> Against bump-and-reprice on identical hardware: 18.4× fewer cycles and 32–560× more accurate than the best bump size for each Greek.</li>
     </ol>
@@ -244,7 +245,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
         <tr class="hi"><td>Energy per evaluation</td><td class="num">≈ 22 µJ</td><td>CPU (analytic) ≈ 0.13–0.68 mJ</td><td class="better">≈ 6–30× less</td><td><span class="pill warn">Estimate</span></td></tr>
         <tr><td>Throughput</td><td class="num">15,300 / s (one engine)</td><td>Four CPU cores, analytic: 41,000–94,000 / s*</td><td style="color:var(--crit);font-weight:600">CPU 3–6× higher</td><td><span class="pill info">CPU</span></td></tr>
         <tr class="hi"><td>Accuracy vs double precision (21 cases)</td><td class="num">price 6.1e-7<br>Greeks ≤ 1.2e-5</td><td>Relative error, Zynq-7020 design</td><td>—</td><td><span class="pill info">Simulation</span></td></tr>
-        <tr><td>Guaranteed error bound</td><td class="num">≤ 0.103 of bound</td><td>Worst measured error ÷ bound, every output, 21 cases (0.268 on the 50-case board sweep)</td><td class="better">Never violated</td><td><span class="pill info">Simulation</span> <span class="pill good">Silicon</span></td></tr>
+        <tr><td>Guaranteed error bound</td><td class="num">≤ 0.103 of bound</td><td>Worst measured error ÷ bound, every output, 21 cases (0.378 over 10,500 inputs; 0.268 on the 50-case board sweep)</td><td class="better">Never violated</td><td><span class="pill info">Simulation</span> <span class="pill good">Silicon</span></td></tr>
         <tr><td>Accuracy vs bump-and-reprice</td><td class="num">32–560× more accurate</td><td>Best bump size chosen in hindsight for each Greek (median 145×), base case, same pricer</td><td class="better">No bump size to tune</td><td><span class="pill info">Simulation</span></td></tr>
         <tr><td>Call pricing accuracy</td><td class="num">3.1e-5</td><td>Before put-call parity: 2.3e-3 (worst of 22 calls, vs integral reference)</td><td class="better">75× smaller</td><td><span class="pill info">Simulation</span></td></tr>
         <tr class="hi"><td>Correct on silicon</td><td class="num">450 / 450 bit-exact</td><td>50 random cases back to back, ZedBoard, no range errors</td><td class="better">Matches the model exactly</td><td><span class="pill good">Silicon</span></td></tr>
@@ -420,6 +421,21 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 </section>
 
 <!-- ============================================================ PARITY -->
+<section id="sweep">
+  <header><div class="eyebrow">Validation, 1 Oct</div><h2>10,500-input sweep</h2></header>
+  <p>The 56-bit design on 6,000 uniform in-domain inputs, 500 in each of seven hard regimes (Feller violated, ρ near its limits, deep strikes, very short and long T, high ξ, very low variance) and 1,000 with one input outside the domain. Each case: bit-accurate model, error bound, reference, and the range check that raises <span class="mono">range_err</span>.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Absolute error, 8,992 unflagged in-domain inputs</th><th class="num">Median</th><th class="num">99th pct.</th><th class="num">Worst</th></tr></thead>
+    <tbody>
+      <tr><td>Price</td><td class="num">3.4e-7</td><td class="num">1.6e-5</td><td class="num">6.2e-5</td></tr>
+      <tr><td>Delta</td><td class="num">3.4e-9</td><td class="num">1.3e-7</td><td class="num">2.1e-6</td></tr>
+      <tr><td>Vega</td><td class="num">2.7e-7</td><td class="num">1.5e-5</td><td class="num">2.9e-4</td></tr>
+      <tr><td>∂V/∂θ</td><td class="num">1.9e-6</td><td class="num">1.1e-4</td><td class="num">3.2e-4</td></tr>
+      <tr><td>∂V/∂ξ</td><td class="num">6.4e-7</td><td class="num">2.4e-4</td><td class="num">1.2e-3</td></tr>
+    </tbody></table></div>
+  <p class="caption"><b>The bound held in all 9,911 unflagged cases</b>, inside and outside the domain (worst 0.378 of the bound), no overflow. The worst case (ξ = 0.105, T = 0.17, large κθ) has ∂V/∂ξ off by 0.2%, all fixed-point rounding, inside its bound. Found: range_err also fires on 2.2% of uniform in-domain inputs and 55% of very-low-variance ones (ranges fitted on 150 samples); refit before the next bitstream. <span class="mono">validation/run_domain_sweep.py</span></p>
+</section>
+
 <section id="parity">
   <header><div class="eyebrow">Improvement found on 29 Sep</div><h2>Calls through put-call parity</h2></header>
   <p>The 50-case board sweep showed calls carrying about 180× the rounding error of puts. A call's COS coefficients contain e<sup>b</sup>, which grows large over a wide truncation range and then cancels. The design now always computes the put and adds S₀ − K·e<sup>−rT</sup> and its derivatives on the host. Measured on the 22 calls of the sweep, against the independent Fourier-integral price:</p>

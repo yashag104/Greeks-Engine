@@ -23,8 +23,9 @@ and its text searched; where only an abstract was reachable it says so.
    the price alone on the same hardware; software AAD costs 5.3–6.7× on the
    measured CPU (`architecture.md` §4.6) and bump-and-reprice 19×.
 5. **A guaranteed error bound for every Greek of a fixed-point adjoint datapath.**
-   Measured error never exceeds 0.103 of the bound over 21 cases, and 0.268 over 50
-   random cases on silicon.
+   Measured error never exceeds 0.103 of the bound over 21 cases, 0.378 over 10,500
+   inputs including hard regimes (every unflagged result), and 0.268 over 50 random
+   cases on silicon.
 6. **Bit-exact Greeks on silicon.** 450 of 450 results identical to the model on a
    ZedBoard (Zynq-7020), 50 random cases back to back.
 7. **Bump-and-reprice on identical hardware:** 18.4× more cycles, and 32–560× less

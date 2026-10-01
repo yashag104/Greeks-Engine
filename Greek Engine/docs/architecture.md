@@ -116,6 +116,32 @@ Against bump-and-reprice on the same pricer and word length, sweeping h from 1e-
 to 1e-1, AAD is more accurate than the best h for every Greek
 (`fig10_gen_bump_vs_aad`). `fig11_gen_accuracy`.
 
+**Large sweep (1 Oct 2026, `validation/run_domain_sweep.py`).** 10,500 cases on the
+56-bit design: 6,000 uniform over the verified domain, 500 each in seven hard
+regimes (Feller condition violated, ρ near its limits, deep strikes, T ≤ 0.15,
+T ≥ 2.5, ξ ≥ 0.8, v0 and θ ≤ 0.01) and 1,000 with one input outside the domain.
+Each case runs the bit-accurate model, the error bound and the COS reference, and
+checks every variable shift against the ranges the RTL was built for (= range_err).
+`results/domain_sweep.csv`, `domain_sweep_summary.csv`.
+
+- **The bound held in every case.** Of 9,911 unflagged results (8,992 in the
+  domain, 919 outside it), none exceeded its bound; the worst was 0.378 of it. No overflow, no failed evaluation. Outside the
+  domain, every result was either flagged or within its bound.
+- **Absolute error, 8,992 unflagged in-domain cases** (median / 99th percentile /
+  worst): price 3.4e-7 / 1.6e-5 / 6.2e-5; delta 3.4e-9 / 1.3e-7 / 2.1e-6;
+  vega 2.7e-7 / 1.5e-5 / 2.9e-4; ∂V/∂θ 1.9e-6 / 1.1e-4 / 3.2e-4; ∂V/∂ξ
+  6.4e-7 / 2.4e-4 / 1.2e-3. The 21-case grid above understates the tail: the worst
+  case (K = 115.8, T = 0.17, κ = 4.95, θ = 0.244, ξ = 0.105) has ∂V/∂ξ wrong by
+  1.2e-3 on a value of −0.563 (0.2%), all of it fixed-point rounding (the
+  double-precision algorithm agrees with the reference to 3e-6) and inside its
+  bound of 8.8e-3. Small ξ with large κθ/ξ² is the weak corner of 56 bits.
+- **range_err fires inside the domain.** 130 of 6,000 uniform cases (2.2%) and 277
+  of 500 low-variance cases (55%) were flagged, mostly at long T, small v0 or θ,
+  large κ and large ξ. The shift ranges were fitted on 150 samples plus a margin of
+  3; flagged results are safe (the hardware reports them) but unusable. Refitting
+  the ranges over this sweep, before the parity bitstream is rebuilt, would remove
+  most of these at a small LUT cost.
+
 ### 4.3 Area (Yosys `synth_xilinx`, generic mapping)
 
 | design | target | LUT | + SRL (LUT-based) | FF | DSP | fits? |

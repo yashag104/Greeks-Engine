@@ -162,8 +162,8 @@ laptop CPU.
   4,733. On the measured CPU, Greeks derived by hand cost 1.9 pricings, AD tools
   5.3--6.7, and bump-and-reprice 19.
   \item \textbf{A guaranteed error bound for every Greek of a fixed-point adjoint
-  datapath.} Measured error never exceeds 0.103 of the bound over 21 test cases, and
-  the bound held on silicon.
+  datapath.} Measured error never exceeds 0.103 of the bound over 21 test cases, 0.378
+  over 10,500 inputs including hard regimes, and the bound held on silicon.
   \item \textbf{Bit-exact Greeks on silicon.} On a ZedBoard (Zynq-7020), 450 of 450
   results from 50 random cases matched the model bit for bit.
 \end{enumerate}
@@ -337,8 +337,8 @@ Cycles, price + 9 Greeks & 4,733 & 92$\times$ fewer than the first-generation en
 Cost of the 9 Greeks & 1.04 pricings & hand-derived software 1.9; AD tools 5.3--6.7; bump-and-reprice 19\\
 Latency on the ZedBoard (loop only) & 65.3\,$\mu$s (57.8\,$\mu$s at 79\,MHz) & 1.4--3.9$\times$ faster than AD tools and bumping on one CPU core; 2.2$\times$ slower than hand-derived Greeks (29\,$\mu$s)\\
 Energy per evaluation & 22.3\,$\mu$J & about 6--30$\times$ less than the CPU (CPU power estimated)\\
-Accuracy (21 cases) & price $6.1\times10^{-7}$, Greeks $\le 1.2\times10^{-5}$ & relative to double precision\\
-Error bound & never exceeded ($\le 0.103$) & every output, every case\\
+Accuracy (21 cases) & price $6.1\times10^{-7}$, Greeks $\le 1.2\times10^{-5}$ & relative to double precision; over 10,500 inputs worst absolute $1.2\times10^{-3}$ ($\partial V/\partial\xi$)\\
+Error bound & never exceeded ($\le 0.378$) & every output, 10,500 inputs\\
 On silicon & 450 / 450 bit-exact & 50 random cases\\
 Area & 72\% LUT, 72 of 220 DSP & fits a Zynq-7020; the first generation did not\\
 \bottomrule
@@ -451,6 +451,44 @@ measured error as a fraction of the guaranteed bound, across both designs.}
 \includegraphics[width=\textwidth]{figures/fig11_gen_accuracy.png}
 \caption{Relative error of every output for both designs over the 21 parameter sets.}
 \end{figure}
+
+A larger sweep tested the 56-bit design on 10,500 inputs: 6,000 uniform over the verified
+domain, 500 in each of seven hard regimes (Feller condition violated, correlation near its
+limits, deep strikes, very short and long maturities, high vol-of-vol, very low variance)
+and 1,000 with one input outside the domain. Each case runs the bit-accurate model, the
+error bound, the reference, and the same range check that raises the hardware's
+\texttt{range\_err} flag.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Output (absolute error)} & \textbf{Median} & \textbf{99th percentile} & \textbf{Worst}\\
+\midrule
+Price & $3.4\times10^{-7}$ & $1.6\times10^{-5}$ & $6.2\times10^{-5}$\\
+Delta & $3.4\times10^{-9}$ & $1.3\times10^{-7}$ & $2.1\times10^{-6}$\\
+Vega $\partial V/\partial v_0$ & $2.7\times10^{-7}$ & $1.5\times10^{-5}$ & $2.9\times10^{-4}$\\
+$\partial V/\partial\theta$ & $1.9\times10^{-6}$ & $1.1\times10^{-4}$ & $3.2\times10^{-4}$\\
+$\partial V/\partial\xi$ & $6.4\times10^{-7}$ & $2.4\times10^{-4}$ & $1.2\times10^{-3}$\\
+\bottomrule
+\end{tabular}
+\caption{56-bit design, 8,992 in-domain inputs not flagged by \texttt{range\_err}.}
+\end{table}
+
+No result exceeded its error bound in any of the 9,911 unflagged cases, inside or outside
+the domain (worst 0.378 of the bound), with no overflow. The 21-case grid understates
+the tail: the worst case, a short-maturity option with small vol-of-vol ($\xi=0.105$) and
+large $\kappa\theta$, has $\partial V/\partial\xi$ wrong by $1.2\times10^{-3}$ on a value of
+$-0.563$ (0.2\%), all of it fixed-point rounding and inside its bound of
+$8.8\times10^{-3}$. Two limits were found: \texttt{range\_err} also fires on 2.2\% of
+uniform in-domain inputs and 55\% of very-low-variance ones, because the shift ranges
+were fitted on only 150 samples; and small $\xi$ is the weak corner of 56 bits.
+
+\useful{The error bound is reliable over ten thousand inputs, including the hard regimes:
+every result the hardware does not flag is within its computed bound, so a user knows
+each Greek's accuracy before using it. The sweep also shows exactly what to fix: refit
+the shift ranges on a larger sample before the next bitstream.}
 
 \useful{Every Greek is accurate to at least five significant figures, and each
 comes with a bound computed in 0.1\,s per parameter set that the hardware error
@@ -793,9 +831,10 @@ Figure~\ref{fig:gantt}).
 30 Sep -- 1 Oct & CPU comparison; results dashboard and report & Done\\
 1 Oct & Hand-derived analytic and optimised bump CPU baselines; strike-chain design study (\S\ref{sec:chain}) & Done\\
 \midrule
-1--3 Oct & Rebuild the ZedBoard bitstream with put-call parity; repeat the 50-case sweep & Next\\
+3--5 Oct & Rebuild the ZedBoard bitstream with put-call parity and refitted ranges; repeat the 50-case sweep & Next\\
 1--13 Oct & Hedging case study on real NIFTY data (first results, \S\ref{sec:hedging}); next: verify charges with a broker, more trades & In progress\\
-2--5 Oct & Validation sweep over $10^5$ inputs including hard regimes; latency accounting (host steps, configurations); CPU timings on an idle machine & Planned\\
+1 Oct & Validation sweep over 10,500 inputs including hard regimes; latency accounting (host steps, configurations) & Done\\
+2--5 Oct & Refit the shift ranges on the sweep; CPU timings on an idle machine & Next\\
 6--12 Oct & Power from simulated switching activity, a board power measurement, and CPU package power, for energy per Greek set on both sides & Planned\\
 
 13--15 Oct & Freeze results; regenerate all figures and tables & Planned\\
