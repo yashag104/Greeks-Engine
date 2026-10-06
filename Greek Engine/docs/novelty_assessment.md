@@ -22,8 +22,16 @@ reachable it says so.
    COS pricer runs the same operations for every input.
 4. **Nine Greeks for 1.04× the cost of the price.** 4,733 cycles against 4,568 for
    the price alone on the same hardware; software AAD costs 5.3–6.7× on the
-   measured CPU (`architecture.md` §4.6) and bump-and-reprice 19×.
-5. **A guaranteed error bound for every Greek of a fixed-point adjoint datapath.**
+   measured CPU (`architecture.md` §4.6) and bump-and-reprice 19×. The 1.04× is
+   reached because the CORDIC units set the pace and the reverse sweep fills idle
+   multiplier slots; forward-mode datapaths from the same generator (6 Oct 2026,
+   `validation/run_mode_baselines.py`) reach the same pace only with more
+   multipliers. Per COS term: adjoint 250 multiplies, best hand-factored analytic
+   313 (+25%), forward-mode AD style 802 (3.2×). With 8 multipliers on the
+   Zynq-7020: 4,731 / 5,622 / 13,597 cycles; with 16 every variant but the dense one
+   is CORDIC-bound (about 4,570). State the claim as fewer multipliers (DSP blocks)
+   for the same speed, not as a unique 1.04×.
+5. **A first-order rounding-error bound for every Greek of a fixed-point adjoint datapath.**
    Measured error never exceeds 0.103 of the bound over 21 cases, 0.378 over 10,500
    inputs including hard regimes (every unflagged result), and 0.199 over 50 random
    cases on silicon (6 Oct 2026 bitstream; 0.268 on the earlier one).
@@ -169,7 +177,7 @@ nothing that does adjoint Greeks or COS on an FPGA.
 
 1. **"Backpropagation accelerators already do reverse mode in hardware."** Yes.
    Answer with what differs: a fixed-point, transcendental-heavy, complex-valued
-   pricing graph (complex log, exp, square root and division, CORDIC), a guaranteed
+   pricing graph (complex log, exp, square root and division, CORDIC), a first-order
    per-output error bound, and a financial workload whose alternative is
    bump-and-reprice. Cite a training accelerator to show awareness.
 2. **"Heston Greeks have an analytic form; why AAD?"** Cui et al. (2017) derive the
@@ -179,7 +187,7 @@ nothing that does adjoint Greeks or COS on an FPGA.
    hardware adjoint is also hand-written (point 4), so "AAD derives it
    mechanically" is only true once the generator derives the reverse sweep. The
    honest answer today: the hardware result is the cost, 1.04 pricings for all
-   Greeks with a guaranteed bound on each, against 1.9 for the best hand-written
+   Greeks with a first-order rounding-error bound on each, against 1.9 for the best hand-written
    software; and the IR adjoint is a general reverse-mode construction that a later
    generator can produce automatically, while the analytic form is specific to
    this characteristic function.

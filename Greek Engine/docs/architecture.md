@@ -137,6 +137,14 @@ checks every variable shift against the ranges the RTL was built for (= range_er
   1.3e-3 on −1.42 (0.09%), is at K = 138.6, ξ = 0.11. Both are fixed-point
   rounding (the double-precision algorithm agrees with the reference to 6e-6) and
   inside their bounds (8.8e-3, 9.9e-3). Small ξ is the weak corner of 56 bits.
+- **Held-out sweep (6 Oct 2026, seed 20261006, `run_domain_sweep.py --heldout`).**
+  The 1 Oct refit was prompted by the sweep above, so it was re-tested on fresh
+  inputs: 9,500 in-domain, none flagged, none over its bound (worst 0.356); 1,000
+  outside, 9 flagged, every other one within its bound. Significant figures against
+  double precision (`sigfig_report.py`; Greeks within 1% of zero excluded), median /
+  99th percentile / worst: price, delta, strike, theta, rho and vega 7.6–8.1 /
+  5.3–5.9 / 3.3–4.4; ∂V/∂θ, ∂V/∂ρ 7.0–7.2 / 4.9 / 3.5–3.7; ∂V/∂κ 6.0 / 3.5 / 2.2;
+  ∂V/∂ξ 5.9 / 3.0 / 1.4 (where it is small, as relative error grows).
 - **range_err: fixed false alarms.** The first pass flagged 2.2% of uniform and 55%
   of very-low-variance inputs, but its check was stricter than the RTL (the RTL
   clamps shifts beyond the word width, where the rounded result is exactly 0, and
@@ -306,6 +314,43 @@ idle): 1 strike 40.3 µs, 4 strikes 56.2 µs (14.0 per strike), 8 strikes 68.0 �
   shared; and the honest conclusion that against a CPU running the best known
   algorithm, the FPGA's case is not speed. Energy per strike, measured on both
   sides, is the remaining comparison worth making.
+
+### 4.8 Adjoint against forward mode (6 Oct 2026)
+
+`hardware/gen/tangent.py` builds forward-mode (tangent) datapaths from the same
+primitives as the adjoint, with the same frozen [a, b], hoisting and finish, and
+`validation/run_mode_baselines.py` schedules them with the same scheduler
+(`results/mode_baselines.csv`). All agree with the adjoint to 6e-14 in double
+precision. Their tangents have no fixed-point rescaling, so their costs are lower
+bounds.
+
+| datapath | multiplies per term | z7, 8 mult. | z7, 16 mult. | zu, 32 mult. | multipliers to reach II 32 (z7) |
+|---|---|---|---|---|---|
+| price only | 126 | 4,566 | 4,561 | 1,024 | 4 |
+| **adjoint** | **250** | **4,731** | 4,619 | **1,591** | **8** |
+| forward, factored (hand-derived analytic) | 313 | 5,622 | 4,571 | 1,795 | 10 |
+| forward, sparse (structural zeros skipped) | 396 | 6,968 | 4,571 | 2,171 | 13 |
+| forward, dense (as an AD tool) | 802 | 13,597 | 7,150 | 3,822 | 26 |
+
+The 1.04× is not unique to the adjoint: with 16 multipliers the CORDIC units set the
+pace for every variant but the dense one. What the adjoint saves is multipliers for
+the same pace: 8 against 10 (factored) and 26 (dense; 234 DSP, more than the
+Zynq-7020 has).
+
+### 4.9 What the error bound covers (6 Oct 2026)
+
+- **First order, rounding only.** The bound drops products of rounding errors and
+  measures against the same algorithm computed exactly. `validation/run_mp_check.py`
+  evaluates the unrolled graph in 50-digit arithmetic on 100 held-out inputs: the
+  hardware's error against it is at most 0.24 of the bound (identical to three
+  decimals to the error against double), and double is within 5e-5 of the bound from
+  the 50-digit value.
+- **COS truncation is a separate term.** `validation/run_method_error.py` compares
+  COS (128 terms, double) with the Fourier integral on the 50 board cases: median
+  error about 1e-9, worst 4.4e-5 (price) and 7.8e-3 (vega). Of the five worst cases,
+  three need more terms (256 matches the integral; high xi, short T) and two a wider
+  range (1.5x matches; deep out-of-the-money put). Total error against the Heston
+  model is at most the rounding bound plus this method error.
 
 ## 5. Limitations and open items
 
