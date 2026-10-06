@@ -78,16 +78,18 @@ pricings for nine Greeks. This project builds adjoint (reverse-mode)
 differentiation as a hardware datapath. The Heston price, computed by the COS
 Fourier-cosine method, and its adjoint are written once as an operation graph; a
 generator turns it into a fixed-point, resource-shared, modulo-scheduled Verilog
-engine, together with a bit-accurate model and a guaranteed error bound for every
-output. The engine returns the price and all nine Greeks in 4,733 clock cycles,
+engine, together with a bit-accurate model and a first-order bound on the rounding
+error of every output. The engine returns the price and all nine Greeks in 4,733 clock cycles,
 only 1.04 times the cost of the price alone and 18.4 times fewer cycles than
 bump-and-reprice on the same hardware. It fits a Zynq-7020 FPGA; with setup and finish
 on the host, its loop takes 65.3\,$\mu$s per evaluation on a ZedBoard and produced
 results bit-identical to the model on 50 random cases in silicon. Hand-derived
 analytic Greeks on one laptop CPU core are faster (about 29\,$\mu$s); the engine's
-gains are the cost of its Greeks and a guaranteed bound on each. In a case study hedging 12 short NIFTY
-call trades on a year of real market data, a hedge built from two of the engine's
-Greeks (delta and variance vega) left 39\% less risk than a Black--Scholes hedge.
+gains are the cost of its Greeks and a rounding-error bound on each. Forward-mode
+datapaths built by the same generator need more multipliers for the same Greeks: 25\%
+more when hand-factored like analytic Greeks, 3.2 times more as an AD tool would
+build them. A small case study on a year of real NIFTY option data illustrates the
+Greeks in use for hedging.
 \end{abstract}
 
 \tableofcontents
@@ -133,7 +135,9 @@ A generator, written for this project, produces from that single description:
 \begin{itemize}
   \item a bit-accurate fixed-point model of the hardware (the golden reference);
   \item a double-precision model of the same algorithm;
-  \item a guaranteed first-order error bound for the price and each Greek;
+  \item a first-order bound on the rounding error of the price and each Greek (the
+  COS method's own truncation error is a separate term, reported in
+  Section~\ref{sec:methoderr});
   \item a modulo-scheduled Verilog datapath that shares a small number of
   multipliers and CORDIC units across all operations.
 \end{itemize}
@@ -161,8 +165,8 @@ laptop CPU.
   hardware the price alone takes 4,568 cycles and the price with all nine Greeks
   4,733. On the measured CPU, Greeks derived by hand cost 1.9 pricings, AD tools
   5.3--6.7, and bump-and-reprice 19.
-  \item \textbf{A guaranteed error bound for every Greek of a fixed-point adjoint
-  datapath.} Measured error never exceeds 0.103 of the bound over 21 test cases, 0.378
+  \item \textbf{A first-order rounding-error bound for every Greek of a fixed-point
+  adjoint datapath.} Measured error never exceeds 0.103 of the bound over 21 test cases, 0.378
   over 10,500 inputs including hard regimes, and the bound held on silicon.
   \item \textbf{Bit-exact Greeks on silicon.} On a ZedBoard (Zynq-7020), 450 of 450
   results from 50 random cases matched the model bit for bit.
@@ -380,8 +384,10 @@ prices, instead of 18.4 times less often under bump-and-reprice.}
 \novel{No hardware had computed Greeks by adjoint differentiation before, so no
 hardware had shown this cost. Software adjoint differentiation costs 5.3--6.7
 pricings because of its tape; here the reverse sweep fills idle multiplier slots
-left by the CORDIC-bound forward pass. On the 64-bit design, where multipliers are
-the bottleneck, the cost is 1.55 pricings, which is still well below software.}
+left by the CORDIC-bound forward pass. A forward-mode sweep could fill them too, but
+needs more multiplies (Section~\ref{sec:modes}). On the 64-bit design, where
+multipliers are the bottleneck, the cost is 1.55 pricings, which is still well below
+software.}
 
 \subsection{Design space: cycles against hardware size}
 \begin{table}[H]
@@ -420,7 +426,54 @@ for a large FPGA from one parameter. Cycles halve as multipliers double until an
 resource sets the pace; at 8 multipliers on the Zynq-7020 design the CORDIC units do,
 so a 16th multiplier gains only 2\%. The table shows where extra hardware stops paying.}
 
-\subsection{Accuracy and the guaranteed error bound}
+\subsection{Adjoint against forward mode on the same hardware}
+\label{sec:modes}
+The reverse sweep is not the only way to get all nine Greeks in one evaluation. Three
+forward-mode (tangent) datapaths were built by the same generator, from the same
+primitives, with the same frozen truncation range, hoisting and finish, and scheduled by
+the same scheduler: \emph{dense}, which carries all eight input directions through every
+operation as a vector forward-mode AD tool does; \emph{sparse}, which skips derivatives
+that are structurally zero; and \emph{factored}, which forms the derivatives of the
+characteristic-function exponent with respect to its two complex inner quantities and
+the maturity once per term and combines them for each Greek, as a careful hand
+derivation of analytic Greeks does (Cui et al.~\cite{cui}). All three return the same
+price and Greeks as the adjoint datapath to within $6\times10^{-14}$ in double
+precision.
+
+\begin{table}[H]
+\centering
+\small
+\resizebox{\textwidth}{!}{\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+& & \multicolumn{2}{c}{\textbf{Zynq-7020 (56-bit)}} & \multicolumn{2}{c}{\textbf{64-bit}}\\
+\textbf{Datapath} & \textbf{Multiplies per term} & \textbf{8 mult.} & \textbf{16 mult.} & \textbf{16 mult.} & \textbf{32 mult.}\\
+\midrule
+Price only & 126 & 4,566 & 4,561 & 1,538 & 1,024\\
+\hi Adjoint (this work) & \textbf{250} & \textbf{4,731} & 4,619 & \textbf{2,612} & \textbf{1,591}\\
+Forward, factored (analytic) & 313 & 5,622 & 4,571 & 3,069 & 1,795\\
+Forward, sparse & 396 & 6,968 & 4,571 & 3,690 & 2,171\\
+Forward, dense (AD tool) & 802 & 13,597 & 7,150 & 7,155 & 3,822\\
+\bottomrule
+\end{tabular}}
+\caption{Multiplies per COS term and cycles per evaluation for the price and nine
+Greeks, by datapath and number of shared multipliers
+(\texttt{validation/run\_mode\_baselines.py}). The forward datapaths have no
+fixed-point rescaling of their tangents, which a working engine would need, so their
+counts are lower bounds.}
+\label{tab:modes}
+\end{table}
+
+\useful{For the same Greeks, the adjoint needs the fewest multiplies: 124 per term
+beyond the price, against 187 for the best hand-factored forward method and 676 for
+forward mode as an AD tool builds it. With the board's 8 multipliers that is 4,731
+cycles against 5,622 and 13,597. The 1.04 pricings of Table~\ref{tab:cycles} are not
+unique to the adjoint: with 16 multipliers the CORDIC units set the pace for every
+variant except the dense one, and all reach about 4,570 cycles. What the adjoint saves
+is hardware: it reaches that pace with 8 multipliers (72 DSP blocks), where the
+factored forward method needs 10 (90) and the dense one 26 (234, more than the chip
+has).}
+
+\subsection{Accuracy and the first-order error bound}
 \begin{table}[H]
 \centering
 \small
@@ -442,7 +495,7 @@ $\partial V/\partial\rho$ & $1.2\times10^{-5}$ & $7.4\times10^{-7}$ & 0.087\\
 \end{tabular}
 \caption{Worst relative error over 21 parameter sets (moneyness, maturity, vol-of-vol,
 correlation; calls and puts) against the double-precision model, and the largest
-measured error as a fraction of the guaranteed bound, across both designs.}
+measured error as a fraction of the first-order bound, across both designs.}
 \label{tab:acc}
 \end{table}
 
@@ -480,25 +533,89 @@ No result exceeded its error bound in any of the 10,482 unflagged cases, inside 
 outside the domain (worst 0.378 of the bound), with no overflow; the 18 flagged inputs
 were all outside the domain. The 21-case grid understates the tail: at small vol-of-vol
 ($\xi\approx0.1$) with large $\kappa\theta$, $\partial V/\partial\xi$ is off by up to
-$1.3\times10^{-3}$ (at most 0.2\% relative), all of it fixed-point rounding and inside
-its bound. The sweep also exposed false alarms: \texttt{range\_err} fired on 25
+$1.3\times10^{-3}$, all of it fixed-point rounding and inside its bound. The sweep also exposed false alarms: \texttt{range\_err} fired on 25
 in-domain inputs at very low variance and very short maturity, where two normalization
 shifts went one step past their fitted range. Fitting the ranges on extra samples at
 the ten edges of the domain widened 50 of 113 shifters by 1--4 steps and removed every
 in-domain flag; all designs were regenerated and pass their bit-exact testbenches.
+Because that sweep had prompted the refit, the refitted ranges were then tested on a
+fresh, held-out sweep of the same size (seed 20261006, \texttt{run\_domain\_sweep.py
+--heldout}): none of its 9,500 in-domain inputs raised \texttt{range\_err}, none
+exceeded its bound (worst 0.356 of it), and of the 1,000 out-of-domain inputs 9 were
+flagged and every other one stayed within its bound.
 
 \useful{The error bound is reliable over ten thousand inputs, including the hard regimes:
 every result the hardware does not flag is within its computed bound, so a user knows
 each Greek's accuracy before using it, and no valid input is now rejected.}
 
-\useful{Every Greek is accurate to at least five significant figures, and each
-comes with a bound computed in 0.1\,s per parameter set that the hardware error
-never exceeds. A risk system can rely on the bound instead of on the cases that
+\useful{Against the same algorithm in double precision, over the 9,500 held-out
+in-domain inputs, the price, delta, strike sensitivity, theta, rho and vega are good to
+at least 5.3 significant figures in 99\% of inputs (median 7.6--8.1; worst 3.3--4.4).
+The model-parameter sensitivities are weaker: $\partial V/\partial\theta$ and
+$\partial V/\partial\rho$ give 4.9 figures at the 99th percentile, and
+$\partial V/\partial\kappa$ and $\partial V/\partial\xi$ only 3.5 and 3.0, falling to
+2.2 and 1.4 where they are small (\texttt{validation/sigfig\_report.py}; inputs where a
+Greek is within 1\% of zero are excluded). Each result comes with a bound computed in
+0.1\,s per parameter set that the hardware error never exceeded. A risk system can rely on the bound instead of on the cases that
 happened to be tested.}
 \novel{FPGA finance work validates fixed point by measuring error over test cases.
-Here the bound is guaranteed and covers every Greek produced by the adjoint
+Here a rounding-error bound is computed for every Greek produced by the adjoint
 datapath, because the error model includes the hardware's own reverse sweep.
 Measured error reaches at most 0.103 of the bound.}
+
+\paragraph{What the bound covers.} The bound is first order: it propagates every
+rounding error through the derivatives of the computation and drops products of
+rounding errors, which are smaller by a factor of about $2^{-28}$ at this word length.
+It covers fixed-point rounding only, measured against the same algorithm computed
+exactly; the COS method's own truncation error is a separate term
+(Section~\ref{sec:methoderr}). Two checks support dropping the second-order terms.
+First, the same graph was evaluated in 50-digit arithmetic on 100 held-out inputs
+(\texttt{validation/run\_mp\_check.py}): the hardware's error against the 50-digit value
+is at most 0.24 of the bound, the same to three decimals as against double precision,
+and double precision itself is within $5\times10^{-5}$ of the bound from the exact value.
+Second, the bound still held at 44 bits (Section~\ref{sec:wordlength}), where
+second-order terms are relatively 4,096 times larger than at 56 bits.
+
+\subsection{COS truncation error: a separate term}
+\label{sec:methoderr}
+The engine computes the COS approximation of the Heston price: 128 terms over a
+truncation range of $\pm10$ standard deviations. Its distance from the exact Heston
+value is the method's own error, which no word length removes. On the 50 board cases it
+was measured against an independent Fourier-integral reference
+(\texttt{validation/run\_method\_error.py}).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Output} & \textbf{Method error, median} & \textbf{Method error, worst} & \textbf{Rounding, worst} & \textbf{Rounding bound, worst}\\
+\midrule
+Price & $2.1\times10^{-11}$ & $4.4\times10^{-5}$ & $1.5\times10^{-5}$ & $2.8\times10^{-4}$\\
+Delta & $6.9\times10^{-10}$ & $8.3\times10^{-5}$ & $1.1\times10^{-7}$ & $1.6\times10^{-6}$\\
+Vega & $1.3\times10^{-9}$ & $7.8\times10^{-3}$ & $1.4\times10^{-5}$ & $2.0\times10^{-4}$\\
+$\partial V/\partial\theta$ & $5.6\times10^{-9}$ & $2.5\times10^{-3}$ & $7.0\times10^{-5}$ & $1.8\times10^{-3}$\\
+$\partial V/\partial\xi$ & $1.3\times10^{-9}$ & $1.8\times10^{-3}$ & $2.1\times10^{-4}$ & $4.5\times10^{-3}$\\
+\bottomrule
+\end{tabular}
+\caption{Absolute errors over the 50 board cases. Method error: COS (128 terms, double
+precision) against the Fourier integral. Rounding: the board's results against COS in
+double precision. The other outputs behave alike.}
+\label{tab:methoderr}
+\end{table}
+
+In a typical case the method error is far below the rounding error, but in a few it is
+much larger. The five worst cases have two causes. In three, 128 terms are too few (high
+volatility of volatility with short maturity: $\xi = 1$, $T = 0.34$ gives the worst vega
+error); with 256 terms COS matches the integral. In two, the truncation range is
+too narrow (a deep out-of-the-money put); a range 1.5 times wider matches the integral.
+The total error of a result against the Heston model is at most the rounding bound plus
+the method error, and only the first is bounded.
+
+\useful{Separating the two terms shows where accuracy is lost. Rounding is bounded and
+small; the method error comes from the choice of 128 terms and the range rule, which
+any implementation of this COS configuration shares, in hardware or software. Where it
+matters, more terms (256 roughly doubles the cycles) or a wider range would reduce it.}
 
 \subsection{Accuracy against bump-and-reprice}
 \begin{figure}[H]
@@ -514,6 +631,7 @@ more accurate than bump-and-reprice even with the best bump size chosen afterwar
 each Greek (median 145 times), with nothing to tune.}
 
 \subsection{Accuracy against word length}
+\label{sec:wordlength}
 \label{sec:wl}
 \begin{table}[H]
 \centering
@@ -536,8 +654,9 @@ each Greek (median 145 times), with nothing to tune.}
 
 \useful{Every four bits removed costs roughly 10--50 times in Greek accuracy. At 48 bits
 a Greek can be 1\% wrong and at 44 bits 28\% wrong, while 64 bits buys accuracy no risk
-desk needs at a higher hardware cost; 56 bits is the point where every Greek is good to
-five significant figures. The guaranteed bound held at every width, so it predicts this
+desk needs at a higher hardware cost; at 56 bits the price and the market Greeks are
+good to at least five significant figures in 99\% of inputs, and the model-parameter
+sensitivities to at least three. The first-order bound held at every width, so it predicts this
 trade-off without building each design.}
 
 \subsection{Calls through put-call parity}
@@ -655,7 +774,11 @@ FPGA engine at the routed 79\,MHz & 57.8 & 1.04$\times$ & 17,300 (1 engine)\\
 the laptop was also running another Vivado job; ratios use that run's price-only time
 (15.4\,$\mu$s); provisional until re-measured on an idle machine. FPGA rows: the term
 loop of the host-setup design (4,572 cycles), excluding the host's setup and finish
-and the register transfers; the CPU rows include everything.}
+and the register transfers; the CPU rows include everything. The CPU's own work
+outside its 128-term loop (truncation range, constants, discounting, parity) takes about
+0.1\,$\mu$s, so comparing loops only changes nothing; what the FPGA figures leave out
+is the transfer of 51 input and 10 output words over the processor bus, which has not
+been measured.}
 \end{table}
 
 The analytic method writes out by hand the derivative of the characteristic function
@@ -671,7 +794,7 @@ faster than bump-and-reprice. It is not faster than the best hand-written softwa
 analytic Greeks on one laptop core take about 29\,$\mu$s (28--37\,$\mu$s across runs),
 about 2.2 times faster than the engine, and several cores give far more throughput.
 What the engine keeps is the cost of its Greeks, 1.04 pricings against 1.9 for the best
-software and 5--7 for AD tools, a guaranteed error bound on every Greek, and energy:
+software and 5--7 for AD tools, a first-order rounding-error bound on every Greek, and energy:
 about 22.2\,$\mu$J per evaluation (0.340\,W $\times$ 65.3\,$\mu$s) against an estimated
 0.13--0.68\,mJ for the CPU at its rated 12--28\,W, 6--30 times less. The CPU's power was
 not measured, so the energy figure is an estimate.}
@@ -722,10 +845,13 @@ UltraScale+ design would at best reach parity with a four-core laptop, on an ass
 clock. The FPGA's case against a CPU is the cost and accuracy of its Greeks and,
 if measured, energy, not speed.}
 
-\subsection{Hedging on real market data}
+\subsection{Illustration: hedging on real market data}
 \label{sec:hedging}
-To see whether the engine's Greeks are worth having in practice, they were used to
-hedge real trades. Data are the NSE end-of-day futures and options files for NIFTY,
+This section illustrates the Greeks in use; it is not evidence for the hardware. The
+hedge decisions depend on the hedging formula and the calibrated model, not on how the
+Greeks are computed: they are insensitive to word length (below), and a double-precision
+CPU implementation would trade the same lots. Within that scope, the engine's Greeks
+were used to hedge real trades. Data are the NSE end-of-day futures and options files for NIFTY,
 September 2025 to September 2026 (268 trading days). Only real market prices were used:
 an option quote counts only if at least 50 contracts traded that day. Each day the
 Heston model was calibrated to these quotes across all monthly expiries at once; the
@@ -782,9 +908,11 @@ matter: deltas from 48-bit and 44-bit engines differ from the 56-bit ones by at 
 $1.7\times10^{-4}$ and $1.6\times10^{-3}$, below the resolution of whole futures lots;
 the 48-bit hedge traded exactly the same lots as the 56-bit one.
 
-\useful{The hedge that worked best uses two Greeks of the same option, delta and
-variance vega, which the engine produces together in one pass at the cost of about one
-price. For hedging, a 48-bit engine would be enough, which makes the design smaller.}
+\useful{The illustration shows a use for having all Greeks at once: the hedge that
+worked best combines two Greeks of the same option, delta and variance vega, which the
+engine produces together in one pass. Its benefit comes from the formula, not from the
+hardware, and needs more trades before it can be claimed. It also shows that for
+hedging, a 48-bit engine would be enough.}
 
 \subsection{Improvement over the first generation}
 \begin{table}[H]
@@ -837,6 +965,7 @@ Figure~\ref{fig:gantt}).
 1 Oct & Hand-derived analytic and optimised bump CPU baselines; strike-chain design study (\S\ref{sec:chain}) & Done\\
 \midrule
 5--6 Oct & ZedBoard bitstream rebuilt with put-call parity and refitted ranges; 50-case sweep repeated, 450 / 450 bit-exact & Done\\
+6 Oct & Forward-mode hardware baselines (\S\ref{sec:modes}); bound stated as first order and checked in 50-digit arithmetic; COS truncation error as a separate term (\S\ref{sec:methoderr}); held-out range sweep; claims corrected & Done\\
 1--13 Oct & Hedging case study on real NIFTY data (first results, \S\ref{sec:hedging}); next: verify charges with a broker, more trades & In progress\\
 1 Oct & Validation sweep over 10,500 inputs including hard regimes; latency accounting (host steps, configurations) & Done\\
 1 Oct & Shift ranges refitted at the domain edges; all designs regenerated and re-verified & Done\\

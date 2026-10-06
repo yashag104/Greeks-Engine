@@ -36,7 +36,7 @@ NAMES = ["price", "delta", "strike_sens", "theta_greek", "rho_greek", "vega",
 
 # FPGA reference points (docs/architecture.md): host-setup design, 4,572 cycles per
 # evaluation, one evaluation at a time.
-FPGA = {"cycles": 4572, "mhz_board": 70.0, "mhz_fmax": 79.1, "watts_board": 0.341}
+FPGA = {"cycles": 4572, "mhz_board": 70.0, "mhz_fmax": 79.1, "watts_board": 0.340}
 
 
 def build():
@@ -58,6 +58,8 @@ def check():
     for line in out.splitlines():
         f = line.split()
         m, vals = f[0], [float(x) for x in f[1:]]
+        if m == "steps":                       # not a pricing method: timing only
+            continue
         n = 1 if m == "price" else 10
         worst[m] = max(abs(vals[i] - want[i]) / max(abs(want[i]), 1e-12) for i in range(n))
     return worst
@@ -117,6 +119,15 @@ def main():
     for m in METHODS:
         print("  %-8s %8.2f%s" % (m, lat[m], "   (price only)" if m == "price" else ""))
     print("  FPGA    %8.2f   (ZedBoard, 70 MHz)   %.2f at the routed 79.1 MHz" % (fpga_board, fpga_fmax))
+    # equal scope: the FPGA figure is the 128-term loop only; the CPU figures are whole
+    # evaluations. 'steps' times the CPU's work outside its loop (truncation range,
+    # constants, discounting, parity), which is what the FPGA's host steps do.
+    loop_cpu = lat["analytic"] - lat["steps"]
+    print("\nEqual scope (analytic vs FPGA):")
+    print("  work outside the loop, CPU      %8.2f" % lat["steps"])
+    print("  loop only: CPU %8.2f   FPGA %8.2f (70 MHz)" % (loop_cpu, fpga_board))
+    print("  whole evaluation: CPU %8.2f   FPGA %8.2f + register transfers (70 MHz, host steps on this CPU)"
+          % (lat["analytic"], fpga_board + lat["steps"]))
     ch = chain()
     print("\nStrike chains, analytic, one core (microseconds per chain, per strike):")
     for M in (1, 4, 8, 16, 32):
@@ -138,6 +149,9 @@ def main():
         for m in METHODS:
             w.writerow([m, "%.3f" % lat[m], "%.1e" % worst[m], "%.1e" % agr[m] if m in agr else ""])
         w.writerow(["fpga_70MHz", "%.3f" % fpga_board, ""]); w.writerow(["fpga_79.1MHz", "%.3f" % fpga_fmax, ""])
+        w.writerow(["steps_outside_loop", "%.3f" % lat["steps"], ""])
+        w.writerow(["analytic_loop_only", "%.3f" % (lat["analytic"] - lat["steps"]), ""])
+        w.writerow(["fpga_70MHz_plus_host_steps", "%.3f" % (fpga_board + lat["steps"]), ""])
         w.writerow([]); w.writerow(["chain_strikes", "us_per_chain_one_core", "us_per_strike"])
         for M in (1, 4, 8, 16, 32):
             w.writerow([M, "%.3f" % ch[M], "%.3f" % (ch[M] / M)])

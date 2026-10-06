@@ -4,6 +4,9 @@
     -> validation/results/domain_sweep.csv, domain_sweep_summary.csv
     .venv/bin/python validation/run_domain_sweep.py --reflag
     (recompute range_err for the flagged rows of an existing sweep)
+    .venv/bin/python validation/run_domain_sweep.py --heldout [n_uniform] [n_per_regime] [n_outside]
+    -> results/domain_sweep_heldout.csv, domain_sweep_heldout_summary.csv: fresh draws
+       (seed 20261006) that played no part in fitting or refitting the shift ranges
 
 Every case runs the bit-accurate model of the whole evaluation (the unrolled
 graph: fixed-point values identical to the hardware's), the same algorithm in
@@ -170,6 +173,7 @@ def run_case(args):
                overflows=novf, error="", **{n: p[n] for n in H.PARAMS})
     for o, fx, flv, rv, b, sg in rows:
         out["err_" + o] = fx - rv                # against the COS reference
+        out["ref_" + o] = rv                     # for relative errors (significant figures)
         out["ratio_" + o] = abs(fx - flv) / b    # against the bound (same algorithm in double)
     return out
 
@@ -206,10 +210,15 @@ def reflag():
 def main():
     if sys.argv[1:] == ["--reflag"]:
         return reflag()
-    n_uniform = int(sys.argv[1]) if len(sys.argv) > 1 else 6000
-    n_regime = int(sys.argv[2]) if len(sys.argv) > 2 else 500
-    n_out = int(sys.argv[3]) if len(sys.argv) > 3 else 1000
-    rng = random.Random(20261001)
+    # The ranges were refitted after the 20261001 sweep flagged inputs, so that sweep
+    # no longer tests them independently; --heldout draws a fresh set.
+    heldout = "--heldout" in sys.argv
+    args = [a for a in sys.argv[1:] if a != "--heldout"]
+    n_uniform = int(args[0]) if len(args) > 0 else 6000
+    n_regime = int(args[1]) if len(args) > 1 else 500
+    n_out = int(args[2]) if len(args) > 2 else 1000
+    tag = "domain_sweep_heldout" if heldout else "domain_sweep"
+    rng = random.Random(20261006 if heldout else 20261001)
     jobs = []
     for regime in REGIMES:
         n = n_uniform if regime == "uniform" else n_out if regime == "outside" else n_regime
@@ -225,16 +234,16 @@ def main():
                 print("%d/%d cases, %.0f s" % (len(res), len(jobs), time.time() - t0), flush=True)
     res.sort(key=lambda r: r["case"])
     keys = list(dict.fromkeys(k for r in res for k in r))
-    out = os.path.join(HERE, "results", "domain_sweep.csv")
+    out = os.path.join(HERE, "results", tag + ".csv")
     with open(out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=keys)
         w.writeheader()
         w.writerows(res)
     print("wrote", out, "in %.0f s" % (time.time() - t0))
-    summarise(res)
+    summarise(res, tag)
 
 
-def summarise(res):
+def summarise(res, tag="domain_sweep"):
     rows = []
     for regime in REGIMES:
         rs = [r for r in res if r["regime"] == regime]
@@ -249,7 +258,7 @@ def summarise(res):
         for o in H.OUTPUTS:
             row["worst_abs_err_" + o] = max((abs(r["err_" + o]) for r in unflagged), default=0)
         rows.append(row)
-    out = os.path.join(HERE, "results", "domain_sweep_summary.csv")
+    out = os.path.join(HERE, "results", tag + "_summary.csv")
     with open(out, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()

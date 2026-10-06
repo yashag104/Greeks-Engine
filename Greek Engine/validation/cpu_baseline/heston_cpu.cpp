@@ -361,7 +361,32 @@ static void m_bumpopt(const double* p, bool call, double* out) {
 }
 
 typedef void (*Method)(const double*, bool, double*);
+// ---- the per-evaluation work outside the 128-term loop (truncation range, the
+// loop's constants, discounting and parity): what the FPGA's host setup and finish
+// steps do. Timing it separately gives equal-scope comparisons: CPU loop only =
+// analytic - steps, and FPGA end to end = FPGA loop + steps (+ register transfers).
+static void m_steps(const double* p, bool call, double* out) {
+  double a, b; trunc_range(p, a, b);
+  const double S0 = p[0], K = p[1], T = p[2], r = p[3], kappa = p[5], theta = p[6], xi = p[7];
+  const double x = std::log(S0 / K), xi2 = xi * xi, coef = kappa * theta / xi2;
+  const double bma = b - a, ea = std::exp(a);
+  double s[9];
+  for (int j = 0; j < 9; ++j) s[j] = 1e-3 * (j + 1) * (x + coef + ea + bma);   // stands in for the sums
+  const double disc = std::exp(-r * T), put = disc * s[0];
+  out[0] = put;
+  out[1] = disc * s[1] / S0;
+  out[2] = -disc * s[1] / K + put / K;
+  out[3] = disc * s[2] - r * put;
+  out[4] = disc * s[3] - T * put;
+  for (int j = 4; j < 9; ++j) out[1 + j] = disc * s[j];
+  if (call) {
+    out[0] += S0 - K * disc; out[1] += 1.0; out[2] -= disc;
+    out[3] += K * r * disc; out[4] += K * T * disc;
+  }
+}
+
 static Method pick(const char* m) {
+  if (!std::strcmp(m, "steps")) return m_steps;
   if (!std::strcmp(m, "price")) return m_price;
   if (!std::strcmp(m, "bump")) return m_bump;
   if (!std::strcmp(m, "aad")) return m_aad;
@@ -386,7 +411,7 @@ static void make_inputs(int n, std::vector<double>& P, std::vector<char>& call) 
 
 int main(int argc, char** argv) {
   const char* mode = argc > 1 ? argv[1] : "check";
-  const char* names[6] = {"price", "bump", "bumpopt", "aad", "fwdvec", "analytic"};
+  const char* names[7] = {"price", "bump", "bumpopt", "aad", "fwdvec", "analytic", "steps"};
   if (!std::strcmp(mode, "check")) {
     double base[9] = {100, 100, 1, 0.05, 0.04, 1.5, 0.04, 0.3, -0.9};
     for (const char* m : names) {
@@ -418,7 +443,7 @@ int main(int argc, char** argv) {
     int n = argc > 2 ? std::atoi(argv[2]) : 2000;       // by each output's typical size
     std::vector<double> P; std::vector<char> C; make_inputs(n, P, C);
     for (const char* m : names) {
-      if (!std::strcmp(m, "price") || !std::strcmp(m, "fwdvec")) continue;
+      if (!std::strcmp(m, "price") || !std::strcmp(m, "fwdvec") || !std::strcmp(m, "steps")) continue;
       double worst = 0;
       for (int i = 0; i < n; ++i) {
         double o[10], f[10];
