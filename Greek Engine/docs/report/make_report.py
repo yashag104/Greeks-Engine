@@ -189,9 +189,20 @@ bullets([
 ])
 
 # ================================================================ 2 related work
-H1("2  Related work and novelty")
-P("A literature check made on 29 September 2026 (docs/novelty_assessment.md) looked for anything that would make "
-  "this work not new. It found three separate bodies of work and nothing joining them.")
+H1("2  Novelty and related work")
+P("<b>Novelty.</b> This work is the first FPGA implementation of adjoint (reverse-mode) differentiation for option "
+  "Greeks, and the first FPGA implementation of the COS method. Specifically:")
+bullets([
+    "<b>Adjoint Greeks on an FPGA.</b> Every published FPGA Greeks engine re-runs the pricer once per sensitivity; no "
+    "FPGA adjoint implementation exists in the literature reviewed below.",
+    "<b>The COS method on an FPGA.</b> COS had run on CPUs and GPUs only.",
+    "<b>A tape-free adjoint datapath,</b> statically scheduled on arithmetic shared with the forward pass.",
+    "<b>Nine Greeks for 1.04× the cost of the price,</b> against 5.3–6.7× for software AAD on the measured CPU.",
+    "<b>A guaranteed error bound for every Greek</b> of a fixed-point adjoint datapath, never exceeded (≤ 0.103).",
+    "<b>Bit-exact Greeks on silicon:</b> 450 of 450 results on a Zynq-7020.",
+])
+P("The literature check behind these points (29 September 2026, docs/novelty_assessment.md) found three bodies of "
+  "work and nothing joining them.")
 P("<b>AAD for Greeks in software.</b> Adjoint pathwise Monte Carlo (Giles and Glasserman, Risk 2006) and its "
   "implementation by algorithmic differentiation (Capriotti, J. Comput. Finance 14(3), 2011) made AAD the standard way "
   "to compute Greeks; production practice is described by Savine (Wiley, 2018). The 2024 review of the field by "
@@ -210,11 +221,9 @@ P("<b>Reverse mode and precision analysis.</b> Reverse-mode differentiation was 
   "rounding error (Linnainmaa, BIT 1976), and AD has been used to choose FPGA word lengths (Gaffar, Mencer, Luk et "
   "al., FPT 2002). Every neural-network training accelerator executes backpropagation, which is reverse mode on a "
   "fixed graph.")
-P("<b>What is new here.</b> To our knowledge this is the first FPGA implementation of AAD for option Greeks and the "
-  "first FPGA implementation of the COS method. The individual techniques (static adjoints, modulo scheduling, "
-  "first-order rounding analysis) are established; the contribution is their combination for a fixed-point, "
-  "complex-valued pricing datapath, with a per-Greek error bound, demonstrated bit-exact on silicon. Unpublished "
-  "industry work cannot be ruled out, so the claim is stated as \"to our knowledge\".")
+P("<b>What the novelty builds on.</b> Static adjoints, modulo scheduling and first-order rounding analysis are "
+  "established techniques, cited above; the contribution is their use for option Greeks as a fixed-point, "
+  "complex-valued FPGA pricing datapath with a per-Greek error bound, demonstrated bit-exact on silicon.")
 table(["Work", "Method", "Platform", "Greeks by"], [
     ["Giles & Glasserman 2006; Capriotti 2011", "Monte Carlo", "CPU", "Adjoint / AD"],
     ["Gremse et al. 2016", "General", "GPU", "AAD"],
@@ -386,7 +395,24 @@ table(["Run", "Cases", "Bit-exact results", "range_err", "Worst error ÷ bound",
           "register traffic; each case computes in about 65 µs. These runs used the bitstream built before put-call "
           "parity; the re-run with the current design is predicted to reach a worst error ÷ bound of 0.199.")
 
-H2("6.6  Generation 1: the hand-written engine")
+H2("6.6  Against a CPU")
+table(["Price + 9 Greeks", "µs per evaluation", "Cost vs one price", "Evaluations / s"], [
+    ["CPU, price only (1 core)", "17.2", "1×", "–"],
+    ["CPU, bump-and-reprice (1 core)", "257.6", "15×", "–"],
+    ["CPU, AAD with CoDiPack (1 core)", "114.9", "6.7×", "23,100 on 4 cores"],
+    ["CPU, forward mode, 9 directions (1 core)", "91.5", "5.3×", "33,900 on 4 cores"],
+    ["FPGA, one engine, ZedBoard at 70 MHz", "65.3", "1.04×", "15,300"],
+], [0.4, 0.18, 0.18, 0.24], num=(1, 2, 3), hi=(4,),
+      lead="The same algorithm in C++ double precision (g++ 13, -O3 -march=native) on an Intel Core i5-1155G7 laptop "
+           "CPU (4 cores, 8 threads), with AAD by CoDiPack v2.3.2. Every method matches the reference at the base case "
+           "(AAD to 1.3e-10 relative).",
+      cap="Table 8. FPGA against a CPU (validation/results/cpu_baseline.csv). The FPGA is 1.4× faster than the best "
+          "software method on one core (1.6× at 79 MHz) and 1.8× faster than taped AAD; four cores give 2.2× more "
+          "throughput than one FPGA engine. Energy per evaluation is an estimated 16–37× lower on the FPGA (CPU power not "
+          "measured; FPGA power is Vivado's vectorless estimate). Pricing alone is faster on the CPU; the FPGA's lead is "
+          "that its Greeks cost 1.04 pricings instead of 5–7.")
+
+H2("6.7  Generation 1: the hand-written engine")
 P("The first engine, a hand-written finite-state machine in 64-bit fixed point, established the error model and the "
   "bump-and-reprice comparison. It was accurate (price 3.0·10<super>−7</super>, Greeks ≤ 5.4·10<super>−5</super>) but took "
   "433,779 cycles, 80% of them in 28 bit-serial divisions per term, and needed far more multipliers than a Zynq-7020 has.")
@@ -420,7 +446,7 @@ table(["Component", "Size"], [
     ["Vivado Tcl (implementation, board build and test)", "683 lines"],
     ["Documentation", "3,806 lines"],
     ["Automated verification", "22 checks, all passing"],
-], [0.62, 0.38], cap="Table 8. Size of the work, measured from the repository.")
+], [0.62, 0.38], cap="Table 9. Size of the work, measured from the repository.")
 
 # ================================================================ 7 limits
 H1("8  Limitations")
@@ -431,10 +457,13 @@ bullets([
     "<b>Host steps run on the PC.</b> Setup and finish are Python, not C on the ARM; the processor-based system is "
     "scripted but not built.",
     "<b>Power is a vectorless estimate</b> at a 12.5% toggle rate; no activity-based figure or measurement yet.",
-    "<b>Priority is stated \"to our knowledge\".</b> The literature check (section 2) cannot see unpublished industry "
-    "work, and should be repeated in Google Scholar, IEEE Xplore and the ACM Digital Library before submission.",
+    "<b>The literature check should be repeated before submission</b> in Google Scholar, IEEE Xplore and the ACM "
+    "Digital Library, to catch papers published after 29 September 2026.",
     "<b>Bounded input domain:</b> S<sub>0</sub> = 100, K 60–150, T 0.1–3, r 0–0.1, v<sub>0</sub> and θ 0.005–0.25, "
     "κ 0.2–6, ξ 0.1–1, ρ −0.95–0.6. Outside it the hardware raises range_err.",
+    "<b>The adjoint is hand-written.</b> The reverse sweep is written as operations in the IR "
+    "(hardware/gen/heston.py) and verified bit-exact and against independent references, but no AD tool derives "
+    "it. The paper should say \"adjoint differentiation\" in its claim, or the generator should derive the sweep.",
     "<b>Greeks hold the truncation range fixed</b> when differentiating, the standard COS convention; their distance "
     "from the model's true Greeks is part of the method error.",
 ])
@@ -443,13 +472,13 @@ bullets([
 H1("9  Next steps")
 table(["", "Step", "Why", "Status"], [
     ["1", "Rebuild the ZedBoard bitstream; repeat the 50-case sweep", "Bring the silicon result up to the current design", "Ready: ~40 min build"],
-    ["2", "Time a CPU software-AAD baseline", "Biggest open risk: if a CPU core is close to 57.8 µs, argue throughput and energy", "Open, critical"],
+    ["2", "Derive the adjoint automatically in the generator", "Turns the tool into a compiler; answers the hand-written-adjoint objection", "Next"],
     ["3", "Repeat the literature search before submission", "Catch anything published since 29 Sep 2026", "Done once"],
     ["4", "Close timing at 100 MHz", "DSP output registers, pipelined carry chains", "Open"],
     ["5", "Port host steps to C; build the processor design", "No PC in the loop", "Open"],
     ["6", "Activity-based power or board measurement", "A defensible energy figure", "Open"],
     ["7", "Merge into main", "After step 1", "Pending"],
-], [0.05, 0.4, 0.37, 0.18], hi=(0,), cap="Table 9. Next steps in order of value for the paper.")
+], [0.05, 0.4, 0.37, 0.18], hi=(0,), cap="Table 10. Next steps in order of value for the paper.")
 
 # ================================================================ 9 conclusion
 H1("10  Conclusion")
@@ -457,8 +486,9 @@ P("Reverse-mode AAD for the Heston model has been built as a fixed-point hardwar
   "from one description, it computes the price and nine Greeks in 4,733 cycles, 1.04 pricings and 18.4 times fewer "
   "cycles than bump-and-reprice on the same hardware, within a guaranteed error bound for every output. It fits a "
   "Zynq-7020, meets timing on a ZedBoard at 70 MHz, and reproduced the emulator bit for bit on 50 cases in silicon. "
-  "The immediate work is to rebuild the board with the put-call parity design and to give the latency a CPU "
-  "comparison, which is now the main open risk.")
+  "Against a laptop CPU it is 1.4× faster per evaluation and uses an estimated 16–37× less energy, though four "
+  "CPU cores give more throughput. The immediate work is to rebuild the board with the put-call parity design and "
+  "to make the generator derive the adjoint automatically.")
 
 H2("Reproducing the results")
 P("<font name='Mono'>./verify_all.sh</font> (all 22 checks, about 4 minutes) · "

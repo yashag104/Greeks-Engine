@@ -13,3 +13,5 @@ Greek Engine/hardware/vivado/**/*.jou
 Greek Engine/hardware/vivado/**/clockInfo.txt
 Greek Engine/hardware/vivado/**/dfx_runtime.txt
 Greek Engine/hardware/vivado/zedboard/base_addr*.txt
+Greek Engine/validation/cpu_baseline/build/
+Greek Engine/validation/hedging/data_raw/

@@ -20,6 +20,16 @@ DOMAIN = dict(S0=(100.0, 100.0), K=(60.0, 150.0), T=(0.1, 3.0), r=(0.0, 0.1), v0
               kappa=(0.2, 6.0), theta=(0.005, 0.25), xi=(0.1, 1.0), rho=(-0.95, 0.6))
 MARGIN = 3
 N_SAMPLES = 150
+# Extra samples at the edges of the domain. 150 uniform samples rarely reach the
+# corners: a 10,500-input sweep (validation/run_domain_sweep.py) found two
+# normalization shifts one step past their fitted range at very low variance and
+# very short maturity (range_err on 4% of low-variance inputs).
+EDGES = dict(low_var=dict(v0=(0.005, 0.01), theta=(0.005, 0.01)), short_T=dict(T=(0.1, 0.12)),
+             long_T=dict(T=(2.8, 3.0)), K_lo=dict(K=(60.0, 63.0)), K_hi=dict(K=(145.0, 150.0)),
+             kappa_hi=dict(kappa=(5.5, 6.0)), xi_lo=dict(xi=(0.1, 0.12)), xi_hi=dict(xi=(0.9, 1.0)),
+             rho_lo=dict(rho=(-0.95, -0.9)), rho_hi=dict(rho=(0.55, 0.6)))
+N_EDGE = 40
+FIT = "uniform150+edges40x10"
 
 
 def fixed_shift(g, n):
@@ -42,6 +52,10 @@ def measure(dp, n_samples=N_SAMPLES, seed=11):
     cases = [([100, 100, 1, .05, .04, 1.5, .04, .3, -.9], True)]
     for _ in range(n_samples):
         cases.append(([rng.uniform(*DOMAIN[p]) for p in H.PARAMS], rng.random() < 0.5))
+    rng = random.Random(seed + 1)
+    for edge in EDGES.values():
+        for _ in range(N_EDGE):
+            cases.append(([rng.uniform(*edge.get(p, DOMAIN[p])) for p in H.PARAMS], rng.random() < 0.5))
 
     def note(vals, part):
         for n in var:
@@ -73,11 +87,11 @@ def get(dp, cache_dir):
     path = os.path.join(cache_dir, key)
     if os.path.exists(path):
         data = json.load(open(path))
-        if data.get("nodes") == len(dp.g.nodes):
+        if data.get("nodes") == len(dp.g.nodes) and data.get("fit") == FIT:
             return {int(k): tuple(v) for k, v in data["ranges"].items()}
     r = measure(dp)
     os.makedirs(cache_dir, exist_ok=True)
-    json.dump({"nodes": len(dp.g.nodes), "domain": DOMAIN, "margin": MARGIN, "samples": N_SAMPLES,
+    json.dump({"nodes": len(dp.g.nodes), "fit": FIT, "domain": DOMAIN, "margin": MARGIN, "samples": N_SAMPLES,
                "ranges": {str(k): v for k, v in r.items()}}, open(path, "w"), indent=1)
     return r
 

@@ -134,8 +134,10 @@ def main():
                       % (o, lit(exp_outs[o], W), ci, o, exp_outs[o], o))
         tb.append("    $display(\"case %d done in %%0d cycles (schedule predicts %d); %s = %%f\", cyc - 1, %s * 1.0 / %d.0);"
                   % (ci, cycles_expected, outs[0], outs[0], 2 ** a.fl))
-    # out-of-domain input (T = 0.01, below the verified T >= 0.1): range_err must fire
-    q = H.quantize_inputs([100, 100, .01, .05, .04, 1.5, .04, .3, -.9], True, a.fl)
+    # out-of-domain input (T = 0.001, far below the verified T >= 0.1): range_err must
+    # fire. (T = 0.01 no longer trips it once the shift ranges were refitted on edge
+    # samples, and is computed within its error bound: error 0.115 of the bound.)
+    q = H.quantize_inputs([100, 100, .001, .05, .04, 1.5, .04, .3, -.9], True, a.fl)
     tb.append("    // out-of-domain case: expect range_err")
     for name in H.PARAMS:
         tb.append("    %s = %s;" % (name, lit(q[name], W)))
@@ -148,7 +150,7 @@ def main():
     tb.append("    @(negedge clk) start = 1; @(negedge clk) start = 0;")
     tb.append("    while (!done) @(posedge clk);")
     tb.append("    #1 if (range_err !== 1'b1) begin errors = errors + 1; $display(\"FAIL: range_err not raised for out-of-domain input\"); end")
-    tb.append("    else $display(\"out-of-domain input (T=0.01) correctly flagged by range_err\");")
+    tb.append("    else $display(\"out-of-domain input (T=0.001) correctly flagged by range_err\");")
     tb.append("    if (errors == 0) $display(\"PASS: RTL matches emulator bit-exactly (%%0d register checks + outputs)\", %d);" % len(checks))
     tb.append("    else $display(\"FAIL: %0d mismatches\", errors);")
     tb.append("    $finish;")

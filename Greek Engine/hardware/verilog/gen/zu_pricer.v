@@ -1134,7 +1134,7 @@ module zu_pricer (
     reg signed [63:0] v86;
     reg signed [63:0] v87;
     wire signed [15:0] sc87_sh = 16'sd29 - $signed(v86);
-    wire [4:0] sc87_v = (sc87_sh > 16'sd56) ? 5'd29 : ((sc87_sh < 16'sd27) ? 5'd0 : sc87_sh - 16'sd27);
+    wire [4:0] sc87_v = (sc87_sh > 16'sd58) ? 5'd31 : ((sc87_sh < 16'sd27) ? 5'd0 : sc87_sh - 16'sd27);
     wire signed [63:0] sc87_b = ($signed($signed(mu0_out[63:0])) >>> 26);
     wire signed [63:0] sc87_out = ((sc87_b >>> sc87_v) + 1) >>> 1;
     reg signed [63:0] v89;
@@ -1144,9 +1144,9 @@ module zu_pricer (
     reg signed [63:0] v94;
     reg signed [63:0] v95;
     wire signed [15:0] sc95_sh = (-16'sd29) - $signed(v94);
-    wire [3:0] sc95_v = (sc95_sh > (-16'sd23)) ? 4'd10 : ((sc95_sh < (-16'sd33)) ? 4'd0 : sc95_sh - (-16'sd33));
-    wire signed [97:0] sc95_b = ($signed(v92) <<< 34);
-    wire signed [97:0] sc95_out = ((sc95_b >>> sc95_v) + 1) >>> 1;
+    wire [3:0] sc95_v = (sc95_sh > (-16'sd23)) ? 4'd11 : ((sc95_sh < (-16'sd34)) ? 4'd0 : sc95_sh - (-16'sd34));
+    wire signed [98:0] sc95_b = ($signed(v92) <<< 35);
+    wire signed [98:0] sc95_out = ((sc95_b >>> sc95_v) + 1) >>> 1;
     reg signed [63:0] v96;
     reg signed [63:0] v97;
     reg signed [63:0] v100;
@@ -1173,9 +1173,9 @@ module zu_pricer (
     reg signed [63:0] v129;
     reg signed [63:0] v130;
     wire signed [15:0] sc130_sh = (-16'sd29) - $signed(v129);
-    wire [3:0] sc130_v = (sc130_sh > (-16'sd28)) ? 4'd12 : ((sc130_sh < (-16'sd40)) ? 4'd0 : sc130_sh - (-16'sd40));
-    wire signed [104:0] sc130_b = ($signed(v127) <<< 41);
-    wire signed [104:0] sc130_out = ((sc130_b >>> sc130_v) + 1) >>> 1;
+    wire [4:0] sc130_v = (sc130_sh > (-16'sd26)) ? 5'd16 : ((sc130_sh < (-16'sd42)) ? 5'd0 : sc130_sh - (-16'sd42));
+    wire signed [106:0] sc130_b = ($signed(v127) <<< 43);
+    wire signed [106:0] sc130_out = ((sc130_b >>> sc130_v) + 1) >>> 1;
     reg signed [63:0] v131;
     reg signed [63:0] v132;
     reg signed [63:0] v137;
@@ -1191,9 +1191,9 @@ module zu_pricer (
     reg signed [63:0] v158;
     reg signed [63:0] v159;
     wire signed [15:0] sc159_sh = (-16'sd29) - $signed(v158);
-    wire [3:0] sc159_v = (sc159_sh > (-16'sd22)) ? 4'd9 : ((sc159_sh < (-16'sd31)) ? 4'd0 : sc159_sh - (-16'sd31));
-    wire signed [95:0] sc159_b = ($signed(v156) <<< 32);
-    wire signed [95:0] sc159_out = ((sc159_b >>> sc159_v) + 1) >>> 1;
+    wire [3:0] sc159_v = (sc159_sh > (-16'sd22)) ? 4'd11 : ((sc159_sh < (-16'sd33)) ? 4'd0 : sc159_sh - (-16'sd33));
+    wire signed [97:0] sc159_b = ($signed(v156) <<< 34);
+    wire signed [97:0] sc159_out = ((sc159_b >>> sc159_v) + 1) >>> 1;
     reg signed [63:0] v160;
     reg signed [63:0] v161;
     reg signed [63:0] v164;
@@ -1221,8 +1221,8 @@ module zu_pricer (
     reg signed [63:0] v208;
     reg signed [63:0] v209;
     wire signed [15:0] sc209_sh = 16'sd29 - $signed(v208);
-    wire [4:0] sc209_v = (sc209_sh > 16'sd46) ? 5'd18 : ((sc209_sh < 16'sd28) ? 5'd0 : sc209_sh - 16'sd28);
-    wire signed [63:0] sc209_b = ($signed($signed(mu0_out[63:0])) >>> 27);
+    wire [4:0] sc209_v = (sc209_sh > 16'sd48) ? 5'd21 : ((sc209_sh < 16'sd27) ? 5'd0 : sc209_sh - 16'sd27);
+    wire signed [63:0] sc209_b = ($signed($signed(mu0_out[63:0])) >>> 26);
     wire signed [63:0] sc209_out = ((sc209_b >>> sc209_v) + 1) >>> 1;
     reg v213;
     reg signed [63:0] v214;
@@ -1253,7 +1253,7 @@ module zu_pricer (
     reg signed [63:0] v257;
     reg signed [63:0] v258;
     wire signed [15:0] sc258_sh = (-16'sd29) - $signed(v257);
-    wire [4:0] sc258_v = (sc258_sh > (-16'sd12)) ? 5'd20 : ((sc258_sh < (-16'sd32)) ? 5'd0 : sc258_sh - (-16'sd32));
+    wire [4:0] sc258_v = (sc258_sh > (-16'sd8)) ? 5'd24 : ((sc258_sh < (-16'sd32)) ? 5'd0 : sc258_sh - (-16'sd32));
     wire signed [96:0] sc258_b = ($signed(v255) <<< 33);
     wire signed [96:0] sc258_out = ((sc258_b >>> sc258_v) + 1) >>> 1;
     reg signed [63:0] v259;
@@ -1294,9 +1294,9 @@ module zu_pricer (
     reg signed [63:0] v310;
     reg signed [63:0] v311;
     wire signed [15:0] sc311_sh = (-16'sd29) - $signed(v310);
-    wire [4:0] sc311_v = (sc311_sh > (-16'sd14)) ? 5'd22 : ((sc311_sh < (-16'sd36)) ? 5'd0 : sc311_sh - (-16'sd36));
-    wire signed [100:0] sc311_b = ($signed(v308) <<< 37);
-    wire signed [100:0] sc311_out = ((sc311_b >>> sc311_v) + 1) >>> 1;
+    wire [4:0] sc311_v = (sc311_sh > (-16'sd10)) ? 5'd28 : ((sc311_sh < (-16'sd38)) ? 5'd0 : sc311_sh - (-16'sd38));
+    wire signed [102:0] sc311_b = ($signed(v308) <<< 39);
+    wire signed [102:0] sc311_out = ((sc311_b >>> sc311_v) + 1) >>> 1;
     reg signed [63:0] v312;
     reg signed [63:0] v313;
     reg signed [63:0] v318;
@@ -1325,15 +1325,15 @@ module zu_pricer (
     reg signed [63:0] v352;
     reg signed [63:0] v353;
     wire signed [15:0] sc353_sh = (-16'sd29) - $signed(v352);
-    wire [3:0] sc353_v = (sc353_sh > (-16'sd19)) ? 4'd13 : ((sc353_sh < (-16'sd32)) ? 4'd0 : sc353_sh - (-16'sd32));
-    wire signed [96:0] sc353_b = ($signed(v344_s1) <<< 33);
-    wire signed [96:0] sc353_out = ((sc353_b >>> sc353_v) + 1) >>> 1;
+    wire [4:0] sc353_v = (sc353_sh > (-16'sd17)) ? 5'd16 : ((sc353_sh < (-16'sd33)) ? 5'd0 : sc353_sh - (-16'sd33));
+    wire signed [97:0] sc353_b = ($signed(v344_s1) <<< 34);
+    wire signed [97:0] sc353_out = ((sc353_b >>> sc353_v) + 1) >>> 1;
     reg signed [63:0] v354;
     reg signed [63:0] v355;
     wire signed [15:0] sc355_sh = (-16'sd29) - $signed(v354);
-    wire [3:0] sc355_v = (sc355_sh > (-16'sd19)) ? 4'd13 : ((sc355_sh < (-16'sd32)) ? 4'd0 : sc355_sh - (-16'sd32));
-    wire signed [96:0] sc355_b = ($signed(v345_s1) <<< 33);
-    wire signed [96:0] sc355_out = ((sc355_b >>> sc355_v) + 1) >>> 1;
+    wire [4:0] sc355_v = (sc355_sh > (-16'sd17)) ? 5'd16 : ((sc355_sh < (-16'sd33)) ? 5'd0 : sc355_sh - (-16'sd33));
+    wire signed [97:0] sc355_b = ($signed(v345_s1) <<< 34);
+    wire signed [97:0] sc355_out = ((sc355_b >>> sc355_v) + 1) >>> 1;
     reg signed [63:0] v358;
     reg v359;
     reg signed [63:0] v360;
@@ -1393,15 +1393,15 @@ module zu_pricer (
     reg signed [63:0] v446;
     reg signed [63:0] v447;
     wire signed [15:0] sc447_sh = (-16'sd29) - $signed(v446);
-    wire [2:0] sc447_v = (sc447_sh > (-16'sd25)) ? 3'd7 : ((sc447_sh < (-16'sd32)) ? 3'd0 : sc447_sh - (-16'sd32));
-    wire signed [96:0] sc447_b = ($signed(v438_s1) <<< 33);
-    wire signed [96:0] sc447_out = ((sc447_b >>> sc447_v) + 1) >>> 1;
+    wire [3:0] sc447_v = (sc447_sh > (-16'sd25)) ? 4'd8 : ((sc447_sh < (-16'sd33)) ? 4'd0 : sc447_sh - (-16'sd33));
+    wire signed [97:0] sc447_b = ($signed(v438_s1) <<< 34);
+    wire signed [97:0] sc447_out = ((sc447_b >>> sc447_v) + 1) >>> 1;
     reg signed [63:0] v448;
     reg signed [63:0] v449;
     wire signed [15:0] sc449_sh = (-16'sd29) - $signed(v448);
-    wire [2:0] sc449_v = (sc449_sh > (-16'sd25)) ? 3'd7 : ((sc449_sh < (-16'sd32)) ? 3'd0 : sc449_sh - (-16'sd32));
-    wire signed [96:0] sc449_b = ($signed(v439_s1) <<< 33);
-    wire signed [96:0] sc449_out = ((sc449_b >>> sc449_v) + 1) >>> 1;
+    wire [3:0] sc449_v = (sc449_sh > (-16'sd25)) ? 4'd8 : ((sc449_sh < (-16'sd33)) ? 4'd0 : sc449_sh - (-16'sd33));
+    wire signed [97:0] sc449_b = ($signed(v439_s1) <<< 34);
+    wire signed [97:0] sc449_out = ((sc449_b >>> sc449_v) + 1) >>> 1;
     reg signed [63:0] v452;
     reg v453;
     reg signed [63:0] v454;
@@ -1691,7 +1691,7 @@ module zu_pricer (
     reg signed [15:0] mu10_sh, mu10_S1, mu10_S2, mu10_S3;
     reg mu10_neg, mu10_N1, mu10_N2;
     reg mu10_val, mu10_V1, mu10_V2, mu10_V3;
-    wire [5:0] mu10_sv = (mu10_S3 > 16'sd70) ? 6'd42 : ((mu10_S3 < 16'sd28) ? 6'd0 : mu10_S3 - 16'sd28);
+    wire [5:0] mu10_sv = (mu10_S3 > 16'sd72) ? 6'd44 : ((mu10_S3 < 16'sd28) ? 6'd0 : mu10_S3 - 16'sd28);
     wire signed [127:0] mu10_bq = ($signed(mu10_Q) >>> 27);
     reg signed [63:0] mu11_a, mu11_b, mu11_A, mu11_B;
     reg signed [127:0] mu11_P, mu11_Q, mu11_out;
@@ -1705,21 +1705,21 @@ module zu_pricer (
     reg signed [15:0] mu12_sh, mu12_S1, mu12_S2, mu12_S3;
     reg mu12_neg, mu12_N1, mu12_N2;
     reg mu12_val, mu12_V1, mu12_V2, mu12_V3;
-    wire [5:0] mu12_sv = (mu12_S3 > 16'sd70) ? 6'd39 : ((mu12_S3 < 16'sd31) ? 6'd0 : mu12_S3 - 16'sd31);
+    wire [5:0] mu12_sv = (mu12_S3 > 16'sd72) ? 6'd41 : ((mu12_S3 < 16'sd31) ? 6'd0 : mu12_S3 - 16'sd31);
     wire signed [127:0] mu12_bq = ($signed(mu12_Q) >>> 30);
     reg signed [63:0] mu13_a, mu13_b, mu13_A, mu13_B;
     reg signed [127:0] mu13_P, mu13_Q, mu13_out;
     reg signed [15:0] mu13_sh, mu13_S1, mu13_S2, mu13_S3;
     reg mu13_neg, mu13_N1, mu13_N2;
     reg mu13_val, mu13_V1, mu13_V2, mu13_V3;
-    wire [5:0] mu13_sv = (mu13_S3 > 16'sd70) ? 6'd38 : ((mu13_S3 < 16'sd32) ? 6'd0 : mu13_S3 - 16'sd32);
+    wire [5:0] mu13_sv = (mu13_S3 > 16'sd72) ? 6'd40 : ((mu13_S3 < 16'sd32) ? 6'd0 : mu13_S3 - 16'sd32);
     wire signed [127:0] mu13_bq = ($signed(mu13_Q) >>> 31);
     reg signed [63:0] mu14_a, mu14_b, mu14_A, mu14_B;
     reg signed [127:0] mu14_P, mu14_Q, mu14_out;
     reg signed [15:0] mu14_sh, mu14_S1, mu14_S2, mu14_S3;
     reg mu14_neg, mu14_N1, mu14_N2;
     reg mu14_val, mu14_V1, mu14_V2, mu14_V3;
-    wire [5:0] mu14_sv = (mu14_S3 > 16'sd71) ? 6'd39 : ((mu14_S3 < 16'sd32) ? 6'd0 : mu14_S3 - 16'sd32);
+    wire [5:0] mu14_sv = (mu14_S3 > 16'sd73) ? 6'd41 : ((mu14_S3 < 16'sd32) ? 6'd0 : mu14_S3 - 16'sd32);
     wire signed [127:0] mu14_bq = ($signed(mu14_Q) >>> 31);
     reg signed [63:0] mu15_a, mu15_b, mu15_A, mu15_B;
     reg signed [127:0] mu15_P, mu15_Q, mu15_out;
@@ -1796,8 +1796,8 @@ module zu_pricer (
     reg signed [15:0] mu25_sh, mu25_S1, mu25_S2, mu25_S3;
     reg mu25_neg, mu25_N1, mu25_N2;
     reg mu25_val, mu25_V1, mu25_V2, mu25_V3;
-    wire [5:0] mu25_sv = (mu25_S3 > 16'sd89) ? 6'd32 : ((mu25_S3 < 16'sd57) ? 6'd0 : mu25_S3 - 16'sd57);
-    wire signed [127:0] mu25_bq = ($signed(mu25_Q) >>> 56);
+    wire [5:0] mu25_sv = (mu25_S3 > 16'sd89) ? 6'd33 : ((mu25_S3 < 16'sd56) ? 6'd0 : mu25_S3 - 16'sd56);
+    wire signed [127:0] mu25_bq = ($signed(mu25_Q) >>> 55);
     reg signed [63:0] mu26_a, mu26_b, mu26_A, mu26_B;
     reg signed [127:0] mu26_P, mu26_Q, mu26_out;
     reg signed [15:0] mu26_sh, mu26_S1, mu26_S2, mu26_S3;
@@ -5112,25 +5112,25 @@ module zu_pricer (
         else if (((in_setup && t == 32'd3) && 1'b1 && ((sc16_sh < (-16'sd27)) || sc16_sh > (-16'sd19))) ||
             ((in_setup && t == 32'd44) && 1'b1 && ((sc38_sh < (-16'sd33)) || sc38_sh > (-16'sd26))) ||
             ((in_setup && t == 32'd13) && 1'b1 && ((sc69_sh < (-16'sd32)) || sc69_sh > (-16'sd26))) ||
-            ((in_setup && t == 32'd38) && 1'b1 && ((sc87_sh < 16'sd27) || sc87_sh > 16'sd56)) ||
-            ((in_setup && t == 32'd3) && 1'b1 && ((sc95_sh < (-16'sd33)) || sc95_sh > (-16'sd23))) ||
+            ((in_setup && t == 32'd38) && 1'b1 && ((sc87_sh < 16'sd27) || sc87_sh > 16'sd58)) ||
+            ((in_setup && t == 32'd3) && 1'b1 && ((sc95_sh < (-16'sd34)) || sc95_sh > (-16'sd23))) ||
             ((in_setup && t == 32'd0) && 1'b1 && ((sc116_sh < (-16'sd2)) || sc116_sh > 16'sd4)) ||
-            ((in_setup && t == 32'd9) && 1'b1 && ((sc130_sh < (-16'sd40)) || sc130_sh > (-16'sd28))) ||
-            ((in_setup && t == 32'd59) && 1'b1 && ((sc159_sh < (-16'sd31)) || sc159_sh > (-16'sd22))) ||
+            ((in_setup && t == 32'd9) && 1'b1 && ((sc130_sh < (-16'sd42)) || sc130_sh > (-16'sd26))) ||
+            ((in_setup && t == 32'd59) && 1'b1 && ((sc159_sh < (-16'sd33)) || sc159_sh > (-16'sd22))) ||
             ((in_setup && t == 32'd86) && 1'b1 && ((sc191_sh < (-16'sd32)) || sc191_sh > (-16'sd26))) ||
-            ((in_setup && t == 32'd111) && 1'b1 && ((sc209_sh < 16'sd28) || sc209_sh > 16'sd46)) ||
+            ((in_setup && t == 32'd111) && 1'b1 && ((sc209_sh < 16'sd27) || sc209_sh > 16'sd48)) ||
             ((in_setup && t == 32'd7) && 1'b1 && ((sc217_sh < (-16'sd39)) || sc217_sh > (-16'sd27))) ||
-            ((in_term && ph == 0) && (t >= 32'd125 && t <= 32'd633) && ((sc258_sh < (-16'sd32)) || sc258_sh > (-16'sd12))) ||
+            ((in_term && ph == 0) && (t >= 32'd125 && t <= 32'd633) && ((sc258_sh < (-16'sd32)) || sc258_sh > (-16'sd8))) ||
             ((in_term && ph == 3) && (t >= 32'd180 && t <= 32'd688) && ((sc290_sh < (-16'sd2)) || sc290_sh > 16'sd4)) ||
             ((in_term && ph == 3) && (t >= 32'd168 && t <= 32'd676) && ((sc308_sh < (-16'sd2)) || sc308_sh > 16'sd4)) ||
-            ((in_term && ph == 2) && (t >= 32'd171 && t <= 32'd679) && ((sc311_sh < (-16'sd36)) || sc311_sh > (-16'sd14))) ||
-            ((in_term && ph == 1) && (t >= 32'd226 && t <= 32'd734) && ((sc353_sh < (-16'sd32)) || sc353_sh > (-16'sd19))) ||
-            ((in_term && ph == 1) && (t >= 32'd226 && t <= 32'd734) && ((sc355_sh < (-16'sd32)) || sc355_sh > (-16'sd19))) ||
+            ((in_term && ph == 2) && (t >= 32'd171 && t <= 32'd679) && ((sc311_sh < (-16'sd38)) || sc311_sh > (-16'sd10))) ||
+            ((in_term && ph == 1) && (t >= 32'd226 && t <= 32'd734) && ((sc353_sh < (-16'sd33)) || sc353_sh > (-16'sd17))) ||
+            ((in_term && ph == 1) && (t >= 32'd226 && t <= 32'd734) && ((sc355_sh < (-16'sd33)) || sc355_sh > (-16'sd17))) ||
             ((in_term && ph == 2) && (t >= 32'd235 && t <= 32'd743) && ((sc363_sh < (-16'sd5)) || sc363_sh > 16'sd3)) ||
             ((in_term && ph == 3) && (t >= 32'd232 && t <= 32'd740) && ((sc401_sh < (-16'sd32)) || sc401_sh > (-16'sd26))) ||
             ((in_term && ph == 0) && (t >= 32'd257 && t <= 32'd765) && (sc419_sh < 16'sd27)) ||
-            ((in_term && ph == 0) && (t >= 32'd285 && t <= 32'd793) && ((sc447_sh < (-16'sd32)) || sc447_sh > (-16'sd25))) ||
-            ((in_term && ph == 0) && (t >= 32'd285 && t <= 32'd793) && ((sc449_sh < (-16'sd32)) || sc449_sh > (-16'sd25))) ||
+            ((in_term && ph == 0) && (t >= 32'd285 && t <= 32'd793) && ((sc447_sh < (-16'sd33)) || sc447_sh > (-16'sd25))) ||
+            ((in_term && ph == 0) && (t >= 32'd285 && t <= 32'd793) && ((sc449_sh < (-16'sd33)) || sc449_sh > (-16'sd25))) ||
             ((in_term && ph == 1) && (t >= 32'd294 && t <= 32'd802) && ((sc457_sh < (-16'sd5)) || sc457_sh > 16'sd3)) ||
             ((in_term && ph == 3) && (t >= 32'd376 && t <= 32'd884) && ((sc491_sh < (-16'sd33)) || sc491_sh > (-16'sd25))) ||
             ((in_term && ph == 1) && (t >= 32'd290 && t <= 32'd798) && ((sc535_sh < (-16'sd32)) || sc535_sh > (-16'sd25))) ||
@@ -5150,11 +5150,11 @@ module zu_pricer (
             (mu7_V3 && ((mu7_S3 < 16'sd32) || mu7_S3 > 16'sd61)) ||
             (mu8_V3 && ((mu8_S3 < 16'sd32) || mu8_S3 > 16'sd61)) ||
             (mu9_V3 && ((mu9_S3 < 16'sd32) || mu9_S3 > 16'sd93)) ||
-            (mu10_V3 && ((mu10_S3 < 16'sd28) || mu10_S3 > 16'sd70)) ||
+            (mu10_V3 && ((mu10_S3 < 16'sd28) || mu10_S3 > 16'sd72)) ||
             (mu11_V3 && ((mu11_S3 < 16'sd32) || mu11_S3 > 16'sd89)) ||
-            (mu12_V3 && ((mu12_S3 < 16'sd31) || mu12_S3 > 16'sd70)) ||
-            (mu13_V3 && ((mu13_S3 < 16'sd32) || mu13_S3 > 16'sd70)) ||
-            (mu14_V3 && ((mu14_S3 < 16'sd32) || mu14_S3 > 16'sd71)) ||
+            (mu12_V3 && ((mu12_S3 < 16'sd31) || mu12_S3 > 16'sd72)) ||
+            (mu13_V3 && ((mu13_S3 < 16'sd32) || mu13_S3 > 16'sd72)) ||
+            (mu14_V3 && ((mu14_S3 < 16'sd32) || mu14_S3 > 16'sd73)) ||
             (mu15_V3 && ((mu15_S3 < 16'sd32) || mu15_S3 > 16'sd63)) ||
             (mu16_V3 && ((mu16_S3 < 16'sd32) || mu16_S3 > 16'sd61)) ||
             (mu17_V3 && ((mu17_S3 < 16'sd32) || mu17_S3 > 16'sd61)) ||
@@ -5165,7 +5165,7 @@ module zu_pricer (
             (mu22_V3 && ((mu22_S3 < 16'sd32) || mu22_S3 > 16'sd61)) ||
             (mu23_V3 && ((mu23_S3 < 16'sd32) || mu23_S3 > 16'sd61)) ||
             (mu24_V3 && ((mu24_S3 < 16'sd32) || mu24_S3 > 16'sd64)) ||
-            (mu25_V3 && ((mu25_S3 < 16'sd57) || mu25_S3 > 16'sd89)) ||
+            (mu25_V3 && ((mu25_S3 < 16'sd56) || mu25_S3 > 16'sd89)) ||
             (mu26_V3 && ((mu26_S3 < 16'sd31) || mu26_S3 > 16'sd64)) ||
             (mu27_V3 && ((mu27_S3 < 16'sd32) || mu27_S3 > 16'sd64)) ||
             (mu28_V3 && ((mu28_S3 < 16'sd32) || mu28_S3 > 16'sd61)) ||

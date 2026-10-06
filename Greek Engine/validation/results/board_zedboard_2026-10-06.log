@@ -1,0 +1,1379 @@
+start_gui
+cd {C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard}
+pwd
+C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard
+source bd_jtag.tcl
+# set part     xc7z020clg484-1
+# set clk_mhz  [expr {[llength $argv] > 0 ? [lindex $argv 0] : 70}]
+# set core     heston_aad_z7h
+# set wrapper  ${core}_lite
+# set bd_name  heston_jtag
+# set proj     proj/heston_jtag
+# set here [file dirname [file normalize [info script]]]
+# set vdir [file normalize "$here/../../verilog/gen"]
+# create_project -force heston_jtag $proj -part $part
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'D:/2025.2/Vivado/data/ip'.
+create_project: Time (s): cpu = 00:00:25 ; elapsed = 00:00:13 . Memory (MB): peak = 1635.977 ; gain = 53.840
+# read_verilog [list "$vdir/$wrapper.v"]
+# read_verilog [list "$vdir/$core.v"]
+# update_compile_order -fileset sources_1
+# create_bd_design heston_jtag
+Wrote  : <C:\Users\hp\Greeks-Engine\Greek Engine\hardware\vivado\zedboard\proj\heston_jtag\heston_jtag.srcs\sources_1\bd\heston_jtag\heston_jtag.bd> 
+create_bd_design: Time (s): cpu = 00:00:06 ; elapsed = 00:00:09 . Memory (MB): peak = 1655.555 ; gain = 4.281
+INFO: [Device 21-403] Loading part xc7z020clg484-1
+create_bd_cell: Time (s): cpu = 00:00:19 ; elapsed = 00:00:31 . Memory (MB): peak = 1932.238 ; gain = 276.684
+# set clkw [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz clk_wiz_0]
+# set_property -dict [list \
+#   CONFIG.PRIM_IN_FREQ {100.000} \
+#   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ [format %.3f $clk_mhz] \
+#   CONFIG.USE_LOCKED {true} \
+#   CONFIG.USE_RESET {false} \
+#   CONFIG.PRIM_SOURCE {Single_ended_clock_capable_pin} \
+# ] $clkw
+# make_bd_pins_external -name clk_in100 [get_bd_pins clk_wiz_0/clk_in1]
+# set jt [create_bd_cell -type ip -vlnv xilinx.com:ip:jtag_axi jtag_axi_0]
+# set_property -dict [list CONFIG.PROTOCOL {2}] $jt      
+# set rst [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset rst_0]
+# set sc  [create_bd_cell -type ip -vlnv xilinx.com:ip:smartconnect smartconnect_0]
+# set_property -dict [list CONFIG.NUM_SI {1} CONFIG.NUM_MI {1}] $sc
+INFO: [IP_Flow 19-1976] HDL Parser: Replacing 'CTRL_W' by 64 for port or parameter 'start_wr'
+INFO: [IP_Flow 19-5107] Inferred bus interface 's_axi' of definition 'xilinx.com:interface:aximm:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'aresetn' of definition 'xilinx.com:signal:reset:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-5107] Inferred bus interface 'aclk' of definition 'xilinx.com:signal:clock:1.0' (from Xilinx Repository).
+INFO: [IP_Flow 19-4728] Bus Interface 'aresetn': Added interface parameter 'POLARITY' with value 'ACTIVE_LOW'.
+INFO: [IP_Flow 19-4728] Bus Interface 'aclk': Added interface parameter 'ASSOCIATED_BUSIF' with value 's_axi'.
+INFO: [IP_Flow 19-4728] Bus Interface 'aclk': Added interface parameter 'ASSOCIATED_RESET' with value 'aresetn'.
+WARNING: [IP_Flow 19-11770] Clock interface 'aclk' has no FREQ_HZ parameter.
+# set eng [create_bd_cell -type module -reference $wrapper engine]
+# connect_bd_net [get_bd_pins clk_wiz_0/clk_out1] \
+#                [get_bd_pins rst_0/slowest_sync_clk] \
+#                [get_bd_pins jtag_axi_0/aclk] \
+#                [get_bd_pins smartconnect_0/aclk] \
+#                [get_bd_pins engine/aclk]
+# connect_bd_net [get_bd_pins clk_wiz_0/locked] [get_bd_pins rst_0/dcm_locked]
+# connect_bd_net [get_bd_pins rst_0/peripheral_aresetn] \
+#                [get_bd_pins jtag_axi_0/aresetn] \
+#                [get_bd_pins smartconnect_0/aresetn] \
+#                [get_bd_pins engine/aresetn]
+INFO: [BD 5-1043] It is recommended to use inline hdl version xilinx.com:inline_hdl:ilconstant:1.0 for the IP type xilinx.com:ip:xlconstant:1.1 for improved performance and reduced disk space. IPs with VLNV xilinx.com:ip:xlconstant:1.1 will not be supported from release 2025.2. More information on inline hdl IP is available in UG994 
+# set cst [create_bd_cell -type ip -vlnv xilinx.com:ip:xlconstant const_1]
+# set_property -dict [list CONFIG.CONST_VAL {1} CONFIG.CONST_WIDTH {1}] $cst
+# connect_bd_net [get_bd_pins const_1/dout] [get_bd_pins rst_0/ext_reset_in]
+# connect_bd_intf_net [get_bd_intf_pins jtag_axi_0/M_AXI] [get_bd_intf_pins smartconnect_0/S00_AXI]
+# connect_bd_intf_net [get_bd_intf_pins smartconnect_0/M00_AXI] [get_bd_intf_pins engine/s_axi]
+# assign_bd_address
+INFO: [BD 41-3093] Triggering Legacy Auto Assign Algorithm
+Slave segment '/engine/s_axi/reg0' is being assigned into address space '/jtag_axi_0/Data' at <0x0000_0000 [ 4K ]>.
+# validate_bd_design
+INFO: [BD 5-943] Reserving offset range <0x0000_0000 [ 4K ]> from slave interface '/smartconnect_0/S00_AXI' to master interface '/smartconnect_0/M00_AXI'. This will be used by smartconnect on path for routing.
+INFO: [xilinx.com:ip:smartconnect:1.0-1] heston_jtag_smartconnect_0_0: SmartConnect heston_jtag_smartconnect_0_0 is in Low-Area Mode.
+xit::source_ipfile: Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2003.906 ; gain = 23.797
+INFO: [xilinx.com:ip:clk_wiz:6.0-1] /clk_wiz_0 clk_wiz propagate
+validate_bd_design: Time (s): cpu = 00:00:14 ; elapsed = 00:00:14 . Memory (MB): peak = 2007.895 ; gain = 41.074
+# save_bd_design
+Wrote  : <C:\Users\hp\Greeks-Engine\Greek Engine\hardware\vivado\zedboard\proj\heston_jtag\heston_jtag.srcs\sources_1\bd\heston_jtag\heston_jtag.bd> 
+Wrote  : <C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.srcs/sources_1/bd/heston_jtag/ui/bd_924af932.ui> 
+# set base [get_property OFFSET [lindex [get_bd_addr_segs -of_objects [get_bd_addr_spaces jtag_axi_0/Data]] 0]]
+# if {$base eq ""} { puts "ERROR: could not read the engine base address"; exit 1 }
+# puts "RESULT: engine base address = $base"
+RESULT: engine base address = 0x00000000
+# set fp [open "$here/base_addr.txt" w]
+# puts $fp $base
+# close $fp
+# add_files -fileset constrs_1 -norecurse [list "$here/jtag.xdc"]
+INFO: [BD 41-1662] The design 'heston_jtag.bd' is already validated. Therefore parameter propagation will not be re-run.
+Verilog Output written to : C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/synth/heston_jtag.v
+Verilog Output written to : C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/sim/heston_jtag.v
+Verilog Output written to : C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/hdl/heston_jtag_wrapper.v
+# add_files -norecurse [list [make_wrapper -files [get_files $bd_name.bd] -top]]
+# set_property top ${bd_name}_wrapper [current_fileset]
+# update_compile_order -fileset sources_1
+# launch_runs impl_1 -to_step write_bitstream -jobs 4
+INFO: [BD 41-1662] The design 'heston_jtag.bd' is already validated. Therefore parameter propagation will not be re-run.
+Wrote  : <C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.srcs/sources_1/bd/heston_jtag/ui/bd_924af932.ui> 
+Verilog Output written to : C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/synth/heston_jtag.v
+Verilog Output written to : C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/sim/heston_jtag.v
+Verilog Output written to : C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/hdl/heston_jtag_wrapper.v
+INFO: [BD 41-1029] Generation completed for the IP Integrator block clk_wiz_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block jtag_axi_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block rst_0 .
+Exporting to file c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_smartconnect_0_0/bd_0/hw_handoff/heston_jtag_smartconnect_0_0.hwh
+Generated Hardware Definition File c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_smartconnect_0_0/bd_0/synth/heston_jtag_smartconnect_0_0.hwdef
+INFO: [BD 41-1029] Generation completed for the IP Integrator block smartconnect_0 .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block engine .
+INFO: [BD 41-1029] Generation completed for the IP Integrator block const_1 .
+Exporting to file C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/hw_handoff/heston_jtag.hwh
+Generated Hardware Definition File C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/synth/heston_jtag.hwdef
+INFO: [BD 41-3262] Generated VHDL Instantiation Template file c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/heston_jtag.vho
+INFO: [BD 41-3262] Generated Verilog Instantiation Template file c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/heston_jtag.veo
+INFO: [BD 41-3262] Generated System Verilog Instantiation Template file c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/heston_jtag_sv.sveo
+[Mon Oct  5 13:23:20 2026] Launched heston_jtag_clk_wiz_0_0_synth_1, heston_jtag_jtag_axi_0_0_synth_1, heston_jtag_rst_0_0_synth_1, heston_jtag_smartconnect_0_0_synth_1, heston_jtag_engine_0_synth_1, synth_1...
+Run output will be captured here:
+heston_jtag_clk_wiz_0_0_synth_1: C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/heston_jtag_clk_wiz_0_0_synth_1/runme.log
+heston_jtag_jtag_axi_0_0_synth_1: C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/heston_jtag_jtag_axi_0_0_synth_1/runme.log
+heston_jtag_rst_0_0_synth_1: C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/heston_jtag_rst_0_0_synth_1/runme.log
+heston_jtag_smartconnect_0_0_synth_1: C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/heston_jtag_smartconnect_0_0_synth_1/runme.log
+heston_jtag_engine_0_synth_1: C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/heston_jtag_engine_0_synth_1/runme.log
+synth_1: C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/synth_1/runme.log
+[Mon Oct  5 13:23:21 2026] Launched impl_1...
+Run output will be captured here: C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/impl_1/runme.log
+launch_runs: Time (s): cpu = 00:00:24 ; elapsed = 00:00:27 . Memory (MB): peak = 2034.125 ; gain = 5.312
+# wait_on_run impl_1
+[Mon Oct  5 13:23:21 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:23:28 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:23:34 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:23:40 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:23:50 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:24:02 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:24:13 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:24:26 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:24:47 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:25:11 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:25:32 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:25:53 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:26:35 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:27:17 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:28:01 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:28:43 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:30:06 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:31:28 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:32:51 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:34:14 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:36:54 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:39:37 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:42:20 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:45:02 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:50:24 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 13:55:47 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 14:01:10 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 17:26:44 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 18:16:41 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 18:27:24 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 18:38:05 2026] Waiting for impl_1 to finish...
+[Mon Oct  5 18:48:49 2026] Waiting for impl_1 to finish...
+
+*** Running vivado
+    with args -log heston_jtag_wrapper.vdi -applog -m64 -product Vivado -messageDb vivado.pb -mode batch -source heston_jtag_wrapper.tcl -notrace
+
+
+
+****** Vivado v2025.2 (64-bit)
+  **** SW Build 6299465 on Fri Nov 14 19:35:11 GMT 2025
+  **** IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+  **** SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+  **** Start of session at: Mon Oct  5 13:42:46 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source heston_jtag_wrapper.tcl -notrace
+create_project: Time (s): cpu = 00:00:46 ; elapsed = 00:00:33 . Memory (MB): peak = 532.426 ; gain = 220.855
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository 'D:/2025.2/Vivado/data/ip'.
+add_files: Time (s): cpu = 00:00:11 ; elapsed = 00:00:13 . Memory (MB): peak = 565.715 ; gain = 33.289
+Command: link_design -top heston_jtag_wrapper -part xc7z020clg484-1
+Design is defaulting to srcset: sources_1
+Design is defaulting to constrset: constrs_1
+INFO: [Device 21-403] Loading part xc7z020clg484-1
+INFO: [Project 1-5699] Read binary netlist with skipMacroContent - 1
+INFO: [Project 1-454] Reading design checkpoint 'c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_clk_wiz_0_0/heston_jtag_clk_wiz_0_0.dcp' for cell 'heston_jtag_i/clk_wiz_0'
+INFO: [Project 1-454] Reading design checkpoint 'c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_engine_0/heston_jtag_engine_0.dcp' for cell 'heston_jtag_i/engine'
+INFO: [Project 1-454] Reading design checkpoint 'c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_jtag_axi_0_0/heston_jtag_jtag_axi_0_0.dcp' for cell 'heston_jtag_i/jtag_axi_0'
+INFO: [Project 1-454] Reading design checkpoint 'c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_rst_0_0/heston_jtag_rst_0_0.dcp' for cell 'heston_jtag_i/rst_0'
+INFO: [Project 1-454] Reading design checkpoint 'c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_smartconnect_0_0/heston_jtag_smartconnect_0_0.dcp' for cell 'heston_jtag_i/smartconnect_0'
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 923.680 ; gain = 0.000
+INFO: [Netlist 29-17] Analyzing 8739 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 1 CPU seconds
+WARNING: [Netlist 29-43] Netlist 'heston_jtag_wrapper' is not ideal for floorplanning, since the cellview 'heston_jtag_engine_0_heston_aad_z7h' defined in file 'heston_jtag_engine_0.edf' contains large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-479] Netlist was created with Vivado 2025.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Chipscope 16-324] Core: heston_jtag_i/jtag_axi_0 UUID: ed981397-743e-5a42-a1ec-f67a6b9a268f 
+Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_clk_wiz_0_0/heston_jtag_clk_wiz_0_0_board.xdc] for cell 'heston_jtag_i/clk_wiz_0/inst'
+Finished Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_clk_wiz_0_0/heston_jtag_clk_wiz_0_0_board.xdc] for cell 'heston_jtag_i/clk_wiz_0/inst'
+Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_clk_wiz_0_0/heston_jtag_clk_wiz_0_0.xdc] for cell 'heston_jtag_i/clk_wiz_0/inst'
+INFO: [Timing 38-35] Done setting XDC timing constraints. [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_clk_wiz_0_0/heston_jtag_clk_wiz_0_0.xdc:54]
+INFO: [Timing 38-2] Deriving generated clocks [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_clk_wiz_0_0/heston_jtag_clk_wiz_0_0.xdc:54]
+get_clocks: Time (s): cpu = 00:00:18 ; elapsed = 00:00:17 . Memory (MB): peak = 1702.320 ; gain = 630.688
+Finished Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_clk_wiz_0_0/heston_jtag_clk_wiz_0_0.xdc] for cell 'heston_jtag_i/clk_wiz_0/inst'
+Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_jtag_axi_0_0/constraints/jtag_axi.xdc] for cell 'heston_jtag_i/jtag_axi_0/inst'
+Finished Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_jtag_axi_0_0/constraints/jtag_axi.xdc] for cell 'heston_jtag_i/jtag_axi_0/inst'
+Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_rst_0_0/heston_jtag_rst_0_0_board.xdc] for cell 'heston_jtag_i/rst_0/U0'
+Finished Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_rst_0_0/heston_jtag_rst_0_0_board.xdc] for cell 'heston_jtag_i/rst_0/U0'
+Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_smartconnect_0_0/bd_0/ip/ip_1/bd_6262_psr_aclk_0_board.xdc] for cell 'heston_jtag_i/smartconnect_0/inst/clk_map/psr_aclk/U0'
+Finished Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_smartconnect_0_0/bd_0/ip/ip_1/bd_6262_psr_aclk_0_board.xdc] for cell 'heston_jtag_i/smartconnect_0/inst/clk_map/psr_aclk/U0'
+Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_smartconnect_0_0/smartconnect.xdc] for cell 'heston_jtag_i/smartconnect_0/inst'
+Finished Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_smartconnect_0_0/smartconnect.xdc] for cell 'heston_jtag_i/smartconnect_0/inst'
+Parsing XDC File [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/jtag.xdc]
+WARNING: [Constraints 18-619] A clock with name 'clk_in100' already exists, overwriting the previous clock with the same name. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/jtag.xdc:4]
+Finished Parsing XDC File [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/jtag.xdc]
+INFO: [Project 1-1714] 26 XPM XDC files have been applied to the design.
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.032 . Memory (MB): peak = 1715.191 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 44 instances were transformed.
+  RAM64M => RAM64M (RAMD64E(x4)): 44 instances
+
+20 Infos, 2 Warnings, 0 Critical Warnings and 0 Errors encountered.
+link_design completed successfully
+link_design: Time (s): cpu = 00:01:17 ; elapsed = 00:01:20 . Memory (MB): peak = 1715.191 ; gain = 1149.477
+Command: opt_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7z020'
+Running DRC as a precondition to command opt_design
+
+Starting DRC Task
+INFO: [DRC 23-27] Running DRC with 2 threads
+INFO: [Project 1-461] DRC finished with 0 Errors
+INFO: [Project 1-462] Please refer to the DRC report (report_drc) for more information.
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 1715.191 ; gain = 0.000
+
+Starting Cache Timing Information Task
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Ending Cache Timing Information Task | Checksum: 1317cf0fc
+
+Time (s): cpu = 00:00:09 ; elapsed = 00:00:06 . Memory (MB): peak = 1715.191 ; gain = 0.000
+
+Starting Logic Optimization Task
+
+Phase 1 Initialization
+
+Phase 1.1 Core Generation And Design Setup
+
+Phase 1.1.1 Generate And Synthesize Debug Cores
+INFO: [Chipscope 16-329] Generating Script for core instance : dbg_hub 
+INFO: [IP_Flow 19-3806] Processing IP xilinx.com:ip:xsdbm:3.0 for cell dbg_hub_CV.
+Done building netlist checker database: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.030 . Memory (MB): peak = 2158.863 ; gain = 0.000
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.083 . Memory (MB): peak = 2158.863 ; gain = 0.000
+Phase 1.1.1 Generate And Synthesize Debug Cores | Checksum: 76b61a4f
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:02:25 . Memory (MB): peak = 2158.863 ; gain = 21.316
+Phase 1.1 Core Generation And Design Setup | Checksum: 76b61a4f
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:02:25 . Memory (MB): peak = 2158.863 ; gain = 21.316
+
+Phase 1.2 Setup Constraints And Sort Netlist
+Phase 1.2 Setup Constraints And Sort Netlist | Checksum: 76b61a4f
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:02:25 . Memory (MB): peak = 2158.863 ; gain = 21.316
+Phase 1 Initialization | Checksum: 76b61a4f
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:02:26 . Memory (MB): peak = 2158.863 ; gain = 21.316
+
+Phase 2 Timer Update And Timing Data Collection
+
+Phase 2.1 Detect if minReqCache needed
+Phase 2.1 Detect if minReqCache needed | Checksum: 76b61a4f
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:02:26 . Memory (MB): peak = 2158.863 ; gain = 21.316
+
+Phase 2.2 Timer Update
+Phase 2.2 Timer Update | Checksum: 76b61a4f
+
+Time (s): cpu = 00:00:23 ; elapsed = 00:02:29 . Memory (MB): peak = 2158.863 ; gain = 21.316
+
+Phase 2.3 Timing Data Collection
+Phase 2.3 Timing Data Collection | Checksum: 76b61a4f
+
+Time (s): cpu = 00:00:23 ; elapsed = 00:02:29 . Memory (MB): peak = 2158.863 ; gain = 21.316
+Phase 2 Timer Update And Timing Data Collection | Checksum: 76b61a4f
+
+Time (s): cpu = 00:00:23 ; elapsed = 00:02:29 . Memory (MB): peak = 2158.863 ; gain = 21.316
+
+Phase 3 Retarget
+INFO: [Opt 31-1851] Number of loadless carry chains removed were: 0
+INFO: [Opt 31-1834] Total Chains To Be Transformed Were: 0 AND Number of Transformed insts Created are: 0
+INFO: [Opt 31-1566] Pulled 66 inverters resulting in an inversion of 417 pins
+INFO: [Opt 31-138] Pushed 10 inverter(s) to 24 load pin(s).
+INFO: [Opt 31-49] Retargeted 0 cell(s).
+Phase 3 Retarget | Checksum: a59f1cbe
+
+Time (s): cpu = 00:00:26 ; elapsed = 00:02:31 . Memory (MB): peak = 2158.863 ; gain = 21.316
+Retarget | Checksum: a59f1cbe
+INFO: [Opt 31-389] Phase Retarget created 5 cells and removed 105 cells
+INFO: [Opt 31-1021] In phase Retarget, 73 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 4 Constant propagation
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Phase 4 Constant propagation | Checksum: 11692a040
+
+Time (s): cpu = 00:00:27 ; elapsed = 00:02:33 . Memory (MB): peak = 2158.863 ; gain = 21.316
+Constant propagation | Checksum: 11692a040
+INFO: [Opt 31-389] Phase Constant propagation created 0 cells and removed 3 cells
+INFO: [Opt 31-1021] In phase Constant propagation, 72 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 5 Sweep
+INFO: [Constraints 18-11670] Building netlist checker database with flags, 0x8
+Done building netlist checker database: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.037 . Memory (MB): peak = 2158.863 ; gain = 0.000
+INFO: [Constraints 18-11670] Building netlist checker database with flags, 0x8
+Done building netlist checker database: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.027 . Memory (MB): peak = 2158.863 ; gain = 0.000
+Phase 5 Sweep | Checksum: 140e80dd4
+
+Time (s): cpu = 00:00:29 ; elapsed = 00:02:35 . Memory (MB): peak = 2158.863 ; gain = 21.316
+Sweep | Checksum: 140e80dd4
+INFO: [Opt 31-389] Phase Sweep created 0 cells and removed 235 cells
+INFO: [Opt 31-1021] In phase Sweep, 936 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 6 BUFG optimization
+Phase 6 BUFG optimization | Checksum: 140e80dd4
+
+Time (s): cpu = 00:00:32 ; elapsed = 00:02:36 . Memory (MB): peak = 2158.863 ; gain = 21.316
+BUFG optimization | Checksum: 140e80dd4
+INFO: [Opt 31-662] Phase BUFG optimization created 0 cells of which 0 are BUFGs and removed 0 cells.
+
+Phase 7 Shift Register Optimization
+INFO: [Opt 31-1064] SRL Remap converted 0 SRLs to 0 registers and converted 0 registers of register chains to 0 SRLs
+Phase 7 Shift Register Optimization | Checksum: 140e80dd4
+
+Time (s): cpu = 00:00:33 ; elapsed = 00:02:37 . Memory (MB): peak = 2158.863 ; gain = 21.316
+Shift Register Optimization | Checksum: 140e80dd4
+INFO: [Opt 31-389] Phase Shift Register Optimization created 0 cells and removed 0 cells
+
+Phase 8 Post Processing Netlist
+Phase 8 Post Processing Netlist | Checksum: b169f6b2
+
+Time (s): cpu = 00:00:33 ; elapsed = 00:02:37 . Memory (MB): peak = 2158.863 ; gain = 21.316
+Post Processing Netlist | Checksum: b169f6b2
+INFO: [Opt 31-389] Phase Post Processing Netlist created 0 cells and removed 0 cells
+INFO: [Opt 31-1021] In phase Post Processing Netlist, 92 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 9 Finalization
+
+Phase 9.1 Finalizing Design Cores and Updating Shapes
+Phase 9.1 Finalizing Design Cores and Updating Shapes | Checksum: 1192ecfba
+
+Time (s): cpu = 00:00:39 ; elapsed = 00:02:44 . Memory (MB): peak = 2158.863 ; gain = 21.316
+
+Phase 9.2 Verifying Netlist Connectivity
+
+Starting Connectivity Check Task
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.399 . Memory (MB): peak = 2158.863 ; gain = 0.000
+Phase 9.2 Verifying Netlist Connectivity | Checksum: 1192ecfba
+
+Time (s): cpu = 00:00:40 ; elapsed = 00:02:44 . Memory (MB): peak = 2158.863 ; gain = 21.316
+Phase 9 Finalization | Checksum: 1192ecfba
+
+Time (s): cpu = 00:00:40 ; elapsed = 00:02:44 . Memory (MB): peak = 2158.863 ; gain = 21.316
+Opt_design Change Summary
+=========================
+
+
+-------------------------------------------------------------------------------------------------------------------------
+|  Phase                        |  #Cells created  |  #Cells Removed  |  #Constrained objects preventing optimizations  |
+-------------------------------------------------------------------------------------------------------------------------
+|  Retarget                     |               5  |             105  |                                             73  |
+|  Constant propagation         |               0  |               3  |                                             72  |
+|  Sweep                        |               0  |             235  |                                            936  |
+|  BUFG optimization            |               0  |               0  |                                              0  |
+|  Shift Register Optimization  |               0  |               0  |                                              0  |
+|  Post Processing Netlist      |               0  |               0  |                                             92  |
+-------------------------------------------------------------------------------------------------------------------------
+
+
+Ending Logic Optimization Task | Checksum: 1192ecfba
+
+Time (s): cpu = 00:00:40 ; elapsed = 00:02:44 . Memory (MB): peak = 2158.863 ; gain = 21.316
+
+Starting Power Optimization Task
+INFO: [Pwropt 34-132] Skipping clock gating for clocks with a period < 2.00 ns.
+INFO: [Pwropt 34-9] Applying IDT optimizations ...
+INFO: [Pwropt 34-10] Applying ODC optimizations ...
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Running Vector-less Activity Propagation...
+
+Finished Running Vector-less Activity Propagation
+
+
+Starting PowerOpt Patch Enables Task
+INFO: [Pwropt 34-162] WRITE_MODE attribute of 0 BRAM(s) out of a total of 7 has been updated to save power. Run report_power_opt to get a complete listing of the BRAMs updated.
+INFO: [Pwropt 34-201] Structural ODC has moved 2 WE to EN ports
+Number of BRAM Ports augmented: 10 newly gated: 2 Total Ports: 14
+Number of Flops added for Enable Generation: 10
+
+Ending PowerOpt Patch Enables Task | Checksum: 175fedb57
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Ending Power Optimization Task | Checksum: 175fedb57
+
+Time (s): cpu = 00:01:10 ; elapsed = 00:00:43 . Memory (MB): peak = 2270.961 ; gain = 112.098
+
+Starting Final Cleanup Task
+
+Starting Logic Optimization Task
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Ending Logic Optimization Task | Checksum: 1dfec1aeb
+
+Time (s): cpu = 00:00:24 ; elapsed = 00:00:16 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Ending Final Cleanup Task | Checksum: 1dfec1aeb
+
+Time (s): cpu = 00:00:33 ; elapsed = 00:00:26 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_jtag_axi_0_0/constraints/heston_jtag_jtag_axi_0_0_impl.xdc] from IP C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.srcs/sources_1/bd/heston_jtag/ip/heston_jtag_jtag_axi_0_0/heston_jtag_jtag_axi_0_0.xci
+Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_jtag_axi_0_0/constraints/heston_jtag_jtag_axi_0_0_impl.xdc] for cell 'heston_jtag_i/jtag_axi_0/inst'
+INFO: [Timing 38-35] Done setting XDC timing constraints. [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_jtag_axi_0_0/constraints/heston_jtag_jtag_axi_0_0_impl.xdc:69]
+all_fanout: Time (s): cpu = 00:00:15 ; elapsed = 00:00:10 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Finished Parsing XDC File [c:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.gen/sources_1/bd/heston_jtag/ip/heston_jtag_jtag_axi_0_0/constraints/heston_jtag_jtag_axi_0_0_impl.xdc] for cell 'heston_jtag_i/jtag_axi_0/inst'
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.086 . Memory (MB): peak = 2270.961 ; gain = 0.000
+INFO: [Common 17-83] Releasing license: Implementation
+59 Infos, 2 Warnings, 0 Critical Warnings and 0 Errors encountered.
+opt_design completed successfully
+opt_design: Time (s): cpu = 00:02:54 ; elapsed = 00:04:16 . Memory (MB): peak = 2270.961 ; gain = 555.770
+INFO: [Vivado 12-24828] Executing command : report_drc -file heston_jtag_wrapper_drc_opted.rpt -pb heston_jtag_wrapper_drc_opted.pb -rpx heston_jtag_wrapper_drc_opted.rpx
+Command: report_drc -file heston_jtag_wrapper_drc_opted.rpt -pb heston_jtag_wrapper_drc_opted.pb -rpx heston_jtag_wrapper_drc_opted.rpx
+INFO: [IP_Flow 19-1839] IP Catalog is up to date.
+INFO: [DRC 23-27] Running DRC with 2 threads
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper_drc_opted.rpt.
+report_drc completed successfully
+report_drc: Time (s): cpu = 00:00:21 ; elapsed = 00:00:15 . Memory (MB): peak = 2270.961 ; gain = 0.000
+generate_parallel_reports: Time (s): cpu = 00:00:21 ; elapsed = 00:00:15 . Memory (MB): peak = 2270.961 ; gain = 0.000
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:02 ; elapsed = 00:00:00.339 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Wrote PlaceStorage: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.002 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Wrote Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.048 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Write Physdb Complete: Time (s): cpu = 00:00:02 ; elapsed = 00:00:00.418 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Write ShapeDB Complete: Time (s): cpu = 00:00:04 ; elapsed = 00:00:00.918 . Memory (MB): peak = 2270.961 ; gain = 0.000
+INFO: [Common 17-1381] The checkpoint 'C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper_opt.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:22 ; elapsed = 00:00:15 . Memory (MB): peak = 2270.961 ; gain = 0.000
+INFO: [Chipscope 16-240] Debug cores have already been implemented
+Command: place_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7z020'
+INFO: [Common 17-83] Releasing license: Implementation
+INFO: [DRC 23-27] Running DRC with 2 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+Running DRC as a precondition to command place_design
+INFO: [DRC 23-27] Running DRC with 2 threads
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+INFO: [Place 30-611] Multithreading enabled for place_design using a maximum of 2 CPUs
+
+Starting Placer Task
+
+Phase 1 Placer Initialization
+
+Phase 1.1 Placer Initialization Netlist Sorting
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.119 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Phase 1.1 Placer Initialization Netlist Sorting | Checksum: 11ab8ac0e
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.171 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.221 . Memory (MB): peak = 2270.961 ; gain = 0.000
+
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device | Checksum: 128582591
+
+Time (s): cpu = 00:00:25 ; elapsed = 00:00:22 . Memory (MB): peak = 2270.961 ; gain = 0.000
+
+Phase 1.3 Build Placer Netlist Model
+Phase 1.3 Build Placer Netlist Model | Checksum: 1bdd5b7d6
+
+Time (s): cpu = 00:02:53 ; elapsed = 00:02:10 . Memory (MB): peak = 2270.961 ; gain = 0.000
+
+Phase 1.4 Constrain Clocks/Macros
+Phase 1.4 Constrain Clocks/Macros | Checksum: 1bdd5b7d6
+
+Time (s): cpu = 00:02:54 ; elapsed = 00:02:11 . Memory (MB): peak = 2270.961 ; gain = 0.000
+Phase 1 Placer Initialization | Checksum: 1bdd5b7d6
+
+Time (s): cpu = 00:02:55 ; elapsed = 00:02:13 . Memory (MB): peak = 2270.961 ; gain = 0.000
+
+Phase 2 Global Placement
+
+Phase 2.1 Floorplanning
+Phase 2.1 Floorplanning | Checksum: 16380c10e
+
+Time (s): cpu = 00:06:26 ; elapsed = 00:04:53 . Memory (MB): peak = 2270.961 ; gain = 0.000
+
+Phase 2.2 Update Timing before SLR Path Opt
+Phase 2.2 Update Timing before SLR Path Opt | Checksum: 19d5a7a73
+
+Time (s): cpu = 00:09:54 ; elapsed = 00:07:41 . Memory (MB): peak = 2270.961 ; gain = 0.000
+
+Phase 2.3 Post-Processing in Floorplanning
+Phase 2.3 Post-Processing in Floorplanning | Checksum: 19d5a7a73
+
+Time (s): cpu = 00:09:55 ; elapsed = 00:07:42 . Memory (MB): peak = 2270.961 ; gain = 0.000
+
+Phase 2.4 Global Place Phase1
+Phase 2.4 Global Place Phase1 | Checksum: 1f256b081
+
+Time (s): cpu = 00:19:07 ; elapsed = 04:31:53 . Memory (MB): peak = 2290.730 ; gain = 19.770
+
+Phase 2.5 Global Place Phase2
+
+Phase 2.5.1 UpdateTiming Before Physical Synthesis
+Phase 2.5.1 UpdateTiming Before Physical Synthesis | Checksum: 2044c1a74
+
+Time (s): cpu = 00:21:40 ; elapsed = 04:33:33 . Memory (MB): peak = 2290.730 ; gain = 19.770
+
+Phase 2.5.2 Physical Synthesis In Placer
+INFO: [Physopt 32-1035] Found 0 LUTNM shape to break, 1371 LUT instances to create LUTNM shape
+INFO: [Physopt 32-1044] Break lutnm for timing: one critical 0, two critical 0, total 0, new lutff created 0
+INFO: [Physopt 32-1138] End 1 Pass. Optimized 572 nets or LUTs. Breaked 0 LUT, combined 572 existing LUTs and moved 0 existing LUT
+INFO: [Physopt 32-65] No nets found for high-fanout optimization.
+INFO: [Physopt 32-232] Optimized 0 net. Created 0 new instance.
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-456] No candidate cells for DSP register optimization found in the design.
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-1123] No candidate cells found for Shift Register to Pipeline optimization
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-1401] No candidate cells found for Shift Register optimization.
+INFO: [Physopt 32-677] No candidate cells for Shift Register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-526] No candidate cells for BRAM register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-846] No candidate cells for URAM register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-846] No candidate cells for URAM register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-949] No candidate nets found for dynamic/static region interface net replication
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.098 . Memory (MB): peak = 2290.730 ; gain = 0.000
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization                                     |  Added Cells  |  Removed Cells  |  Optimized Cells/Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  LUT Combining                                    |            0  |            572  |                   572  |           0  |           1  |  00:00:10  |
+|  Retime                                           |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Very High Fanout                                 |            0  |              0  |                     0  |           0  |           1  |  00:00:01  |
+|  DSP Register                                     |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Shift Register to Pipeline                       |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Shift Register                                   |            0  |              0  |                     0  |           0  |           1  |  00:00:01  |
+|  BRAM Register                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  URAM Register                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Dynamic/Static Region Interface Net Replication  |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Total                                            |            0  |            572  |                   572  |           0  |           9  |  00:00:12  |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Phase 2.5.2 Physical Synthesis In Placer | Checksum: 24ec1f09b
+
+Time (s): cpu = 00:23:50 ; elapsed = 04:35:07 . Memory (MB): peak = 2290.730 ; gain = 19.770
+Phase 2.5 Global Place Phase2 | Checksum: 1008271ed
+
+Time (s): cpu = 00:23:59 ; elapsed = 04:35:16 . Memory (MB): peak = 2290.730 ; gain = 19.770
+Phase 2 Global Placement | Checksum: 1008271ed
+
+Time (s): cpu = 00:23:59 ; elapsed = 04:35:16 . Memory (MB): peak = 2290.730 ; gain = 19.770
+
+Phase 3 Detail Placement
+
+Phase 3.1 Commit Multi Column Macros
+Phase 3.1 Commit Multi Column Macros | Checksum: 1a7e86a0e
+
+Time (s): cpu = 00:25:37 ; elapsed = 04:36:15 . Memory (MB): peak = 2290.730 ; gain = 19.770
+
+Phase 3.2 Commit Most Macros & LUTRAMs
+Phase 3.2 Commit Most Macros & LUTRAMs | Checksum: 1e7283cce
+
+Time (s): cpu = 00:28:14 ; elapsed = 04:38:12 . Memory (MB): peak = 2290.730 ; gain = 19.770
+
+Phase 3.3 Area Swap Optimization
+Phase 3.3 Area Swap Optimization | Checksum: 16b78e008
+
+Time (s): cpu = 00:28:17 ; elapsed = 04:38:16 . Memory (MB): peak = 2290.730 ; gain = 19.770
+
+Phase 3.4 Pipeline Register Optimization
+Phase 3.4 Pipeline Register Optimization | Checksum: 16d4bae04
+
+Time (s): cpu = 00:28:18 ; elapsed = 04:38:16 . Memory (MB): peak = 2290.730 ; gain = 19.770
+
+Phase 3.5 Fast Optimization
+Phase 3.5 Fast Optimization | Checksum: 1ec287179
+
+Time (s): cpu = 00:29:49 ; elapsed = 04:39:14 . Memory (MB): peak = 2290.730 ; gain = 19.770
+
+Phase 3.6 Small Shape Detail Placement
+Phase 3.6 Small Shape Detail Placement | Checksum: 1bd10bef4
+
+Time (s): cpu = 00:31:17 ; elapsed = 04:41:09 . Memory (MB): peak = 2290.730 ; gain = 19.770
+
+Phase 3.7 Re-assign LUT pins
+Phase 3.7 Re-assign LUT pins | Checksum: 14c904574
+
+Time (s): cpu = 00:31:54 ; elapsed = 04:41:54 . Memory (MB): peak = 2290.730 ; gain = 19.770
+
+Phase 3.8 Pipeline Register Optimization
+Phase 3.8 Pipeline Register Optimization | Checksum: 13dc5aab8
+
+Time (s): cpu = 00:31:55 ; elapsed = 04:41:55 . Memory (MB): peak = 2290.730 ; gain = 19.770
+Phase 3 Detail Placement | Checksum: 13dc5aab8
+
+Time (s): cpu = 00:31:56 ; elapsed = 04:41:56 . Memory (MB): peak = 2290.730 ; gain = 19.770
+
+Phase 4 Post Placement Optimization and Clean-Up
+
+Phase 4.1 Post Commit Optimization
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+
+Phase 4.1.1 Post Placement Optimization
+Post Placement Optimization Initialization | Checksum: 254d1603a
+
+Phase 4.1.1.1 BUFG Insertion
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 2 CPUs
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.220 | TNS=-0.487 |
+Phase 1 Physical Synthesis Initialization | Checksum: 28ab6be4e
+
+Time (s): cpu = 00:00:09 ; elapsed = 00:00:07 . Memory (MB): peak = 2386.895 ; gain = 0.000
+INFO: [Place 46-33] Processed net heston_jtag_i/engine/inst/core/p_21_in, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net heston_jtag_i/engine/inst/awready_r_i_1_n_0, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net heston_jtag_i/engine/inst/core/p_0_in27_in, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net heston_jtag_i/engine/inst/core/p_3_in, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net heston_jtag_i/engine/inst/core/p_0_in12_in, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net heston_jtag_i/engine/inst/core/p_0_in274_in, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net heston_jtag_i/engine/inst/core/p_23_in, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net heston_jtag_i/engine/inst/core/v656_s1[55]_i_1_n_0, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-56] BUFG insertion identified 8 candidate nets. Inserted BUFG: 0, Replicated BUFG Driver: 0, Skipped due to Placement/Routing Conflicts: 8, Skipped due to Timing Degradation: 0, Skipped due to netlist editing failed: 0.
+Ending Physical Synthesis Task | Checksum: 2224049fe
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:00:15 . Memory (MB): peak = 2386.895 ; gain = 0.000
+Phase 4.1.1.1 BUFG Insertion | Checksum: 254d1603a
+
+Time (s): cpu = 00:34:07 ; elapsed = 04:43:52 . Memory (MB): peak = 2386.895 ; gain = 115.934
+
+Phase 4.1.1.2 Post Placement Timing Optimization
+INFO: [Place 30-746] Post Placement Timing Summary WNS=0.517. For the most accurate timing information please run report_timing.
+Phase 4.1.1.2 Post Placement Timing Optimization | Checksum: 25b6bdf8d
+
+Time (s): cpu = 00:34:22 ; elapsed = 04:44:11 . Memory (MB): peak = 2386.895 ; gain = 115.934
+
+Time (s): cpu = 00:34:22 ; elapsed = 04:44:11 . Memory (MB): peak = 2386.895 ; gain = 115.934
+Phase 4.1 Post Commit Optimization | Checksum: 25b6bdf8d
+
+Time (s): cpu = 00:34:23 ; elapsed = 04:44:12 . Memory (MB): peak = 2386.895 ; gain = 115.934
+
+Phase 4.2 Post Placement Cleanup
+Phase 4.2 Post Placement Cleanup | Checksum: 25b6bdf8d
+
+Time (s): cpu = 00:34:27 ; elapsed = 04:44:15 . Memory (MB): peak = 2386.895 ; gain = 115.934
+
+Phase 4.3 Placer Reporting
+
+Phase 4.3.1 Print Estimated Congestion
+INFO: [Place 30-612] Post-Placement Estimated Congestion 
+ ____________________________________________________
+|           | Global Congestion | Short Congestion  |
+| Direction | Region Size       | Region Size       |
+|___________|___________________|___________________|
+|      North|              16x16|                4x4|
+|___________|___________________|___________________|
+|      South|                8x8|                4x4|
+|___________|___________________|___________________|
+|       East|              16x16|                8x8|
+|___________|___________________|___________________|
+|       West|                1x1|                2x2|
+|___________|___________________|___________________|
+
+Phase 4.3.1 Print Estimated Congestion | Checksum: 25b6bdf8d
+
+Time (s): cpu = 00:34:28 ; elapsed = 04:44:17 . Memory (MB): peak = 2386.895 ; gain = 115.934
+Phase 4.3 Placer Reporting | Checksum: 25b6bdf8d
+
+Time (s): cpu = 00:34:29 ; elapsed = 04:44:18 . Memory (MB): peak = 2386.895 ; gain = 115.934
+
+Phase 4.4 Final Placement Cleanup
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.882 . Memory (MB): peak = 2386.895 ; gain = 0.000
+
+Time (s): cpu = 00:34:29 ; elapsed = 04:44:18 . Memory (MB): peak = 2386.895 ; gain = 115.934
+Phase 4 Post Placement Optimization and Clean-Up | Checksum: 2175685c6
+
+Time (s): cpu = 00:34:30 ; elapsed = 04:44:19 . Memory (MB): peak = 2386.895 ; gain = 115.934
+Ending Placer Task | Checksum: 15585f719
+
+Time (s): cpu = 00:34:31 ; elapsed = 04:44:20 . Memory (MB): peak = 2386.895 ; gain = 115.934
+110 Infos, 2 Warnings, 0 Critical Warnings and 0 Errors encountered.
+place_design completed successfully
+place_design: Time (s): cpu = 00:34:44 ; elapsed = 04:44:31 . Memory (MB): peak = 2386.895 ; gain = 115.934
+INFO: [Vivado 12-24838] Running report commands "report_control_sets, report_io, report_utilization" in parallel.
+Running report generation with 2 threads.
+INFO: [Vivado 12-24828] Executing command : report_io -file heston_jtag_wrapper_io_placed.rpt
+report_io: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.661 . Memory (MB): peak = 2386.895 ; gain = 0.000
+INFO: [Vivado 12-24828] Executing command : report_control_sets -verbose -file heston_jtag_wrapper_control_sets_placed.rpt
+report_control_sets: Time (s): cpu = 00:00:02 ; elapsed = 00:00:00.975 . Memory (MB): peak = 2386.895 ; gain = 0.000
+INFO: [Vivado 12-24828] Executing command : report_utilization -file heston_jtag_wrapper_utilization_placed.rpt -pb heston_jtag_wrapper_utilization_placed.pb
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 2386.895 ; gain = 0.000
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.003 . Memory (MB): peak = 2386.895 ; gain = 0.000
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:02 ; elapsed = 00:00:00.606 . Memory (MB): peak = 2389.156 ; gain = 2.262
+Write ShapeDB Complete: Time (s): cpu = 00:00:04 ; elapsed = 00:00:01 . Memory (MB): peak = 2391.324 ; gain = 4.430
+Wrote PlaceStorage: Time (s): cpu = 00:00:30 ; elapsed = 00:00:21 . Memory (MB): peak = 2394.582 ; gain = 5.426
+Wrote Netlist Cache: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.701 . Memory (MB): peak = 2394.582 ; gain = 0.000
+Wrote Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.081 . Memory (MB): peak = 2394.582 ; gain = 0.000
+Write Physdb Complete: Time (s): cpu = 00:00:33 ; elapsed = 00:00:22 . Memory (MB): peak = 2394.582 ; gain = 7.688
+INFO: [Common 17-1381] The checkpoint 'C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper_placed.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:41 ; elapsed = 00:00:36 . Memory (MB): peak = 2394.582 ; gain = 7.688
+Command: phys_opt_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7z020'
+
+Starting Initial Update Timing Task
+
+Time (s): cpu = 00:01:29 ; elapsed = 00:01:01 . Memory (MB): peak = 2394.582 ; gain = 0.000
+INFO: [Vivado_Tcl 4-2279] Estimated Timing Summary | WNS= 0.517 | TNS= 0.000 | 
+INFO: [Vivado_Tcl 4-383] Design worst setup slack (WNS) is greater than or equal to 0.000 ns. All physical synthesis setup optimizations will be skipped.
+INFO: [Vivado_Tcl 4-232] No setup violation found. The netlist was not modified.
+INFO: [Common 17-83] Releasing license: Implementation
+121 Infos, 2 Warnings, 0 Critical Warnings and 0 Errors encountered.
+phys_opt_design completed successfully
+phys_opt_design: Time (s): cpu = 00:01:31 ; elapsed = 00:01:04 . Memory (MB): peak = 2394.582 ; gain = 0.000
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2399.871 ; gain = 0.000
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2399.871 ; gain = 0.000
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.451 . Memory (MB): peak = 2419.742 ; gain = 19.871
+Write ShapeDB Complete: Time (s): cpu = 00:00:06 ; elapsed = 00:00:02 . Memory (MB): peak = 2424.742 ; gain = 24.879
+Wrote PlaceStorage: Time (s): cpu = 00:00:32 ; elapsed = 00:00:25 . Memory (MB): peak = 2425.438 ; gain = 5.695
+Wrote Netlist Cache: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.808 . Memory (MB): peak = 2425.438 ; gain = 0.000
+Wrote Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.098 . Memory (MB): peak = 2425.438 ; gain = 0.000
+Write Physdb Complete: Time (s): cpu = 00:00:34 ; elapsed = 00:00:26 . Memory (MB): peak = 2425.438 ; gain = 25.566
+INFO: [Common 17-1381] The checkpoint 'C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper_physopt.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:44 ; elapsed = 00:00:39 . Memory (MB): peak = 2425.438 ; gain = 30.855
+Command: route_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7z020'
+
+
+Starting Routing Task
+INFO: [Route 35-254] Multithreading enabled for route_design using a maximum of 2 CPUs
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: 5bf032ea ConstDB: 0 ShapeSum: e39c513f RouteDB: 15f972f0
+Post Restoration Checksum: NetGraph: f6ffb18 | NumContArr: 431d08de | Constraints: c2a8fa9d | Timing: c2a8fa9d
+Phase 1 Build RT Design | Checksum: 1d7def930
+
+Time (s): cpu = 00:03:46 ; elapsed = 00:02:53 . Memory (MB): peak = 2425.438 ; gain = 0.000
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: 1d7def930
+
+Time (s): cpu = 00:03:48 ; elapsed = 00:02:55 . Memory (MB): peak = 2425.438 ; gain = 0.000
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: 1d7def930
+
+Time (s): cpu = 00:03:49 ; elapsed = 00:02:55 . Memory (MB): peak = 2425.438 ; gain = 0.000
+ Number of Nodes with overlaps = 0
+
+Phase 2.3 Update Timing
+Phase 2.3 Update Timing | Checksum: 1b7fc9a46
+
+Time (s): cpu = 00:06:04 ; elapsed = 00:04:25 . Memory (MB): peak = 2473.492 ; gain = 48.055
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.524  | TNS=0.000  | WHS=-0.360 | THS=-279.899|
+
+
+Phase 2.4 Update Timing for Bus Skew
+
+Phase 2.4.1 Update Timing
+Phase 2.4.1 Update Timing | Checksum: 1bc41e0c8
+
+Time (s): cpu = 00:07:40 ; elapsed = 00:05:23 . Memory (MB): peak = 2704.453 ; gain = 279.016
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.524  | TNS=0.000  | WHS=-0.256 | THS=-9.156 |
+
+Phase 2.4 Update Timing for Bus Skew | Checksum: 1b6b9f1cd
+
+Time (s): cpu = 00:07:40 ; elapsed = 00:05:24 . Memory (MB): peak = 2704.453 ; gain = 279.016
+
+Phase 2.5 Soft Constraint Pins - Fast Budgeting
+Phase 2.5 Soft Constraint Pins - Fast Budgeting | Checksum: 1b6b9f1cd
+
+Time (s): cpu = 00:07:42 ; elapsed = 00:05:25 . Memory (MB): peak = 2704.453 ; gain = 279.016
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0 %
+  Global Horizontal Routing Utilization  = 0 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 61172
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 61172
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Phase 2 Router Initialization | Checksum: 1e3e4c02c
+
+Time (s): cpu = 00:07:46 ; elapsed = 00:05:28 . Memory (MB): peak = 2704.453 ; gain = 279.016
+
+Phase 3 Global Routing
+Phase 3 Global Routing | Checksum: 1e3e4c02c
+
+Time (s): cpu = 00:07:46 ; elapsed = 00:05:28 . Memory (MB): peak = 2704.453 ; gain = 279.016
+
+Phase 4 Initial Routing
+
+Phase 4.1 Initial Net Routing Pass
+Phase 4.1 Initial Net Routing Pass | Checksum: 25b6e3129
+
+Time (s): cpu = 00:09:25 ; elapsed = 00:06:28 . Memory (MB): peak = 2715.059 ; gain = 289.621
+
+Phase 4.2 Update Timing
+Phase 4.2 Update Timing | Checksum: 2e5562417
+
+Time (s): cpu = 00:09:49 ; elapsed = 00:06:44 . Memory (MB): peak = 2715.059 ; gain = 289.621
+
+Phase 4.3 Fast Budgeting
+Phase 4.3 Fast Budgeting | Checksum: 33b732b06
+
+Time (s): cpu = 00:09:55 ; elapsed = 00:06:48 . Memory (MB): peak = 2715.059 ; gain = 289.621
+Phase 4 Initial Routing | Checksum: 326b96799
+
+Time (s): cpu = 00:09:57 ; elapsed = 00:06:49 . Memory (MB): peak = 2715.059 ; gain = 289.621
+
+Phase 5 Rip-up And Reroute
+
+Phase 5.1 Global Iteration 0
+Phase 5.1 Global Iteration 0 | Checksum: 326b96799
+
+Time (s): cpu = 00:09:59 ; elapsed = 00:06:51 . Memory (MB): peak = 2715.059 ; gain = 289.621
+
+Phase 5.2 Global Iteration 1
+ Number of Nodes with overlaps = 36305
+ Number of Nodes with overlaps = 12109
+ Number of Nodes with overlaps = 3280
+ Number of Nodes with overlaps = 1078
+ Number of Nodes with overlaps = 447
+ Number of Nodes with overlaps = 166
+ Number of Nodes with overlaps = 64
+ Number of Nodes with overlaps = 31
+ Number of Nodes with overlaps = 29
+ Number of Nodes with overlaps = 6
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.389  | TNS=0.000  | WHS=N/A    | THS=N/A    |
+
+Phase 5.2 Global Iteration 1 | Checksum: 296b13b2f
+
+Time (s): cpu = 00:39:14 ; elapsed = 00:24:54 . Memory (MB): peak = 2766.680 ; gain = 341.242
+
+Phase 5.3 Global Iteration 2
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 53
+ Number of Nodes with overlaps = 27
+ Number of Nodes with overlaps = 18
+ Number of Nodes with overlaps = 5
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.457  | TNS=0.000  | WHS=N/A    | THS=N/A    |
+
+Phase 5.3 Global Iteration 2 | Checksum: 2a6c21170
+
+Time (s): cpu = 00:39:40 ; elapsed = 00:25:14 . Memory (MB): peak = 2766.680 ; gain = 341.242
+Phase 5 Rip-up And Reroute | Checksum: 2a6c21170
+
+Time (s): cpu = 00:39:41 ; elapsed = 00:25:14 . Memory (MB): peak = 2766.680 ; gain = 341.242
+
+Phase 6 Delay and Skew Optimization
+
+Phase 6.1 Delay CleanUp
+Phase 6.1 Delay CleanUp | Checksum: 2a6c21170
+
+Time (s): cpu = 00:39:41 ; elapsed = 00:25:15 . Memory (MB): peak = 2766.680 ; gain = 341.242
+
+Phase 6.2 Clock Skew Optimization
+Phase 6.2 Clock Skew Optimization | Checksum: 2a6c21170
+
+Time (s): cpu = 00:39:41 ; elapsed = 00:25:15 . Memory (MB): peak = 2766.680 ; gain = 341.242
+Phase 6 Delay and Skew Optimization | Checksum: 2a6c21170
+
+Time (s): cpu = 00:39:42 ; elapsed = 00:25:15 . Memory (MB): peak = 2766.680 ; gain = 341.242
+
+Phase 7 Post Hold Fix
+
+Phase 7.1 Hold Fix Iter
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.457  | TNS=0.000  | WHS=0.015  | THS=0.000  |
+
+Phase 7.1 Hold Fix Iter | Checksum: 299e06d80
+
+Time (s): cpu = 00:39:51 ; elapsed = 00:25:20 . Memory (MB): peak = 2766.680 ; gain = 341.242
+Phase 7 Post Hold Fix | Checksum: 299e06d80
+
+Time (s): cpu = 00:39:51 ; elapsed = 00:25:20 . Memory (MB): peak = 2766.680 ; gain = 341.242
+
+Phase 8 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 45.0409 %
+  Global Horizontal Routing Utilization  = 41.4748 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Phase 8 Route finalize | Checksum: 299e06d80
+
+Time (s): cpu = 00:39:52 ; elapsed = 00:25:20 . Memory (MB): peak = 2766.680 ; gain = 341.242
+
+Phase 9 Verifying routed nets
+
+ Verification completed successfully
+Phase 9 Verifying routed nets | Checksum: 299e06d80
+
+Time (s): cpu = 00:39:53 ; elapsed = 00:25:21 . Memory (MB): peak = 2766.680 ; gain = 341.242
+
+Phase 10 Depositing Routes
+Phase 10 Depositing Routes | Checksum: 24d541866
+
+Time (s): cpu = 00:40:16 ; elapsed = 00:25:41 . Memory (MB): peak = 2766.680 ; gain = 341.242
+
+Phase 11 Post Process Routing
+Phase 11 Post Process Routing | Checksum: 24d541866
+
+Time (s): cpu = 00:40:16 ; elapsed = 00:25:41 . Memory (MB): peak = 2766.680 ; gain = 341.242
+
+Phase 12 Post Router Timing
+INFO: [Route 35-57] Estimated Timing Summary | WNS=0.457  | TNS=0.000  | WHS=0.015  | THS=0.000  |
+
+INFO: [Route 35-327] The final timing numbers are based on the router estimated timing analysis. For a complete and accurate timing signoff, please run report_timing_summary.
+Phase 12 Post Router Timing | Checksum: 24d541866
+
+Time (s): cpu = 00:40:17 ; elapsed = 00:25:41 . Memory (MB): peak = 2766.680 ; gain = 341.242
+Total Elapsed time in route_design: 1541.47 secs
+
+Phase 13 Post-Route Event Processing
+Phase 13 Post-Route Event Processing | Checksum: 209ccbaeb
+
+Time (s): cpu = 00:40:17 ; elapsed = 00:25:42 . Memory (MB): peak = 2766.680 ; gain = 341.242
+INFO: [Route 35-16] Router Completed Successfully
+Ending Routing Task | Checksum: 209ccbaeb
+
+Time (s): cpu = 00:40:18 ; elapsed = 00:25:42 . Memory (MB): peak = 2766.680 ; gain = 341.242
+
+Routing Is Done.
+INFO: [Common 17-83] Releasing license: Implementation
+134 Infos, 2 Warnings, 0 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 00:40:19 ; elapsed = 00:25:44 . Memory (MB): peak = 2766.680 ; gain = 341.242
+INFO: [Vivado 12-24828] Executing command : report_drc -file heston_jtag_wrapper_drc_routed.rpt -pb heston_jtag_wrapper_drc_routed.pb -rpx heston_jtag_wrapper_drc_routed.rpx
+Command: report_drc -file heston_jtag_wrapper_drc_routed.rpt -pb heston_jtag_wrapper_drc_routed.pb -rpx heston_jtag_wrapper_drc_routed.rpx
+INFO: [IP_Flow 19-1839] IP Catalog is up to date.
+INFO: [DRC 23-27] Running DRC with 2 threads
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper_drc_routed.rpt.
+report_drc completed successfully
+report_drc: Time (s): cpu = 00:00:27 ; elapsed = 00:00:15 . Memory (MB): peak = 2766.680 ; gain = 0.000
+INFO: [Vivado 12-24828] Executing command : report_methodology -file heston_jtag_wrapper_methodology_drc_routed.rpt -pb heston_jtag_wrapper_methodology_drc_routed.pb -rpx heston_jtag_wrapper_methodology_drc_routed.rpx
+Command: report_methodology -file heston_jtag_wrapper_methodology_drc_routed.rpt -pb heston_jtag_wrapper_methodology_drc_routed.pb -rpx heston_jtag_wrapper_methodology_drc_routed.rpx
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [DRC 23-133] Running Methodology with 2 threads
+INFO: [Vivado_Tcl 2-1520] The results of Report Methodology are in file C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper_methodology_drc_routed.rpt.
+report_methodology completed successfully
+report_methodology: Time (s): cpu = 00:01:33 ; elapsed = 00:00:50 . Memory (MB): peak = 2766.680 ; gain = 0.000
+INFO: [Vivado 12-24828] Executing command : report_timing_summary -max_paths 10 -routable_nets -report_unconstrained -file heston_jtag_wrapper_timing_summary_routed.rpt -pb heston_jtag_wrapper_timing_summary_routed.pb -rpx heston_jtag_wrapper_timing_summary_routed.rpx -warn_on_violation 
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 2 CPUs
+WARNING: [Timing 38-436] There are set_bus_skew constraint(s) in this design. Please run report_bus_skew to ensure that bus skew requirements are met.
+report_timing_summary: Time (s): cpu = 00:00:24 ; elapsed = 00:00:17 . Memory (MB): peak = 2766.680 ; gain = 0.000
+INFO: [Vivado 12-24838] Running report commands "report_incremental_reuse, report_route_status" in parallel.
+Running report generation with 2 threads.
+INFO: [Vivado 12-24828] Executing command : report_incremental_reuse -file heston_jtag_wrapper_incremental_reuse_routed.rpt
+INFO: [Vivado_Tcl 4-1062] Incremental flow is disabled. No incremental reuse Info to report.
+INFO: [Vivado 12-24828] Executing command : report_route_status -file heston_jtag_wrapper_route_status.rpt -pb heston_jtag_wrapper_route_status.pb
+INFO: [Vivado 12-24828] Executing command : report_power -file heston_jtag_wrapper_power_routed.rpt -pb heston_jtag_wrapper_power_summary_routed.pb -rpx heston_jtag_wrapper_power_routed.rpx
+Command: report_power -file heston_jtag_wrapper_power_routed.rpt -pb heston_jtag_wrapper_power_summary_routed.pb -rpx heston_jtag_wrapper_power_routed.rpx
+Running Vector-less Activity Propagation...
+
+Finished Running Vector-less Activity Propagation
+WARNING: [Power 33-332] Found switching activity that implies high-fanout reset nets being asserted for excessive periods of time which may result in inaccurate power analysis.
+Resolution: To review and fix problems, please run Power Constraints Advisor in the GUI from Tools > Power Constraints Advisor or run report_power with the -advisory option to generate a text report.
+151 Infos, 4 Warnings, 0 Critical Warnings and 0 Errors encountered.
+report_power completed successfully
+report_power: Time (s): cpu = 00:00:39 ; elapsed = 00:00:28 . Memory (MB): peak = 2766.680 ; gain = 0.000
+INFO: [Vivado 12-24828] Executing command : report_clock_utilization -file heston_jtag_wrapper_clock_utilization_routed.rpt
+INFO: [Vivado 12-24828] Executing command : report_bus_skew -warn_on_violation -file heston_jtag_wrapper_bus_skew_routed.rpt -pb heston_jtag_wrapper_bus_skew_routed.pb -rpx heston_jtag_wrapper_bus_skew_routed.rpx
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 2 CPUs
+generate_parallel_reports: Time (s): cpu = 00:03:08 ; elapsed = 00:01:55 . Memory (MB): peak = 2766.680 ; gain = 0.000
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2766.680 ; gain = 0.000
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2766.680 ; gain = 0.000
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Write ShapeDB Complete: Time (s): cpu = 00:00:02 ; elapsed = 00:00:00.373 . Memory (MB): peak = 2766.680 ; gain = 0.000
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:07 ; elapsed = 00:00:02 . Memory (MB): peak = 2766.680 ; gain = 0.000
+Wrote PlaceStorage: Time (s): cpu = 00:00:09 ; elapsed = 00:00:06 . Memory (MB): peak = 2766.680 ; gain = 0.000
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.334 . Memory (MB): peak = 2766.680 ; gain = 0.000
+Wrote Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.022 . Memory (MB): peak = 2766.680 ; gain = 0.000
+Write Physdb Complete: Time (s): cpu = 00:00:16 ; elapsed = 00:00:08 . Memory (MB): peak = 2766.680 ; gain = 0.000
+INFO: [Common 17-1381] The checkpoint 'C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper_routed.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:21 ; elapsed = 00:00:12 . Memory (MB): peak = 2766.680 ; gain = 0.000
+Command: write_bitstream -force heston_jtag_wrapper.bit
+Attempting to get a license for feature 'Implementation' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7z020'
+Running DRC as a precondition to command write_bitstream
+INFO: [IP_Flow 19-1839] IP Catalog is up to date.
+INFO: [DRC 23-27] Running DRC with 2 threads
+INFO: [Vivado 12-3199] DRC finished with 0 Errors
+INFO: [Vivado 12-3200] Please refer to the DRC report (report_drc) for more information.
+Integrating Hard IP ELF/MEM with the PDI.
+INFO: [Designutils 20-2272] Running write_bitstream with 2 threads.
+Loading data files...
+Loading site data...
+Loading route data...
+Processing options...
+Creating bitmap...
+Creating bitstream...
+Writing bitstream ./heston_jtag_wrapper.bit...
+INFO: [Vivado 12-1842] Bitgen Completed Successfully.
+INFO: [Common 17-83] Releasing license: Implementation
+165 Infos, 4 Warnings, 0 Critical Warnings and 0 Errors encountered.
+write_bitstream completed successfully
+write_bitstream: Time (s): cpu = 00:01:30 ; elapsed = 00:00:55 . Memory (MB): peak = 3126.238 ; gain = 359.559
+INFO: [Common 17-206] Exiting Vivado at Mon Oct  5 19:05:32 2026...
+[Mon Oct  5 19:05:38 2026] impl_1 finished
+wait_on_runs: Time (s): cpu = 00:05:50 ; elapsed = 05:42:20 . Memory (MB): peak = 2066.094 ; gain = 31.969
+# if {[get_property PROGRESS [get_runs impl_1]] != "100%"} {
+#   puts "ERROR: implementation did not finish; see $proj/heston_jtag.runs/impl_1/runme.log"
+#   exit 1
+# }
+# open_run impl_1
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.699 . Memory (MB): peak = 2160.203 ; gain = 0.000
+INFO: [Netlist 29-17] Analyzing 8757 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 1 CPU seconds
+WARNING: [Netlist 29-43] Netlist 'heston_jtag_wrapper' is not ideal for floorplanning, since the cellview 'heston_jtag_engine_0_heston_aad_z7h' defined in file 'heston_jtag_engine_0.edf' contains large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-479] Netlist was created with Vivado 2025.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Read ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.403 . Memory (MB): peak = 2288.934 ; gain = 6.805
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.443 . Memory (MB): peak = 2987.141 ; gain = 0.000
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.073 . Memory (MB): peak = 2987.141 ; gain = 0.000
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 2987.141 ; gain = 0.000
+Read placeStorage: Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 3004.750 ; gain = 17.609
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3004.750 ; gain = 0.000
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:06 ; elapsed = 00:00:04 . Memory (MB): peak = 3048.223 ; gain = 43.473
+Read Physdb Files: Time (s): cpu = 00:00:15 ; elapsed = 00:00:12 . Memory (MB): peak = 3048.223 ; gain = 61.082
+Restored from archive | CPU: 16.000000 secs | Memory: 0.000000 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:15 ; elapsed = 00:00:12 . Memory (MB): peak = 3048.223 ; gain = 61.082
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.124 . Memory (MB): peak = 3102.367 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 50 instances were transformed.
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 6 instances
+  RAM64M => RAM64M (RAMD64E(x4)): 44 instances
+
+open_run: Time (s): cpu = 00:03:04 ; elapsed = 00:01:52 . Memory (MB): peak = 3730.953 ; gain = 1664.859
+# report_utilization    -file "$here/util_jtag.rpt"
+# report_timing_summary -file "$here/timing_jtag.rpt"
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 2 CPUs
+WARNING: [Timing 38-436] There are set_bus_skew constraint(s) in this design. Please run report_bus_skew to ensure that bus skew requirements are met.
+report_timing_summary: Time (s): cpu = 00:01:29 ; elapsed = 00:00:49 . Memory (MB): peak = 3878.922 ; gain = 147.160
+# set wns [get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]]
+# puts "RESULT: WNS = $wns ns at ${clk_mhz} MHz"
+RESULT: WNS = 0.458 ns at 70 MHz
+# if {$wns < 0} {
+#   puts "WARNING: timing FAILED. Board results from this bitstream can be wrong in ways"
+#   puts "         that look like datapath bugs. Rebuild with a lower clock: -tclargs 60"
+# }
+# puts "RESULT: bitstream at $proj/heston_jtag.runs/impl_1/${bd_name}_wrapper.bit"
+RESULT: bitstream at proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper.bit
+update_compile_order -fileset sources_1
+open_hw_manager
+report_timing_summary -delay_type min_max -report_unconstrained -check_timing_verbose -max_paths 10 -input_pins -routable_nets -name timing_1
+WARNING: [Timing 38-436] There are set_bus_skew constraint(s) in this design. Please run report_bus_skew to ensure that bus skew requirements are met.
+report_timing_summary: Time (s): cpu = 00:00:09 ; elapsed = 00:00:06 . Memory (MB): peak = 4786.277 ; gain = 694.645
+report_utilization -hierarchical_min_primitive_count 50 -name utilization_1
+report_utilization: Time (s): cpu = 00:00:08 ; elapsed = 00:00:06 . Memory (MB): peak = 4798.176 ; gain = 0.000
+report_power -name {power_1}
+Command: report_power -name power_1
+Running Vector-less Activity Propagation...
+
+Finished Running Vector-less Activity Propagation
+WARNING: [Power 33-332] Found switching activity that implies high-fanout reset nets being asserted for excessive periods of time which may result in inaccurate power analysis.
+Resolution: To review and fix problems, please run Power Constraints Advisor in the GUI from Tools > Power Constraints Advisor or run report_power with the -advisory option to generate a text report.
+0 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+report_power completed successfully
+report_power: Time (s): cpu = 00:00:34 ; elapsed = 00:00:26 . Memory (MB): peak = 4798.176 ; gain = 0.000
+pwd
+C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard
+connect_hw_server -allow_non_jtag
+INFO: [Labtools 27-2285] Connecting to hw_server url TCP:localhost:3121
+INFO: [Labtools 27-2222] Launching hw_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+****** Xilinx hw_server v2025.2
+  **** Build date : Oct 28 2025 at 10:03:13
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+
+
+INFO: [Labtools 27-3415] Connecting to cs_server url TCP:localhost:0
+INFO: [Labtools 27-3417] Launching cs_server...
+INFO: [Labtools 27-2221] Launch Output:
+
+
+******** Xilinx cs_server v2025.2.0
+  ****** Build date   : Nov 14 2025-04:46:52
+    **** Build number : 2025.2.1763075812
+      ** Copyright 2017-2022 Xilinx, Inc. All Rights Reserved.
+      ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+
+
+connect_hw_server: Time (s): cpu = 00:00:05 ; elapsed = 00:00:19 . Memory (MB): peak = 4798.176 ; gain = 0.000
+open_hw_target
+INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Digilent/210248469827
+open_hw_target: Time (s): cpu = 00:00:11 ; elapsed = 00:00:55 . Memory (MB): peak = 4798.176 ; gain = 0.000
+set_property PROGRAM.FILE {C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper.bit} [get_hw_devices xc7z020_1]
+set_property PROBES.FILE {C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper.ltx} [get_hw_devices xc7z020_1]
+set_property FULL_PROBES.FILE {C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper.ltx} [get_hw_devices xc7z020_1]
+current_hw_device [get_hw_devices xc7z020_1]
+refresh_hw_device [lindex [get_hw_devices xc7z020_1] 0]
+INFO: [Labtools 27-1435] Device xc7z020 (JTAG device index = 1) is not programmed (DONE status = 0).
+source run_jtag.tcl
+# set here [file dirname [file normalize [info script]]]
+# proc stop {} { error "run_jtag.tcl stopped; see the messages above" }
+# if {![info exists argv]} { set argv {} }
+# if {[regexp {^0[xX][0-9a-fA-F]+$} [lindex $argv 0]]} {
+#   set base [lindex $argv 0]
+#   puts "INFO: base address from argv"
+# } elseif {[file exists "$here/base_addr.txt"]} {
+#   set fp [open "$here/base_addr.txt"]; set base [string trim [read $fp]]; close $fp
+#   puts "INFO: base address from base_addr.txt"
+# } else {
+#   puts "ERROR: no base address given and no base_addr.txt; run bd_jtag.tcl first"; stop
+# }
+INFO: base address from base_addr.txt
+# if {$base % 4096 != 0} {
+#   puts "ERROR: base address $base is not 4 KB aligned; the engine's register map is 4 KB"; stop
+# }
+# set bit  [expr {[llength $argv] > 1 && [file exists [lindex $argv 1]] ? [lindex $argv 1] \
+#                 : "$here/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper.bit"}]
+# if {[info exists ::JTAG_VEC]} {
+#   set vec $::JTAG_VEC; unset ::JTAG_VEC
+# } else {
+#   set vec "$here/../../gen/build/heston_aad_z7h_lite_vector.tcl"
+# }
+# foreach f [list $bit $vec] {
+#   if {![file exists $f]} { puts "ERROR: missing $f"; stop }
+# }
+# foreach v {VEC_CASES VEC_WRITES VEC_EXPECT} { if {[info exists $v]} { unset $v } }
+# source $vec
+## set VEC_WL 56
+## set VEC_FL 28
+## set VEC_CTRL 0x100
+## set VEC_STAT 0x104
+## set VEC_WRITES {
+##   {0x000 0x40000000}
+##   {0x004 0x00000006}
+##   {0x008 0x40000000}
+##   {0x00c 0x00000006}
+##   {0x010 0x10000000}
+##   {0x014 0x00000000}
+##   {0x018 0x00cccccd}
+##   {0x01c 0x00000000}
+##   {0x020 0x00a3d70a}
+##   {0x024 0x00000000}
+##   {0x028 0x18000000}
+##   {0x02c 0x00000000}
+##   {0x030 0x00a3d70a}
+##   {0x034 0x00000000}
+##   {0x038 0x04cccccd}
+##   {0x03c 0x00000000}
+##   {0x040 0xf199999a}
+##   {0x044 0x00ffffff}
+##   {0x048 0x00000001}
+##   {0x04c 0x00000000}
+##   {0x050 0x00000000}
+##   {0x054 0x007ae148}
+##   {0x058 0x00000000}
+##   {0x05c 0x27311c22}
+##   {0x060 0x00000000}
+##   {0x064 0xd949c526}
+##   {0x068 0x00ffffff}
+##   {0x06c 0x0a42a97e}
+##   {0x070 0x00000000}
+##   {0x074 0x8d328056}
+##   {0x078 0x00000002}
+##   {0x07c 0x18f346b1}
+##   {0x080 0x00000000}
+##   {0x084 0x016c68aa}
+##   {0x088 0x00000000}
+##   {0x08c 0xfbae147b}
+##   {0x090 0x00ffffff}
+##   {0x094 0x0170a3d7}
+##   {0x098 0x00000000}
+##   {0x09c 0x24000000}
+##   {0x0a0 0x00000000}
+##   {0x0a4 0x8ed6e9e1}
+##   {0x0a8 0x001638e3}
+##   {0x0ac 0x00000004}
+##   {0x0b0 0x00000000}
+##   {0x0b4 0x0aaaaaa7}
+##   {0x0b8 0x00000000}
+##   {0x0bc 0x00cccccd}
+##   {0x0c0 0x00000000}
+##   {0x0c4 0xe8000000}
+##   {0x0c8 0x00ffffff}
+## }
+## set VEC_EXPECT {
+##   {sum_price    0x200 1554936349}
+##   {sum_T        0x208 545693945}
+##   {sum_r        0x210 -8066687262}
+##   {sum_v0       0x218 13150426907}
+##   {sum_kappa    0x220 17479410}
+##   {sum_theta    0x228 12469284499}
+##   {sum_xi       0x230 -339930900}
+##   {sum_rho      0x238 -32926857}
+##   {sum_x        0x240 -8066687262}
+## }
+# if {![info exists VEC_CASES]} {
+#   set VEC_CASES [list [list "single vector" $VEC_WRITES $VEC_EXPECT]]
+# }
+# set VEC_WRITES [lindex $VEC_CASES 0 1]
+# set VEC_EXPECT [lindex $VEC_CASES 0 2]
+# puts "INFO: [llength $VEC_CASES] case(s) from [file tail $vec]"
+INFO: 1 case(s) from heston_aad_z7h_lite_vector.tcl
+# puts "INFO: base 0x[format %08x $base] ; [llength $VEC_WRITES] input words ; [llength $VEC_EXPECT] outputs"
+INFO: base 0x00000000 ; 51 input words ; 9 outputs
+# proc axi_w {off data} {
+#   global base axi
+#   create_hw_axi_txn -quiet _w $axi -address [format %08x [expr {$base + $off}]] \
+#                     -data [format %08x $data] -type write -len 1
+#   run_hw_axi -quiet _w
+#   delete_hw_axi_txn [get_hw_axi_txns _w]
+# }
+# proc axi_r {off} {
+#   global base axi
+#   create_hw_axi_txn -quiet _r $axi -address [format %08x [expr {$base + $off}]] -type read -len 1
+#   run_hw_axi -quiet _r
+#   set v [get_property DATA [get_hw_axi_txns _r]]
+#   delete_hw_axi_txn [get_hw_axi_txns _r]
+#   # -quiet hides a failed transaction; an empty DATA is how it shows up
+#   if {$v eq ""} {
+#     puts "ERROR: AXI read at 0x[format %08x [expr {$base + $off}]] returned no data"
+#     puts "       (bus error: wrong base address, or the engine is not responding)"
+#     stop
+#   }
+#   # braced expr cannot splice "0x" onto $v (a parse error, not a bad value).
+#   # scan %x yields a SIGNED 32-bit int: mask it, or a low word with bit 31 set
+#   # sign-extends over the high word (first board run: 4 outputs off by k*2^32).
+#   return [expr {[scan $v %x] & 0xffffffff}]
+# }
+# open_hw_manager
+# if {[llength [get_hw_servers -quiet]] == 0} { connect_hw_server -quiet }
+# if {[llength [get_hw_devices -quiet]] == 0} { open_hw_target }
+# set devs [get_hw_devices -quiet xc7z*]
+# if {[llength $devs] == 0} {
+#   puts "ERROR: no xc7z FPGA on the JTAG chain; found: [get_hw_devices -quiet]"
+#   stop
+# }
+# set dev [lindex $devs 0]
+# current_hw_device $dev
+# puts "INFO: device [get_property PART $dev]"
+INFO: device xc7z020
+# set_property PROGRAM.FILE $bit $dev
+# program_hw_devices $dev
+INFO: [Labtools 27-3164] End of startup status: HIGH
+# refresh_hw_device -quiet $dev
+# set axis [get_hw_axis -quiet]
+# if {[llength $axis] == 0} {
+#   puts "ERROR: no JTAG-to-AXI master found after programming."
+#   puts "       The bitstream in $bit does not contain jtag_axi, or programming failed."
+#   stop
+# }
+# set axi [lindex $axis 0]
+# reset_hw_axi -quiet $axi
+# set old [get_hw_axi_txns -quiet]
+# if {[llength $old]} { delete_hw_axi_txn -quiet $old }
+# set sign [expr {1 << ($VEC_WL - 1)}]
+# set mod  [expr {1 << $VEC_WL}]
+# set ncase [llength $VEC_CASES]
+# set bad_cases 0
+# set t0 [clock milliseconds]
+# for {set c 0} {$c < $ncase} {incr c} {
+#   lassign [lindex $VEC_CASES $c] label writes expect
+#   puts "CASE [expr {$c + 1}]/$ncase $label"
+#   set errors 0
+#   foreach w $writes { axi_w [lindex $w 0] [lindex $w 1] }
+# 
+#   # readback of the first word catches a wrong base address or dead design
+#   set first [lindex $writes 0]
+#   set rb [axi_r [lindex $first 0]]
+#   if {$rb != [lindex $first 1]} {
+#     puts "FAIL: readback 0x[format %08x $rb] != written 0x[format %08x [lindex $first 1]]"
+#     puts "      Wrong base address, or the design is not responding. Stopping."
+#     stop
+#   }
+#   # done stays set from the previous case until the next start, so this
+#   # check only means something straight after programming
+#   if {$c == 0 && ([axi_r $VEC_STAT] & 1) != 0} { puts "FAIL: done set before start"; incr errors }
+#   axi_w $VEC_CTRL 1
+# 
+#   set st 0
+#   for {set i 0} {$i < 1000} {incr i} {
+#     set st [axi_r $VEC_STAT]
+#     if {$st & 1} break
+#   }
+#   if {!($st & 1)} { puts "FAIL: done never asserted (STAT=0x[format %08x $st])"; stop }
+#   if {$st & 2} { puts "FAIL: range_err set for an in-domain case"; incr errors }
+# 
+#   foreach e $expect {
+#     lassign $e name off want
+#     set lo [axi_r $off]
+#     set hi [axi_r [expr {$off + 4}]]
+#     set raw [expr {(($hi & ((1 << ($VEC_WL - 32)) - 1)) << 32) | $lo}]
+#     if {$raw >= $sign} { set raw [expr {$raw - $mod}] }
+#     if {$raw != $want} {
+#       puts [format "FAIL %-12s got %ld want %ld (diff %ld)" $name $raw $want [expr {$raw - $want}]]
+#       incr errors
+#     } else {
+#       puts [format "  ok %-12s %ld  (%.10f)" $name $raw [expr {double($raw) / (1 << $VEC_FL)}]]
+#     }
+#   }
+#   if {$errors} { incr bad_cases; puts "CASE [expr {$c + 1}]: FAIL ($errors)" } else { puts "CASE [expr {$c + 1}]: ok" }
+# }
+CASE 1/1 single vector
+  ok sum_price    1554936349  (5.7925892957)
+  ok sum_T        545693945  (2.0328683592)
+  ok sum_r        -8066687262  (-30.0507517979)
+  ok sum_v0       13150426907  (48.9891577773)
+  ok sum_kappa    17479410  (0.0651158765)
+  ok sum_theta    12469284499  (46.4517045729)
+  ok sum_xi       -339930900  (-1.2663412839)
+  ok sum_rho      -32926857  (-0.1226621009)
+  ok sum_x        -8066687262  (-30.0507517979)
+CASE 1: ok
+# set secs [expr {([clock milliseconds] - $t0) / 1000.0}]
+# if {$bad_cases == 0} {
+#   puts [format "PASS: ZedBoard outputs bit-exact vs the emulator, %d case(s) x %d outputs (%.1f s)" \
+#         $ncase [llength $VEC_EXPECT] $secs]
+# } else {
+#   puts "FAIL: $bad_cases of $ncase case(s) had mismatches"
+# }
+PASS: ZedBoard outputs bit-exact vs the emulator, 1 case(s) x 9 outputs (3.2 s)
+# close_hw_manager
+close_hw_manager: Time (s): cpu = 00:00:13 ; elapsed = 00:00:06 . Memory (MB): peak = 4798.176 ; gain = 0.000
