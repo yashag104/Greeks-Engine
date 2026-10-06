@@ -1,7 +1,7 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version     : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
-| Date             : Mon Sep 28 20:19:06 2026
+| Date             : Mon Oct  5 19:04:17 2026
 | Host             : SaY-PC running 64-bit major release  (build 9200)
 | Command          : report_power -file heston_jtag_wrapper_power_routed.rpt -pb heston_jtag_wrapper_power_summary_routed.pb -rpx heston_jtag_wrapper_power_routed.rpx
 | Design           : heston_jtag_wrapper
@@ -30,10 +30,10 @@ Table of Contents
 ----------
 
 +--------------------------+--------------+
-| Total On-Chip Power (W)  | 0.341        |
+| Total On-Chip Power (W)  | 0.340        |
 | Design Power Budget (W)  | Unspecified* |
 | Power Budget Margin (W)  | NA           |
-| Dynamic (W)              | 0.235        |
+| Dynamic (W)              | 0.234        |
 | Device Static (W)        | 0.106        |
 | Effective TJA (C/W)      | 11.5         |
 | Max Ambient (C)          | 81.1         |
@@ -53,21 +53,21 @@ Table of Contents
 | On-Chip                  | Power (W) | Used     | Available | Utilization (%) |
 +--------------------------+-----------+----------+-----------+-----------------+
 | Clocks                   |     0.040 |        6 |       --- |             --- |
-| Slice Logic              |     0.031 |    84184 |       --- |             --- |
-|   LUT as Logic           |     0.028 |    36744 |     53200 |           69.07 |
-|   CARRY4                 |     0.002 |     4213 |     13300 |           31.68 |
-|   Register               |    <0.001 |    32206 |    106400 |           30.27 |
-|   F7/F8 Muxes            |    <0.001 |     3978 |     53200 |            7.48 |
+| Slice Logic              |     0.029 |    85028 |       --- |             --- |
+|   LUT as Logic           |     0.026 |    37128 |     53200 |           69.79 |
+|   CARRY4                 |     0.002 |     4244 |     13300 |           31.91 |
+|   Register               |    <0.001 |    32134 |    106400 |           30.20 |
+|   F7/F8 Muxes            |    <0.001 |     4383 |     53200 |            8.24 |
 |   LUT as Distributed RAM |    <0.001 |      200 |     17400 |            1.15 |
-|   LUT as Shift Register  |    <0.001 |     1414 |     17400 |            8.13 |
-|   Others                 |     0.000 |      304 |       --- |             --- |
-| Signals                  |     0.042 |    61173 |       --- |             --- |
-| Block RAM                |    <0.001 |      5.5 |       140 |            3.93 |
+|   LUT as Shift Register  |    <0.001 |     1424 |     17400 |            8.18 |
+|   Others                 |     0.000 |      292 |       --- |             --- |
+| Signals                  |     0.044 |    61171 |       --- |             --- |
+| Block RAM                |    <0.001 |      4.5 |       140 |            3.21 |
 | MMCM                     |     0.121 |        1 |         4 |           25.00 |
 | DSPs                     |    <0.001 |       72 |       220 |           32.73 |
 | I/O                      |    <0.001 |        1 |       200 |            0.50 |
 | Static Power             |     0.106 |          |           |                 |
-| Total                    |     0.341 |          |           |                 |
+| Total                    |     0.340 |          |           |                 |
 +--------------------------+-----------+----------+-----------+-----------------+
 
 
@@ -77,7 +77,7 @@ Table of Contents
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
 | Source    | Voltage (V) | Total (A) | Dynamic (A) | Static (A) | Powerup (A) | Budget (A)  | Margin (A) |
 +-----------+-------------+-----------+-------------+------------+-------------+-------------+------------+
-| Vccint    |       1.000 |     0.122 |       0.114 |      0.008 |       NA    | Unspecified | NA         |
+| Vccint    |       1.000 |     0.121 |       0.113 |      0.008 |       NA    | Unspecified | NA         |
 | Vccaux    |       1.800 |     0.078 |       0.067 |      0.011 |       NA    | Unspecified | NA         |
 | Vcco33    |       3.300 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
 | Vcco25    |       2.500 |     0.000 |       0.000 |      0.000 |       NA    | Unspecified | NA         |
@@ -156,11 +156,11 @@ Table of Contents
 +--------------------------+-----------+
 | Name                     | Power (W) |
 +--------------------------+-----------+
-| heston_jtag_wrapper      |     0.235 |
+| heston_jtag_wrapper      |     0.234 |
 |   dbg_hub                |     0.002 |
 |     inst                 |     0.002 |
 |       BSCANID.u_xsdbm_id |     0.002 |
-|   heston_jtag_i          |     0.233 |
+|   heston_jtag_i          |     0.232 |
 |     clk_wiz_0            |     0.121 |
 |       inst               |     0.121 |
 |     engine               |     0.107 |
