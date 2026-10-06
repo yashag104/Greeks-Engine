@@ -174,9 +174,8 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   <div class="pills">
     <span class="pill good">Simulation: 22 / 22 checks pass</span>
     <span class="pill good">ZedBoard: 50 / 50 cases bit-exact</span>
-    <span class="pill warn">Board bitstream predates put-call parity: rebuild pending</span>
     <span class="pill warn">79 MHz, not 100 MHz</span>
-    <span class="pill info">Status as of 29 Sep 2026</span>
+    <span class="pill info">Status as of 6 Oct 2026</span>
   </div>
 </header>
 
@@ -210,7 +209,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     <div class="kpi"><div class="l">Latency per evaluation</div><div class="v">57.8<small>µs</small></div><div class="d">4,572 FPGA cycles at the routed 79.1 MHz (setup and finish on the host). 65.3 µs on the board at 70 MHz.</div></div>
     <div class="kpi"><div class="l">On silicon</div><div class="v">50<small>/50</small></div><div class="d">random cases bit-exact on a ZedBoard, run back to back: 450 of 450 results identical to the emulator.</div></div>
     <div class="kpi"><div class="l">Error vs guarantee</div><div class="v">≤ 0.103</div><div class="d">worst measured error as a fraction of the first-order bound, all 10 outputs, 21-case grid (must stay ≤ 1).</div></div>
-    <div class="kpi"><div class="l">Fits a Zynq-7020</div><div class="v">72<small>% LUT</small></div><div class="d">ZedBoard build: 38,358 LUT, 72 of 220 DSP, timing met at 70 MHz (WNS +0.404 ns).</div></div>
+    <div class="kpi"><div class="l">Fits a Zynq-7020</div><div class="v">73<small>% LUT</small></div><div class="d">ZedBoard build: 38,752 LUT, 72 of 220 DSP, timing met at 70 MHz (WNS +0.458 ns).</div></div>
   </div>
 </section>
 
@@ -226,7 +225,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       <li><b>The COS method on an FPGA, for the first time.</b> COS pricing had run on CPUs and GPUs only; the only FPGA Fourier pricer (AMD) uses trapezoidal integration and returns the price alone.</li>
       <li><b>A tape-free adjoint datapath.</b> Software AAD records a tape and replays it. Here the reverse sweep is compiled into a statically scheduled fixed-point datapath that shares its arithmetic units with the forward pass, because the COS pricer runs the same operations for every input.</li>
       <li><b>Nine Greeks for 1.04× the cost of the price.</b> 4,733 cycles against 4,568 for the price alone. On the measured CPU, hand-derived Greeks cost 1.9×, AD tools 5.3–6.7×, and bump-and-reprice 19×.</li>
-      <li><b>A guaranteed error bound for every Greek of a fixed-point adjoint datapath.</b> Measured error never exceeds 0.103 of the bound over 21 cases, 0.378 over 10,500 inputs including hard regimes, and 0.268 over 50 random cases on silicon.</li>
+      <li><b>A guaranteed error bound for every Greek of a fixed-point adjoint datapath.</b> Measured error never exceeds 0.103 of the bound over 21 cases, 0.378 over 10,500 inputs including hard regimes, and 0.199 over 50 random cases on silicon.</li>
       <li><b>Bit-exact Greeks on silicon.</b> 450 of 450 results identical to the model on a ZedBoard, 50 random cases back to back.</li>
       <li><b>A fair baseline.</b> Against bump-and-reprice on identical hardware: 18.4× fewer cycles and 32–560× more accurate than the best bump size for each Greek.</li>
     </ol>
@@ -245,15 +244,15 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
         <tr class="hi"><td>Energy per evaluation</td><td class="num">≈ 22 µJ</td><td>CPU (analytic) ≈ 0.13–0.68 mJ</td><td class="better">≈ 6–30× less</td><td><span class="pill warn">Estimate</span></td></tr>
         <tr><td>Throughput</td><td class="num">15,300 / s (one engine)</td><td>Four CPU cores, analytic: 41,000–94,000 / s*</td><td style="color:var(--crit);font-weight:600">CPU 3–6× higher</td><td><span class="pill info">CPU</span></td></tr>
         <tr class="hi"><td>Accuracy vs double precision (21 cases)</td><td class="num">price 6.1e-7<br>Greeks ≤ 1.2e-5</td><td>Relative error, Zynq-7020 design</td><td>—</td><td><span class="pill info">Simulation</span></td></tr>
-        <tr><td>Guaranteed error bound</td><td class="num">≤ 0.103 of bound</td><td>Worst measured error ÷ bound, every output, 21 cases (0.378 over 10,500 inputs; 0.268 on the 50-case board sweep)</td><td class="better">Never violated</td><td><span class="pill info">Simulation</span> <span class="pill good">Silicon</span></td></tr>
+        <tr><td>Guaranteed error bound</td><td class="num">≤ 0.103 of bound</td><td>Worst measured error ÷ bound, every output, 21 cases (0.378 over 10,500 inputs; 0.199 on the 50-case board sweep)</td><td class="better">Never violated</td><td><span class="pill info">Simulation</span> <span class="pill good">Silicon</span></td></tr>
         <tr><td>Accuracy vs bump-and-reprice</td><td class="num">32–560× more accurate</td><td>Best bump size chosen in hindsight for each Greek (median 145×), base case, same pricer</td><td class="better">No bump size to tune</td><td><span class="pill info">Simulation</span></td></tr>
         <tr><td>Call pricing accuracy</td><td class="num">3.1e-5</td><td>Before put-call parity: 2.3e-3 (worst of 22 calls, vs integral reference)</td><td class="better">75× smaller</td><td><span class="pill info">Simulation</span></td></tr>
         <tr class="hi"><td>Correct on silicon</td><td class="num">450 / 450 bit-exact</td><td>50 random cases back to back, ZedBoard, no range errors</td><td class="better">Matches the model exactly</td><td><span class="pill good">Silicon</span></td></tr>
-        <tr><td>Area</td><td class="num">38,358 LUT (72%)<br>72 of 220 DSP</td><td>Generation 1: 159 separate 64×64 multipliers, over 1,000 DSP; could not fit</td><td class="better">Fits a Zynq-7020</td><td><span class="pill info">Vivado</span></td></tr>
+        <tr><td>Area</td><td class="num">38,752 LUT (73%)<br>72 of 220 DSP</td><td>Generation 1: 159 separate 64×64 multipliers, over 1,000 DSP; could not fit</td><td class="better">Fits a Zynq-7020</td><td><span class="pill info">Vivado</span></td></tr>
       </tbody>
     </table>
   </div>
-  <p class="caption">Energy: FPGA 0.341 W × 65.3 µs = 22.3 µJ. The 0.341 W is Vivado's power report for the built design (the Power screenshot): a prediction from the placed logic and an assumed switching rate ("vectorless", confidence Medium), not a reading from the board; it includes 0.121 W of clock generator. CPU power could not be measured under WSL; the range uses the Intel Core i5-1155G7's 12–28 W configurable power at the analytic method's measured throughput. * Analytic Greeks added 1 Oct, measured while the laptop also ran another Vivado job; provisional until re-measured on an idle machine. Generation 1 was never routed, so it is compared in cycles only. The CPU runs the identical algorithm in C++ double precision with g++ -O3 -march=native, AAD by CoDiPack.</p>
+  <p class="caption">Energy: FPGA 0.340 W × 65.3 µs = 22.2 µJ. The 0.340 W is Vivado's power report for the built design (the Power screenshot): a prediction from the placed logic and an assumed switching rate ("vectorless", confidence Medium), not a reading from the board; it includes 0.121 W of clock generator. CPU power could not be measured under WSL; the range uses the Intel Core i5-1155G7's 12–28 W configurable power at the analytic method's measured throughput. * Analytic Greeks added 1 Oct, measured while the laptop also ran another Vivado job; provisional until re-measured on an idle machine. Generation 1 was never routed, so it is compared in cycles only. The CPU runs the identical algorithm in C++ double precision with g++ -O3 -march=native, AAD by CoDiPack.</p>
 
   <div class="card">
     <h3>Scope of the novelty</h3>
@@ -270,7 +269,6 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     <h3>Raise these before being asked</h3>
     <ol>
       <li>Energy is an estimate on both sides; no power was measured.</li>
-      <li>The silicon results used the bitstream from before put-call parity; the rebuild and repeat are pending.</li>
       <li>Timing closes at about 79 MHz, not 100 MHz; the board runs at 70 MHz.</li>
       <li>The reverse sweep is written by hand as IR operations; making the generator derive it is the next task.</li>
       <li>The host steps (setup and finish) still run on the PC, not the Zynq's ARM cores.</li>
@@ -453,7 +451,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       </tbody>
     </table>
   </div>
-  <p class="caption">Cost: 4,731 → 4,733 cycles on the Zynq-7020 design, 1,599 → 1,593 on the 64-bit, one multiply per term fewer (251 → 250), 16 host constants instead of 19. After the change the FPGA's error matches the double-precision COS method's own error, so rounding is no longer the limiting factor. Predicted for the board re-run: worst price error over the 50 cases 2.3e-3 → 1.5e-5.</p>
+  <p class="caption">Cost: 4,731 → 4,733 cycles on the Zynq-7020 design, 1,599 → 1,593 on the 64-bit, one multiply per term fewer (251 → 250), 16 host constants instead of 19. After the change the FPGA's error matches the double-precision COS method's own error, so rounding is no longer the limiting factor. Measured on the board (6 Oct): worst price error over the 50 cases 2.3e-3 → 1.5e-5, as predicted.</p>
 </section>
 
 <!-- ============================================================ HARDWARE -->
@@ -464,14 +462,14 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       <thead><tr><th>Build</th><th class="num">LUT</th><th class="num">FF</th><th class="num">DSP</th><th class="num">Clock</th><th class="num">WNS</th><th class="num">Power</th></tr></thead>
       <tbody>
         <tr><td>Engine only, out of context, xc7z020clg400-1</td><td class="num">36,499 (68.6%)</td><td class="num">28,559 (26.8%)</td><td class="num">72 (32.7%)</td><td class="num">100 MHz</td><td class="num" style="color:var(--crit)">−2.639 ns</td><td class="num">0.258 W</td></tr>
-        <tr class="hi"><td>ZedBoard system, xc7z020clg484-1</td><td class="num">38,358 (72.1%)</td><td class="num">32,206 (30.3%)</td><td class="num">72 (32.7%)</td><td class="num">70 MHz</td><td class="num" style="color:var(--good)">+0.404 ns</td><td class="num">0.341 W</td></tr>
+        <tr class="hi"><td>ZedBoard system, xc7z020clg484-1</td><td class="num">38,752 (72.8%)</td><td class="num">32,134 (30.2%)</td><td class="num">72 (32.7%)</td><td class="num">70 MHz</td><td class="num" style="color:var(--good)">+0.458 ns</td><td class="num">0.340 W</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="caption">Fmax is about 79 MHz for the engine alone and about 72 MHz inside the ZedBoard system; both are limited by 64-bit carry chains and multiplier outputs, mostly routing delay. Power is Vivado's vectorless estimate; 0.121 W of the board figure is the clock generator. Both builds predate put-call parity, which changes the RTL slightly. Vivado's 67 DRC warnings are 56 suggestions to use the DSP blocks' internal registers, the likely route to 100 MHz, plus routine notices; no errors.</p>
+  <p class="caption">Fmax is about 79 MHz for the engine alone and about 72 MHz inside the ZedBoard system; both are limited by 64-bit carry chains and multiplier outputs, mostly routing delay. Power is Vivado's vectorless estimate; 0.121 W of the board figure is the clock generator. The ZedBoard row is the 6 Oct rebuild with put-call parity and refitted ranges (394 LUT more than the 29 Sep build); the engine-alone row and the screenshots below are from the earlier builds. Vivado's 67 DRC warnings are 56 suggestions to use the DSP blocks' internal registers, the likely route to 100 MHz, plus routine notices; no errors.</p>
   <div class="figs">
     <figure><div class="plate"><img src="validation/results/vivado/Design.png" alt="Vivado device view of the Zynq-7020 with most of the programmable logic filled by the placed design." loading="lazy"></div><figcaption><b>Placed design on the Zynq-7020</b>Device view: the engine fills about three quarters of the programmable logic.</figcaption></figure>
-    <figure><div class="plate"><img src="validation/results/vivado/Timing.png" alt="Vivado design timing summary: WNS 0.404 ns, WHS 0.021 ns, 0 failing endpoints out of 76,961. All user specified timing constraints are met." loading="lazy"></div><figcaption><b>Timing met at 70 MHz</b>0 failing endpoints of 76,961 for setup, hold and pulse width.</figcaption></figure>
+    <figure><div class="plate"><img src="validation/results/vivado/Timing.png" alt="Vivado design timing summary: WNS 0.404 ns, WHS 0.021 ns, 0 failing endpoints out of 76,961. All user specified timing constraints are met." loading="lazy"></div><figcaption><b>Timing met at 70 MHz</b>29 Sep build: 0 failing endpoints of 76,961. The 6 Oct rebuild: WNS +0.458 ns, 0 failing of 76,672.</figcaption></figure>
     <figure><div class="plate"><img src="validation/results/vivado/Summary.png" alt="Vivado project summary: 67 DRC warnings, 3 advisories, utilization LUT 72 percent, FF 30, DSP 33, total on-chip power 0.341 W, junction 28.9 C." loading="lazy"></div><figcaption><b>Project summary</b>Utilization, timing and power of the ZedBoard build.</figcaption></figure>
     <figure><div class="plate"><img src="validation/results/vivado/Power.png" alt="Vivado power breakdown: dynamic 0.235 W, of which clock manager 0.121 W, signals 0.042, clocks 0.040, logic 0.031; device static 0.106 W." loading="lazy"></div><figcaption><b>Power breakdown</b>Vectorless: 0.235 W dynamic, 0.106 W static. The clock manager is the largest single consumer.</figcaption></figure>
   </div>
@@ -489,12 +487,12 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     <table>
       <thead><tr><th>Run</th><th class="num">Cases</th><th class="num">Bit-exact results</th><th class="num">range_err</th><th class="num">Worst error ÷ bound</th><th class="num">Wall time</th></tr></thead>
       <tbody>
-        <tr><td>First vector</td><td class="num">1</td><td class="num">9 / 9</td><td class="num">0</td><td class="num">0.031</td><td class="num">—</td></tr>
-        <tr class="hi"><td>Sweep</td><td class="num">50</td><td class="num">450 / 450</td><td class="num">0</td><td class="num">0.268</td><td class="num">56.9 s</td></tr>
+        <tr><td>First vector</td><td class="num">1</td><td class="num">9 / 9</td><td class="num">0</td><td class="num">0.049</td><td class="num">3.2 s</td></tr>
+        <tr class="hi"><td>Sweep</td><td class="num">50</td><td class="num">450 / 450</td><td class="num">0</td><td class="num">0.199</td><td class="num">132.5 s</td></tr>
       </tbody>
     </table>
   </div>
-  <p class="caption">Almost all of the 56.9 s is JTAG register traffic; the engine computes each case in about 65 µs. These runs used the bitstream built before put-call parity; after the rebuild the same 50 cases are ready to re-run, with the worst error ÷ bound predicted at 0.199. Logs and reports: <span class="mono">validation/results/board_*</span>.</p>
+  <p class="caption">Run 6 Oct 2026 on the current design. Almost all of the 132.5 s is JTAG register traffic; the engine computes each case in about 65 µs. Worst price error against the double-precision reference: 1.5e-5, down from 2.3e-3 on the 29 Sep bitstream from before put-call parity (also 450 / 450 bit-exact, worst 0.268 of the bound). The 0.199 is what the emulator predicted. Logs and reports: <span class="mono">validation/results/board_*</span>.</p>
 </section>
 
 <!-- ============================================================ GEN 1 -->
@@ -535,7 +533,6 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   <header><div class="eyebrow">Stated openly</div><h2>Known limits</h2></header>
   <div class="limits">
     <div class="limit"><b>79 MHz, not 100 MHz</b><p>The engine misses 100 MHz by 2.6 ns on 64-bit carry chains. Latency figures use the measured Fmax.</p></div>
-    <div class="limit"><b>Board bitstream is one change behind</b><p>The on-silicon results used the design before put-call parity. The new RTL passes all simulation checks and needs a rebuild and re-run.</p></div>
     <div class="limit"><b>Host steps run on the PC</b><p>Setup and finish are Python on the PC, not C on the ARM. The processor-based design exists as a script but is not built.</p></div>
     <div class="limit"><b>Power is an estimate</b><p>Vectorless, 12.5% toggle rate. No simulated-activity (SAIF) figure or board measurement yet.</p></div>
     <div class="limit"><b>The adjoint is hand-written</b><p>The reverse sweep is written as IR operations and verified, not derived by an AD tool. Say "adjoint differentiation" in the claim, or automate the sweep.</p></div>
@@ -547,15 +544,16 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 <section id="next">
   <header><div class="eyebrow">What has to happen</div><h2>Next steps</h2><p class="muted">In order of value for the paper.</p></header>
   <div class="steps">
-    <div class="step"><div><div class="t">Rebuild the ZedBoard bitstream and repeat the 50-case sweep</div><p>Brings the silicon result up to the current design. Scripts, vectors and the report are ready: about 40 minutes of build and 1 minute on the board.</p></div><span class="pill warn">Ready, needs the board</span></div>
+    <div class="step"><div><div class="t">Rebuild the ZedBoard bitstream and repeat the 50-case sweep</div><p>Done 6 Oct: 450 / 450 bit-exact on the current design, worst 0.199 of the bound, price error 1.5e-5.</p></div><span class="pill good">Done</span></div>
+    <div class="step"><div><div class="t">Build the 64-bit design on an UltraScale+ board</div><p>The 64-bit, 32-multiplier design (1,593 cycles, setup in hardware) is generated and verified in simulation. At 150–250 MHz it would take about 6–11 µs, faster than the best CPU method (29 µs), which the Zynq-7020 cannot reach.</p></div><span class="pill warn">Next, needs the board</span></div>
     
-    <div class="step"><div><div class="t">Time a CPU software-AAD baseline</div><p>Done 30 Sep and 1 Oct. Hand-derived analytic Greeks on one CPU core (29 µs) beat the FPGA (65 µs); the FPGA beats AD tools and bumping. Frame the paper on Greeks overhead (1.04× vs 1.9× best software), the error bound and energy, not latency. Re-time on an idle laptop.</p></div><span class="pill good">Done</span></div>
-    <div class="step"><div><div class="t">Derive the adjoint automatically</div><p>Make the generator produce the reverse sweep from the forward graph, so the tool is a compiler for fixed-point AAD datapaths and a second model costs little.</p></div><span class="pill warn">Next</span></div>
-    <div class="step"><div><div class="t">Repeat the literature search before submission</div><p>Done once (docs/novelty_assessment.md). Repeat in Google Scholar, IEEE Xplore and the ACM Digital Library in the final month, and ask the guide about recent FPT, FPL, FCCM and HEART papers.</p></div><span class="pill info">Done once, repeat</span></div>
+    <div class="step"><div><div class="t">Time a CPU software-AAD baseline</div><p>Done 30 Sep and 1 Oct. Hand-derived analytic Greeks on one CPU core (29 µs) beat the FPGA (65 µs); the FPGA beats AD tools and bumping. Frame the paper on Greeks overhead (1.04× vs 1.9× best software), the error bound and energy, not latency. Re-time on an idle laptop.</p></div><span class="pill warn">Re-time idle</span></div>
+    <div class="step"><div><div class="t">Derive the adjoint automatically</div><p>Make the generator produce the reverse sweep from the forward graph, so the tool is a compiler for fixed-point AAD datapaths and a second model costs little. Moved to after the 29 Oct paper.</p></div><span class="pill info">After the paper</span></div>
+    <div class="step"><div><div class="t">Repeat the literature search before submission</div><p>Done 29 Sep and 6 Oct (docs/novelty_assessment.md). Repeat in Google Scholar, IEEE Xplore and the ACM Digital Library in the final month, and ask the guide about recent FPT, FPL, FCCM and HEART papers.</p></div><span class="pill info">Done once, repeat</span></div>
     <div class="step"><div><div class="t">Close timing at 100 MHz</div><p>Use the DSP blocks' internal output registers (Vivado's 56 suggestions) and pipeline the 64-bit carry chains. Cycle counts change; bit-exactness does not.</p></div><span class="pill crit">Open</span></div>
     <div class="step"><div><div class="t">Port the host steps to C and build the processor design</div><p>Bit-exact C for setup and finish, with a hand-written 64×64→128-bit multiply for the 32-bit ARM, then <span class="mono">bd_lite.tcl</span>: no PC in the loop.</p></div><span class="pill crit">Open</span></div>
-    <div class="step"><div><div class="t">Measure power properly</div><p>Simulated switching activity (SAIF) through Vivado, or a rail measurement on the board.</p></div><span class="pill crit">Open</span></div>
-    <div class="step"><div><div class="t">Merge into main</div><p>Open a pull request from <span class="mono">pipeline-shared-mult</span> once the board re-run passes.</p></div><span class="pill info">After step 1</span></div>
+    <div class="step"><div><div class="t">Measure power properly</div><p>Simulated switching activity (SAIF) through Vivado, a rail measurement on the board, and CPU package power, for energy per Greek set on both sides. Planned 6–12 Oct.</p></div><span class="pill warn">Next</span></div>
+    <div class="step"><div><div class="t">Merge into main</div><p>Pull request from <span class="mono">pipeline-shared-mult</span>, opened 6 Oct after the board re-run passed.</p></div><span class="pill good">Open PR</span></div>
   </div>
 </section>
 <!-- ============================================================ DOCUMENTS -->
