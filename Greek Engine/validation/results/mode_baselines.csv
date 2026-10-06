@@ -1,0 +1,31 @@
+family,wl,mults,datapath,mul_per_term,crot,cvec,ii,cycles,cost_vs_price,lut_est
+z7,56,8,price only,126,3,2,32,4566,1.0,30868
+z7,56,8,adjoint,250,3,2,32,4731,1.036,43892
+z7,56,8,forward factored (analytic),313,3,2,40,5622,1.231,45992
+z7,56,8,forward sparse,396,3,2,50,6968,1.526,51200
+z7,56,8,forward dense (AD tool),802,3,2,101,13597,2.978,80376
+z7,56,16,price only,126,3,2,32,4561,1.0,34900
+z7,56,16,adjoint,250,3,2,32,4619,1.013,46132
+z7,56,16,forward factored (analytic),313,3,2,32,4571,1.002,49128
+z7,56,16,forward sparse,396,3,2,32,4571,1.002,54336
+z7,56,16,forward dense (AD tool),802,3,2,51,7150,1.568,83512
+zu,64,8,price only,126,3,2,16,2571,1.0,47496
+zu,64,8,adjoint,250,3,2,32,4707,1.831,62376
+zu,64,8,forward factored (analytic),313,3,2,40,5666,2.204,64776
+zu,64,8,forward sparse,396,3,2,50,6870,2.672,70728
+zu,64,8,forward dense (AD tool),802,3,2,101,13602,5.291,104072
+zu,64,16,price only,126,3,2,8,1538,1.0,52104
+zu,64,16,adjoint,250,3,2,16,2612,1.698,64936
+zu,64,16,forward factored (analytic),313,3,2,20,3069,1.995,68360
+zu,64,16,forward sparse,396,3,2,25,3690,2.399,74312
+zu,64,16,forward dense (AD tool),802,3,2,51,7155,4.652,107656
+zu,64,32,price only,126,3,2,4,1024,1.0,59272
+zu,64,32,adjoint,250,3,2,8,1591,1.554,74152
+zu,64,32,forward factored (analytic),313,3,2,10,1795,1.753,75528
+zu,64,32,forward sparse,396,3,2,13,2171,2.12,83528
+zu,64,32,forward dense (AD tool),802,3,2,26,3822,3.732,114824
+zu,64,64,price only,126,3,2,3,886,1.0,77704
+zu,64,64,adjoint,250,3,2,4,1071,1.209,88488
+zu,64,64,forward factored (analytic),313,3,2,5,1150,1.298,89864
+zu,64,64,forward sparse,396,3,2,7,1407,1.588,101960
+zu,64,64,forward dense (AD tool),802,3,2,13,2169,2.448,133256

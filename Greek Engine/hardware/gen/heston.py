@@ -178,10 +178,11 @@ def cf_reverse(g, s, u, u2, cf, wn_r, wn_i):
                 x=adj_x), sh
 
 
-def term(g, s, k, greeks=True):
+def term(g, s, k, greeks=True, internals=None):
     """one COS term; k is an integer input node. Returns node dict.
     greeks=False: forward pass only (the price-only pricer used by the
-    bump-and-reprice baseline)."""
+    bump-and-reprice baseline). internals: if a dict, receives the payoff
+    weight, cos/sin and forward nodes (used by tangent.py; the graph is unchanged)."""
     g.part = "term"
     fl, mf = g.fl, g.mf
     T, r, v0, kappa, theta, xi, rho = (s[n] for n in ["T", "r", "v0", "kappa", "theta", "xi", "rho"])
@@ -218,6 +219,8 @@ def term(g, s, k, greeks=True):
     # price contribution
     F = g.add(g.mul(phi[0], cu), g.mul(phi[1], su))
     contrib = g.mul(F, wV)
+    if internals is not None:
+        internals.update(u=u, u2=u2, cu=cu, su=su, wV=wV, cf=cf, one=one)
     if not greeks:
         return {"price": contrib}
 

@@ -170,7 +170,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 <header class="top">
   <div class="eyebrow">FPGA · Heston stochastic volatility · COS method · reverse-mode AAD</div>
   <h1>Greeks Engine</h1>
-  <p class="lede">Fixed-point FPGA hardware that computes a Heston option price and all nine of its sensitivities (the Greeks) in one forward and one reverse pass. It is generated from a single description, verified bit-exact against a golden model with a guaranteed error bound per Greek, and has run on a Zynq-7020 ZedBoard.</p>
+  <p class="lede">Fixed-point FPGA hardware that computes a Heston option price and all nine of its sensitivities (the Greeks) in one forward and one reverse pass. It is generated from a single description, verified bit-exact against a golden model with a first-order bound on the rounding error of each Greek, and has run on a Zynq-7020 ZedBoard.</p>
   <div class="pills">
     <span class="pill good">Simulation: 22 / 22 checks pass</span>
     <span class="pill good">ZedBoard: 50 / 50 cases bit-exact</span>
@@ -208,7 +208,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
     <div class="kpi aad"><div class="l">Faster than bump-and-reprice</div><div class="v">18.4<small>×</small></div><div class="d">on identical hardware: 4,733 cycles against 86,860 for 19 pricings.</div></div>
     <div class="kpi"><div class="l">Latency per evaluation</div><div class="v">57.8<small>µs</small></div><div class="d">4,572 FPGA cycles at the routed 79.1 MHz (setup and finish on the host). 65.3 µs on the board at 70 MHz.</div></div>
     <div class="kpi"><div class="l">On silicon</div><div class="v">50<small>/50</small></div><div class="d">random cases bit-exact on a ZedBoard, run back to back: 450 of 450 results identical to the emulator.</div></div>
-    <div class="kpi"><div class="l">Error vs guarantee</div><div class="v">≤ 0.103</div><div class="d">worst measured error as a fraction of the first-order bound, all 10 outputs, 21-case grid (must stay ≤ 1).</div></div>
+    <div class="kpi"><div class="l">Error vs bound</div><div class="v">≤ 0.103</div><div class="d">worst measured error as a fraction of the first-order bound, all 10 outputs, 21-case grid (must stay ≤ 1).</div></div>
     <div class="kpi"><div class="l">Fits a Zynq-7020</div><div class="v">73<small>% LUT</small></div><div class="d">ZedBoard build: 38,752 LUT, 72 of 220 DSP, timing met at 70 MHz (WNS +0.458 ns).</div></div>
   </div>
 </section>
@@ -219,13 +219,13 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 
   <div class="card">
     <h3>Novelty</h3>
-    <p><b>The first FPGA implementation of adjoint (reverse-mode) differentiation for option Greeks, and the first FPGA implementation of the COS method</b>: a generated fixed-point datapath for the Heston model that returns the price and all nine sensitivities in one forward and reverse pass, with a guaranteed error bound on every output, bit-exact on a Zynq-7020.</p>
+    <p><b>The first FPGA implementation of adjoint (reverse-mode) differentiation for option Greeks, and the first FPGA implementation of the COS method</b>: a generated fixed-point datapath for the Heston model that returns the price and all nine sensitivities in one forward and reverse pass, with a first-order rounding-error bound on every output, bit-exact on a Zynq-7020.</p>
     <ol>
       <li><b>Adjoint Greeks on an FPGA, for the first time.</b> Every published FPGA Greeks engine re-runs the pricer once per sensitivity (Klaisoongnoen et al. 2022; AMD's Vitis finance library). No FPGA adjoint implementation exists in the 2024 survey of 99 FPGA option-pricing studies or in the 2024 review of 15 years of AAD in finance.</li>
       <li><b>The COS method on an FPGA, for the first time.</b> COS pricing had run on CPUs and GPUs only; the only FPGA Fourier pricer (AMD) uses trapezoidal integration and returns the price alone.</li>
       <li><b>A tape-free adjoint datapath.</b> Software AAD records a tape and replays it. Here the reverse sweep is compiled into a statically scheduled fixed-point datapath that shares its arithmetic units with the forward pass, because the COS pricer runs the same operations for every input.</li>
-      <li><b>Nine Greeks for 1.04× the cost of the price.</b> 4,733 cycles against 4,568 for the price alone. On the measured CPU, hand-derived Greeks cost 1.9×, AD tools 5.3–6.7×, and bump-and-reprice 19×.</li>
-      <li><b>A guaranteed error bound for every Greek of a fixed-point adjoint datapath.</b> Measured error never exceeds 0.103 of the bound over 21 cases, 0.378 over 10,500 inputs including hard regimes, and 0.199 over 50 random cases on silicon.</li>
+      <li><b>Nine Greeks for 1.04× the cost of the price.</b> 4,733 cycles against 4,568 for the price alone. On the measured CPU, hand-derived Greeks cost 1.9×, AD tools 5.3–6.7×, and bump-and-reprice 19×. In hardware, forward-mode datapaths from the same generator need more multiplies for the same Greeks: 25% more hand-factored, 3.2× as an AD tool builds them.</li>
+      <li><b>A first-order rounding-error bound for every Greek of a fixed-point adjoint datapath.</b> Measured error never exceeds 0.103 of the bound over 21 cases, 0.378 over 10,500 inputs including hard regimes, and 0.199 over 50 random cases on silicon.</li>
       <li><b>Bit-exact Greeks on silicon.</b> 450 of 450 results identical to the model on a ZedBoard, 50 random cases back to back.</li>
       <li><b>A fair baseline.</b> Against bump-and-reprice on identical hardware: 18.4× fewer cycles and 32–560× more accurate than the best bump size for each Greek.</li>
     </ol>
@@ -304,8 +304,8 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   <div class="card">
     <h3>The three claims that carry the paper</h3>
     <div class="claim"><span class="tag">N1</span><p><b>AAD with no tape.</b> COS pricing runs the same operations for every input, so the reverse sweep can be unrolled at design time into a fixed datapath: no tape memory, no replay sequencer. Evidence: generated RTL bit-exact on 5 designs, now on silicon.</p></div>
-    <div class="claim"><span class="tag">N2</span><p><b>Nine Greeks for 1.04 pricings.</b> On the Zynq-7020 design the iterative CORDIC units set the pace, leaving multiplier slots idle that the adjoint's multiplies fill. The condition matters: on the 64-bit design, where multipliers bind, the ratio is 1.55×.</p></div>
-    <div class="claim"><span class="tag">N4</span><p><b>A guaranteed error bound for every Greek.</b> AAD applied a second time, to the hardware's own rounding model, bounds the error of each output. Measured error never exceeds 0.103 of that bound on the grid, 0.199 on the 50 random cases. The method is classical (Linnainmaa, 1976); applying it to a datapath that itself computes adjoints is the new part.</p></div>
+    <div class="claim"><span class="tag">N2</span><p><b>Nine Greeks for 1.04 pricings.</b> On the Zynq-7020 design the iterative CORDIC units set the pace, leaving multiplier slots idle that the adjoint's multiplies fill. The condition matters: on the 64-bit design, where multipliers bind, the ratio is 1.55×. A forward-mode datapath could fill those slots too, but needs more multiplies: per COS term the adjoint uses 250, the best hand-factored forward method 313 and an AD-tool-style one 802, so reaching the same pace takes 8, 10 and 26 multipliers (6 Oct, <span class="mono">validation/run_mode_baselines.py</span>).</p></div>
+    <div class="claim"><span class="tag">N4</span><p><b>A first-order rounding-error bound for every Greek.</b> AAD applied a second time, to the hardware's own rounding model, bounds the error of each output. Measured error never exceeds 0.103 of that bound on the grid, 0.199 on the 50 random cases. The method is classical (Linnainmaa, 1976); applying it to a datapath that itself computes adjoints is the new part.</p></div>
   </div>
 </section>
 
@@ -415,7 +415,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       </tbody>
     </table>
   </div>
-  <p class="caption">The bound column is the largest ratio across both designs. A ratio below 1 means the guaranteed bound held; all are at most 0.103, so the bound is safe and about ten times conservative.</p>
+  <p class="caption">The bound column is the largest ratio across both designs. A ratio below 1 means the first-order bound held; all are at most 0.103, so the bound is safe and about ten times conservative.</p>
 </section>
 
 <!-- ============================================================ PARITY -->
@@ -431,7 +431,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       <tr><td>∂V/∂θ</td><td class="num">2.0e-6</td><td class="num">1.1e-4</td><td class="num">3.7e-4</td></tr>
       <tr><td>∂V/∂ξ</td><td class="num">5.9e-7</td><td class="num">2.5e-4</td><td class="num">1.3e-3</td></tr>
     </tbody></table></div>
-  <p class="caption"><b>The bound held in all 10,482 unflagged cases</b>, inside and outside the domain (worst 0.378 of the bound), no overflow; the 18 flagged inputs were all outside the domain. At small ξ with large κθ, ∂V/∂ξ is off by up to 1.3e-3 (≤ 0.2%), all fixed-point rounding, inside its bound. The sweep exposed false range_err alarms on 25 in-domain inputs (very low variance, very short T); refitting the shift ranges at the domain edges removed all of them, and every design was regenerated and re-verified (22/22 checks). <span class="mono">validation/run_domain_sweep.py</span></p>
+  <p class="caption"><b>The bound held in all 10,482 unflagged cases</b>, inside and outside the domain (worst 0.378 of the bound), no overflow; the 18 flagged inputs were all outside the domain. At small ξ with large κθ, ∂V/∂ξ is off by up to 1.3e-3, all fixed-point rounding, inside its bound. The sweep exposed false range_err alarms on 25 in-domain inputs (very low variance, very short T); refitting the shift ranges at the domain edges removed all of them, and every design was regenerated and re-verified (22/22 checks). A fresh held-out sweep of the same size (6 Oct) then tested the refitted ranges on inputs they were not fitted to: no in-domain flag, no result over its bound (worst 0.356). Against double precision the price and market Greeks give at least 5.3 significant figures in 99% of inputs; ∂V/∂κ and ∂V/∂ξ only 3.5 and 3.0, down to 2.2 and 1.4 where they are small. <span class="mono">validation/run_domain_sweep.py</span>, <span class="mono">validation/sigfig_report.py</span></p>
 </section>
 
 <section id="parity">
@@ -497,7 +497,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
 
 <!-- ============================================================ GEN 1 -->
 <section id="hedging">
-  <header><div class="eyebrow">Application, 1 Oct</div><h2>Hedging on real NIFTY data</h2></header>
+  <header><div class="eyebrow">Illustration, not evidence for the hardware</div><h2>Hedging on real NIFTY data</h2></header>
   <p>12 trades, Sep 2025 – Sep 2026: each sells 20 lots of an at-the-money NIFTY call and hedges daily with futures until 0.10 years remain. Heston is calibrated each day to real quotes only (at least 50 contracts traded), across all monthly expiries; the model's prices were within 0.019% of the index level in a typical day (median). Hedge ratios come from the bit-accurate engine model. Profit and loss is after brokerage, STT, exchange, SEBI and stamp charges, GST, slippage and 30% tax.</p>
   <div class="tbl">
     <table>
@@ -510,7 +510,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
       </tbody>
     </table>
   </div>
-  <p class="caption">The hedge using two of the engine's Greeks (delta and variance vega, produced together in one pass) left 39% less risk than Black-Scholes. Heston delta alone did worse than Black-Scholes, as expected: it ignores that index volatility rises when the price falls. With 12 trades this is a case study, not a statistical result (bootstrap ≈ 88%). 48-bit deltas traded exactly the same futures lots as 56-bit. Charge rates are settings still to be checked with a broker. <span class="mono">validation/hedging/</span></p>
+  <p class="caption">The hedge decisions come from the hedging formula, not from how the Greeks are computed: they are insensitive to word length, and a double-precision CPU would trade the same lots. Within that scope, the hedge using two of the engine's Greeks (delta and variance vega, produced together in one pass) left 39% less risk than Black-Scholes. Heston delta alone did worse than Black-Scholes, as expected: it ignores that index volatility rises when the price falls. With 12 trades this is a case study, not a statistical result (bootstrap ≈ 88%). 48-bit deltas traded exactly the same futures lots as 56-bit. Charge rates are settings still to be checked with a broker. <span class="mono">validation/hedging/</span></p>
   <div class="figs">
     <figure class="wide"><div class="plate"><img src="validation/hedging/results/figures/hedge_risk_by_strategy.png" alt="Bar chart of P&amp;L spread by hedging strategy; the minimum-variance Heston hedge is lowest"></div><figcaption><b>Risk left after each hedge</b>Lower is better.</figcaption></figure>
     <figure class="wide"><div class="plate"><img src="validation/hedging/results/figures/hedge_pnl_per_trade.png" alt="P&amp;L of each of 12 trades for four hedging strategies"></div><figcaption><b>Each trade's profit or loss</b>After all charges and tax.</figcaption></figure>
@@ -534,6 +534,7 @@ footer { margin-top: 56px; padding-top: 18px; border-top: 1px solid var(--rule);
   <div class="limits">
     <div class="limit"><b>79 MHz, not 100 MHz</b><p>The engine misses 100 MHz by 2.6 ns on 64-bit carry chains. Latency figures use the measured Fmax.</p></div>
     <div class="limit"><b>Host steps run on the PC</b><p>Setup and finish are Python on the PC, not C on the ARM. The processor-based design exists as a script but is not built.</p></div>
+    <div class="limit"><b>The bound covers rounding only</b><p>It is first order and bounds fixed-point rounding against the same algorithm computed exactly (checked in 50-digit arithmetic: at most 0.24 of the bound). The COS method's own error (128 terms, ±10 standard deviations) is separate: negligible in a typical case, but up to 7.8e-3 on vega in the worst of 50 board cases.</p></div>
     <div class="limit"><b>Power is an estimate</b><p>Vectorless, 12.5% toggle rate. No simulated-activity (SAIF) figure or board measurement yet.</p></div>
     <div class="limit"><b>The adjoint is hand-written</b><p>The reverse sweep is written as IR operations and verified, not derived by an AD tool. Say "adjoint differentiation" in the claim, or automate the sweep.</p></div>
     <div class="limit"><b>Bounded input domain</b><p>Verified for S₀ = 100, K 60–150, T 0.1–3, and ranges for each model parameter. Outside it the hardware raises <span class="mono">range_err</span> instead of returning a wrong value.</p></div>
