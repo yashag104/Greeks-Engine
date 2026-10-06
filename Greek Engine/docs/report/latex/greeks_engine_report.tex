@@ -63,7 +63,7 @@
 \small Birla Institute of Technology and Science, Pilani\\[8pt]
 \small Course registered under: \textbf{Prof.\ Natasha Hazarika}\\
 \small Supervisor: \textbf{Prof.\ Govind Prasad}}
-\date{\small Project report, 1 October 2026}
+\date{\small Project report, 6 October 2026}
 
 \begin{document}
 \maketitle
@@ -336,11 +336,11 @@ is useful and what is new.
 Cycles, price + 9 Greeks & 4,733 & 92$\times$ fewer than the first-generation engine; 18.4$\times$ fewer than bump-and-reprice\\
 Cost of the 9 Greeks & 1.04 pricings & hand-derived software 1.9; AD tools 5.3--6.7; bump-and-reprice 19\\
 Latency on the ZedBoard (loop only) & 65.3\,$\mu$s (57.8\,$\mu$s at 79\,MHz) & 1.4--3.9$\times$ faster than AD tools and bumping on one CPU core; 2.2$\times$ slower than hand-derived Greeks (29\,$\mu$s)\\
-Energy per evaluation & 22.3\,$\mu$J & about 6--30$\times$ less than the CPU (CPU power estimated)\\
+Energy per evaluation & 22.2\,$\mu$J & about 6--30$\times$ less than the CPU (CPU power estimated)\\
 Accuracy (21 cases) & price $6.1\times10^{-7}$, Greeks $\le 1.2\times10^{-5}$ & relative to double precision; over 10,500 inputs worst absolute $1.2\times10^{-3}$ ($\partial V/\partial\xi$)\\
 Error bound & never exceeded ($\le 0.378$) & every output, 10,500 inputs\\
 On silicon & 450 / 450 bit-exact & 50 random cases\\
-Area & 72\% LUT, 72 of 220 DSP & fits a Zynq-7020; the first generation did not\\
+Area & 73\% LUT, 72 of 220 DSP & fits a Zynq-7020; the first generation did not\\
 \bottomrule
 \end{tabularx}
 \caption{Results at a glance (Zynq-7020 configuration).}
@@ -581,7 +581,7 @@ rounding is no longer the limiting factor.}
 \textbf{Build} & \textbf{LUT} & \textbf{FF} & \textbf{DSP} & \textbf{Clock} & \textbf{Slack} & \textbf{Power}\\
 \midrule
 Engine alone (xc7z020clg400-1) & 36,499 (68.6\%) & 28,559 (26.8\%) & 72 (32.7\%) & 100\,MHz & $-2.639$\,ns & 0.258\,W\\
-\hi ZedBoard system (xc7z020clg484-1) & 38,358 (72.1\%) & 32,206 (30.3\%) & 72 (32.7\%) & 70\,MHz & $+0.404$\,ns & 0.341\,W\\
+\hi ZedBoard system (xc7z020clg484-1) & 38,752 (72.8\%) & 32,134 (30.2\%) & 72 (32.7\%) & 70\,MHz & $+0.458$\,ns & 0.340\,W\\
 \bottomrule
 \end{tabular}}
 \caption{Vivado 2025.2 results after routing. The engine alone reaches about 79\,MHz;
@@ -594,10 +594,12 @@ report (vectorless analysis); 0.121\,W of the board figure is the clock generato
 \includegraphics[width=0.58\textwidth]{figures/vivado_device.png}\\[4pt]
 \includegraphics[width=\textwidth]{figures/vivado_timing.png}
 \caption{The placed design on the Zynq-7020 (top) and the timing summary of the
-ZedBoard build: all constraints met at 70\,MHz, 0 failing endpoints of 76,961 (bottom).}
+ZedBoard build of 29 September: all constraints met at 70\,MHz, 0 failing endpoints of
+76,961 (bottom). The rebuild of 6 October with put-call parity and the refitted ranges
+also meets 70\,MHz: WNS $+0.458$\,ns, 0 failing endpoints of 76,672, and 394 more LUTs.}
 \end{figure}
 
-\useful{The engine fits a low-cost Zynq-7020 with room to spare: 72\% of the logic and
+\useful{The engine fits a low-cost Zynq-7020 with room to spare: 73\% of the logic and
 a third of the DSP blocks, leaving space for the processor interface. The first
 generation could not fit at all.}
 
@@ -609,14 +611,16 @@ generation could not fit at all.}
 \toprule
 \textbf{Run} & \textbf{Cases} & \textbf{Bit-exact results} & \textbf{Range errors} & \textbf{Worst error $\div$ bound}\\
 \midrule
-First vector & 1 & 9 / 9 & 0 & 0.031\\
-\hi Sweep, back to back & 50 & 450 / 450 & 0 & 0.268\\
+First vector & 1 & 9 / 9 & 0 & 0.049\\
+\hi Sweep, back to back & 50 & 450 / 450 & 0 & 0.199\\
 \bottomrule
 \end{tabular}
-\caption{ZedBoard results, 29 September 2026. The sweep used 2 reference cases and 48
-random cases over the valid input range (22 calls, 28 puts), with no reset between
-cases. These runs used the bitstream built before put-call parity; the repeat with the
-current design is scheduled (Section~\ref{sec:timeline}).}
+\caption{ZedBoard results, 6 October 2026, with the current design (put-call parity
+and refitted shift ranges). The sweep used 2 reference cases and 48 random cases over
+the valid input range (22 calls, 28 puts), with no reset between cases. Worst price
+error over the 50 cases against the double-precision reference: $1.5\times10^{-5}$,
+down from $2.3\times10^{-3}$ with the earlier bitstream of 29 September (which was also
+450 / 450 bit-exact, worst 0.268 of the bound).}
 \end{table}
 
 \useful{The hardware computes exactly what the model computes, so every accuracy result
@@ -668,7 +672,7 @@ analytic Greeks on one laptop core take about 29\,$\mu$s (28--37\,$\mu$s across 
 about 2.2 times faster than the engine, and several cores give far more throughput.
 What the engine keeps is the cost of its Greeks, 1.04 pricings against 1.9 for the best
 software and 5--7 for AD tools, a guaranteed error bound on every Greek, and energy:
-about 22.3\,$\mu$J per evaluation (0.341\,W $\times$ 65.3\,$\mu$s) against an estimated
+about 22.2\,$\mu$J per evaluation (0.340\,W $\times$ 65.3\,$\mu$s) against an estimated
 0.13--0.68\,mJ for the CPU at its rated 12--28\,W, 6--30 times less. The CPU's power was
 not measured, so the energy figure is an estimate.}
 
@@ -796,7 +800,7 @@ Advantage over bump-and-reprice & 8.8$\times$ & \textbf{18.4$\times$}\\
 Multipliers & 159 dedicated 64$\times$64 (over 1,000 DSP) & \textbf{8 shared} (72 DSP)\\
 Dividers & 28 bit-serial per term, 80\% of latency & \textbf{none}\\
 Terms & one after another & \textbf{16 overlapping}\\
-Fits a Zynq-7020 & no & \textbf{yes}, 72\% LUT\\
+Fits a Zynq-7020 & no & \textbf{yes}, 73\% LUT\\
 Run on silicon & no & \textbf{yes}, bit-exact\\
 Error bound & price and Greeks, $\le 0.21$ & price and Greeks, $\le 0.103$\\
 \bottomrule
@@ -832,11 +836,11 @@ Figure~\ref{fig:gantt}).
 30 Sep -- 1 Oct & CPU comparison; results dashboard and report & Done\\
 1 Oct & Hand-derived analytic and optimised bump CPU baselines; strike-chain design study (\S\ref{sec:chain}) & Done\\
 \midrule
-3--5 Oct & Rebuild the ZedBoard bitstream with put-call parity and refitted ranges; repeat the 50-case sweep & Next\\
+5--6 Oct & ZedBoard bitstream rebuilt with put-call parity and refitted ranges; 50-case sweep repeated, 450 / 450 bit-exact & Done\\
 1--13 Oct & Hedging case study on real NIFTY data (first results, \S\ref{sec:hedging}); next: verify charges with a broker, more trades & In progress\\
 1 Oct & Validation sweep over 10,500 inputs including hard regimes; latency accounting (host steps, configurations) & Done\\
 1 Oct & Shift ranges refitted at the domain edges; all designs regenerated and re-verified & Done\\
-2--5 Oct & CPU timings on an idle machine & Next\\
+6--8 Oct & CPU timings on an idle machine & Next\\
 6--12 Oct & Power from simulated switching activity, a board power measurement, and CPU package power, for energy per Greek set on both sides & Planned\\
 
 13--15 Oct & Freeze results; regenerate all figures and tables & Planned\\
@@ -865,7 +869,7 @@ After 29 Oct & Generator derives the reverse sweep automatically; a second prici
   \ganttbar{5}{Board interface, first route}{41}{43}{aad}
   \ganttbar{6}{Silicon runs, parity, literature}{44}{45}{aad}
   \ganttbar{7}{CPU comparison, report}{46}{47}{aad}
-  \ganttbar{8}{Bitstream rebuild, repeat sweep}{47}{49}{plan}
+  \ganttbar{8}{Bitstream rebuild, repeat sweep}{51}{52}{aad}
   \ganttbar{9}{Hedging study, real NIFTY data}{47}{59}{plan}
   \ganttbar{10}{Power measurement}{52}{58}{plan}
   \ganttbar{11}{Freeze results, figures}{59}{61}{plan}

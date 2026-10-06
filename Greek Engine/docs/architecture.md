@@ -241,7 +241,7 @@ terms. It is the strongest software competitor and it changes the comparison:
 - **Throughput:** the analytic method on 4 cores / 8 processes reached
   41,000–94,000 evaluations/s on the loaded laptop, against 15,300 for one FPGA
   engine.
-- **Energy (estimate):** the FPGA board design is 0.341 W (vectorless, including
+- **Energy (estimate):** the FPGA board design is 0.340 W (vectorless, including
   the clock generator), about 22 µJ per evaluation. CPU power could not be
   measured under WSL; at the part's 12–28 W configurable power and the analytic
   method's throughput, about 0.13–0.68 mJ per evaluation, so roughly 6–30× more
@@ -330,23 +330,25 @@ idle): 1 strike 40.3 µs, 4 strikes 56.2 µs (14.0 per strike), 8 strikes 68.0 �
   checkpoints after placement, `impl_from_dcp.tcl` resumes from a checkpoint, and
   `run_native.bat` runs the flow outside WSL). Power is vectorless; activity-based
   (SAIF) power is still open.
-- **On silicon: 50 cases, bit-exact (2026-09-29).** The AXI4-Stream wrappers are
+- **On silicon: 50 cases, bit-exact (2026-09-29, repeated 2026-10-06).** The AXI4-Stream wrappers are
   up to 1,456 bits wide, which no Zynq PS-PL port can carry, so `wrappers.py lite`
   generates an AXI4-Lite register file (bit-exact, in `verify_all.sh`). On a ZedBoard
   (xc7z020clg484-1), `zedboard/bd_jtag.tcl` puts it behind a JTAG-to-AXI master at
-  70 MHz (WNS +0.404 ns, so ~72 MHz in context against ~79 MHz out of context; 38,358
-  LUT, 72 DSP). `run_jtag.tcl` wrote the 56 input words, started the engine, saw done
+  70 MHz (6 Oct build: WNS +0.458 ns, so ~72 MHz in context against ~79 MHz out of
+  context; 38,752 LUT, 72 DSP, 0.340 W vectorless). `run_jtag.tcl` wrote the 51 input words, started the engine, saw done
   on the first status poll, and read back all 9 outputs **bit-exact against the
-  emulator**. Log: `validation/results/board_zedboard_2026-09-29.log`. A sweep then
+  emulator**. Log: `validation/results/board_zedboard_2026-10-06.log`. A sweep then
   ran 50 cases back to back with no reset between them (the 2 fixed cases plus 48
   random draws over the verified domain, seed 2026, not the seed the shifter ranges
   were fitted on; 22 calls, 28 puts): 450/450 sums bit-exact, `range_err` never set,
-  56.9 s in all, almost all of it JTAG register traffic. Through the host finish step
-  all 500 outputs equal the emulator's, and the worst is 0.268 of its error bound
-  (`validation/board_report.py`; `results/board_sweep_*`). These runs used the
-  bitstream built before put-call parity (19 host constants, 56 input words); the
-  regenerated design (16 constants, 51 words) needs a new bitstream and a re-run.
-  Also open: the PS design (`bd_lite.tcl`), which needs a C port of the host setup
+  132.5 s in all, almost all of it JTAG register traffic (the engine's share is about
+  3 ms). Through the host finish step all 500 outputs equal the emulator's, and the
+  worst is 0.199 of its error bound; worst price error against the double-precision
+  reference 1.5e-5 (`validation/board_report.py`; `results/board_sweep_*_2026-10-06*`).
+  The first runs, on 29 Sep, used the bitstream from before put-call parity (19 host
+  constants, 56 input words): also 450/450 bit-exact, but worst 0.268 of the bound
+  and price error 2.3e-3. Put-call parity plus the refitted shift ranges cost 394 LUT
+  (38,358 to 38,752). Also open: the PS design (`bd_lite.tcl`), which needs a C port of the host setup
   and finish.
 - **Calls are priced as puts plus put-call parity.** Priced directly, a call's COS
   coefficients carry e^b, which over a wide truncation range grows and then cancels:

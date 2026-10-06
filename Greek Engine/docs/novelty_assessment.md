@@ -1,7 +1,8 @@
 # Novelty of the Greeks Engine
 
-Literature check made on 29 September 2026. Every source in section 4 was opened
-and its text searched; where only an abstract was reachable it says so.
+Literature check made on 29 September 2026 and repeated on 5 October 2026. Every
+source in section 4 was opened and its text searched; where only an abstract was
+reachable it says so.
 
 ## 1. Novelty points
 
@@ -24,8 +25,8 @@ and its text searched; where only an abstract was reachable it says so.
    measured CPU (`architecture.md` §4.6) and bump-and-reprice 19×.
 5. **A guaranteed error bound for every Greek of a fixed-point adjoint datapath.**
    Measured error never exceeds 0.103 of the bound over 21 cases, 0.378 over 10,500
-   inputs including hard regimes (every unflagged result), and 0.268 over 50 random
-   cases on silicon.
+   inputs including hard regimes (every unflagged result), and 0.199 over 50 random
+   cases on silicon (6 Oct 2026 bitstream; 0.268 on the earlier one).
 6. **Bit-exact Greeks on silicon.** 450 of 450 results identical to the model on a
    ZedBoard (Zynq-7020), 50 random cases back to back.
 7. **Bump-and-reprice on identical hardware:** 18.4× more cycles, and 32–560× less
@@ -129,11 +130,20 @@ as an open problem; no source says so (section 5).
 | Linnainmaa, *Taylor expansion of the accumulated rounding error*, BIT 16:146–160, 1976 (thesis 1970) | Reverse mode originated as rounding-error analysis. N4's method. |
 | Gaffar, Mencer, Luk, Cheung, Shirazi, *Floating-point bitwidth analysis via automatic differentiation*, FPT 2002 (and FCCM 2004 fixed/floating unification) | AD-based sensitivity for FPGA precision. N4's closest hardware prior art. |
 
+### AD in hardware outside finance (added 5 Oct 2026)
+| Source | Relevance |
+|---|---|
+| Schoder & Bücker (Jena), *Scaling an Augmented RISC-V Processor Design with High-Level Synthesis*, RISC-V for HPC workshop, ISC 2024 (Springer LNCS 2025) | **Forward-mode** AD built into a RISC-V soft processor (custom instructions, HLS) on an Alveo U50 FPGA. Slides read in full: forward mode only, a processor not a datapath, test functions like Rosenbrock, no finance. Cite it: AD has run on an FPGA, so never claim "first AD on an FPGA". |
+| Boudaoud, Calotoiu, Copik, Hoefler (ETH), *DaCe AD*, arXiv:2509.02197, Sept 2025 | Reverse-mode AD in the DaCe framework, whose code generator can target FPGAs, but every result is on CPU and GPU; no finance. Cite as reverse-mode AD for accelerators. |
+| de Beer, *Accelerated Adjoint Algorithmic Differentiation with Applications in Finance*, MPhil thesis, UCT 2017 | Hand-written adjoint Greeks of a Heston Monte Carlo rainbow option on a **GPU**; full text has no FPGA. Another GPU AAD reference. |
+
 ### Searches that returned nothing relevant
 AD/AAD + FPGA; AD + high-level synthesis; reverse-mode AD + ASIC/circuit; tape-free
 adjoint + hardware pipeline; COS/Fourier-cosine + FPGA; Heston Fourier + FPGA
 accelerator; FPGA pathwise/adjoint Monte Carlo; Maxeler + adjoint; 2025–2026 arXiv
-FPGA + AD + Greeks.
+FPGA + AD + Greeks. Repeated 5 Oct 2026 (FPGA adjoint Greeks; COS + FPGA; reverse-mode
+AD + FPGA/HLS; FPGA Heston Greeks 2025–2026; FPGA Greeks + fixed-point error bound):
+nothing that does adjoint Greeks or COS on an FPGA.
 
 ## 5. Corrections to the earlier literature review
 
