@@ -38,8 +38,8 @@
 \@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces The modulo schedule (first ten of 128 terms). A term lasts 506 cycles and a new one starts every 32, so about 16 terms share the arithmetic units at any time.}}{6}{figure.caption.6}\protected@file@percent }
 \newlabel{fig:sched}{{4}{6}{The modulo schedule (first ten of 128 terms). A term lasts 506 cycles and a new one starts every 32, so about 16 terms share the arithmetic units at any time}{figure.caption.6}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {3}Results}{6}{section.3}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Results at a glance (Zynq-7020 configuration).}}{6}{table.caption.7}\protected@file@percent }
-\newlabel{tab:glance}{{1}{6}{Results at a glance (Zynq-7020 configuration)}{table.caption.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces Results at a glance (Zynq-7020 configuration).}}{7}{table.caption.7}\protected@file@percent }
+\newlabel{tab:glance}{{1}{7}{Results at a glance (Zynq-7020 configuration)}{table.caption.7}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Speed: clock cycles for the price and nine Greeks}{7}{subsection.3.1}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces Clock cycles per evaluation, from cycle-exact RTL simulation (128 COS terms). ``Greeks cost'' is the price-with-Greeks cycles divided by the price-only cycles on the same hardware.}}{7}{table.caption.8}\protected@file@percent }
 \newlabel{tab:cycles}{{2}{7}{Clock cycles per evaluation, from cycle-exact RTL simulation (128 COS terms). ``Greeks cost'' is the price-with-Greeks cycles divided by the price-only cycles on the same hardware}{table.caption.8}{}}
@@ -48,8 +48,8 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Design space: cycles against hardware size}{8}{subsection.3.2}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces Cycles per evaluation as the number of shared multipliers changes. The interval is the number of cycles between the starts of consecutive COS terms.}}{8}{table.caption.10}\protected@file@percent }
 \@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Cycles against shared multipliers (64-bit). Circled points were simulated as RTL and matched the schedule exactly.}}{8}{figure.caption.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Adjoint against forward mode on the same hardware}{8}{subsection.3.3}\protected@file@percent }
-\newlabel{sec:modes}{{3.3}{8}{Adjoint against forward mode on the same hardware}{subsection.3.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Adjoint against forward mode on the same hardware}{9}{subsection.3.3}\protected@file@percent }
+\newlabel{sec:modes}{{3.3}{9}{Adjoint against forward mode on the same hardware}{subsection.3.3}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces Multiplies per COS term and cycles per evaluation for the price and nine Greeks, by datapath and number of shared multipliers (\texttt  {validation/run\_mode\_baselines.py}). The forward datapaths have no fixed-point rescaling of their tangents, which a working engine would need, so their counts are lower bounds.}}{9}{table.caption.12}\protected@file@percent }
 \newlabel{tab:modes}{{4}{9}{Multiplies per COS term and cycles per evaluation for the price and nine Greeks, by datapath and number of shared multipliers (\texttt {validation/run\_mode\_baselines.py}). The forward datapaths have no fixed-point rescaling of their tangents, which a working engine would need, so their counts are lower bounds}{table.caption.12}{}}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.4}Accuracy and the first-order error bound}{9}{subsection.3.4}\protected@file@percent }
@@ -73,27 +73,31 @@
 \@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Effect of put-call parity on the 22 calls of the 50-case board set, against the independent Fourier-integral price. It costs 2 cycles (4,731 $\rightarrow $ 4,733) and removes one multiplication per term.}}{13}{table.caption.20}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.9}Implementation on the Zynq-7020}{13}{subsection.3.9}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Vivado 2025.2 results after routing. The engine alone reaches about 79\,MHz; inside the board system the design meets timing at 70\,MHz. Power is Vivado's power report (vectorless analysis); 0.121\,W of the board figure is the clock generator.}}{13}{table.caption.21}\protected@file@percent }
-\citation{codipack}
-\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces The placed design on the Zynq-7020 (top) and the timing summary of the ZedBoard build of 29 September: all constraints met at 70\,MHz, 0 failing endpoints of 76,961 (bottom). The rebuild of 6 October with put-call parity and the refitted ranges also meets 70\,MHz: WNS $+0.458$\,ns, 0 failing endpoints of 76,672, and 394 more LUTs.}}{14}{figure.caption.22}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces The placed design on the Zynq-7020 (top) and the timing summary of the ZedBoard build of 6 October (put-call parity, refitted ranges): all constraints met at 70\,MHz, WNS $+0.458$\,ns, 0 failing endpoints of 76,672 (bottom).}}{14}{figure.caption.22}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.10}On silicon}{14}{subsection.3.10}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces ZedBoard results, 6 October 2026, with the current design (put-call parity and refitted shift ranges). The sweep used 2 reference cases and 48 random cases over the valid input range (22 calls, 28 puts), with no reset between cases. Worst price error over the 50 cases against the double-precision reference: $1.5\times 10^{-5}$, down from $2.3\times 10^{-3}$ with the earlier bitstream of 29 September (which was also 450 / 450 bit-exact, worst 0.268 of the bound).}}{14}{table.caption.23}\protected@file@percent }
+\citation{codipack}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.11}The 64-bit engine on a Zynq UltraScale+ (ZCU104)}{15}{subsection.3.11}\protected@file@percent }
+\newlabel{sec:zcu104}{{3.11}{15}{The 64-bit engine on a Zynq UltraScale+ (ZCU104)}{subsection.3.11}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces The 64-bit engine on the ZCU104 (\texttt  {hardware/vivado/zcu104}). The latency is the whole evaluation, setup and finish included, and excludes only the 19-word and 10-word bus transfers. Not yet run on the board.}}{15}{table.caption.24}\protected@file@percent }
+\newlabel{tab:zcu104}{{12}{15}{The 64-bit engine on the ZCU104 (\texttt {hardware/vivado/zcu104}). The latency is the whole evaluation, setup and finish included, and excludes only the 19-word and 10-word bus transfers. Not yet run on the board}{table.caption.24}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.12}Against a CPU}{15}{subsection.3.12}\protected@file@percent }
 \citation{cui}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.11}Against a CPU}{15}{subsection.3.11}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces FPGA against CPU on the same algorithm. $^{*}$Added 1 October, measured while the laptop was also running another Vivado job; ratios use that run's price-only time (15.4\,$\mu $s); provisional until re-measured on an idle machine. FPGA rows: the term loop of the host-setup design (4,572 cycles), excluding the host's setup and finish and the register transfers; the CPU rows include everything. The CPU's own work outside its 128-term loop (truncation range, constants, discounting, parity) takes about 0.1\,$\mu $s, so comparing loops only changes nothing; what the FPGA figures leave out is the transfer of 51 input and 10 output words over the processor bus, which has not been measured.}}{15}{table.caption.24}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.12}Many strikes at once (design study)}{15}{subsection.3.12}\protected@file@percent }
-\newlabel{sec:chain}{{3.12}{15}{Many strikes at once (design study)}{subsection.3.12}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Price and nine Greeks for a chain of strikes, from the scheduler. The Zynq-7020 style rows use one iterative CORDIC rotator per few strikes; only about 2 strikes fit the Zynq-7020's logic.}}{16}{table.caption.25}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.13}Illustration: hedging on real market data}{16}{subsection.3.13}\protected@file@percent }
-\newlabel{sec:hedging}{{3.13}{16}{Illustration: hedging on real market data}{subsection.3.13}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Hedging 12 short NIFTY call trades, after all charges and tax (L = lakh).}}{16}{table.caption.26}\protected@file@percent }
-\newlabel{tab:hedge}{{14}{16}{Hedging 12 short NIFTY call trades, after all charges and tax (L = lakh)}{table.caption.26}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Top: risk left after each hedge, including rebalancing every 2 or 5 days and the 48- and 44-bit engines. Bottom: each trade's profit or loss.}}{17}{figure.caption.27}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.14}Improvement over the first generation}{18}{subsection.3.14}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces The first-generation engine against the generated engine.}}{18}{table.caption.28}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {4}Timeline}{18}{section.4}\protected@file@percent }
-\newlabel{sec:timeline}{{4}{18}{Timeline}{section.4}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Project timeline.}}{19}{table.caption.29}\protected@file@percent }
-\newlabel{tab:timeline}{{16}{19}{Project timeline}{table.caption.29}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces FPGA against CPU on the same algorithm. $^{*}$Added 1 October, measured while the laptop was also running another Vivado job; ratios use that run's price-only time (15.4\,$\mu $s); provisional until re-measured on an idle machine. FPGA rows: the term loop of the host-setup design (4,572 cycles), excluding the host's setup and finish and the register transfers; the CPU rows include everything. The CPU's own work outside its 128-term loop (truncation range, constants, discounting, parity) takes about 0.1\,$\mu $s, so comparing loops only changes nothing; what the FPGA figures leave out is the transfer of 51 input and 10 output words over the processor bus, which has not been measured. $^{\dagger }$Whole evaluation, setup and finish on chip (Section~\ref {sec:zcu104}); from the routed design's cycle count and clock, not yet run on the board.}}{16}{table.caption.25}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.13}Many strikes at once (design study)}{16}{subsection.3.13}\protected@file@percent }
+\newlabel{sec:chain}{{3.13}{16}{Many strikes at once (design study)}{subsection.3.13}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Price and nine Greeks for a chain of strikes, from the scheduler. The Zynq-7020 style rows use one iterative CORDIC rotator per few strikes; only about 2 strikes fit the Zynq-7020's logic.}}{17}{table.caption.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.14}Illustration: hedging on real market data}{17}{subsection.3.14}\protected@file@percent }
+\newlabel{sec:hedging}{{3.14}{17}{Illustration: hedging on real market data}{subsection.3.14}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Hedging 12 short NIFTY call trades, after all charges and tax (L = lakh).}}{17}{table.caption.27}\protected@file@percent }
+\newlabel{tab:hedge}{{15}{17}{Hedging 12 short NIFTY call trades, after all charges and tax (L = lakh)}{table.caption.27}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Top: risk left after each hedge, including rebalancing every 2 or 5 days and the 48- and 44-bit engines. Bottom: each trade's profit or loss.}}{18}{figure.caption.28}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.15}Improvement over the first generation}{19}{subsection.3.15}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces The first-generation engine against the generated engine.}}{19}{table.caption.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4}Timeline}{19}{section.4}\protected@file@percent }
+\newlabel{sec:timeline}{{4}{19}{Timeline}{section.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces Project timeline.}}{20}{table.caption.30}\protected@file@percent }
+\newlabel{tab:timeline}{{17}{20}{Project timeline}{table.caption.30}{}}
 \bibcite{heston}{1}
 \bibcite{fang}{2}
 \bibcite{giles}{3}
@@ -108,6 +112,6 @@
 \bibcite{linnainmaa}{12}
 \bibcite{codipack}{13}
 \bibcite{cui}{14}
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Timeline from project start to the paper deadline.}}{20}{figure.caption.30}\protected@file@percent }
-\newlabel{fig:gantt}{{11}{20}{Timeline from project start to the paper deadline}{figure.caption.30}{}}
-\gdef \@abspage@last{21}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Timeline from project start to the paper deadline.}}{21}{figure.caption.31}\protected@file@percent }
+\newlabel{fig:gantt}{{11}{21}{Timeline from project start to the paper deadline}{figure.caption.31}{}}
+\gdef \@abspage@last{22}

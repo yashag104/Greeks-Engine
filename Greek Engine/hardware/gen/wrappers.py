@@ -325,8 +325,10 @@ def lite_wrapper(name, core, wl, in_ports, out_ports):
     nw = (W + 31) // 32
     for i, o in enumerate(out_ports):
         P("                oreg[%d] <= o_%s[31:0];" % (i * nw, o))
-        if nw > 1:
+        if nw > 1 and W < 64:
             P("                oreg[%d] <= {%d'b0, o_%s[%d:32]};" % (i * nw + 1, 32 - (W - 32), o, W - 1))
+        elif nw > 1:                              # exactly two words: no padding (a 0'b0 is illegal)
+            P("                oreg[%d] <= o_%s[%d:32];" % (i * nw + 1, o, W - 1))
     P("            end")
     P("        end")
     P("    end")

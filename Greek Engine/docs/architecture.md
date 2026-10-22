@@ -166,7 +166,7 @@ checks every variable shift against the ranges the RTL was built for (= range_er
 | `heston_aad_z7`, full-range shifters | xc7 | 90,648 | 3,050 | 32,878 | 96 | no (Zynq-7020: 53,200 LUT) |
 | `heston_aad_z7`, measured-range shifters | xc7 | 59,024 | 3,058 | 32,731 | 96 | no, ~11 % over |
 | **`heston_aad_z7h`** (host setup) | xc7 | **45,504** | 2,922 | 24,856 | 96 / 220 | **yes: 91 % LUT incl. SRL, 23 % FF, 44 % DSP** |
-| **`heston_aad_zu`** (64-bit, 32 multipliers) | xcup | **108,330** | 6,409 | 59,953 | 512 DSP48E2 | **ZCU104: 50 % LUT, 30 % DSP**; ZCU102: yes; ZU3EG: no |
+| **`heston_aad_zu`** (64-bit, 32 multipliers) | xcup | **108,330** | 6,409 | 59,953 | 512 DSP48E2 | **ZCU104: 50 % LUT, 30 % DSP**; ZCU102: yes; ZU3EG: no (Vivado: 77,863 LUT, 510 DSP, §4.5b) |
 
 ### 4.4 Area (Vivado 2025.2, post-synthesis, out of context)
 
@@ -208,6 +208,27 @@ as an area result.
 The design fits and routes but does not close at 100 MHz. The failing paths are 64-bit
 carry chains; pipelining them, or running at ≤ 79 MHz, are the options. The ZedBoard
 bring-up designs run the engine at 70 MHz for margin.
+
+### 4.5b The 64-bit engine on a ZCU104 (Vivado 2025.2, 21 Oct 2026)
+
+`hardware/vivado/zcu104/bd_jtag.tcl`: `heston_aad_zu` behind the AXI4-Lite register
+file (`heston_aad_zu_lite`, bit-exact in simulation; 19 input words, 10 outputs) with
+the same JTAG-to-AXI test system as the ZedBoard, clocked from the board's 300 MHz
+system clock through the board file. Reports in `validation/results/vivado/zcu104_jtag/`.
+
+| | ZCU104 (xczu7ev-ffvc1156-2-e) |
+|---|---|
+| LUT | 77,863 (33.8 %; Yosys estimate 108,330) |
+| registers | 63,796 (13.8 %) |
+| DSP | 510 (29.5 %) |
+| BRAM | 6.5 tiles |
+| clock | 100 MHz, WNS +1.469 ns, 0 routing errors (Fmax ~117 MHz) |
+| power (vectorless) | 1.197 W: 0.602 dynamic, 0.595 static |
+| latency | 1,593 cycles = **15.9 µs** per whole evaluation (setup and finish on chip) |
+| energy (estimate) | ~19 µJ per evaluation |
+
+Against the analytic CPU method (29.3 µs, one loaded core) this is about 1.8× faster
+on the same scope. Not yet run on the board: `run_board.bat test / sweep / nifty`.
 
 ### 4.6 Against a CPU (measured 30 Sep 2026)
 
@@ -358,11 +379,11 @@ Zynq-7020 has).
   not be mixed: `z7` (fully on-chip, 4,733 cycles, **never routed**, so its clock is
   unknown and any µs figure for it borrows z7h's clock), `z7h` (host setup and
   finish, FPGA term loop only, 4,572 cycles, routed: 79.1 MHz out of context, 70 MHz
-  on the ZedBoard) and `zu` (64-bit, 1,593 cycles, **Yosys estimate only, never
-  through Vivado**). The board figures 65.3 µs (70 MHz) and 57.8 µs (79.1 MHz) are
+  on the ZedBoard) and `zu` (64-bit, 1,593 cycles, routed on a ZCU104 at
+  100 MHz on 21 Oct 2026, §4.5b, so 15.9 µs per whole evaluation; not yet run on the board). The board figures 65.3 µs (70 MHz) and 57.8 µs (79.1 MHz) are
   z7h's loop alone: they exclude the host's setup and finish (about 100 multiplies
-  plus a few exp, log and sqrt, in double precision on the ARM; not yet ported or
-  timed) and the AXI4-Lite transfers (51 input words, 9 sums back), which on the
+  plus a few exp, log and sqrt; ported to C on 21 Oct 2026, bit-exact, in
+  `hardware/sw/zedboard`, not yet timed on the board) and the AXI4-Lite transfers (51 input words, 9 sums back), which on the
   ARM would take some microseconds and over JTAG took about a second per case. The
   CPU figures include everything. Until the PS design (`bd_lite.tcl` with a C host
   step) is timed, quote the FPGA number as "engine latency, excluding host steps".
