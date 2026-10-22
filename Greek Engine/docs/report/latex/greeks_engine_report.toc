@@ -20,8 +20,9 @@
 \contentsline {subsection}{\numberline {3.9}Implementation on the Zynq-7020}{13}{subsection.3.9}%
 \contentsline {subsection}{\numberline {3.10}On silicon}{14}{subsection.3.10}%
 \contentsline {subsection}{\numberline {3.11}The 64-bit engine on a Zynq UltraScale+ (ZCU104)}{15}{subsection.3.11}%
-\contentsline {subsection}{\numberline {3.12}Against a CPU}{15}{subsection.3.12}%
-\contentsline {subsection}{\numberline {3.13}Many strikes at once (design study)}{16}{subsection.3.13}%
-\contentsline {subsection}{\numberline {3.14}Illustration: hedging on real market data}{17}{subsection.3.14}%
-\contentsline {subsection}{\numberline {3.15}Improvement over the first generation}{19}{subsection.3.15}%
+\contentsline {subsection}{\numberline {3.12}Power from simulated switching activity}{15}{subsection.3.12}%
+\contentsline {subsection}{\numberline {3.13}Against a CPU}{16}{subsection.3.13}%
+\contentsline {subsection}{\numberline {3.14}Many strikes at once (design study)}{17}{subsection.3.14}%
+\contentsline {subsection}{\numberline {3.15}Illustration: hedging on real market data}{17}{subsection.3.15}%
+\contentsline {subsection}{\numberline {3.16}Improvement over the first generation}{19}{subsection.3.16}%
 \contentsline {section}{\numberline {4}Timeline}{19}{section.4}%
