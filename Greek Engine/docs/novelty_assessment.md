@@ -47,8 +47,11 @@ Against a CPU running the same algorithm, the FPGA is 1.4–1.8× faster than th
 general AD methods, but **hand-derived analytic Greeks on one CPU core are about
 2.2× faster than the FPGA** (29 µs against 65 µs, provisional) and four cores give
 far more throughput. The FPGA's claims against a CPU are the Greeks overhead (1.04
-pricings against 1.9 for the best software) and an estimated 6–30× less energy per
-evaluation (`architecture.md` §4.6), not speed.
+pricings against 1.9 for the best software) and about 3–17× less energy per
+evaluation (engine power from simulated activity, CPU power estimated;
+`architecture.md` §4.6). The 64-bit engine routed on a ZCU104 (21 Oct 2026) changes the
+latency picture: 15.9 µs per whole evaluation, about 1.8× faster than the analytic CPU
+method, once it is confirmed on the board.
 
 ## 2. What the novelty builds on
 
@@ -197,8 +200,10 @@ nothing that does adjoint Greeks or COS on an FPGA.
    the board, so **the CPU wins latency by about 2.2×** and throughput by more.
    The FPGA beats only the general methods: forward mode (91.5 µs, 1.4×), CoDiPack
    AAD (114.9 µs, 1.8×) and bump-and-reprice (257.6 µs, 3.9×). Energy per
-   evaluation is an estimated 6–30× lower on the FPGA, against a CPU power figure
-   that was not measured. Do not argue latency or throughput against a CPU. Argue
+   evaluation is about 3–17× lower on the FPGA (engine power from simulated activity,
+   22 Oct 2026), against a CPU power figure that was not measured. On the Zynq-7020 do
+   not argue latency or throughput against a CPU; the ZCU104 engine (15.9 µs, about
+   1.8× faster than the analytic method) can carry a latency claim once run on the board. Argue
    Greeks overhead (1.04 against 1.9 for the best software), the per-Greek error
    bound, energy per Greek set, and what a larger device with several engines or
    strike sharing would deliver; and measure CPU power before relying on energy.

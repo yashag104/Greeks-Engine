@@ -1,0 +1,4 @@
+top heston_aad_z7h
+part xc7z020clg484-1
+clk_ns 14.286
+wns_ns 0.109

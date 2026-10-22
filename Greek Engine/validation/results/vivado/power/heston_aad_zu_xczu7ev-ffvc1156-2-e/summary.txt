@@ -1,0 +1,4 @@
+top heston_aad_zu
+part xczu7ev-ffvc1156-2-e
+clk_ns 10.0
+wns_ns 2.189

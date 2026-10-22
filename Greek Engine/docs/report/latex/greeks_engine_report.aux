@@ -76,28 +76,32 @@
 \@writefile{lof}{\contentsline {figure}{\numberline {9}{\ignorespaces The placed design on the Zynq-7020 (top) and the timing summary of the ZedBoard build of 6 October (put-call parity, refitted ranges): all constraints met at 70\,MHz, WNS $+0.458$\,ns, 0 failing endpoints of 76,672 (bottom).}}{14}{figure.caption.22}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.10}On silicon}{14}{subsection.3.10}\protected@file@percent }
 \@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces ZedBoard results, 6 October 2026, with the current design (put-call parity and refitted shift ranges). The sweep used 2 reference cases and 48 random cases over the valid input range (22 calls, 28 puts), with no reset between cases. Worst price error over the 50 cases against the double-precision reference: $1.5\times 10^{-5}$, down from $2.3\times 10^{-3}$ with the earlier bitstream of 29 September (which was also 450 / 450 bit-exact, worst 0.268 of the bound).}}{14}{table.caption.23}\protected@file@percent }
-\citation{codipack}
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.11}The 64-bit engine on a Zynq UltraScale+ (ZCU104)}{15}{subsection.3.11}\protected@file@percent }
 \newlabel{sec:zcu104}{{3.11}{15}{The 64-bit engine on a Zynq UltraScale+ (ZCU104)}{subsection.3.11}{}}
 \@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces The 64-bit engine on the ZCU104 (\texttt  {hardware/vivado/zcu104}). The latency is the whole evaluation, setup and finish included, and excludes only the 19-word and 10-word bus transfers. Not yet run on the board.}}{15}{table.caption.24}\protected@file@percent }
 \newlabel{tab:zcu104}{{12}{15}{The 64-bit engine on the ZCU104 (\texttt {hardware/vivado/zcu104}). The latency is the whole evaluation, setup and finish included, and excludes only the 19-word and 10-word bus transfers. Not yet run on the board}{table.caption.24}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.12}Against a CPU}{15}{subsection.3.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.12}Power from simulated switching activity}{15}{subsection.3.12}\protected@file@percent }
+\newlabel{sec:power}{{3.12}{15}{Power from simulated switching activity}{subsection.3.12}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Engine power with Vivado's default activity and with the activity of the routed netlist simulated on real evaluations (confidence ``High''; 57\% of nets matched by name, the rest propagated by Vivado). Dynamic power was 0.099 against 0.564\,W (ZedBoard) and 0.692 against 1.883\,W (ZCU104). Engine only: the clock generator, bus and the rest of the board are not included; a board rail measurement is pending.}}{15}{table.caption.25}\protected@file@percent }
+\newlabel{tab:power}{{13}{15}{Engine power with Vivado's default activity and with the activity of the routed netlist simulated on real evaluations (confidence ``High''; 57\% of nets matched by name, the rest propagated by Vivado). Dynamic power was 0.099 against 0.564\,W (ZedBoard) and 0.692 against 1.883\,W (ZCU104). Engine only: the clock generator, bus and the rest of the board are not included; a board rail measurement is pending}{table.caption.25}{}}
+\citation{codipack}
 \citation{cui}
-\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces FPGA against CPU on the same algorithm. $^{*}$Added 1 October, measured while the laptop was also running another Vivado job; ratios use that run's price-only time (15.4\,$\mu $s); provisional until re-measured on an idle machine. FPGA rows: the term loop of the host-setup design (4,572 cycles), excluding the host's setup and finish and the register transfers; the CPU rows include everything. The CPU's own work outside its 128-term loop (truncation range, constants, discounting, parity) takes about 0.1\,$\mu $s, so comparing loops only changes nothing; what the FPGA figures leave out is the transfer of 51 input and 10 output words over the processor bus, which has not been measured. $^{\dagger }$Whole evaluation, setup and finish on chip (Section~\ref {sec:zcu104}); from the routed design's cycle count and clock, not yet run on the board.}}{16}{table.caption.25}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.13}Many strikes at once (design study)}{16}{subsection.3.13}\protected@file@percent }
-\newlabel{sec:chain}{{3.13}{16}{Many strikes at once (design study)}{subsection.3.13}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Price and nine Greeks for a chain of strikes, from the scheduler. The Zynq-7020 style rows use one iterative CORDIC rotator per few strikes; only about 2 strikes fit the Zynq-7020's logic.}}{17}{table.caption.26}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.14}Illustration: hedging on real market data}{17}{subsection.3.14}\protected@file@percent }
-\newlabel{sec:hedging}{{3.14}{17}{Illustration: hedging on real market data}{subsection.3.14}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Hedging 12 short NIFTY call trades, after all charges and tax (L = lakh).}}{17}{table.caption.27}\protected@file@percent }
-\newlabel{tab:hedge}{{15}{17}{Hedging 12 short NIFTY call trades, after all charges and tax (L = lakh)}{table.caption.27}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Top: risk left after each hedge, including rebalancing every 2 or 5 days and the 48- and 44-bit engines. Bottom: each trade's profit or loss.}}{18}{figure.caption.28}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.15}Improvement over the first generation}{19}{subsection.3.15}\protected@file@percent }
-\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces The first-generation engine against the generated engine.}}{19}{table.caption.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.13}Against a CPU}{16}{subsection.3.13}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces FPGA against CPU on the same algorithm. $^{*}$Added 1 October, measured while the laptop was also running another Vivado job; ratios use that run's price-only time (15.4\,$\mu $s); provisional until re-measured on an idle machine. FPGA rows: the term loop of the host-setup design (4,572 cycles), excluding the host's setup and finish and the register transfers; the CPU rows include everything. The CPU's own work outside its 128-term loop (truncation range, constants, discounting, parity) takes about 0.1\,$\mu $s, so comparing loops only changes nothing; what the FPGA figures leave out is the transfer of 51 input and 10 output words over the processor bus, which has not been measured. $^{\dagger }$Whole evaluation, setup and finish on chip (Section~\ref {sec:zcu104}); from the routed design's cycle count and clock, not yet run on the board.}}{16}{table.caption.26}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.14}Many strikes at once (design study)}{17}{subsection.3.14}\protected@file@percent }
+\newlabel{sec:chain}{{3.14}{17}{Many strikes at once (design study)}{subsection.3.14}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Price and nine Greeks for a chain of strikes, from the scheduler. The Zynq-7020 style rows use one iterative CORDIC rotator per few strikes; only about 2 strikes fit the Zynq-7020's logic.}}{17}{table.caption.27}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.15}Illustration: hedging on real market data}{17}{subsection.3.15}\protected@file@percent }
+\newlabel{sec:hedging}{{3.15}{17}{Illustration: hedging on real market data}{subsection.3.15}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {16}{\ignorespaces Hedging 12 short NIFTY call trades, after all charges and tax (L = lakh).}}{18}{table.caption.28}\protected@file@percent }
+\newlabel{tab:hedge}{{16}{18}{Hedging 12 short NIFTY call trades, after all charges and tax (L = lakh)}{table.caption.28}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {10}{\ignorespaces Top: risk left after each hedge, including rebalancing every 2 or 5 days and the 48- and 44-bit engines. Bottom: each trade's profit or loss.}}{18}{figure.caption.29}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.16}Improvement over the first generation}{19}{subsection.3.16}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces The first-generation engine against the generated engine.}}{19}{table.caption.30}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {4}Timeline}{19}{section.4}\protected@file@percent }
 \newlabel{sec:timeline}{{4}{19}{Timeline}{section.4}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {17}{\ignorespaces Project timeline.}}{20}{table.caption.30}\protected@file@percent }
-\newlabel{tab:timeline}{{17}{20}{Project timeline}{table.caption.30}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {18}{\ignorespaces Project timeline.}}{20}{table.caption.31}\protected@file@percent }
+\newlabel{tab:timeline}{{18}{20}{Project timeline}{table.caption.31}{}}
 \bibcite{heston}{1}
 \bibcite{fang}{2}
 \bibcite{giles}{3}
@@ -112,6 +116,6 @@
 \bibcite{linnainmaa}{12}
 \bibcite{codipack}{13}
 \bibcite{cui}{14}
-\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Timeline from project start to the paper deadline.}}{21}{figure.caption.31}\protected@file@percent }
-\newlabel{fig:gantt}{{11}{21}{Timeline from project start to the paper deadline}{figure.caption.31}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {11}{\ignorespaces Timeline from project start to the paper deadline.}}{21}{figure.caption.32}\protected@file@percent }
+\newlabel{fig:gantt}{{11}{21}{Timeline from project start to the paper deadline}{figure.caption.32}{}}
 \gdef \@abspage@last{22}

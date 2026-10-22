@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.5)  21 OCT 2026 21:56
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.5)  22 OCT 2026 03:16
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -885,21 +885,21 @@ LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <9> on input line 196.
  [4{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathsy.enc}] [5{/usr/share/texmf/fon
 ts/enc/dvips/lm/lm-rm.enc}] [6]
-<figures/fig8_architecture_cycles.png, id=223, 496.7358pt x 175.3752pt>
+<figures/fig8_architecture_cycles.png, id=228, 496.7358pt x 175.3752pt>
 File: figures/fig8_architecture_cycles.png Graphic file (type png)
 <use figures/fig8_architecture_cycles.png>
 Package pdftex.def Info: figures/fig8_architecture_cycles.png  used on input li
 ne 377.
 (pdftex.def)             Requested size: 472.31595pt x 166.75803pt.
  [7 <./figures/fig8_architecture_cycles.png>]
-<figures/fig9_cycles_vs_mults.png, id=236, 236.3229pt x 179.4705pt>
+<figures/fig9_cycles_vs_mults.png, id=241, 236.3229pt x 179.4705pt>
 File: figures/fig9_cycles_vs_mults.png Graphic file (type png)
 <use figures/fig9_cycles_vs_mults.png>
 Package pdftex.def Info: figures/fig9_cycles_vs_mults.png  used on input line 4
 20.
 (pdftex.def)             Requested size: 292.83357pt x 222.39322pt.
  [8 <./figures/fig9_cycles_vs_mults.png>]
-<figures/fig11_gen_accuracy.png, id=246, 445.1832pt x 221.628pt>
+<figures/fig11_gen_accuracy.png, id=251, 445.1832pt x 221.628pt>
 File: figures/fig11_gen_accuracy.png Graphic file (type png)
 <use figures/fig11_gen_accuracy.png>
 Package pdftex.def Info: figures/fig11_gen_accuracy.png  used on input line 505
@@ -910,7 +910,7 @@ Overfull \hbox (29.79146pt too wide) in paragraph at lines 591--604
  [][] 
  []
 
-<figures/fig10_gen_bump_vs_aad.png, id=264, 502.5174pt x 452.1693pt>
+<figures/fig10_gen_bump_vs_aad.png, id=269, 502.5174pt x 452.1693pt>
 File: figures/fig10_gen_bump_vs_aad.png Graphic file (type png)
 <use figures/fig10_gen_bump_vs_aad.png>
 Package pdftex.def Info: figures/fig10_gen_bump_vs_aad.png  used on input line 
@@ -923,51 +923,51 @@ pa-ram-e-ter sets as the word length changes
  []
 
 [12 <./figures/fig10_gen_bump_vs_aad.png>]
-<figures/vivado_device.png, id=278, 677.53125pt x 428.802pt>
+<figures/vivado_device.png, id=283, 677.53125pt x 428.802pt>
 File: figures/vivado_device.png Graphic file (type png)
 <use figures/vivado_device.png>
 Package pdftex.def Info: figures/vivado_device.png  used on input line 714.
 (pdftex.def)             Requested size: 273.9441pt x 173.3825pt.
-<figures/vivado_timing.png, id=279, 849.1725pt x 290.2845pt>
+<figures/vivado_timing.png, id=284, 849.1725pt x 290.2845pt>
 File: figures/vivado_timing.png Graphic file (type png)
 <use figures/vivado_timing.png>
 Package pdftex.def Info: figures/vivado_timing.png  used on input line 715.
 (pdftex.def)             Requested size: 472.31595pt x 161.45972pt.
- [13] [14 <./figures/vivado_device.png> <./figures/vivado_timing.png>]
-Overfull \hbox (4.87198pt too wide) in paragraph at lines 803--828
+ [13] [14 <./figures/vivado_device.png> <./figures/vivado_timing.png>] [15]
+Overfull \hbox (4.87198pt too wide) in paragraph at lines 837--862
  [][] 
  []
 
-[15] [16{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc}]
-<figures/fig12_hedge_risk.png, id=314, 650.43pt x 303.534pt>
+[16] [17{/usr/share/texmf/fonts/enc/dvips/lm/lm-mathex.enc}]
+<figures/fig12_hedge_risk.png, id=326, 650.43pt x 303.534pt>
 File: figures/fig12_hedge_risk.png Graphic file (type png)
 <use figures/fig12_hedge_risk.png>
-Package pdftex.def Info: figures/fig12_hedge_risk.png  used on input line 945.
+Package pdftex.def Info: figures/fig12_hedge_risk.png  used on input line 980.
 (pdftex.def)             Requested size: 472.31595pt x 220.42007pt.
-<figures/fig13_hedge_pnl_per_trade.png, id=315, 650.43pt x 274.626pt>
+<figures/fig13_hedge_pnl_per_trade.png, id=327, 650.43pt x 274.626pt>
 File: figures/fig13_hedge_pnl_per_trade.png Graphic file (type png)
 <use figures/fig13_hedge_pnl_per_trade.png>
 Package pdftex.def Info: figures/fig13_hedge_pnl_per_trade.png  used on input l
-ine 946.
+ine 981.
 (pdftex.def)             Requested size: 472.31595pt x 199.42769pt.
- [17] [18 <./figures/fig12_hedge_risk.png> <./figures/fig13_hedge_pnl_per_trade
-.png>] [19]
-Underfull \hbox (badness 1231) in paragraph at lines 1046--1046
+ [18 <./figures/fig12_hedge_risk.png> <./figures/fig13_hedge_pnl_per_trade.png>
+] [19]
+Underfull \hbox (badness 1231) in paragraph at lines 1083--1083
  [][]\T1/lmr/m/n/8 First-generation en-gine
  []
 
 
-Underfull \hbox (badness 2671) in paragraph at lines 1054--1054
+Underfull \hbox (badness 2671) in paragraph at lines 1091--1091
  [][]\T1/lmr/m/n/8 Power mea-sure-ment
  []
 
 
-Underfull \hbox (badness 1924) in paragraph at lines 1055--1055
+Underfull \hbox (badness 1924) in paragraph at lines 1092--1092
  [][]\T1/lmr/m/n/8 Freeze re-sults, fig-ures
  []
 
 
-Underfull \hbox (badness 5817) in paragraph at lines 1056--1056
+Underfull \hbox (badness 5817) in paragraph at lines 1093--1093
  [][]\T1/lmr/m/n/8 Write the pa-per
  []
 
@@ -977,13 +977,13 @@ LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
  ***********
 Package rerunfilecheck Info: File `greeks_engine_report.out' has not changed.
-(rerunfilecheck)             Checksum: B52F67547EC2E66393F5E3DAE2CA0177;4929.
+(rerunfilecheck)             Checksum: F0488B9F9A504D458A12C16208600541;5195.
  ) 
 Here is how much of TeX's memory you used:
- 24083 strings out of 476182
- 453077 string characters out of 5795595
+ 24088 strings out of 476182
+ 453147 string characters out of 5795595
  1950975 words of memory out of 5000000
- 45564 multiletter control sequences out of 15000+600000
+ 45567 multiletter control sequences out of 15000+600000
  639646 words of font info for 82 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  84i,13n,87p,1018b,964s stack positions out of 10000i,1000n,20000p,200000b,200000s
@@ -1000,10 +1000,10 @@ hare/texmf/fonts/type1/public/lm/lmsy10.pfb></usr/share/texmf/fonts/type1/publi
 c/lm/lmsy7.pfb></usr/share/texmf/fonts/type1/public/lm/lmsy8.pfb></usr/share/te
 xmf/fonts/type1/public/lm/lmsy9.pfb></usr/share/texmf/fonts/type1/public/lm/lmt
 t10.pfb>
-Output written on greeks_engine_report.pdf (22 pages, 1210408 bytes).
+Output written on greeks_engine_report.pdf (22 pages, 1212539 bytes).
 PDF statistics:
- 482 PDF objects out of 1000 (max. 8388607)
- 388 compressed objects within 4 object streams
- 100 named destinations out of 1000 (max. 500000)
- 253 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 495 PDF objects out of 1000 (max. 8388607)
+ 397 compressed objects within 4 object streams
+ 102 named destinations out of 1000 (max. 500000)
+ 261 words of extra memory for PDF output out of 10000 (max. 10000000)
 

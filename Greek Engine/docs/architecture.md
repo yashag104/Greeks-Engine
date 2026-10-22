@@ -225,7 +225,7 @@ system clock through the board file. Reports in `validation/results/vivado/zcu10
 | clock | 100 MHz, WNS +1.469 ns, 0 routing errors (Fmax ~117 MHz) |
 | power (vectorless) | 1.197 W: 0.602 dynamic, 0.595 static |
 | latency | 1,593 cycles = **15.9 µs** per whole evaluation (setup and finish on chip) |
-| energy (estimate) | ~19 µJ per evaluation |
+| power, engine alone, simulated activity | 2.485 W (1.883 dynamic): ~40 µJ per evaluation |
 
 Against the analytic CPU method (29.3 µs, one loaded core) this is about 1.8× faster
 on the same scope. Not yet run on the board: `run_board.bat test / sweep / nifty`.
@@ -270,10 +270,13 @@ terms. It is the strongest software competitor and it changes the comparison:
 - **Throughput:** the analytic method on 4 cores / 8 processes reached
   41,000–94,000 evaluations/s on the loaded laptop, against 15,300 for one FPGA
   engine.
-- **Energy (estimate):** the FPGA board design is 0.340 W (vectorless, including
-  the clock generator), about 22 µJ per evaluation. CPU power could not be
+- **Energy:** engine power from the routed netlist simulated on real evaluations
+  (22 Oct 2026, `hardware/vivado/power`): 0.676 W at 70 MHz on the Zynq-7020, so
+  about 44 µJ per evaluation; 2.485 W at 100 MHz on the ZCU104, about 40 µJ per whole
+  evaluation. Vivado's vectorless figure (0.204 W for the engine, 0.340 W for the
+  board design) underestimated dynamic power about 6×. CPU power could not be
   measured under WSL; at the part's 12–28 W configurable power and the analytic
-  method's throughput, about 0.13–0.68 mJ per evaluation, so roughly 6–30× more
+  method's throughput, about 0.13–0.68 mJ per evaluation, so roughly 3–17× more
   than the FPGA. Energy per Greek set is the FPGA's remaining measured-or-estimated
   advantage, and it rests on a CPU power estimate.
 - **Greeks overhead:** the FPGA's Greeks cost 1.04 pricings; the best hand-written
@@ -394,8 +397,8 @@ Zynq-7020 has).
   filename in two (fixed by wrapping in `[list ...]`); and two runs were killed
   mid-flow with no error message, most likely memory pressure (the flow now
   checkpoints after placement, `impl_from_dcp.tcl` resumes from a checkpoint, and
-  `run_native.bat` runs the flow outside WSL). Power is vectorless; activity-based
-  (SAIF) power is still open.
+  `run_native.bat` runs the flow outside WSL). Power here is vectorless; with
+  simulated activity the engine draws 0.676 W (§4.6).
 - **On silicon: 50 cases, bit-exact (2026-09-29, repeated 2026-10-06).** The AXI4-Stream wrappers are
   up to 1,456 bits wide, which no Zynq PS-PL port can carry, so `wrappers.py lite`
   generates an AXI4-Lite register file (bit-exact, in `verify_all.sh`). On a ZedBoard

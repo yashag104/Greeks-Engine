@@ -341,7 +341,7 @@ Cycles, price + 9 Greeks & 4,733 & 92$\times$ fewer than the first-generation en
 Cost of the 9 Greeks & 1.04 pricings & hand-derived software 1.9; AD tools 5.3--6.7; bump-and-reprice 19\\
 Latency on the ZedBoard (loop only) & 65.3\,$\mu$s (57.8\,$\mu$s at 79\,MHz) & 1.4--3.9$\times$ faster than AD tools and bumping on one CPU core; 2.2$\times$ slower than hand-derived Greeks (29\,$\mu$s)\\
 Latency, 64-bit on a ZCU104 & 15.9\,$\mu$s, whole evaluation (100\,MHz, routed; board run pending) & about 1.8$\times$ faster than hand-derived Greeks on one core\\
-Energy per evaluation & 22.2\,$\mu$J & about 6--30$\times$ less than the CPU (CPU power estimated)\\
+Energy per evaluation & 44\,$\mu$J (ZedBoard loop), 40\,$\mu$J (ZCU104, whole evaluation); engine power from simulated activity & about 3--17$\times$ less than the CPU (CPU power estimated)\\
 Accuracy (21 cases) & price $6.1\times10^{-7}$, Greeks $\le 1.2\times10^{-5}$ & relative to double precision; over 10,500 inputs worst absolute $1.2\times10^{-3}$ ($\partial V/\partial\xi$)\\
 Error bound & never exceeded ($\le 0.378$) & every output, 10,500 inputs\\
 On silicon & 450 / 450 bit-exact & 50 random cases\\
@@ -774,8 +774,9 @@ Registers & 63,796 (13.8\%)\\
 DSP blocks & 510 (29.5\%)\\
 Clock, slack & 100\,MHz, WNS $+1.469$\,ns (Fmax about 117\,MHz)\\
 Power (vectorless) & 1.20\,W (0.60 dynamic, 0.60 static)\\
+Power, engine alone, simulated activity & 2.49\,W (1.88 dynamic, 0.60 static)\\
 \hi Latency, price + 9 Greeks, whole evaluation & \textbf{15.9\,$\mu$s} (1,593 cycles at 100\,MHz)\\
-Energy per evaluation (estimate) & 19\,$\mu$J\\
+Energy per evaluation (engine, simulated activity) & 40\,$\mu$J\\
 \bottomrule
 \end{tabular}
 \caption{The 64-bit engine on the ZCU104 (\texttt{hardware/vivado/zcu104}). The latency
@@ -790,6 +791,39 @@ whole evaluation against 29.3\,$\mu$s for analytic Greeks on one CPU core (Table
 about 1.8 times. It uses a third of the device, leaving room for more engines. Two
 caveats: the CPU figure was measured on a loaded laptop and will fall on an idle one, and
 the engine has not yet been run on the ZCU104.}
+
+\subsection{Power from simulated switching activity}
+\label{sec:power}
+Vivado's default power report assumes that every signal toggles in 12.5\% of cycles. For
+an engine that is busy every cycle that guess is too low. Each engine was therefore
+implemented on its own, its routed netlist simulated gate by gate on four evaluations back
+to back (two board-sweep cases and two real NIFTY days, every output checked bit-exact),
+and the recorded activity read back into the power analysis
+(\texttt{hardware/vivado/power}).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Engine alone (routed)} & \textbf{Default guess} & \textbf{Simulated activity} & \textbf{Latency} & \textbf{Energy}\\
+\midrule
+ZedBoard engine, 70\,MHz & 0.204\,W & \textbf{0.676\,W} & 65.3\,$\mu$s (loop) & \textbf{44\,$\mu$J}\\
+ZCU104 64-bit engine, 100\,MHz & 1.288\,W & \textbf{2.485\,W} & 15.9\,$\mu$s (whole) & \textbf{40\,$\mu$J}\\
+\bottomrule
+\end{tabular}
+\caption{Engine power with Vivado's default activity and with the activity of the routed
+netlist simulated on real evaluations (confidence ``High''; 57\% of nets matched by name,
+the rest propagated by Vivado). Dynamic power was 0.099 against 0.564\,W (ZedBoard) and
+0.692 against 1.883\,W (ZCU104). Engine only: the clock generator, bus and the rest of
+the board are not included; a board rail measurement is pending.}
+\label{tab:power}
+\end{table}
+
+\useful{Measured activity replaces an assumption that underestimated dynamic power 3 to 6
+times. The energy per evaluation is about twice the earlier estimate (44 instead of
+22\,$\mu$J on the ZedBoard), and the faster ZCU104 engine uses slightly less energy per
+evaluation than the ZedBoard's despite drawing more power.}
 
 \subsection{Against a CPU}
 The same algorithm was written in C++ (double precision, g++ 13, -O3 -march=native) and
@@ -846,9 +880,10 @@ one core, from the routed design (not yet on the board; the CPU figure is from a
 laptop).
 What the engine keeps is the cost of its Greeks, 1.04 pricings against 1.9 for the best
 software and 5--7 for AD tools, a first-order rounding-error bound on every Greek, and energy:
-about 22.2\,$\mu$J per evaluation (0.340\,W $\times$ 65.3\,$\mu$s) against an estimated
-0.13--0.68\,mJ for the CPU at its rated 12--28\,W, 6--30 times less. The CPU's power was
-not measured, so the energy figure is an estimate.}
+about 44\,$\mu$J per evaluation on the ZedBoard and 40\,$\mu$J on the ZCU104, from the
+engine's power under simulated activity (Section~\ref{sec:power}), against an estimated
+0.13--0.68\,mJ for the CPU at its rated 12--28\,W, about 3--17 times less. The CPU's power
+was not measured, so the energy ratio is still an estimate.}
 
 \subsection{Many strikes at once (design study)}
 \label{sec:chain}
@@ -1021,7 +1056,9 @@ Figure~\ref{fig:gantt}).
 1 Oct & Validation sweep over 10,500 inputs including hard regimes; latency accounting (host steps, configurations) & Done\\
 1 Oct & Shift ranges refitted at the domain edges; all designs regenerated and re-verified & Done\\
 6--8 Oct & CPU timings on an idle machine & Next\\
-6--12 Oct & Power from simulated switching activity, a board power measurement, and CPU package power, for energy per Greek set on both sides & Planned\\
+21--22 Oct & ZCU104 build of the 64-bit engine (\S\ref{sec:zcu104}); ARM end-to-end design with the host steps in C; real NIFTY inputs as board vectors & Done\\
+21--22 Oct & Power from simulated switching activity, both engines (\S\ref{sec:power}) & Done\\
+Next & Board runs: ZCU104 test, sweep and NIFTY; ZedBoard ARM end to end and NIFTY; a board power measurement and CPU package power & Needs the boards\\
 
 13--15 Oct & Freeze results; regenerate all figures and tables & Planned\\
 13--22 Oct & Write the paper: introduction, related work, architecture, results & Planned\\
