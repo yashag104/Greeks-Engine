@@ -1,0 +1,423 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date         : Thu Oct 22 01:17:00 2026
+| Host         : SaY-PC running 64-bit major release  (build 9200)
+| Command      : report_timing_summary -file {C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/zedboard/timing_zed.rpt}
+| Design       : heston_bd_wrapper
+| Device       : 7z020-clg484
+| Speed File   : -1  PRODUCTION 1.12 2019-11-22
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Summary Report
+
+------------------------------------------------------------------------------------------------
+| Timer Settings
+| --------------
+------------------------------------------------------------------------------------------------
+
+  Enable Multi Corner Analysis               :  Yes
+  Enable Pessimism Removal                   :  Yes
+  Pessimism Removal Resolution               :  Nearest Common Node
+  Enable Input Delay Default Clock           :  No
+  Enable Preset / Clear Arcs                 :  No
+  Disable Flight Delays                      :  No
+  Ignore I/O Paths                           :  No
+  Timing Early Launch at Borrowing Latches   :  No
+  Borrow Time for Max Delay Exceptions       :  Yes
+  Merge Timing Exceptions                    :  Yes
+  Inter-SLR Compensation                     :  Conservative
+
+  Corner  Analyze    Analyze    
+  Name    Max Paths  Min Paths  
+  ------  ---------  ---------  
+  Slow    Yes        Yes        
+  Fast    Yes        Yes        
+
+
+------------------------------------------------------------------------------------------------
+| Report Methodology
+| ------------------
+------------------------------------------------------------------------------------------------
+
+No report available as report_methodology has not been run prior. Run report_methodology on the current design for the summary of methodology violations.
+
+
+
+check_timing report
+
+Table of Contents
+-----------------
+1. checking no_clock (0)
+2. checking constant_clock (0)
+3. checking pulse_width_clock (0)
+4. checking unconstrained_internal_endpoints (0)
+5. checking no_input_delay (0)
+6. checking no_output_delay (0)
+7. checking multiple_clock (0)
+8. checking generated_clocks (0)
+9. checking loops (0)
+10. checking partial_input_delay (0)
+11. checking partial_output_delay (0)
+12. checking latch_loops (0)
+
+1. checking no_clock (0)
+------------------------
+ There are 0 register/latch pins with no clock.
+
+
+2. checking constant_clock (0)
+------------------------------
+ There are 0 register/latch pins with constant_clock.
+
+
+3. checking pulse_width_clock (0)
+---------------------------------
+ There are 0 register/latch pins which need pulse_width check
+
+
+4. checking unconstrained_internal_endpoints (0)
+------------------------------------------------
+ There are 0 pins that are not constrained for maximum delay.
+
+ There are 0 pins that are not constrained for maximum delay due to constant clock.
+
+
+5. checking no_input_delay (0)
+------------------------------
+ There are 0 input ports with no input delay specified.
+
+ There are 0 input ports with no input delay but user has a false path constraint.
+
+
+6. checking no_output_delay (0)
+-------------------------------
+ There are 0 ports with no output delay specified.
+
+ There are 0 ports with no output delay but user has a false path constraint
+
+ There are 0 ports with no output delay but with a timing clock defined on it or propagating through it
+
+
+7. checking multiple_clock (0)
+------------------------------
+ There are 0 register/latch pins with multiple clocks.
+
+
+8. checking generated_clocks (0)
+--------------------------------
+ There are 0 generated clocks that are not connected to a clock source.
+
+
+9. checking loops (0)
+---------------------
+ There are 0 combinational loops in the design.
+
+
+10. checking partial_input_delay (0)
+------------------------------------
+ There are 0 input ports with partial input delay specified.
+
+
+11. checking partial_output_delay (0)
+-------------------------------------
+ There are 0 ports with partial output delay specified.
+
+
+12. checking latch_loops (0)
+----------------------------
+ There are 0 combinational latch loops in the design through latch input
+
+
+
+------------------------------------------------------------------------------------------------
+| Design Timing Summary
+| ---------------------
+------------------------------------------------------------------------------------------------
+
+    WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+    -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+      0.080        0.000                      0                71232        0.031        0.000                      0                71232        6.020        0.000                       0                 33107  
+
+
+All user specified timing constraints are met.
+
+
+------------------------------------------------------------------------------------------------
+| Clock Summary
+| -------------
+------------------------------------------------------------------------------------------------
+
+Clock       Waveform(ns)       Period(ns)      Frequency(MHz)
+-----       ------------       ----------      --------------
+clk_fpga_0  {0.000 7.000}      14.000          71.429          
+
+
+------------------------------------------------------------------------------------------------
+| Intra Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+Clock             WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints     WPWS(ns)     TPWS(ns)  TPWS Failing Endpoints  TPWS Total Endpoints  
+-----             -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------     --------     --------  ----------------------  --------------------  
+clk_fpga_0          0.080        0.000                      0                71232        0.031        0.000                      0                71232        6.020        0.000                       0                 33107  
+
+
+------------------------------------------------------------------------------------------------
+| Inter Clock Table
+| -----------------
+------------------------------------------------------------------------------------------------
+
+From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Other Path Groups Table
+| -----------------------
+------------------------------------------------------------------------------------------------
+
+Path Group    From Clock    To Clock          WNS(ns)      TNS(ns)  TNS Failing Endpoints  TNS Total Endpoints      WHS(ns)      THS(ns)  THS Failing Endpoints  THS Total Endpoints  
+----------    ----------    --------          -------      -------  ---------------------  -------------------      -------      -------  ---------------------  -------------------  
+
+
+------------------------------------------------------------------------------------------------
+| Timing Details
+| --------------
+------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------------------------------------------------
+From Clock:  clk_fpga_0
+  To Clock:  clk_fpga_0
+
+Setup :            0  Failing Endpoints,  Worst Slack        0.080ns,  Total Violation        0.000ns
+Hold  :            0  Failing Endpoints,  Worst Slack        0.031ns,  Total Violation        0.000ns
+PW    :            0  Failing Endpoints,  Worst Slack        6.020ns,  Total Violation        0.000ns
+---------------------------------------------------------------------------------------------------
+
+
+Max Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.080ns  (required time - arrival time)
+  Source:                 heston_bd_i/engine/inst/core/v632_reg[0]/C
+                            (rising edge-triggered cell FDRE clocked by clk_fpga_0  {rise@0.000ns fall@7.000ns period=14.000ns})
+  Destination:            heston_bd_i/engine/inst/core/v633_reg[3]/D
+                            (rising edge-triggered cell FDRE clocked by clk_fpga_0  {rise@0.000ns fall@7.000ns period=14.000ns})
+  Path Group:             clk_fpga_0
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            14.000ns  (clk_fpga_0 rise@14.000ns - clk_fpga_0 rise@0.000ns)
+  Data Path Delay:        13.512ns  (logic 5.974ns (44.213%)  route 7.538ns (55.787%))
+  Logic Levels:           36  (CARRY4=26 LUT1=1 LUT3=2 LUT4=1 LUT5=3 LUT6=3)
+  Clock Path Skew:        -0.228ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    2.667ns = ( 16.667 - 14.000 ) 
+    Source Clock Delay      (SCD):    3.024ns
+    Clock Pessimism Removal (CPR):    0.129ns
+  Clock Uncertainty:      0.213ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.420ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_fpga_0 rise edge)
+                                                      0.000     0.000 r  
+    PS7_X0Y0             PS7                          0.000     0.000 r  heston_bd_i/ps7/inst/PS7_i/FCLKCLK[0]
+                         net (fo=1, routed)           1.193     1.193    heston_bd_i/ps7/inst/FCLK_CLK_unbuffered[0]
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.101     1.294 r  heston_bd_i/ps7/inst/buffer_fclk_clk_0.FCLK_CLK_0_BUFG/O
+                         net (fo=33155, routed)       1.730     3.024    heston_bd_i/engine/inst/core/aclk
+    SLICE_X57Y1          FDRE                                         r  heston_bd_i/engine/inst/core/v632_reg[0]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X57Y1          FDRE (Prop_fdre_C_Q)         0.456     3.480 f  heston_bd_i/engine/inst/core/v632_reg[0]/Q
+                         net (fo=5, routed)           0.450     3.930    heston_bd_i/engine/inst/core/v632_reg_n_0_[0]
+    SLICE_X54Y0          LUT1 (Prop_lut1_I0_O)        0.124     4.054 r  heston_bd_i/engine/inst/core/v633[0]_i_100/O
+                         net (fo=1, routed)           0.347     4.401    heston_bd_i/engine/inst/core/p_0_out__1[0]
+    SLICE_X56Y1          CARRY4 (Prop_carry4_CYINIT_CO[3])
+                                                      0.580     4.981 r  heston_bd_i/engine/inst/core/v633_reg[0]_i_98/CO[3]
+                         net (fo=1, routed)           0.000     4.981    heston_bd_i/engine/inst/core/v633_reg[0]_i_98_n_0
+    SLICE_X56Y2          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     5.095 r  heston_bd_i/engine/inst/core/v633_reg[3]_i_50/CO[3]
+                         net (fo=1, routed)           0.000     5.095    heston_bd_i/engine/inst/core/v633_reg[3]_i_50_n_0
+    SLICE_X56Y3          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     5.209 r  heston_bd_i/engine/inst/core/v633_reg[3]_i_49/CO[3]
+                         net (fo=1, routed)           0.000     5.209    heston_bd_i/engine/inst/core/v633_reg[3]_i_49_n_0
+    SLICE_X56Y4          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     5.323 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_468/CO[3]
+                         net (fo=1, routed)           0.000     5.323    heston_bd_i/engine/inst/core/v633_reg[4]_i_468_n_0
+    SLICE_X56Y5          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     5.437 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_425/CO[3]
+                         net (fo=1, routed)           0.000     5.437    heston_bd_i/engine/inst/core/v633_reg[4]_i_425_n_0
+    SLICE_X56Y6          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     5.551 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_308/CO[3]
+                         net (fo=1, routed)           0.000     5.551    heston_bd_i/engine/inst/core/v633_reg[4]_i_308_n_0
+    SLICE_X56Y7          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     5.665 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_368/CO[3]
+                         net (fo=1, routed)           0.000     5.665    heston_bd_i/engine/inst/core/v633_reg[4]_i_368_n_0
+    SLICE_X56Y8          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     5.779 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_211/CO[3]
+                         net (fo=1, routed)           0.000     5.779    heston_bd_i/engine/inst/core/v633_reg[4]_i_211_n_0
+    SLICE_X56Y9          CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     5.893 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_202/CO[3]
+                         net (fo=1, routed)           0.000     5.893    heston_bd_i/engine/inst/core/v633_reg[4]_i_202_n_0
+    SLICE_X56Y10         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     6.007 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_206/CO[3]
+                         net (fo=1, routed)           0.000     6.007    heston_bd_i/engine/inst/core/v633_reg[4]_i_206_n_0
+    SLICE_X56Y11         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     6.121 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_222/CO[3]
+                         net (fo=1, routed)           0.000     6.121    heston_bd_i/engine/inst/core/v633_reg[4]_i_222_n_0
+    SLICE_X56Y12         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     6.235 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_102/CO[3]
+                         net (fo=1, routed)           0.000     6.235    heston_bd_i/engine/inst/core/v633_reg[4]_i_102_n_0
+    SLICE_X56Y13         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     6.349 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_103/CO[3]
+                         net (fo=1, routed)           0.000     6.349    heston_bd_i/engine/inst/core/v633_reg[4]_i_103_n_0
+    SLICE_X56Y14         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     6.463 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_243/CO[3]
+                         net (fo=1, routed)           0.000     6.463    heston_bd_i/engine/inst/core/v633_reg[4]_i_243_n_0
+    SLICE_X56Y15         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     6.577 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_324/CO[3]
+                         net (fo=1, routed)           0.000     6.577    heston_bd_i/engine/inst/core/v633_reg[4]_i_324_n_0
+    SLICE_X56Y16         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     6.691 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_285/CO[3]
+                         net (fo=1, routed)           0.000     6.691    heston_bd_i/engine/inst/core/v633_reg[4]_i_285_n_0
+    SLICE_X56Y17         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     6.805 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_128/CO[3]
+                         net (fo=1, routed)           0.000     6.805    heston_bd_i/engine/inst/core/v633_reg[4]_i_128_n_0
+    SLICE_X56Y18         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     6.919 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_280/CO[3]
+                         net (fo=1, routed)           0.000     6.919    heston_bd_i/engine/inst/core/v633_reg[4]_i_280_n_0
+    SLICE_X56Y19         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     7.033 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_270/CO[3]
+                         net (fo=1, routed)           0.000     7.033    heston_bd_i/engine/inst/core/v633_reg[4]_i_270_n_0
+    SLICE_X56Y20         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     7.147 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_119/CO[3]
+                         net (fo=1, routed)           0.000     7.147    heston_bd_i/engine/inst/core/v633_reg[4]_i_119_n_0
+    SLICE_X56Y21         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     7.261 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_118/CO[3]
+                         net (fo=1, routed)           0.000     7.261    heston_bd_i/engine/inst/core/v633_reg[4]_i_118_n_0
+    SLICE_X56Y22         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     7.375 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_279/CO[3]
+                         net (fo=1, routed)           0.000     7.375    heston_bd_i/engine/inst/core/v633_reg[4]_i_279_n_0
+    SLICE_X56Y23         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     7.489 r  heston_bd_i/engine/inst/core/v633_reg[0]_i_35/CO[3]
+                         net (fo=1, routed)           0.000     7.489    heston_bd_i/engine/inst/core/v633_reg[0]_i_35_n_0
+    SLICE_X56Y24         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     7.603 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_180/CO[3]
+                         net (fo=1, routed)           0.009     7.612    heston_bd_i/engine/inst/core/v633_reg[4]_i_180_n_0
+    SLICE_X56Y25         CARRY4 (Prop_carry4_CI_CO[3])
+                                                      0.114     7.726 r  heston_bd_i/engine/inst/core/v633_reg[4]_i_75/CO[3]
+                         net (fo=1, routed)           0.000     7.726    heston_bd_i/engine/inst/core/v633_reg[4]_i_75_n_0
+    SLICE_X56Y26         CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.334     8.060 f  heston_bd_i/engine/inst/core/v633_reg[4]_i_144/O[1]
+                         net (fo=1, routed)           0.569     8.629    heston_bd_i/engine/inst/core/found3__0[102]
+    SLICE_X58Y26         LUT3 (Prop_lut3_I0_O)        0.296     8.925 f  heston_bd_i/engine/inst/core/v633[4]_i_77/O
+                         net (fo=2, routed)           0.906     9.831    heston_bd_i/engine/inst/core/v633[4]_i_77_n_0
+    SLICE_X53Y26         LUT4 (Prop_lut4_I0_O)        0.348    10.179 f  heston_bd_i/engine/inst/core/v633[0]_i_13/O
+                         net (fo=4, routed)           0.603    10.783    heston_bd_i/engine/inst/core/v633[0]_i_13_n_0
+    SLICE_X51Y25         LUT5 (Prop_lut5_I4_O)        0.124    10.907 f  heston_bd_i/engine/inst/core/v633[3]_i_16/O
+                         net (fo=3, routed)           0.920    11.826    heston_bd_i/engine/inst/core/v633[3]_i_16_n_0
+    SLICE_X51Y21         LUT5 (Prop_lut5_I2_O)        0.124    11.950 f  heston_bd_i/engine/inst/core/v633[4]_i_329/O
+                         net (fo=2, routed)           1.045    12.995    heston_bd_i/engine/inst/core/v633[4]_i_329_n_0
+    SLICE_X51Y10         LUT5 (Prop_lut5_I1_O)        0.124    13.119 f  heston_bd_i/engine/inst/core/v633[4]_i_166/O
+                         net (fo=1, routed)           0.665    13.784    heston_bd_i/engine/inst/core/v633[4]_i_166_n_0
+    SLICE_X51Y10         LUT6 (Prop_lut6_I1_O)        0.124    13.908 f  heston_bd_i/engine/inst/core/v633[4]_i_65/O
+                         net (fo=1, routed)           0.756    14.664    heston_bd_i/engine/inst/core/v633[4]_i_65_n_0
+    SLICE_X51Y16         LUT6 (Prop_lut6_I0_O)        0.124    14.788 f  heston_bd_i/engine/inst/core/v633[4]_i_18/O
+                         net (fo=4, routed)           0.669    15.457    heston_bd_i/engine/inst/core/v633[4]_i_18_n_0
+    SLICE_X48Y16         LUT3 (Prop_lut3_I0_O)        0.153    15.610 r  heston_bd_i/engine/inst/core/v633[3]_i_2/O
+                         net (fo=1, routed)           0.599    16.209    heston_bd_i/engine/inst/core/v633[3]_i_2_n_0
+    SLICE_X49Y13         LUT6 (Prop_lut6_I4_O)        0.327    16.536 r  heston_bd_i/engine/inst/core/v633[3]_i_1/O
+                         net (fo=1, routed)           0.000    16.536    heston_bd_i/engine/inst/core/adj_shift_fn[3]
+    SLICE_X49Y13         FDRE                                         r  heston_bd_i/engine/inst/core/v633_reg[3]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_fpga_0 rise edge)
+                                                     14.000    14.000 r  
+    PS7_X0Y0             PS7                          0.000    14.000 r  heston_bd_i/ps7/inst/PS7_i/FCLKCLK[0]
+                         net (fo=1, routed)           1.088    15.088    heston_bd_i/ps7/inst/FCLK_CLK_unbuffered[0]
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.091    15.179 r  heston_bd_i/ps7/inst/buffer_fclk_clk_0.FCLK_CLK_0_BUFG/O
+                         net (fo=33155, routed)       1.488    16.667    heston_bd_i/engine/inst/core/aclk
+    SLICE_X49Y13         FDRE                                         r  heston_bd_i/engine/inst/core/v633_reg[3]/C
+                         clock pessimism              0.129    16.796    
+                         clock uncertainty           -0.213    16.583    
+    SLICE_X49Y13         FDRE (Setup_fdre_C_D)        0.032    16.615    heston_bd_i/engine/inst/core/v633_reg[3]
+  -------------------------------------------------------------------
+                         required time                         16.615    
+                         arrival time                         -16.536    
+  -------------------------------------------------------------------
+                         slack                                  0.080    
+
+
+
+
+
+Min Delay Paths
+--------------------------------------------------------------------------------------
+Slack (MET) :             0.031ns  (arrival time - required time)
+  Source:                 heston_bd_i/engine/inst/core/v309_reg[13]/C
+                            (rising edge-triggered cell FDRE clocked by clk_fpga_0  {rise@0.000ns fall@7.000ns period=14.000ns})
+  Destination:            heston_bd_i/engine/inst/core/v311_reg[12]/D
+                            (rising edge-triggered cell FDRE clocked by clk_fpga_0  {rise@0.000ns fall@7.000ns period=14.000ns})
+  Path Group:             clk_fpga_0
+  Path Type:              Hold (Min at Fast Process Corner)
+  Requirement:            0.000ns  (clk_fpga_0 rise@0.000ns - clk_fpga_0 rise@0.000ns)
+  Data Path Delay:        0.430ns  (logic 0.256ns (59.599%)  route 0.174ns (40.401%))
+  Logic Levels:           1  (CARRY4=1)
+  Clock Path Skew:        0.264ns (DCD - SCD - CPR)
+    Destination Clock Delay (DCD):    1.245ns
+    Source Clock Delay      (SCD):    0.951ns
+    Clock Pessimism Removal (CPR):    0.030ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_fpga_0 rise edge)
+                                                      0.000     0.000 r  
+    PS7_X0Y0             PS7                          0.000     0.000 r  heston_bd_i/ps7/inst/PS7_i/FCLKCLK[0]
+                         net (fo=1, routed)           0.310     0.310    heston_bd_i/ps7/inst/FCLK_CLK_unbuffered[0]
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.026     0.336 r  heston_bd_i/ps7/inst/buffer_fclk_clk_0.FCLK_CLK_0_BUFG/O
+                         net (fo=33155, routed)       0.615     0.951    heston_bd_i/engine/inst/core/aclk
+    SLICE_X103Y49        FDRE                                         r  heston_bd_i/engine/inst/core/v309_reg[13]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X103Y49        FDRE (Prop_fdre_C_Q)         0.141     1.092 r  heston_bd_i/engine/inst/core/v309_reg[13]/Q
+                         net (fo=1, routed)           0.174     1.265    heston_bd_i/engine/inst/core/v309[13]
+    SLICE_X102Y50        CARRY4 (Prop_carry4_S[0]_O[0])
+                                                      0.115     1.380 r  heston_bd_i/engine/inst/core/v311_reg[15]_i_1/O[0]
+                         net (fo=1, routed)           0.000     1.380    heston_bd_i/engine/inst/core/sc311_out[12]
+    SLICE_X102Y50        FDRE                                         r  heston_bd_i/engine/inst/core/v311_reg[12]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_fpga_0 rise edge)
+                                                      0.000     0.000 r  
+    PS7_X0Y0             PS7                          0.000     0.000 r  heston_bd_i/ps7/inst/PS7_i/FCLKCLK[0]
+                         net (fo=1, routed)           0.337     0.337    heston_bd_i/ps7/inst/FCLK_CLK_unbuffered[0]
+    BUFGCTRL_X0Y16       BUFG (Prop_bufg_I_O)         0.029     0.366 r  heston_bd_i/ps7/inst/buffer_fclk_clk_0.FCLK_CLK_0_BUFG/O
+                         net (fo=33155, routed)       0.879     1.245    heston_bd_i/engine/inst/core/aclk
+    SLICE_X102Y50        FDRE                                         r  heston_bd_i/engine/inst/core/v311_reg[12]/C
+                         clock pessimism             -0.030     1.215    
+    SLICE_X102Y50        FDRE (Hold_fdre_C_D)         0.134     1.349    heston_bd_i/engine/inst/core/v311_reg[12]
+  -------------------------------------------------------------------
+                         required time                         -1.349    
+                         arrival time                           1.380    
+  -------------------------------------------------------------------
+                         slack                                  0.031    
+
+
+
+
+
+Pulse Width Checks
+--------------------------------------------------------------------------------------
+Clock Name:         clk_fpga_0
+Waveform(ns):       { 0.000 7.000 }
+Period(ns):         14.000
+Sources:            { heston_bd_i/ps7/inst/PS7_i/FCLKCLK[0] }
+
+Check Type        Corner  Lib Pin      Reference Pin  Required(ns)  Actual(ns)  Slack(ns)  Location      Pin
+Min Period        n/a     DSP48E1/CLK  n/a            3.884         14.000      10.116     DSP48_X2Y29   heston_bd_i/engine/inst/core/mu0_P_reg/CLK
+Low Pulse Width   Slow    SRL16E/CLK   n/a            0.980         7.000       6.020      SLICE_X46Y44  heston_bd_i/engine/inst/core/v242_s10_reg[0]_srl8/CLK
+High Pulse Width  Slow    SRL16E/CLK   n/a            0.980         7.000       6.020      SLICE_X46Y44  heston_bd_i/engine/inst/core/v242_s10_reg[0]_srl8/CLK
+
+
+

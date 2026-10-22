@@ -36,6 +36,15 @@ set vdir [file normalize "$here/../../verilog/gen"]
 
 # ---- board file check, with a message that says what to do -----------------
 set bp [get_board_parts -quiet *zedboard*]
+# A board installed from the Vivado Store lands in the per-user board store,
+# which batch mode does not search: add it and look again.
+if {[llength $bp] == 0 && [info exists ::env(APPDATA)]} {
+  set store [file join $::env(APPDATA) Xilinx Vivado [version -short] xhub board_store xilinx_board_store]
+  if {[file isdirectory $store]} {
+    set_param board.repoPaths [concat [get_param board.repoPaths] [list $store]]
+    set bp [get_board_parts -quiet *zedboard*]
+  }
+}
 if {[llength $bp] == 0} {
   puts "ERROR: no ZedBoard board part is installed."
   puts "       Install it: Vivado GUI -> Tools -> Vivado Store -> Boards -> ZedBoard,"
