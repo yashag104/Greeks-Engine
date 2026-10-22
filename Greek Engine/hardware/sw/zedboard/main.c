@@ -53,6 +53,9 @@
 #define STAT_DONE  1u
 #define STAT_RERR  2u
 #define REPEAT     200      /* timing repetitions of each stage, case 1 */
+#ifndef POWER_WINDOW_S
+#define POWER_WINDOW_S 30   /* seconds per idle / run window for the supply-meter reading */
+#endif
 
 static void wr64(unsigned off, int64_t v) {      /* low word first, as the RTL expects */
   REG_WR(off, (uint32_t)((uint64_t)v & 0xffffffffu));
@@ -153,5 +156,29 @@ int main(void) {
   uint64_t tb = best.setup + best.write + best.engine + best.read + best.finish;
   uint64_t tm = (sum.setup + sum.write + sum.engine + sum.read + sum.finish) / REPEAT;
   printf("  END TO END                 %8u %8u\r\n", ns(tb), ns(tm));
+
+  /* Power measurement windows: read the board's supply current with a meter in
+   * each window. IDLE: programmed, engine idle. RUN: evaluations back to back
+   * (the engine is busy almost all the time). Engine power = RUN - IDLE. */
+  printf("POWER WINDOWS: read the supply meter during each window (%d s each)\r\n", POWER_WINDOW_S);
+  for (int rep = 1; rep <= 3; rep++) {
+    printf("  window %d IDLE: start\r\n", rep);
+    uint64_t t0 = NOW();
+    while (NOW() - t0 < (uint64_t)POWER_WINDOW_S * TICKS_PER_S) { }
+    printf("  window %d IDLE: end\r\n", rep);
+    printf("  window %d RUN: start\r\n", rep);
+    unsigned long n = 0;
+    t0 = NOW();
+    while (NOW() - t0 < (uint64_t)POWER_WINDOW_S * TICKS_PER_S) {
+      int64_t out[HC_NOUT];
+      stage_t t;
+      if (evaluate(&hc_cases[n % HC_NCASES], out, &t)) { printf("  RUN: FAIL\r\n"); return 1; }
+      n++;
+    }
+    uint64_t el = NOW() - t0;
+    printf("  window %d RUN: end, %lu evaluations, %lu per second\r\n", rep, n,
+           (unsigned long)(el ? n * TICKS_PER_S / el : 0));
+  }
+  printf("DONE\r\n");
   return bad_cases != 0;
 }

@@ -19,6 +19,11 @@ Steps (Windows, from the listed folder):
 3. open a serial terminal on the board's USB-UART (115200 8N1), then
    here: `D:\2025.2\Vitis\bin\xsdb.bat run_app.tcl`
 
+After the tests and the timing table it runs three power windows of 30 s each:
+`IDLE` (engine idle) then `RUN` (evaluations back to back, the engine busy almost all
+the time), announced on the UART. Read the board's supply power with a meter in each
+window; engine power = RUN - IDLE. Set the length with `-DPOWER_WINDOW_S=<s>`.
+
 Without a board: `gcc -O2 -std=gnu99 -DHC_PC_TEST -Igenerated main.c generated/heston_host.c -o pc_test && ./pc_test`
 runs the same program against a model of the engine's registers (`pc_test.h`);
 `verify_all.sh` does this on every run.

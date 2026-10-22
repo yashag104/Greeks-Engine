@@ -119,7 +119,7 @@ ok=1
 for f in heston_host.c heston_host.h heston_host_regs.h; do
   cmp -s "build/$f" "$SW/generated/$f" || { echo "  differs: $f"; ok=0; }
 done
-gcc -O2 -std=gnu99 -DHC_PC_TEST -DHC_PORTABLE -I"$SW/generated" "$SW/main.c" "$SW/generated/heston_host.c" \
+gcc -O2 -std=gnu99 -DHC_PC_TEST -DHC_PORTABLE -DPOWER_WINDOW_S=0 -I"$SW/generated" "$SW/main.c" "$SW/generated/heston_host.c" \
     -o build/arm_app_pc_test > "$LOG/arm_app.log" 2>&1 && build/arm_app_pc_test >> "$LOG/arm_app.log" 2>&1 || ok=0
 grep -q "^PASS: 100 cases" "$LOG/arm_app.log" || ok=0
 [ $ok = 1 ] && echo PASS > "$LOG/arm_app.chk" || echo FAIL > "$LOG/arm_app.chk"
