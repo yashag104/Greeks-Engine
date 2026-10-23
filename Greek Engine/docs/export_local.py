@@ -21,7 +21,8 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else "/mnt/c/Users/hp/OneDrive/Desktop/Gr
 
 GH = "https://github.com/yashag104/Greeks-Engine/blob/pipeline-shared-mult/Greek%20Engine/"
 FILES = {  # local name -> source (relative to ROOT)
-    "02 Project Report.pdf": "docs/report/greeks_engine_report.pdf",
+    "00 Complete Dossier.html": "docs/greeks_engine_dossier.html",
+    "02 Project Report.pdf": "docs/report/latex/greeks_engine_report.pdf",   # the current LaTeX report
     "04 Course.html": "docs/course.html",
     "05 Viva Guide.html": "docs/viva_study_guide.html",
     "Block Design.pdf": "validation/results/vivado/Block_design.pdf",
