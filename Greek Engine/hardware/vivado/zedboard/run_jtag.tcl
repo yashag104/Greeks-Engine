@@ -98,7 +98,14 @@ proc axi_r {off} {
 
 # ---- connect and program ---------------------------------------------------
 open_hw_manager
-if {[llength [get_hw_servers -quiet]] == 0} { connect_hw_server -quiet }
+# A board on another machine: run hw_server there and set HW_SERVER=host:port
+# here (e.g. localhost:3122 through an ssh tunnel); otherwise the local server.
+if {[llength [get_hw_servers -quiet]] == 0} {
+  if {[info exists ::env(HW_SERVER)] && $::env(HW_SERVER) ne ""} {
+    puts "INFO: using remote hw_server $::env(HW_SERVER)"
+    connect_hw_server -quiet -url $::env(HW_SERVER)
+  } else { connect_hw_server -quiet }
+}
 if {[llength [get_hw_devices -quiet]] == 0} { open_hw_target }
 # The Zynq JTAG chain is arm_dap_0 first, then the FPGA (xc7z020_1; on a
 # ZCU104, xczu7_0): select the FPGA by name, not by position.

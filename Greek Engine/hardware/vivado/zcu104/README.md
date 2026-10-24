@@ -22,3 +22,20 @@ Vectors: `hardware/gen/board_vectors.py ... --name heston_aad_zu` (single and
 `--sweep 48`), and `--cases-csv validation/hedging/results/board_cases.csv` for the
 NIFTY run. The checking logic is shared with the ZedBoard (`../zedboard/run_jtag.tcl`);
 `tclsh mock/drive.tcl` tests it against a model of Vivado's hardware manager.
+
+## Board on a remote machine
+
+The remote machine only needs Xilinx `hw_server` running next to the board
+(it ships with Vivado and the Lab Edition; no GUI needed):
+
+    hw_server -s tcp::3121          # on the remote machine; leave it running
+
+From this laptop, tunnel that port and point the scripts at it:
+
+    ssh -N -L 3122:localhost:3121 <user>@<remote-host>     # keep this window open
+    set HW_SERVER=localhost:3122                           # in a cmd window
+    run_board.bat test
+
+`run_jtag.tcl` connects to `HW_SERVER` when it is set (the sweep and NIFTY runs
+use the same script), so the bitstream and vectors stay on this machine and
+only JTAG traffic crosses the network.
