@@ -106,7 +106,16 @@ if {[llength [get_hw_servers -quiet]] == 0} {
     connect_hw_server -quiet -url $::env(HW_SERVER)
   } else { connect_hw_server -quiet }
 }
-if {[llength [get_hw_devices -quiet]] == 0} { open_hw_target }
+if {[llength [get_hw_devices -quiet]] == 0} {
+  if {[llength [get_hw_targets -quiet]] == 0} {
+    puts "ERROR: connected to hw_server [get_hw_servers -quiet], but it sees no JTAG cable."
+    puts "       Check on the machine the board is plugged into: board powered on, the"
+    puts "       JTAG/UART micro-USB cable connected, Xilinx cable drivers installed."
+    stop
+  }
+  puts "INFO: JTAG targets: [get_hw_targets -quiet]"
+  open_hw_target [lindex [get_hw_targets -quiet] 0]
+}
 # The Zynq JTAG chain is arm_dap_0 first, then the FPGA (xc7z020_1; on a
 # ZCU104, xczu7_0): select the FPGA by name, not by position.
 set devs [get_hw_devices -quiet $dev_pattern]
