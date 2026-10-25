@@ -89,23 +89,41 @@ record "range_err raised for out-of-domain input (64-bit)" "$LOG/gen_zu.log" "co
 ( "$PY" wrappers.py bump $ZU --name zu > "$LOG/bump_zu.log" 2>&1 ) &
 ( "$PY" wrappers.py axi  $Z7 --host-setup --name heston_aad_z7h > "$LOG/axi_z7h.log" 2>&1 ) &
 ( "$PY" wrappers.py lite $Z7 --host-setup --name heston_aad_z7h > "$LOG/lite_z7h.log" 2>&1 ) &
+( "$PY" wrappers.py lite $ZU --name heston_aad_zu > "$LOG/lite_zu.log" 2>&1 ) &
 ( "$PY" host.py > "$LOG/host.log" 2>&1 ) &
 wait
 record "generated AXI4-Stream wrapper, Zynq-7020 config" "$LOG/axi_z7.log" "PASS: AXI4-Stream"
 record "generated AXI4-Stream wrapper, 64-bit config" "$LOG/axi_zu.log" "PASS: AXI4-Stream"
 record "generated AXI4-Stream wrapper, host-setup Zynq-7020" "$LOG/axi_z7h.log" "PASS: AXI4-Stream"
 record "generated AXI4-Lite register file, host-setup Zynq-7020" "$LOG/lite_z7h.log" "PASS: AXI4-Lite"
+record "generated AXI4-Lite register file, 64-bit (ZCU104)" "$LOG/lite_zu.log" "PASS: AXI4-Lite"
 record "host setup + FPGA loop + host finish == on-chip design" "$LOG/host.log" "^PASS"
 record "bump-and-reprice on generated pricer, Zynq-7020" "$LOG/bump_z7.log" "PASS: bump-and-reprice"
 record "bump-and-reprice on generated pricer, 64-bit" "$LOG/bump_zu.log" "PASS: bump-and-reprice"
 
 echo "== 4. committed generated RTL == generator output"
 ok=1
-for f in heston_aad_z7 heston_aad_zu heston_aad_z7h z7_pricer zu_pricer heston_aad_z7_axi heston_aad_zu_axi heston_aad_z7h_axi heston_aad_z7h_lite heston_bump_z7 heston_bump_zu; do
+for f in heston_aad_z7 heston_aad_zu heston_aad_z7h z7_pricer zu_pricer heston_aad_z7_axi heston_aad_zu_axi heston_aad_z7h_axi heston_aad_z7h_lite heston_aad_zu_lite heston_bump_z7 heston_bump_zu; do
   cmp -s "build/$f.v" "$V/gen/$f.v" || { echo "  differs: $f.v"; ok=0; }
 done
 [ $ok = 1 ] && echo PASS > "$LOG/gen_cmp.chk" || echo FAIL > "$LOG/gen_cmp.chk"
 record "hardware/verilog/gen/*.v up to date" "$LOG/gen_cmp.chk" PASS
+
+echo "== 4b. host steps in C (ARM) == host.py"
+"$PY" cgen.py --check 300 > "$LOG/cgen.log" 2>&1
+grep -q "^native 128-bit .*PASS" "$LOG/cgen.log" && grep -q "^portable .*PASS" "$LOG/cgen.log" \
+  && echo PASS > "$LOG/cgen.chk" || echo FAIL > "$LOG/cgen.chk"
+record "host steps in C bit-exact, native and portable 128-bit" "$LOG/cgen.chk" PASS
+SW="$ROOT/hardware/sw/zedboard"
+ok=1
+for f in heston_host.c heston_host.h heston_host_regs.h; do
+  cmp -s "build/$f" "$SW/generated/$f" || { echo "  differs: $f"; ok=0; }
+done
+gcc -O2 -std=gnu99 -DHC_PC_TEST -DHC_PORTABLE -DPOWER_WINDOW_S=0 -I"$SW/generated" "$SW/main.c" "$SW/generated/heston_host.c" \
+    -o build/arm_app_pc_test > "$LOG/arm_app.log" 2>&1 && build/arm_app_pc_test >> "$LOG/arm_app.log" 2>&1 || ok=0
+grep -q "^PASS: 100 cases" "$LOG/arm_app.log" || ok=0
+[ $ok = 1 ] && echo PASS > "$LOG/arm_app.chk" || echo FAIL > "$LOG/arm_app.chk"
+record "ARM end-to-end program on a PC register model, 100 cases" "$LOG/arm_app.chk" PASS
 
 echo "== 5. emulator accuracy and error bound"
 "$PY" check_accuracy.py 32 > "$LOG/acc32.log" 2>&1

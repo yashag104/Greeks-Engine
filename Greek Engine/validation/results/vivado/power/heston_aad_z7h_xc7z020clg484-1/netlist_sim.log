@@ -1,0 +1,42 @@
+#-----------------------------------------------------------
+# xsim v2025.2 (64-bit)
+# SW Build 6299465 on Fri Nov 14 19:35:11 GMT 2025
+# IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+# SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+# Start of session at: Thu Oct 22 06:45:46 2026
+# Process ID         : 14340
+# Current directory  : C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/power/runs/xc7z020clg484-1/heston_aad_z7h/saif_sim
+# Command line       : xsim.exe -log sim.log -mode tcl -source {xsim.dir/pwr/xsim_script.tcl}
+# Log file           : C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/power/runs/xc7z020clg484-1/heston_aad_z7h/saif_sim/sim.log
+# Journal file       : C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/power/runs/xc7z020clg484-1/heston_aad_z7h/saif_sim\xsim.jou
+# Running On         : SaY-PC
+# Platform           : Windows Server 2016 or Windows 10
+# Operating System   : 26200
+# Processor Detail   : 11th Gen Intel(R) Core(TM) i5-1155G7 @ 2.50GHz
+# CPU Frequency      : 2496 MHz
+# CPU Physical cores : 4
+# CPU Logical cores  : 8
+# Host memory        : 16804 MB
+# Swap memory        : 15569 MB
+# Total Virtual      : 32374 MB
+# Available Virtual  : 4579 MB
+#-----------------------------------------------------------
+source xsim.dir/pwr/xsim_script.tcl
+# xsim {pwr} -autoloadwcfg -tclbatch {saif_run.tcl}
+Time resolution is 1 ps
+source saif_run.tcl
+## open_saif activity.saif
+get_objects: Time (s): cpu = 00:32:09 ; elapsed = 00:32:56 . Memory (MB): peak = 253.617 ; gain = 0.000
+## log_saif [get_objects -r /tb/uut/*]
+## run all
+progress: evaluation 1 of 4 done at 65594000
+progress: evaluation 2 of 4 done at 130938000
+progress: evaluation 3 of 4 done at 196282000
+progress: evaluation 4 of 4 done at 261627000
+PASS: power testbench, 4 evaluations bit-exact
+$finish called at time : 261626661 ps : File "C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/power/runs/xc7z020clg484-1/heston_aad_z7h/saif_sim/tb_power.v" Line 210
+run: Time (s): cpu = 00:00:02 ; elapsed = 00:28:02 . Memory (MB): peak = 253.617 ; gain = 0.000
+## close_saif
+## quit
+INFO: xsimkernel Simulation Memory Usage: 368476 KB (Peak: 368476 KB), Simulation CPU Usage: 1657796 ms
+INFO: [Common 17-206] Exiting xsim at Thu Oct 22 07:46:50 2026...

@@ -166,7 +166,7 @@ checks every variable shift against the ranges the RTL was built for (= range_er
 | `heston_aad_z7`, full-range shifters | xc7 | 90,648 | 3,050 | 32,878 | 96 | no (Zynq-7020: 53,200 LUT) |
 | `heston_aad_z7`, measured-range shifters | xc7 | 59,024 | 3,058 | 32,731 | 96 | no, ~11 % over |
 | **`heston_aad_z7h`** (host setup) | xc7 | **45,504** | 2,922 | 24,856 | 96 / 220 | **yes: 91 % LUT incl. SRL, 23 % FF, 44 % DSP** |
-| **`heston_aad_zu`** (64-bit, 32 multipliers) | xcup | **108,330** | 6,409 | 59,953 | 512 DSP48E2 | **ZCU104: 50 % LUT, 30 % DSP**; ZCU102: yes; ZU3EG: no |
+| **`heston_aad_zu`** (64-bit, 32 multipliers) | xcup | **108,330** | 6,409 | 59,953 | 512 DSP48E2 | **ZCU104: 50 % LUT, 30 % DSP**; ZCU102: yes; ZU3EG: no (Vivado: 77,863 LUT on the ZCU104, 77,515 on the ZCU102, 510 DSP, §4.5b) |
 
 ### 4.4 Area (Vivado 2025.2, post-synthesis, out of context)
 
@@ -209,7 +209,36 @@ The design fits and routes but does not close at 100 MHz. The failing paths are 
 carry chains; pipelining them, or running at ≤ 79 MHz, are the options. The ZedBoard
 bring-up designs run the engine at 70 MHz for margin.
 
-### 4.6 Against a CPU (measured 30 Sep 2026)
+### 4.5b The 64-bit engine on UltraScale+: ZCU104 build (21 Oct), ZCU102 build and board run (25 Oct 2026)
+
+`hardware/vivado/zcu104/bd_jtag.tcl`: `heston_aad_zu` behind the AXI4-Lite register
+file (`heston_aad_zu_lite`, bit-exact in simulation; 19 input words, 10 outputs) with
+the same JTAG-to-AXI test system as the ZedBoard, clocked from the board's 300 MHz
+system clock through the board file. `hardware/vivado/zcu102/` runs the same script
+with the ZCU102's board file (part and clock taken from it); it was built and run
+in Vivado 2026.1 on the lab PC, which has the ZU9EG licence. Reports in
+`validation/results/vivado/zcu104_jtag/` and `zcu102_jtag/`.
+
+| | ZCU102 (xczu9eg-ffvb1156-2-e) | ZCU104 (xczu7ev-ffvc1156-2-e) |
+|---|---|---|
+| LUT | 77,515 (28.3 %) | 77,863 (33.8 %; Yosys estimate 108,330) |
+| registers | 63,547 (11.6 %) | 63,796 (13.8 %) |
+| DSP | 510 (20.2 %) | 510 (29.5 %) |
+| BRAM | 7.5 tiles | 6.5 tiles |
+| clock | 100 MHz, WNS +1.601 ns (Fmax ~119 MHz) | 100 MHz, WNS +1.469 ns, 0 routing errors (Fmax ~117 MHz) |
+| power (vectorless) | 1.433 W: 0.809 dynamic, 0.625 static | 1.197 W: 0.602 dynamic, 0.595 static |
+| **on the board** | **1 vector + 50-case sweep + 50 NIFTY days: 1,010 / 1,010 outputs bit-exact; worst 0.255 of the bound** | not run |
+| latency | 1,593 cycles = **15.9 µs** per whole evaluation (setup and finish on chip) | same |
+| power, engine alone, simulated activity | ~40 µJ per evaluation (xczu7ev dynamic + xczu9eg static) | 2.485 W (1.883 dynamic): ~40 µJ per evaluation |
+
+Against the analytic CPU method (20.3 µs, one idle core) this is about 1.3× faster
+on the same scope. The board run checks every output but cannot time the engine (each
+JTAG transaction is far slower than an evaluation), so the latency is the cycle count
+at the clock. Worst price error against the double-precision reference on the board:
+7.3e-7 (ZedBoard 1.5e-5). Logs: `validation/results/board_*zcu102_2026-10-25.log`,
+reports `board_*report_zcu102_2026-10-25.csv` (`validation/board_report.py --design zu`).
+
+### 4.6 Against a CPU (measured 30 Sep 2026, re-timed on an idle machine 23 Oct 2026)
 
 `validation/cpu_baseline/`: the same algorithm (COS, 128 terms, puts with calls by
 parity, frozen [a, b]) in C++ double precision, g++ 13 -O3 -march=native, on an
@@ -220,46 +249,51 @@ relative). Results in `validation/results/cpu_baseline.csv`.
 
 | price + 9 Greeks | µs per evaluation, one core | cost relative to one price |
 |---|---|---|
-| CPU, price only | 17.2 | 1× |
-| CPU, bump-and-reprice (19 pricings) | 257.6 | 15× |
-| CPU, AAD (CoDiPack reverse) | 114.9 | 6.7× |
-| CPU, forward mode, 9 directions | 91.5 | 5.3× |
-| CPU, optimised bump (9 full pricings, characteristic function reused) * | 158.6 | 10.3× |
-| **CPU, hand-derived analytic Greeks, one pass** * | **29.3** | **1.9×** |
-| FPGA, ZedBoard at 70 MHz | 65.3 | 1.04× |
-| FPGA at the routed 79.1 MHz | 57.8 | 1.04× |
+| CPU, price only | 13.7 | 1× |
+| CPU, bump-and-reprice (19 pricings) | 238.1 | 17.4× |
+| CPU, AAD (CoDiPack reverse) | 103.8 | 7.6× |
+| CPU, forward mode, 9 directions | 78.0 | 5.7× |
+| CPU, optimised bump (9 full pricings, characteristic function reused) * | 146.6 | 10.7× |
+| **CPU, hand-derived analytic Greeks, one pass** * | **20.3** | **1.5×** |
+| FPGA, ZedBoard at 70 MHz (loop) | 65.3 | 1.04× |
+| FPGA at the routed 79.1 MHz (loop) | 57.8 | 1.04× |
+| **FPGA, 64-bit engine, ZCU102 at 100 MHz (whole evaluation)** | **15.9** | 1.55× |
 
-\* Added 1 October 2026 (`analytic`, `bumpopt` in `heston_cpu.cpp`), measured on
-the same laptop while it was also running another Vivado job; cost ratios use the
-price-only time from the same run (15.4 µs). Provisional until `run_baseline.py` is
-re-run on an idle machine. Across five loaded runs the analytic method took
-28–37 µs, always under the FPGA's 65 µs. It agrees with forward mode to 1.0e-11 over
-2,000 random in-domain inputs.
+All CPU rows from one run of `run_baseline.py` on an idle machine (23 Oct 2026; best
+of 5 passes over 2,000 in-domain inputs). The earlier figures (30 Sep, and 1 Oct for
+the starred rows, measured while the laptop ran a Vivado job) were 8–44 % slower.
+\* Added 1 October 2026 (`analytic`, `bumpopt` in `heston_cpu.cpp`). The analytic
+method agrees with forward mode to 1.0e-11 over 2,000 random in-domain inputs.
 
 The analytic method writes out, by hand, the derivative of the characteristic
 function with respect to each input (chain rule through b, d, g and e, in the
 spirit of Cui et al. 2017) and accumulates all ten sums in one pass over the 128
 terms. It is the strongest software competitor and it changes the comparison:
 
-- **Latency:** one CPU core with hand-derived Greeks is about 2.2× faster than the
-  FPGA engine (29 µs against 65 µs). The FPGA is faster only than the general
-  methods: 1.4× faster than forward mode, 1.8× faster than taped AAD and 3.9×
-  faster than plain bump-and-reprice. The paper must not claim a latency
-  advantage over a CPU.
+- **Latency:** one CPU core with hand-derived Greeks is about 3.2× faster than the
+  ZedBoard engine (20.3 µs against 65.3 µs), which is faster only than the general
+  methods: 1.2× faster than forward mode, 1.6× faster than taped AAD and 3.6×
+  faster than plain bump-and-reprice. The 64-bit engine on the ZCU102 (15.9 µs) is
+  about 1.3× faster than the analytic method, and 4.9×, 6.5× and 15× faster than
+  forward mode, AAD and bumping. The latency advantage over the best software is
+  narrow and holds only on the larger FPGA; the paper must say so.
 - **Throughput:** the analytic method on 4 cores / 8 processes reached
-  41,000–94,000 evaluations/s on the loaded laptop, against 15,300 for one FPGA
-  engine.
-- **Energy (estimate):** the FPGA board design is 0.340 W (vectorless, including
-  the clock generator), about 22 µJ per evaluation. CPU power could not be
+  158,000 evaluations/s on the idle laptop, against 15,300 for one ZedBoard engine
+  and 62,800 for one 64-bit engine (2.5× fewer).
+- **Energy:** engine power from the routed netlist simulated on real evaluations
+  (22 Oct 2026, `hardware/vivado/power`): 0.676 W at 70 MHz on the Zynq-7020, so
+  about 44 µJ per evaluation; 2.485 W at 100 MHz for the 64-bit engine (xczu7ev; the
+  ZCU102's xczu9eg adds 0.03 W static), about 40 µJ per whole evaluation. Vivado's vectorless figure (0.204 W for the engine, 0.340 W for the
+  board design) underestimated dynamic power about 6×. CPU power could not be
   measured under WSL; at the part's 12–28 W configurable power and the analytic
-  method's throughput, about 0.13–0.68 mJ per evaluation, so roughly 6–30× more
-  than the FPGA. Energy per Greek set is the FPGA's remaining measured-or-estimated
+  method's idle-machine throughput (158,000/s), about 76–177 µJ per evaluation, so
+  roughly 2–4× more than the FPGA. Energy per Greek set is the FPGA's remaining measured-or-estimated
   advantage, and it rests on a CPU power estimate.
 - **Greeks overhead:** the FPGA's Greeks cost 1.04 pricings; the best hand-written
-  software costs 1.9, and general AD tools 5–7. The engine reaches this without
+  software costs 1.5, and general AD tools 5.7–7.6. The engine reaches this without
   anyone deriving the derivatives of the characteristic function by hand.
 - **Optimised bump-and-reprice** (reusing the characteristic function for the S0,
-  K, r, v0 and theta bumps) costs 10.3 pricings on the CPU, against 15 for plain
+  K, r, v0 and theta bumps) costs 10.7 pricings on the CPU, against 17.4 for plain
   bumping. The hardware advantage over bumping should therefore be quoted against
   an optimised bump as well, not only the 18.4× against a plain one.
 
@@ -298,17 +332,15 @@ fit, perhaps 4 after optimisation.)
 
 **The CPU gains as much.** The same sharing in the analytic C++ method
 (`m_chain` in `heston_cpu.cpp`, agreeing with the one-strike method to 1e-13):
-one core, loaded laptop (price-only 23.4 µs in the same runs, ~1.5× slower than
-idle): 1 strike 40.3 µs, 4 strikes 56.2 µs (14.0 per strike), 8 strikes 68.0 µs
-(8.5), 16 strikes 93.3 µs (5.8), 32 strikes 122.5 µs (3.8).
+one core, idle laptop (23 Oct 2026): 1 strike 20.6 µs, 4 strikes 28.5 µs (7.1 per
+strike), 8 strikes 36.4 µs (4.5), 16 strikes 48.1 µs (3.0), 32 strikes 74.4 µs (2.3).
 
 - **Zynq-7020 at 70 MHz:** 2 strikes in 70 µs (35 µs per strike), 4 strikes in
-  78 µs (19 µs per strike) if they fit. One loaded CPU core does 14 µs per strike
+  78 µs (19 µs per strike) if they fit. One idle CPU core does 7.1 µs per strike
   at 4 strikes. The CPU stays faster.
-- **A 64-bit UltraScale+ design** (not built; clock unknown, LUT estimate only):
-  16 strikes in 2,854 cycles, 0.7 µs per strike at an assumed 250 MHz, 2.5 µs at
-  70 MHz. A 4-core laptop at 32 strikes is roughly 1 µs per strike. At best
-  parity, on unverified assumptions.
+- **A 64-bit UltraScale+ chain design** (not built): at the 100 MHz the one-strike
+  64-bit engine met on the ZCU102, 32 strikes in 4,892 cycles = 48.9 µs (1.5 µs per
+  strike), 1.5× faster than one idle core and slower than four.
 - **What the study does give:** a hardware cost per extra strike of 16
   multiplies and one rotation per term (about 7% of one option), with the adjoint
   shared; and the honest conclusion that against a CPU running the best known
@@ -358,11 +390,12 @@ Zynq-7020 has).
   not be mixed: `z7` (fully on-chip, 4,733 cycles, **never routed**, so its clock is
   unknown and any µs figure for it borrows z7h's clock), `z7h` (host setup and
   finish, FPGA term loop only, 4,572 cycles, routed: 79.1 MHz out of context, 70 MHz
-  on the ZedBoard) and `zu` (64-bit, 1,593 cycles, **Yosys estimate only, never
-  through Vivado**). The board figures 65.3 µs (70 MHz) and 57.8 µs (79.1 MHz) are
+  on the ZedBoard) and `zu` (64-bit, 1,593 cycles, routed on a ZCU104 at
+  100 MHz on 21 Oct 2026 and on a ZCU102 on 25 Oct, §4.5b, so 15.9 µs per whole
+  evaluation; run bit-exact on the ZCU102). The board figures 65.3 µs (70 MHz) and 57.8 µs (79.1 MHz) are
   z7h's loop alone: they exclude the host's setup and finish (about 100 multiplies
-  plus a few exp, log and sqrt, in double precision on the ARM; not yet ported or
-  timed) and the AXI4-Lite transfers (51 input words, 9 sums back), which on the
+  plus a few exp, log and sqrt; ported to C on 21 Oct 2026, bit-exact, in
+  `hardware/sw/zedboard`, not yet timed on the board) and the AXI4-Lite transfers (51 input words, 9 sums back), which on the
   ARM would take some microseconds and over JTAG took about a second per case. The
   CPU figures include everything. Until the PS design (`bd_lite.tcl` with a C host
   step) is timed, quote the FPGA number as "engine latency, excluding host steps".
@@ -373,8 +406,8 @@ Zynq-7020 has).
   filename in two (fixed by wrapping in `[list ...]`); and two runs were killed
   mid-flow with no error message, most likely memory pressure (the flow now
   checkpoints after placement, `impl_from_dcp.tcl` resumes from a checkpoint, and
-  `run_native.bat` runs the flow outside WSL). Power is vectorless; activity-based
-  (SAIF) power is still open.
+  `run_native.bat` runs the flow outside WSL). Power here is vectorless; with
+  simulated activity the engine draws 0.676 W (§4.6).
 - **On silicon: 50 cases, bit-exact (2026-09-29, repeated 2026-10-06).** The AXI4-Stream wrappers are
   up to 1,456 bits wide, which no Zynq PS-PL port can carry, so `wrappers.py lite`
   generates an AXI4-Lite register file (bit-exact, in `verify_all.sh`). On a ZedBoard

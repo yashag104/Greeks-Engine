@@ -17,6 +17,16 @@
 # `source run_jtag.tcl`), reusing a Hardware Manager connection if one is open.
 # ============================================================================
 set here [file dirname [file normalize [info script]]]
+# Another board's wrapper (e.g. ../zcu104/run_jtag.tcl) sets these three and then
+# sources this file; each is unset at once so a later ZedBoard run in the same
+# GUI session gets the defaults again.
+set dev_pattern xc7z*
+set board_name ZedBoard
+set default_vec "$here/../../gen/build/heston_aad_z7h_lite_vector.tcl"
+if {[info exists ::JTAG_DIR]}         { set here $::JTAG_DIR;                unset ::JTAG_DIR }
+if {[info exists ::JTAG_DEVICE]}      { set dev_pattern $::JTAG_DEVICE;      unset ::JTAG_DEVICE }
+if {[info exists ::JTAG_BOARD]}       { set board_name $::JTAG_BOARD;       unset ::JTAG_BOARD }
+if {[info exists ::JTAG_DEFAULT_VEC]} { set default_vec $::JTAG_DEFAULT_VEC; unset ::JTAG_DEFAULT_VEC }
 # Stop with a Tcl error, not `exit`: from the GUI console `exit` would quit
 # Vivado itself. In batch mode an uncaught error ends the run just the same.
 proc stop {} { error "run_jtag.tcl stopped; see the messages above" }
@@ -43,7 +53,7 @@ set bit  [expr {[llength $argv] > 1 && [file exists [lindex $argv 1]] ? [lindex 
 if {[info exists ::JTAG_VEC]} {
   set vec $::JTAG_VEC; unset ::JTAG_VEC
 } else {
-  set vec "$here/../../gen/build/heston_aad_z7h_lite_vector.tcl"
+  set vec $default_vec
 }
 
 foreach f [list $bit $vec] {
@@ -88,13 +98,29 @@ proc axi_r {off} {
 
 # ---- connect and program ---------------------------------------------------
 open_hw_manager
-if {[llength [get_hw_servers -quiet]] == 0} { connect_hw_server -quiet }
-if {[llength [get_hw_devices -quiet]] == 0} { open_hw_target }
-# The Zynq JTAG chain is arm_dap_0 first, then the FPGA (xc7z020_1): select
-# the FPGA by name, not by position.
-set devs [get_hw_devices -quiet xc7z*]
+# A board on another machine: run hw_server there and set HW_SERVER=host:port
+# here (e.g. localhost:3122 through an ssh tunnel); otherwise the local server.
+if {[llength [get_hw_servers -quiet]] == 0} {
+  if {[info exists ::env(HW_SERVER)] && $::env(HW_SERVER) ne ""} {
+    puts "INFO: using remote hw_server $::env(HW_SERVER)"
+    connect_hw_server -quiet -url $::env(HW_SERVER)
+  } else { connect_hw_server -quiet }
+}
+if {[llength [get_hw_devices -quiet]] == 0} {
+  if {[llength [get_hw_targets -quiet]] == 0} {
+    puts "ERROR: connected to hw_server [get_hw_servers -quiet], but it sees no JTAG cable."
+    puts "       Check on the machine the board is plugged into: board powered on, the"
+    puts "       JTAG/UART micro-USB cable connected, Xilinx cable drivers installed."
+    stop
+  }
+  puts "INFO: JTAG targets: [get_hw_targets -quiet]"
+  open_hw_target [lindex [get_hw_targets -quiet] 0]
+}
+# The Zynq JTAG chain is arm_dap_0 first, then the FPGA (xc7z020_1; on a
+# ZCU104, xczu7_0): select the FPGA by name, not by position.
+set devs [get_hw_devices -quiet $dev_pattern]
 if {[llength $devs] == 0} {
-  puts "ERROR: no xc7z FPGA on the JTAG chain; found: [get_hw_devices -quiet]"
+  puts "ERROR: no $dev_pattern FPGA on the JTAG chain; found: [get_hw_devices -quiet]"
   stop
 }
 set dev [lindex $devs 0]
@@ -170,7 +196,7 @@ for {set c 0} {$c < $ncase} {incr c} {
 set secs [expr {([clock milliseconds] - $t0) / 1000.0}]
 
 if {$bad_cases == 0} {
-  puts [format "PASS: ZedBoard outputs bit-exact vs the emulator, %d case(s) x %d outputs (%.1f s)" \
+  puts [format "PASS: $board_name outputs bit-exact vs the emulator, %d case(s) x %d outputs (%.1f s)" \
         $ncase [llength $VEC_EXPECT] $secs]
 } else {
   puts "FAIL: $bad_cases of $ncase case(s) had mismatches"

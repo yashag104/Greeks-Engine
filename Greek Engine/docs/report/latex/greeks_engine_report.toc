@@ -10,17 +10,19 @@
 \contentsline {section}{\numberline {3}Results}{6}{section.3}%
 \contentsline {subsection}{\numberline {3.1}Speed: clock cycles for the price and nine Greeks}{7}{subsection.3.1}%
 \contentsline {subsection}{\numberline {3.2}Design space: cycles against hardware size}{8}{subsection.3.2}%
-\contentsline {subsection}{\numberline {3.3}Adjoint against forward mode on the same hardware}{8}{subsection.3.3}%
-\contentsline {subsection}{\numberline {3.4}Accuracy and the first-order error bound}{9}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.3}Adjoint against forward mode on the same hardware}{9}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}Accuracy and the first-order error bound}{10}{subsection.3.4}%
 \contentsline {paragraph}{What the bound covers.}{11}{section*.16}%
-\contentsline {subsection}{\numberline {3.5}COS truncation error: a separate term}{11}{subsection.3.5}%
-\contentsline {subsection}{\numberline {3.6}Accuracy against bump-and-reprice}{12}{subsection.3.6}%
-\contentsline {subsection}{\numberline {3.7}Accuracy against word length}{12}{subsection.3.7}%
-\contentsline {subsection}{\numberline {3.8}Calls through put-call parity}{13}{subsection.3.8}%
-\contentsline {subsection}{\numberline {3.9}Implementation on the Zynq-7020}{13}{subsection.3.9}%
-\contentsline {subsection}{\numberline {3.10}On silicon}{14}{subsection.3.10}%
-\contentsline {subsection}{\numberline {3.11}Against a CPU}{15}{subsection.3.11}%
-\contentsline {subsection}{\numberline {3.12}Many strikes at once (design study)}{15}{subsection.3.12}%
-\contentsline {subsection}{\numberline {3.13}Illustration: hedging on real market data}{16}{subsection.3.13}%
-\contentsline {subsection}{\numberline {3.14}Improvement over the first generation}{18}{subsection.3.14}%
-\contentsline {section}{\numberline {4}Timeline}{18}{section.4}%
+\contentsline {subsection}{\numberline {3.5}COS truncation error: a separate term}{12}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Accuracy against bump-and-reprice}{13}{subsection.3.6}%
+\contentsline {subsection}{\numberline {3.7}Accuracy against word length}{13}{subsection.3.7}%
+\contentsline {subsection}{\numberline {3.8}Calls through put-call parity}{14}{subsection.3.8}%
+\contentsline {subsection}{\numberline {3.9}Implementation on the Zynq-7020}{14}{subsection.3.9}%
+\contentsline {subsection}{\numberline {3.10}On silicon}{15}{subsection.3.10}%
+\contentsline {subsection}{\numberline {3.11}The 64-bit engine on a Zynq UltraScale+ (ZCU102)}{16}{subsection.3.11}%
+\contentsline {subsection}{\numberline {3.12}Power from simulated switching activity}{16}{subsection.3.12}%
+\contentsline {subsection}{\numberline {3.13}Against a CPU}{17}{subsection.3.13}%
+\contentsline {subsection}{\numberline {3.14}Many strikes at once (design study)}{18}{subsection.3.14}%
+\contentsline {subsection}{\numberline {3.15}Illustration: hedging on real market data}{18}{subsection.3.15}%
+\contentsline {subsection}{\numberline {3.16}Improvement over the first generation}{21}{subsection.3.16}%
+\contentsline {section}{\numberline {4}Timeline}{21}{section.4}%

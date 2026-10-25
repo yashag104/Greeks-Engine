@@ -131,11 +131,28 @@ def sweep_cases(dp, n, seed):
     return cases, skipped
 
 
-def sweep(a, n, seed):
+def csv_cases(path):
+    """explicit cases from a CSV with columns S0 .. rho and is_call (e.g. the real
+    NIFTY calibrations of validation/hedging/board_cases.py)"""
+    import csv
+    return [([float(r[p]) for p in H.PARAMS], r["is_call"] in ("1", "True", "true"))
+            for r in csv.DictReader(open(path))]
+
+
+def sweep(a, n, seed, cases=None, suffix="sweep", note=None):
     dp, gen, in_ports, out_ports, regs = _ports(a)
-    cases, skipped = sweep_cases(dp, n, seed)
-    t = _header(a, "sweep: %d cases (2 fixed + %d random, seed %d; %d out-of-range draws skipped)"
-                % (len(cases), n, seed, skipped))
+    if cases is None:
+        cases, skipped = sweep_cases(dp, n, seed)
+        note = "sweep: %d cases (2 fixed + %d random, seed %d; %d out-of-range draws skipped)" % (
+            len(cases), n, seed, skipped)
+    else:
+        # explicit inputs are not filtered: an input the hardware would flag with
+        # range_err is a result to report, not a case to drop
+        rmap = RG.get(dp, BUILD)
+        flagged = sum(1 for pv, call in cases if not shifts_in_range(dp, rmap, pv, call))
+        note = "%s: %d cases; %d expected to raise range_err" % (note, len(cases), flagged)
+        print(note)
+    t = _header(a, note)
     t.append("set VEC_CASES {")
     for i, (pv, call) in enumerate(cases):
         writes, exp = case_io(a, dp, gen, in_ports, out_ports, regs, pv, call)
@@ -145,10 +162,10 @@ def sweep(a, n, seed):
         t.append("   {" + " ".join("{0x%03x 0x%08x}" % wd for wd in writes) + "}")
         t.append("   {" + " ".join("{%s 0x%03x %s}" % (o, regs[o]["offset"], _dec(exp[o])) for o in out_ports) + "}}")
     t.append("}")
-    path = os.path.join(BUILD, a.name + "_lite_sweep.tcl")
+    path = os.path.join(BUILD, "%s_lite_%s.tcl" % (a.name, suffix))
     os.makedirs(BUILD, exist_ok=True)
     open(path, "w").write("\n".join(t) + "\n")
-    print("wrote %s: %d cases, %d out-of-range draws skipped" % (path, len(cases), skipped))
+    print("wrote %s: %s" % (path, note))
     return path
 
 
@@ -171,8 +188,12 @@ if __name__ == "__main__":
     ap.add_argument("--case", type=int, default=0)
     ap.add_argument("--sweep", type=int, default=0, help="emit N random cases instead of one")
     ap.add_argument("--seed", type=int, default=2026, help="sweep seed (ranges.py fitted on 11)")
+    ap.add_argument("--cases-csv", help="explicit cases (columns S0..rho, is_call) -> <name>_lite_nifty.tcl")
     a = ap.parse_args()
-    if a.sweep:
+    if a.cases_csv:
+        sweep(a, 0, 0, cases=csv_cases(a.cases_csv), suffix="nifty",
+              note="real NIFTY inputs from %s" % os.path.basename(a.cases_csv))
+    elif a.sweep:
         sweep(a, a.sweep, a.seed)
     else:
         vector(a, a.case)

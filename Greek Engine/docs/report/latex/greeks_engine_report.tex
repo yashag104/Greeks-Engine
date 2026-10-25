@@ -84,8 +84,11 @@ only 1.04 times the cost of the price alone and 18.4 times fewer cycles than
 bump-and-reprice on the same hardware. It fits a Zynq-7020 FPGA; with setup and finish
 on the host, its loop takes 65.3\,$\mu$s per evaluation on a ZedBoard and produced
 results bit-identical to the model on 50 random cases in silicon. Hand-derived
-analytic Greeks on one laptop CPU core are faster (about 29\,$\mu$s); the engine's
-gains are the cost of its Greeks and a rounding-error bound on each. Forward-mode
+analytic Greeks on one laptop CPU core are faster than that (20.3\,$\mu$s). The 64-bit
+configuration, run bit-exact on a ZCU102 (101 evaluations), takes 15.9\,$\mu$s for the
+whole evaluation: about 1.3 times faster than analytic Greeks on one core and 4.9--15
+times faster than forward-mode, adjoint and bump-and-reprice software. The engine's
+main gains are the cost of its Greeks and a rounding-error bound on each. Forward-mode
 datapaths built by the same generator need more multipliers for the same Greeks: 25\%
 more when hand-factored like analytic Greeks, 3.2 times more as an AD tool would
 build them. A small case study on a year of real NIFTY option data illustrates the
@@ -163,8 +166,8 @@ laptop CPU.
   pricer performs the same operations for every input.
   \item \textbf{All nine Greeks for 1.04 times the cost of one price.} On the same
   hardware the price alone takes 4,568 cycles and the price with all nine Greeks
-  4,733. On the measured CPU, Greeks derived by hand cost 1.9 pricings, AD tools
-  5.3--6.7, and bump-and-reprice 19.
+  4,733. On the measured CPU, Greeks derived by hand cost 1.5 pricings, AD tools
+  5.7--7.6, and bump-and-reprice 19.
   \item \textbf{A first-order rounding-error bound for every Greek of a fixed-point
   adjoint datapath.} Measured error never exceeds 0.103 of the bound over 21 test cases, 0.378
   over 10,500 inputs including hard regimes, and the bound held on silicon.
@@ -338,9 +341,10 @@ is useful and what is new.
 \textbf{Measure} & \textbf{Result} & \textbf{Compared with}\\
 \midrule
 Cycles, price + 9 Greeks & 4,733 & 92$\times$ fewer than the first-generation engine; 18.4$\times$ fewer than bump-and-reprice\\
-Cost of the 9 Greeks & 1.04 pricings & hand-derived software 1.9; AD tools 5.3--6.7; bump-and-reprice 19\\
-Latency on the ZedBoard (loop only) & 65.3\,$\mu$s (57.8\,$\mu$s at 79\,MHz) & 1.4--3.9$\times$ faster than AD tools and bumping on one CPU core; 2.2$\times$ slower than hand-derived Greeks (29\,$\mu$s)\\
-Energy per evaluation & 22.2\,$\mu$J & about 6--30$\times$ less than the CPU (CPU power estimated)\\
+Cost of the 9 Greeks & 1.04 pricings & hand-derived software 1.5; AD tools 5.7--7.6; bump-and-reprice 19\\
+Latency on the ZedBoard (loop only) & 65.3\,$\mu$s (57.8\,$\mu$s at 79\,MHz) & 1.2--3.6$\times$ faster than AD tools and bumping on one CPU core; 3.2$\times$ slower than hand-derived Greeks (20.3\,$\mu$s)\\
+Latency, 64-bit on a ZCU102 & 15.9\,$\mu$s, whole evaluation (100\,MHz; 101 board evaluations bit-exact) & about 1.3$\times$ faster than hand-derived Greeks on one core; 4.9--15$\times$ faster than AD tools and bumping\\
+Energy per evaluation & 44\,$\mu$J (ZedBoard loop), 40\,$\mu$J (64-bit, whole evaluation); engine power from simulated activity & about 2--4$\times$ less than the CPU at full throughput (CPU power estimated)\\
 Accuracy (21 cases) & price $6.1\times10^{-7}$, Greeks $\le 1.2\times10^{-5}$ & relative to double precision; over 10,500 inputs worst absolute $1.2\times10^{-3}$ ($\partial V/\partial\xi$)\\
 Error bound & never exceeded ($\le 0.378$) & every output, 10,500 inputs\\
 On silicon & 450 / 450 bit-exact & 50 random cases\\
@@ -699,13 +703,15 @@ rounding is no longer the limiting factor.}
 \toprule
 \textbf{Build} & \textbf{LUT} & \textbf{FF} & \textbf{DSP} & \textbf{Clock} & \textbf{Slack} & \textbf{Power}\\
 \midrule
-Engine alone (xc7z020clg400-1) & 36,499 (68.6\%) & 28,559 (26.8\%) & 72 (32.7\%) & 100\,MHz & $-2.639$\,ns & 0.258\,W\\
+Engine alone, 29 Sep design (xc7z020clg400-1) & 36,499 (68.6\%) & 28,559 (26.8\%) & 72 (32.7\%) & 100\,MHz & $-2.639$\,ns & 0.258\,W\\
+Engine alone, current design (xc7z020clg484-1) & 35,782 (67.3\%) & 27,204 (25.6\%) & 72 (32.7\%) & 70\,MHz & $+0.109$\,ns & 0.204\,W\\
 \hi ZedBoard system (xc7z020clg484-1) & 38,752 (72.8\%) & 32,134 (30.2\%) & 72 (32.7\%) & 70\,MHz & $+0.458$\,ns & 0.340\,W\\
 \bottomrule
 \end{tabular}}
 \caption{Vivado 2025.2 results after routing. The engine alone reaches about 79\,MHz;
 inside the board system the design meets timing at 70\,MHz. Power is Vivado's power
-report (vectorless analysis); 0.121\,W of the board figure is the clock generator.}
+report (vectorless analysis); 0.121\,W of the board figure is the clock generator. With
+simulated activity the current engine alone draws 0.676\,W (Section~\ref{sec:power}).}
 \end{table}
 
 \begin{figure}[H]
@@ -713,9 +719,8 @@ report (vectorless analysis); 0.121\,W of the board figure is the clock generato
 \includegraphics[width=0.58\textwidth]{figures/vivado_device.png}\\[4pt]
 \includegraphics[width=\textwidth]{figures/vivado_timing.png}
 \caption{The placed design on the Zynq-7020 (top) and the timing summary of the
-ZedBoard build of 29 September: all constraints met at 70\,MHz, 0 failing endpoints of
-76,961 (bottom). The rebuild of 6 October with put-call parity and the refitted ranges
-also meets 70\,MHz: WNS $+0.458$\,ns, 0 failing endpoints of 76,672, and 394 more LUTs.}
+ZedBoard build of 6 October (put-call parity, refitted ranges): all constraints met at
+70\,MHz, WNS $+0.458$\,ns, 0 failing endpoints of 76,672 (bottom).}
 \end{figure}
 
 \useful{The engine fits a low-cost Zynq-7020 with room to spare: 73\% of the logic and
@@ -747,6 +752,97 @@ and the error bound carry over to the chip. Running the cases back to back also 
 that nothing carries over from one evaluation to the next.}
 \novel{These are the first adjoint-differentiated option Greeks computed on an FPGA.}
 
+A second ZedBoard design puts the ARM processor in the loop: the setup and finish steps
+run on the ARM as C generated from the same operation graph (bit-exact with the model on
+300 inputs, with the portable 64$\times$64-bit multiply the 32-bit ARM needs), and the
+engine sits behind the processor's AXI4-Lite port. It is built (timing met at the
+processor's 71.4\,MHz clock, WNS $+0.080$\,ns) with a program that checks 100 cases
+bit-exact and times each stage, including the 51-word and 18-word bus transfers that the
+loop-only latency leaves out; the board measurement is pending.
+
+\subsection{The 64-bit engine on a Zynq UltraScale+ (ZCU102)}
+\label{sec:zcu104}
+The 64-bit configuration (32 shared multipliers, setup and finish on chip, 1,593 cycles
+per evaluation) had only been estimated by Yosys. It was implemented behind the same AXI4-Lite register file and JTAG test system as the
+ZedBoard, in Vivado 2025.2 for the ZCU104's xczu7ev and in Vivado 2026.1 for the ZCU102's
+xczu9eg (the part and clock taken from each board's file), and met timing at 100\,MHz on
+both. It was run on the ZCU102: one vector, the 50-case sweep and the 50 real NIFTY days,
+all ten outputs of all 101 evaluations bit-exact against the model (1,010 of 1,010 words).
+Every output stays within its first-order error bound (worst 0.243 of the bound on the
+sweep, 0.255 on the NIFTY days), and the worst price error against the double-precision
+reference is $7.3\times10^{-7}$, against $1.5\times10^{-5}$ for the 56-bit ZedBoard engine
+(\texttt{validation/board\_report.py --design zu}).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+& \textbf{ZCU102} & \textbf{ZCU104}\\
+\midrule
+Part & xczu9eg-ffvb1156-2-e & xczu7ev-ffvc1156-2-e\\
+LUT & 77,515 (28.3\%) & 77,863 (33.8\%)\\
+Registers & 63,547 (11.6\%) & 63,796 (13.8\%)\\
+DSP blocks & 510 (20.2\%) & 510 (29.5\%)\\
+Slack at 100\,MHz & $+1.601$\,ns (Fmax $\approx$119\,MHz) & $+1.469$\,ns (Fmax $\approx$117\,MHz)\\
+Power (vectorless) & 1.43\,W (0.81 dyn., 0.63 static) & 1.20\,W (0.60 dyn., 0.60 static)\\
+\hi On the board & \textbf{1,010 / 1,010 outputs bit-exact} & not run\\
+\midrule
+\hi Latency, price + 9 Greeks & \multicolumn{2}{c}{\textbf{15.9\,$\mu$s}, whole evaluation (1,593 cycles at 100\,MHz)}\\
+Engine power, simulated activity & \multicolumn{2}{c}{2.49\,W on the xczu7ev (1.88 dynamic, 0.60 static)}\\
+Energy per evaluation & \multicolumn{2}{c}{40\,$\mu$J (engine, simulated activity)}\\
+\bottomrule
+\end{tabular}
+\caption{The 64-bit engine on two Zynq UltraScale+ boards (\texttt{hardware/vivado/zcu102},
+\texttt{zcu104}; Yosys had estimated 108,330 LUT). The latency is the whole evaluation,
+setup and finish included, from the cycle count and clock; it excludes only the 19-word
+and 10-word bus transfers. The board run checks every output but cannot time the engine,
+since each JTAG transaction takes far longer than an evaluation.}
+\label{tab:zcu104}
+\end{table}
+
+\useful{On a larger FPGA the same generator gives an engine 4 times faster than the
+ZedBoard's loop and, narrowly, faster than the best hand-written software: 15.9\,$\mu$s
+for the whole evaluation against 20.3\,$\mu$s for analytic Greeks on one idle CPU core
+(Table below), about 1.3 times (1.5 times at the 119\,MHz the routing allows, not tested
+on the board). It computes exactly what the model computes on a second FPGA family, and
+uses about a quarter of the ZCU102's logic, leaving room for more engines (not built).}
+
+\subsection{Power from simulated switching activity}
+\label{sec:power}
+Vivado's default power report assumes that every signal toggles in 12.5\% of cycles. For
+an engine that is busy every cycle that guess is too low. Each engine was therefore
+implemented on its own, its routed netlist simulated gate by gate on four evaluations back
+to back (two board-sweep cases and two real NIFTY days, every output checked bit-exact),
+and the recorded activity read back into the power analysis
+(\texttt{hardware/vivado/power}).
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Engine alone (routed)} & \textbf{Default guess} & \textbf{Simulated activity} & \textbf{Latency} & \textbf{Energy}\\
+\midrule
+ZedBoard engine, 70\,MHz & 0.204\,W & \textbf{0.676\,W} & 65.3\,$\mu$s (loop) & \textbf{44\,$\mu$J}\\
+64-bit engine (xczu7ev), 100\,MHz & 1.288\,W & \textbf{2.485\,W} & 15.9\,$\mu$s (whole) & \textbf{40\,$\mu$J}\\
+\bottomrule
+\end{tabular}
+\caption{Engine power with Vivado's default activity and with the activity of the routed
+netlist simulated on real evaluations (confidence ``High''; 57\% of nets matched by name,
+the rest propagated by Vivado). Dynamic power was 0.099 against 0.564\,W (ZedBoard) and
+0.692 against 1.883\,W (64-bit). Engine only: the clock generator, bus and the rest of
+the board are not included; a board rail measurement is pending. On the ZCU102's
+xczu9eg the static power is 0.03\,W higher (vectorless reports), which leaves the 64-bit
+engine's energy at 40\,$\mu$J.}
+\label{tab:power}
+\end{table}
+
+\useful{Measured activity replaces an assumption that underestimated dynamic power 3 to 6
+times. The energy per evaluation is about twice the earlier estimate (44 instead of
+22\,$\mu$J on the ZedBoard), and the faster 64-bit engine uses slightly less energy per
+evaluation than the ZedBoard's despite drawing more power.}
+
 \subsection{Against a CPU}
 The same algorithm was written in C++ (double precision, g++ 13, -O3 -march=native) and
 run on an Intel Core i5-1155G7 laptop CPU, with adjoint differentiation by the CoDiPack
@@ -760,25 +856,29 @@ $1.3\times10^{-10}$ relative).
 \toprule
 \textbf{Price + 9 Greeks} & \textbf{$\mu$s per evaluation} & \textbf{Cost vs one price} & \textbf{Evaluations / s}\\
 \midrule
-CPU, price only (1 core) & 17.2 & 1$\times$ & --\\
-CPU, bump-and-reprice (1 core) & 257.6 & 15$\times$ & --\\
-CPU, adjoint with CoDiPack (1 core) & 114.9 & 6.7$\times$ & 23,100 (4 cores)\\
-CPU, forward mode, 9 directions (1 core) & 91.5 & 5.3$\times$ & 33,900 (4 cores)\\
-CPU, optimised bump$^{*}$ (1 core) & 158.6 & 10.3$\times$ & --\\
-CPU, analytic Greeks$^{*}$ (1 core) & \textbf{29.3} & 1.9$\times$ & 41k--94k (4 cores)\\
+CPU, price only (1 core) & 13.7 & 1$\times$ & --\\
+CPU, bump-and-reprice (1 core) & 238.1 & 17.4$\times$ & --\\
+CPU, adjoint with CoDiPack (1 core) & 103.8 & 7.6$\times$ & 26,900 (4 cores)\\
+CPU, forward mode, 9 directions (1 core) & 78.0 & 5.7$\times$ & 34,000 (4 cores)\\
+CPU, optimised bump$^{*}$ (1 core) & 146.6 & 10.7$\times$ & --\\
+CPU, analytic Greeks$^{*}$ (1 core) & \textbf{20.3} & 1.5$\times$ & 158,000 (4 cores)\\
 \hi FPGA engine, ZedBoard at 70\,MHz & \textbf{65.3} & \textbf{1.04$\times$} & 15,300 (1 engine)\\
 FPGA engine at the routed 79\,MHz & 57.8 & 1.04$\times$ & 17,300 (1 engine)\\
+\hi FPGA, 64-bit engine, ZCU102 at 100\,MHz$^{\dagger}$ & \textbf{15.9} & 1.55$\times$ & 62,800 (1 engine)\\
 \bottomrule
 \end{tabular}
-\caption{FPGA against CPU on the same algorithm. $^{*}$Added 1 October, measured while
-the laptop was also running another Vivado job; ratios use that run's price-only time
-(15.4\,$\mu$s); provisional until re-measured on an idle machine. FPGA rows: the term
+\caption{FPGA against CPU on the same algorithm. CPU rows: one run on an idle machine
+(23 October), best of 5 passes over 2,000 in-domain inputs on one core; throughput from 8
+independent processes on the 4 cores (8 threads). $^{*}$Hand-optimised methods, added
+1 October. FPGA rows: the term
 loop of the host-setup design (4,572 cycles), excluding the host's setup and finish
 and the register transfers; the CPU rows include everything. The CPU's own work
 outside its 128-term loop (truncation range, constants, discounting, parity) takes about
-0.1\,$\mu$s, so comparing loops only changes nothing; what the FPGA figures leave out
+0.03\,$\mu$s, so comparing loops only changes nothing; what the FPGA figures leave out
 is the transfer of 51 input and 10 output words over the processor bus, which has not
-been measured.}
+been measured. $^{\dagger}$Whole evaluation, setup and finish on chip
+(Section~\ref{sec:zcu104}); from the cycle count and clock, run bit-exact on the ZCU102,
+where JTAG cannot time it.}
 \end{table}
 
 The analytic method writes out by hand the derivative of the characteristic function
@@ -788,16 +888,22 @@ $10^{-11}$ over 2,000 random inputs. The optimised bump-and-reprice reuses the
 characteristic function for the $S_0$, $K$, $r$, $v_0$ and $\theta$ bumps, so only nine
 of its pricings are full ones.
 
-\useful{The FPGA is faster than the general software methods: 1.4 times faster than
-forward mode, 1.8 times faster than adjoint differentiation with CoDiPack and 3.9 times
-faster than bump-and-reprice. It is not faster than the best hand-written software:
-analytic Greeks on one laptop core take about 29\,$\mu$s (28--37\,$\mu$s across runs),
-about 2.2 times faster than the engine, and several cores give far more throughput.
-What the engine keeps is the cost of its Greeks, 1.04 pricings against 1.9 for the best
-software and 5--7 for AD tools, a first-order rounding-error bound on every Greek, and energy:
-about 22.2\,$\mu$J per evaluation (0.340\,W $\times$ 65.3\,$\mu$s) against an estimated
-0.13--0.68\,mJ for the CPU at its rated 12--28\,W, 6--30 times less. The CPU's power was
-not measured, so the energy figure is an estimate.}
+\useful{On the Zynq-7020 the engine is faster than the general software methods: 1.2
+times faster than forward mode, 1.6 times faster than adjoint differentiation with
+CoDiPack and 3.6 times faster than bump-and-reprice, but not faster than the best
+hand-written software: analytic Greeks on one idle laptop core take 20.3\,$\mu$s, about
+3.2 times faster than the ZedBoard's loop, and several cores give far more throughput.
+The 64-bit engine on the ZCU102 reverses this, narrowly: 15.9\,$\mu$s for the whole
+evaluation, about 1.3 times faster than the analytic method on one core, and 4.9, 6.5
+and 15 times faster than forward mode, CoDiPack and bump-and-reprice. Four cores still
+give 2.5 times the throughput of one engine.
+What the engine keeps is the cost of its Greeks, 1.04 pricings against 1.5 for the best
+software and 5.7--7.6 for AD tools, a first-order rounding-error bound on every Greek, and
+energy: about 44\,$\mu$J per evaluation on the ZedBoard and 40\,$\mu$J for the 64-bit
+engine, from the engine's power under simulated activity (Section~\ref{sec:power}), against
+an estimated 76--177\,$\mu$J for the CPU at full throughput (158,000 evaluations per
+second) at its rated 12--28\,W, about 2--4 times less. The CPU's power was not measured,
+so the energy ratio is still an estimate.}
 
 \subsection{Many strikes at once (design study)}
 \label{sec:chain}
@@ -839,10 +945,10 @@ Zynq-7020's logic.}
 \useful{Sharing cuts the hardware cost of each further strike to about 7\% of one option,
 which is what calibration (all strikes of an expiry, with their gradients) needs. The
 same sharing applies to software: the analytic C++ method prices and differentiates 32
-strikes in 122.5\,$\mu$s on one loaded laptop core, 3.8\,$\mu$s per strike. On a
+strikes in 74.4\,$\mu$s on one idle laptop core, 2.3\,$\mu$s per strike. On a
 Zynq-7020 at 70\,MHz two strikes take 70\,$\mu$s, so the CPU remains faster; a 64-bit
-UltraScale+ design would at best reach parity with a four-core laptop, on an assumed
-clock. The FPGA's case against a CPU is the cost and accuracy of its Greeks and,
+chain engine at the ZCU102's 100\,MHz would take 48.9\,$\mu$s for 32 strikes (scheduled,
+not built), 1.5 times faster than one core but slower than four. The FPGA's case against a CPU is the cost and accuracy of its Greeks and,
 if measured, energy, not speed.}
 
 \subsection{Illustration: hedging on real market data}
@@ -969,8 +1075,11 @@ Figure~\ref{fig:gantt}).
 1--13 Oct & Hedging case study on real NIFTY data (first results, \S\ref{sec:hedging}); next: verify charges with a broker, more trades & In progress\\
 1 Oct & Validation sweep over 10,500 inputs including hard regimes; latency accounting (host steps, configurations) & Done\\
 1 Oct & Shift ranges refitted at the domain edges; all designs regenerated and re-verified & Done\\
-6--8 Oct & CPU timings on an idle machine & Next\\
-6--12 Oct & Power from simulated switching activity, a board power measurement, and CPU package power, for energy per Greek set on both sides & Planned\\
+23 Oct & CPU timings on an idle machine & Done\\
+21--22 Oct & ZCU104 build of the 64-bit engine (\S\ref{sec:zcu104}); ARM end-to-end design with the host steps in C; real NIFTY inputs as board vectors & Done\\
+21--22 Oct & Power from simulated switching activity, both engines (\S\ref{sec:power}) & Done\\
+25 Oct & ZCU102 build (xczu9eg, Vivado 2026.1) and board runs: one vector, 50-case sweep, 50 NIFTY days, 1,010 / 1,010 outputs bit-exact (\S\ref{sec:zcu104}) & Done\\
+Next & ZedBoard ARM end to end and NIFTY; a board power measurement and CPU package power & Needs the board\\
 
 13--15 Oct & Freeze results; regenerate all figures and tables & Planned\\
 13--22 Oct & Write the paper: introduction, related work, architecture, results & Planned\\
