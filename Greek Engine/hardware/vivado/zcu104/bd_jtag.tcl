@@ -22,7 +22,8 @@
 # ============================================================================
 set part       xczu7ev-ffvc1156-2-e
 set board_part xilinx.com:zcu104:part0:1.1
-set clk_mhz  [expr {[llength $argv] > 0 ? [lindex $argv 0] : 100}]
+set clk_mhz  [expr {[llength $argv] > 0 && [lindex $argv 0] ne "dry" ? [lindex $argv 0] : 100}]
+if {[lindex $argv 0] eq "dry"} { set ::BD_DRY 1 }
 set core     heston_aad_zu
 set wrapper  ${core}_lite
 set bd_name  heston_jtag
@@ -30,9 +31,41 @@ set proj     proj/heston_jtag
 
 set here [file dirname [file normalize [info script]]]
 set vdir [file normalize "$here/../../verilog/gen"]
+set clk_if    clk_300mhz
+set clk_in_mhz 300.000
+
+# Another board's wrapper (e.g. ../zcu102/bd_jtag.tcl) sets ::BD_BOARD (the board
+# name in Vivado's board files) and ::BD_DIR (where its reports go). The part
+# comes from the board file, and the clock from the first of these board
+# interfaces the board has, so no pin or part number is typed by hand.
+# (ZCU104: clk_300mhz; ZCU102: user_si570_sysclk, both 300 MHz in their board files.)
+set clk_choices {clk_300mhz 300.000 user_si570_sysclk 300.000}
+if {[info exists ::BD_BOARD]} {
+  set board_part [lindex [get_board_parts -quiet -latest_file_version "*:$::BD_BOARD:*"] 0]
+  if {$board_part eq ""} {
+    puts "ERROR: no board files for $::BD_BOARD in this Vivado install"
+    puts "       (Tools > Vivado Store > Boards, or the board.repoPaths parameter)"
+    exit 1
+  }
+  set part [get_property PART_NAME [get_board_parts $board_part]]
+  set here $::BD_DIR
+  puts "RESULT: board $board_part, part $part"
+}
 
 create_project -force heston_jtag $proj -part $part
 set_property board_part $board_part [current_project]
+if {[info exists ::BD_BOARD]} {
+  set have [get_board_part_interfaces -quiet]
+  set clk_if ""
+  foreach {name mhz} $clk_choices {
+    if {[lsearch -exact $have $name] >= 0} { set clk_if $name; set clk_in_mhz $mhz; break }
+  }
+  if {$clk_if eq ""} {
+    puts "ERROR: none of {$clk_choices} among this board's interfaces: $have"
+    exit 1
+  }
+  puts "RESULT: clock from board interface $clk_if ($clk_in_mhz MHz)"
+}
 # File arguments go through [list ...]: this repository lives under "Greek Engine".
 read_verilog [list "$vdir/$wrapper.v"]
 read_verilog [list "$vdir/$core.v"]
@@ -42,14 +75,14 @@ create_bd_design $bd_name
 
 set clkw [create_bd_cell -type ip -vlnv xilinx.com:ip:clk_wiz clk_wiz_0]
 set_property -dict [list \
-  CONFIG.CLK_IN1_BOARD_INTERFACE {clk_300mhz} \
+  CONFIG.CLK_IN1_BOARD_INTERFACE $clk_if \
   CONFIG.PRIM_SOURCE {Differential_clock_capable_pin} \
-  CONFIG.PRIM_IN_FREQ {300.000} \
+  CONFIG.PRIM_IN_FREQ $clk_in_mhz \
   CONFIG.CLKOUT1_REQUESTED_OUT_FREQ [format %.3f $clk_mhz] \
   CONFIG.USE_LOCKED {true} \
   CONFIG.USE_RESET {false} \
 ] $clkw
-apply_board_connection -board_interface "clk_300mhz" -ip_intf "clk_wiz_0/CLK_IN1_D" -diagram $bd_name
+apply_board_connection -board_interface $clk_if -ip_intf "clk_wiz_0/CLK_IN1_D" -diagram $bd_name
 
 set jt [create_bd_cell -type ip -vlnv xilinx.com:ip:jtag_axi jtag_axi_0]
 set_property -dict [list CONFIG.PROTOCOL {2}] $jt      ;# 2 = AXI4-Lite
@@ -86,6 +119,10 @@ set base [get_property OFFSET [lindex [get_bd_addr_segs -of_objects [get_bd_addr
 if {$base eq ""} { puts "ERROR: could not read the engine base address"; exit 1 }
 puts "RESULT: engine base address = $base"
 set fp [open "$here/base_addr.txt" w]; puts $fp $base; close $fp
+if {[info exists ::BD_DRY] && $::BD_DRY} {
+  puts "RESULT: dry run: block design valid, stopping before synthesis"
+  exit 0
+}
 
 add_files -norecurse [list [make_wrapper -files [get_files $bd_name.bd] -top]]
 set_property top ${bd_name}_wrapper [current_fileset]
