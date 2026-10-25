@@ -21,7 +21,7 @@ reachable it says so.
    forward pass, with no tape memory or replay logic. This is possible because the
    COS pricer runs the same operations for every input.
 4. **Nine Greeks for 1.04× the cost of the price.** 4,733 cycles against 4,568 for
-   the price alone on the same hardware; software AAD costs 5.3–6.7× on the
+   the price alone on the same hardware; software AAD costs 5.7–7.6× on the
    measured CPU (`architecture.md` §4.6) and bump-and-reprice 19×. The 1.04× is
    reached because the CORDIC units set the pace and the reverse sweep fills idle
    multiplier slots; forward-mode datapaths from the same generator (6 Oct 2026,
@@ -34,21 +34,27 @@ reachable it says so.
 5. **A first-order rounding-error bound for every Greek of a fixed-point adjoint datapath.**
    Measured error never exceeds 0.103 of the bound over 21 cases, 0.378 over 10,500
    inputs including hard regimes (every unflagged result), and 0.199 over 50 random
-   cases on silicon (6 Oct 2026 bitstream; 0.268 on the earlier one).
-6. **Bit-exact Greeks on silicon.** 450 of 450 results identical to the model on a
-   ZedBoard (Zynq-7020), 50 random cases back to back.
+   cases on silicon (6 Oct 2026 bitstream; 0.268 on the earlier one), and 0.255 over
+   101 evaluations of the 64-bit engine on a ZCU102 (25 Oct 2026).
+6. **Bit-exact Greeks on silicon, on two FPGA families.** 450 of 450 results identical
+   to the model on a ZedBoard (Zynq-7020), 50 random cases back to back; and 1,010 of
+   1,010 for the 64-bit engine (all outputs computed on chip) on a ZCU102 (Zynq
+   UltraScale+): one vector, 50 random cases and 50 real NIFTY days.
 7. **Bump-and-reprice on identical hardware:** 18.4× more cycles, and 32–560× less
    accurate than AAD even at the best bump size for each Greek. The hardware bump
    runs 19 independent pricings; an optimised bump that reuses the characteristic
-   function needs about 10 pricings' worth of work (measured on the CPU, 10.3×), so
+   function needs about 10 pricings' worth of work (measured on the CPU, 10.7×), so
    quote the hardware advantage against both.
 
-Against a CPU running the same algorithm, the FPGA is 1.4–1.8× faster than the
-general AD methods, but **hand-derived analytic Greeks on one CPU core are about
-2.2× faster than the FPGA** (29 µs against 65 µs, provisional) and four cores give
-far more throughput. The FPGA's claims against a CPU are the Greeks overhead (1.04
-pricings against 1.9 for the best software) and an estimated 6–30× less energy per
-evaluation (`architecture.md` §4.6), not speed.
+Against a CPU running the same algorithm (idle laptop, 23 Oct 2026), the ZedBoard
+engine is 1.2–1.6× faster than the general AD methods, but **hand-derived analytic
+Greeks on one CPU core are about 3.2× faster than it** (20.3 µs against 65.3 µs). The
+64-bit engine on the ZCU102 (15.9 µs per whole evaluation, run bit-exact on the board)
+is about **1.3× faster than the analytic method** and 4.9–6.5× faster than the AD
+methods; four cores still give 2.5× its throughput. The FPGA's claims against a CPU
+are the Greeks overhead (1.04 pricings against 1.5 for the best software), a narrow
+latency lead on the larger FPGA, and about 2–4× less energy per evaluation (engine
+power from simulated activity, CPU power estimated; `architecture.md` §4.6).
 
 ## 2. What the novelty builds on
 
@@ -183,28 +189,31 @@ nothing that does adjoint Greeks or COS on an FPGA.
 2. **"Heston Greeks have an analytic form; why AAD?"** Cui et al. (2017) derive the
    gradient of the Fourier price by hand, and this project now measures that
    approach (1 Oct 2026, `analytic` in `validation/cpu_baseline/heston_cpu.cpp`):
-   price and 9 Greeks in one pass at 1.9 pricings on a CPU. In this project the
+   price and 9 Greeks in one pass at 1.5 pricings on a CPU. In this project the
    hardware adjoint is also hand-written (point 4), so "AAD derives it
    mechanically" is only true once the generator derives the reverse sweep. The
    honest answer today: the hardware result is the cost, 1.04 pricings for all
-   Greeks with a first-order rounding-error bound on each, against 1.9 for the best hand-written
+   Greeks with a first-order rounding-error bound on each, against 1.5 for the best hand-written
    software; and the IR adjoint is a general reverse-mode construction that a later
    generator can produce automatically, while the analytic form is specific to
    this characteristic function.
-3. **"How fast is this against a CPU?"** Measured 30 Sep and 1 Oct 2026
-   (`docs/architecture.md` §4.6). Hand-derived analytic Greeks on one laptop core
-   take about 29 µs (28–37 µs across runs on a loaded machine) against 65.3 µs on
-   the board, so **the CPU wins latency by about 2.2×** and throughput by more.
-   The FPGA beats only the general methods: forward mode (91.5 µs, 1.4×), CoDiPack
-   AAD (114.9 µs, 1.8×) and bump-and-reprice (257.6 µs, 3.9×). Energy per
-   evaluation is an estimated 6–30× lower on the FPGA, against a CPU power figure
-   that was not measured. Do not argue latency or throughput against a CPU. Argue
-   Greeks overhead (1.04 against 1.9 for the best software), the per-Greek error
+3. **"How fast is this against a CPU?"** Measured on an idle laptop, 23 Oct 2026
+   (`docs/architecture.md` §4.6). Hand-derived analytic Greeks on one core take
+   20.3 µs against 65.3 µs for the ZedBoard's loop, so **on the Zynq-7020 the CPU
+   wins latency by about 3.2×** and throughput by more; the ZedBoard beats only the
+   general methods: forward mode (78.0 µs, 1.2×), CoDiPack AAD (103.8 µs, 1.6×) and
+   bump-and-reprice (238.1 µs, 3.6×). The 64-bit engine on the ZCU102 (15.9 µs, run
+   bit-exact on the board) is **about 1.3× faster than the analytic method** on one
+   core, 4.9–15× faster than the others, and 2.5× slower in throughput than four
+   cores. Energy per evaluation is about 2–4× lower on the FPGA (engine power from
+   simulated activity, 22 Oct 2026), against a CPU power figure that was not measured.
+   Argue the latency lead only for the larger FPGA and only as narrow. Argue
+   Greeks overhead (1.04 against 1.5 for the best software), the per-Greek error
    bound, energy per Greek set, and what a larger device with several engines or
    strike sharing would deliver; and measure CPU power before relying on energy.
    Strike sharing (`architecture.md` §4.7) cuts the cost per extra strike to
-   about 7% of one option in hardware, but the same sharing makes the CPU 10×
-   cheaper per strike too (3.8 µs per strike at 32 strikes, one loaded core), and
+   about 7% of one option in hardware, but the same sharing makes the CPU about 9×
+   cheaper per strike too (2.3 µs per strike at 32 strikes, one idle core), and
    pricing many strikes from one characteristic function is standard COS practice
    (Fang & Oosterlee 2008). It is a design result, not a novelty claim.
 4. **"Is this algorithmic differentiation, or a hand-written adjoint?"** In this

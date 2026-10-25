@@ -64,7 +64,8 @@ proc start {} {
     if {!$hit} continue
     foreach e $expect {
       lassign $e n off v
-      set raw [expr {$v & ((1 << 56) - 1)}]
+      set wl [expr {[info exists ::mock_wl] ? $::mock_wl : 56}]   ;# zcu104/mock sets 64
+      set raw [expr {$v & ((1 << $wl) - 1)}]
       dict set ::mem [expr {$off}] [expr {$raw & 0xffffffff}]
       dict set ::mem [expr {$off + 4}] [expr {$raw >> 32}]
     }

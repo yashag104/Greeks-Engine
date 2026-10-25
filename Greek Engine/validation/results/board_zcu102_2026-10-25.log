@@ -1,0 +1,249 @@
+INFO: [Common 17-3922] A valid Vivado Design Suite CORE license has been detected. Your current license is active and will expire on 19-oct-2027.
+#-----------------------------------------------------------
+# Vivado v2026.1 (64-bit)
+# SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+# IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+# SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+# Start of session at: Sun Oct 25 11:59:19 2026
+# Process ID         : 1218687
+# Current directory  : /home/sop_govind_sir/greeks_zcu102/hardware/vivado/zcu102
+# Command line       : vivado -mode batch -nojournal -log run_jtag.log -source run_jtag.tcl
+# Log file           : /home/sop_govind_sir/greeks_zcu102/hardware/vivado/zcu102/run_jtag.log
+# Journal file       : 
+# Running On         : ramesh-ubuntu
+# Platform           : Ubuntu
+# Operating System   : Ubuntu 24.04.4 LTS
+# Processor Detail   : AMD Ryzen Threadripper 9960X 24-Cores
+# CPU Frequency      : 5367.514 MHz
+# CPU Physical cores : 24
+# CPU Logical cores  : 48
+# Host memory        : 32957 MB
+# Swap memory        : 8589 MB
+# Total Virtual      : 41547 MB
+# Available Virtual  : 24751 MB
+#-----------------------------------------------------------
+source run_jtag.tcl
+# set ::JTAG_DIR [file dirname [file normalize [info script]]]
+# set ::JTAG_DEVICE xczu9*
+# set ::JTAG_BOARD ZCU102
+# if {![info exists ::JTAG_VEC]} {
+#   set ::JTAG_DEFAULT_VEC [file normalize "$::JTAG_DIR/../../gen/build/heston_aad_zu_lite_vector.tcl"]
+# }
+# source [file join $::JTAG_DIR ../zedboard/run_jtag.tcl]
+## set here [file dirname [file normalize [info script]]]
+## set dev_pattern xc7z*
+## set board_name ZedBoard
+## set default_vec "$here/../../gen/build/heston_aad_z7h_lite_vector.tcl"
+## if {[info exists ::JTAG_DIR]}         { set here $::JTAG_DIR;                unset ::JTAG_DIR }
+## if {[info exists ::JTAG_DEVICE]}      { set dev_pattern $::JTAG_DEVICE;      unset ::JTAG_DEVICE }
+## if {[info exists ::JTAG_BOARD]}       { set board_name $::JTAG_BOARD;       unset ::JTAG_BOARD }
+## if {[info exists ::JTAG_DEFAULT_VEC]} { set default_vec $::JTAG_DEFAULT_VEC; unset ::JTAG_DEFAULT_VEC }
+## proc stop {} { error "run_jtag.tcl stopped; see the messages above" }
+## if {![info exists argv]} { set argv {} }
+## if {[regexp {^0[xX][0-9a-fA-F]+$} [lindex $argv 0]]} {
+##   set base [lindex $argv 0]
+##   puts "INFO: base address from argv"
+## } elseif {[file exists "$here/base_addr.txt"]} {
+##   set fp [open "$here/base_addr.txt"]; set base [string trim [read $fp]]; close $fp
+##   puts "INFO: base address from base_addr.txt"
+## } else {
+##   puts "ERROR: no base address given and no base_addr.txt; run bd_jtag.tcl first"; stop
+## }
+INFO: base address from base_addr.txt
+## if {$base % 4096 != 0} {
+##   puts "ERROR: base address $base is not 4 KB aligned; the engine's register map is 4 KB"; stop
+## }
+## set bit  [expr {[llength $argv] > 1 && [file exists [lindex $argv 1]] ? [lindex $argv 1] \
+##                 : "$here/proj/heston_jtag/heston_jtag.runs/impl_1/heston_jtag_wrapper.bit"}]
+## if {[info exists ::JTAG_VEC]} {
+##   set vec $::JTAG_VEC; unset ::JTAG_VEC
+## } else {
+##   set vec $default_vec
+## }
+## foreach f [list $bit $vec] {
+##   if {![file exists $f]} { puts "ERROR: missing $f"; stop }
+## }
+## foreach v {VEC_CASES VEC_WRITES VEC_EXPECT} { if {[info exists $v]} { unset $v } }
+## source $vec
+### set VEC_WL 64
+### set VEC_FL 32
+### set VEC_CTRL 0x100
+### set VEC_STAT 0x104
+### set VEC_WRITES {
+###   {0x000 0x00000000}
+###   {0x004 0x00000064}
+###   {0x008 0x00000000}
+###   {0x00c 0x00000064}
+###   {0x010 0x00000000}
+###   {0x014 0x00000001}
+###   {0x018 0x0ccccccd}
+###   {0x01c 0x00000000}
+###   {0x020 0x0a3d70a4}
+###   {0x024 0x00000000}
+###   {0x028 0x80000000}
+###   {0x02c 0x00000001}
+###   {0x030 0x0a3d70a4}
+###   {0x034 0x00000000}
+###   {0x038 0x4ccccccd}
+###   {0x03c 0x00000000}
+###   {0x040 0x1999999a}
+###   {0x044 0xffffffff}
+###   {0x048 0x00000001}
+### }
+### set VEC_EXPECT {
+###   {price        0x200 44612421806}
+###   {delta        0x208 3067244061}
+###   {strike_sens  0x210 -2621119843}
+###   {theta_greek  0x218 27549498160}
+###   {rho_greek    0x220 262111984315}
+###   {vega         0x228 200145170394}
+###   {kappa_sens   0x230 266030900}
+###   {theta_sens   0x238 189778399478}
+###   {xi_sens      0x240 -5173634624}
+###   {rho_corr     0x248 -501135228}
+### }
+## if {![info exists VEC_CASES]} {
+##   set VEC_CASES [list [list "single vector" $VEC_WRITES $VEC_EXPECT]]
+## }
+## set VEC_WRITES [lindex $VEC_CASES 0 1]
+## set VEC_EXPECT [lindex $VEC_CASES 0 2]
+## puts "INFO: [llength $VEC_CASES] case(s) from [file tail $vec]"
+INFO: 1 case(s) from heston_aad_zu_lite_vector.tcl
+## puts "INFO: base 0x[format %08x $base] ; [llength $VEC_WRITES] input words ; [llength $VEC_EXPECT] outputs"
+INFO: base 0x00000000 ; 19 input words ; 10 outputs
+## proc axi_w {off data} {
+##   global base axi
+##   create_hw_axi_txn -quiet _w $axi -address [format %08x [expr {$base + $off}]] \
+##                     -data [format %08x $data] -type write -len 1
+##   run_hw_axi -quiet _w
+##   delete_hw_axi_txn [get_hw_axi_txns _w]
+## }
+## proc axi_r {off} {
+##   global base axi
+##   create_hw_axi_txn -quiet _r $axi -address [format %08x [expr {$base + $off}]] -type read -len 1
+##   run_hw_axi -quiet _r
+##   set v [get_property DATA [get_hw_axi_txns _r]]
+##   delete_hw_axi_txn [get_hw_axi_txns _r]
+##   # -quiet hides a failed transaction; an empty DATA is how it shows up
+##   if {$v eq ""} {
+##     puts "ERROR: AXI read at 0x[format %08x [expr {$base + $off}]] returned no data"
+##     puts "       (bus error: wrong base address, or the engine is not responding)"
+##     stop
+##   }
+##   # braced expr cannot splice "0x" onto $v (a parse error, not a bad value).
+##   # scan %x yields a SIGNED 32-bit int: mask it, or a low word with bit 31 set
+##   # sign-extends over the high word (first board run: 4 outputs off by k*2^32).
+##   return [expr {[scan $v %x] & 0xffffffff}]
+## }
+## open_hw_manager
+## if {[llength [get_hw_servers -quiet]] == 0} {
+##   if {[info exists ::env(HW_SERVER)] && $::env(HW_SERVER) ne ""} {
+##     puts "INFO: using remote hw_server $::env(HW_SERVER)"
+##     connect_hw_server -quiet -url $::env(HW_SERVER)
+##   } else { connect_hw_server -quiet }
+## }
+## if {[llength [get_hw_devices -quiet]] == 0} {
+##   if {[llength [get_hw_targets -quiet]] == 0} {
+##     puts "ERROR: connected to hw_server [get_hw_servers -quiet], but it sees no JTAG cable."
+##     puts "       Check on the machine the board is plugged into: board powered on, the"
+##     puts "       JTAG/UART micro-USB cable connected, Xilinx cable drivers installed."
+##     stop
+##   }
+##   puts "INFO: JTAG targets: [get_hw_targets -quiet]"
+##   open_hw_target [lindex [get_hw_targets -quiet] 0]
+## }
+INFO: JTAG targets: localhost:3121/xilinx_tcf/Digilent/210308BECF00
+INFO: [Labtoolstcl 44-466] Opening hw_target localhost:3121/xilinx_tcf/Digilent/210308BECF00
+## set devs [get_hw_devices -quiet $dev_pattern]
+## if {[llength $devs] == 0} {
+##   puts "ERROR: no $dev_pattern FPGA on the JTAG chain; found: [get_hw_devices -quiet]"
+##   stop
+## }
+## set dev [lindex $devs 0]
+## current_hw_device $dev
+## puts "INFO: device [get_property PART $dev]"
+INFO: device xczu9
+## set_property PROGRAM.FILE $bit $dev
+## program_hw_devices $dev
+INFO: [Labtools 27-3164] End of startup status: HIGH
+program_hw_devices: Time (s): cpu = 00:00:15 ; elapsed = 00:00:15 . Memory (MB): peak = 1783.656 ; gain = 0.000 ; free physical = 7830 ; free virtual = 22949
+## refresh_hw_device -quiet $dev
+## set axis [get_hw_axis -quiet]
+## if {[llength $axis] == 0} {
+##   puts "ERROR: no JTAG-to-AXI master found after programming."
+##   puts "       The bitstream in $bit does not contain jtag_axi, or programming failed."
+##   stop
+## }
+## set axi [lindex $axis 0]
+## reset_hw_axi -quiet $axi
+## set old [get_hw_axi_txns -quiet]
+## if {[llength $old]} { delete_hw_axi_txn -quiet $old }
+## set sign [expr {1 << ($VEC_WL - 1)}]
+## set mod  [expr {1 << $VEC_WL}]
+## set ncase [llength $VEC_CASES]
+## set bad_cases 0
+## set t0 [clock milliseconds]
+## for {set c 0} {$c < $ncase} {incr c} {
+##   lassign [lindex $VEC_CASES $c] label writes expect
+##   puts "CASE [expr {$c + 1}]/$ncase $label"
+##   set errors 0
+##   foreach w $writes { axi_w [lindex $w 0] [lindex $w 1] }
+## 
+##   # readback of the first word catches a wrong base address or dead design
+##   set first [lindex $writes 0]
+##   set rb [axi_r [lindex $first 0]]
+##   if {$rb != [lindex $first 1]} {
+##     puts "FAIL: readback 0x[format %08x $rb] != written 0x[format %08x [lindex $first 1]]"
+##     puts "      Wrong base address, or the design is not responding. Stopping."
+##     stop
+##   }
+##   # done stays set from the previous case until the next start, so this
+##   # check only means something straight after programming
+##   if {$c == 0 && ([axi_r $VEC_STAT] & 1) != 0} { puts "FAIL: done set before start"; incr errors }
+##   axi_w $VEC_CTRL 1
+## 
+##   set st 0
+##   for {set i 0} {$i < 1000} {incr i} {
+##     set st [axi_r $VEC_STAT]
+##     if {$st & 1} break
+##   }
+##   if {!($st & 1)} { puts "FAIL: done never asserted (STAT=0x[format %08x $st])"; stop }
+##   if {$st & 2} { puts "FAIL: range_err set for an in-domain case"; incr errors }
+## 
+##   foreach e $expect {
+##     lassign $e name off want
+##     set lo [axi_r $off]
+##     set hi [axi_r [expr {$off + 4}]]
+##     set raw [expr {(($hi & ((1 << ($VEC_WL - 32)) - 1)) << 32) | $lo}]
+##     if {$raw >= $sign} { set raw [expr {$raw - $mod}] }
+##     if {$raw != $want} {
+##       puts [format "FAIL %-12s got %ld want %ld (diff %ld)" $name $raw $want [expr {$raw - $want}]]
+##       incr errors
+##     } else {
+##       puts [format "  ok %-12s %ld  (%.10f)" $name $raw [expr {double($raw) / (1 << $VEC_FL)}]]
+##     }
+##   }
+##   if {$errors} { incr bad_cases; puts "CASE [expr {$c + 1}]: FAIL ($errors)" } else { puts "CASE [expr {$c + 1}]: ok" }
+## }
+CASE 1/1 single vector
+  ok price        44612421806  (10.3871388840)
+  ok delta        3067244061  (0.7141484090)
+  ok strike_sens  -2621119843  (-0.6102770201)
+  ok theta_greek  27549498160  (6.4143673889)
+  ok rho_greek    262111984315  (61.0277020175)
+  ok vega         200145170394  (46.5999288470)
+  ok kappa_sens   266030900  (0.0619401457)
+  ok theta_sens   189778399478  (44.1862269021)
+  ok xi_sens      -5173634624  (-1.2045806795)
+  ok rho_corr     -501135228  (-0.1166796377)
+CASE 1: ok
+## set secs [expr {([clock milliseconds] - $t0) / 1000.0}]
+## if {$bad_cases == 0} {
+##   puts [format "PASS: $board_name outputs bit-exact vs the emulator, %d case(s) x %d outputs (%.1f s)" \
+##         $ncase [llength $VEC_EXPECT] $secs]
+## } else {
+##   puts "FAIL: $bad_cases of $ncase case(s) had mismatches"
+## }
+PASS: ZCU102 outputs bit-exact vs the emulator, 1 case(s) x 10 outputs (0.0 s)
+## close_hw_manager
+INFO: [Common 17-206] Exiting Vivado at Sun Oct 25 11:59:40 2026...
