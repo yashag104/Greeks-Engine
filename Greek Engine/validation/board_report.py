@@ -1,8 +1,9 @@
-"""Turn a ZedBoard test log into price + Greeks, and judge them.
+"""Turn a board test log into price + Greeks, and judge them.
 
-The board returns the 9 raw COS sums (sum_*). For each case this runs the
+The ZedBoard returns the 9 raw COS sums (sum_*). For each case this runs the
 host finish step (hardware/gen/host.py, the bit-exact specification of what
-the ARM will do) on the board's sums, and compares the 10 outputs with
+the ARM will do) on the board's sums. The 64-bit engine (--design zu, ZCU102)
+returns the 10 outputs itself. Either way the 10 outputs are compared with
 
   - the fixed-point emulator (must be identical: the board already matched
     the sums bit for bit, this confirms it end to end),
@@ -12,6 +13,8 @@ the ARM will do) on the board's sums, and compares the 10 outputs with
 
     python board_report.py results/board_zedboard_2026-09-29.log
     python board_report.py <run_sweep.log or vivado.log> [--seed 2026]
+    python board_report.py results/board_nifty_zcu102_2026-10-25.log --design zu \
+           --cases-csv hedging/results/board_cases.csv --out results/board_nifty_report_zcu102.csv
     -> results/board_report.csv, and a per-output summary on stdout
 
 Only the last run in the log is used. Needs numpy and scipy (the reference).
@@ -36,8 +39,9 @@ import heston as H  # noqa: E402
 import host  # noqa: E402
 from wrappers import CASES  # noqa: E402
 
-A = types.SimpleNamespace(wl=56, fl=28, mults=8, crot=3, cvec=2, pipe_cordic=False,
-                          host_setup=True, terms=128, name="heston_aad_z7h")
+DESIGNS = {"z7h": types.SimpleNamespace(wl=56, fl=28, host_setup=True, name="heston_aad_z7h"),
+           "zu": types.SimpleNamespace(wl=64, fl=32, host_setup=False, name="heston_aad_zu")}
+A = DESIGNS["z7h"]
 
 
 def parse(log):
@@ -54,7 +58,8 @@ def parse(log):
             cur = (m.group(1).strip(), {})
             cases.append(cur)
             continue
-        m = re.match(r"\s*ok sum_(\w+)\s+(-?\d+)", line) or re.match(r"FAIL sum_(\w+)\s+got (-?\d+)", line)
+        # sum_<acc> from the host-setup engine, the output names from the 64-bit one
+        m = re.match(r"\s*ok (?:sum_)?(\w+)\s+(-?\d+)", line) or re.match(r"FAIL (?:sum_)?(\w+)\s+got (-?\d+)", line)
         if m:
             if cur is None:                       # log from before CASE lines existed
                 cur = ("single vector", {})
@@ -63,12 +68,16 @@ def parse(log):
     return cases
 
 
-def params_for(labels, seed):
+def params_for(labels, seed, cases_csv=None):
     """recover the exact parameters: labels only carry 6 significant digits"""
-    if len(labels) == 1:
+    if cases_csv:
+        cases = BV.csv_cases(cases_csv)
+        if len(cases) != len(labels):
+            sys.exit("%d cases in %s, %d in the log" % (len(cases), cases_csv, len(labels)))
+    elif len(labels) == 1:
         return [CASES[0]]
-    dp = H.Datapath(A.wl, A.fl)
-    cases, _ = BV.sweep_cases(dp, len(labels) - len(CASES), seed)
+    else:
+        cases, _ = BV.sweep_cases(H.Datapath(A.wl, A.fl), len(labels) - len(CASES), seed)
     for lab, (pv, call) in zip(labels, cases):
         want = "S0=%.6g K=%.6g T=%.6g r=%.6g v0=%.6g kappa=%.6g theta=%.6g xi=%.6g rho=%.6g %s" % (
             tuple(pv) + ("call" if call else "put",))
@@ -81,19 +90,24 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("log")
     ap.add_argument("--seed", type=int, default=2026)
+    ap.add_argument("--design", choices=sorted(DESIGNS), default="z7h")
+    ap.add_argument("--cases-csv", help="the cases' CSV (board_vectors.py --cases-csv) instead of the sweep seed")
     ap.add_argument("--out", default=os.path.join(HERE, "results", "board_report.csv"))
     a = ap.parse_args()
+    global A
+    A = DESIGNS[a.design]
 
     runs = parse(a.log)
-    cases = params_for([lab for lab, _ in runs], a.seed)
+    cases = params_for([lab for lab, _ in runs], a.seed, a.cases_csv)
     dp = H.Datapath(A.wl, A.fl)
     g_out = H.unrolled(A.wl, A.fl)
+    names = dp.acc_names if A.host_setup else H.OUTPUTS
     rows, incomplete = [], 0
     for i, ((lab, sums), (pv, call)) in enumerate(zip(runs, cases)):
-        if len(sums) != len(dp.acc_names):
+        if len(sums) != len(names):
             incomplete += 1
             continue
-        board = host.finish(dp, pv, call, sums)
+        board = host.finish(dp, pv, call, sums) if A.host_setup else sums
         emu, _ = C.run(pv, call, A.fl, g_out)
         for o, fx, fl, rv, bound, sigma in emu:
             b = board[o] / 2 ** A.fl
@@ -108,7 +122,7 @@ def main():
     ncase = len(runs) - incomplete
     exact = sum(1 for r in rows if r["board"] == r["emulator"])
     print("%d case(s) from %s; %d incomplete skipped" % (ncase, os.path.basename(a.log), incomplete))
-    print("board == emulator after host finish: %d / %d outputs" % (exact, len(rows)))
+    print("board == emulator%s: %d / %d outputs" % (" after host finish" if A.host_setup else "", exact, len(rows)))
     print()
     print("%-12s %14s %14s %14s" % ("output", "max |err|", "max rel. err", "max err/bound"))
     for o in H.OUTPUTS:

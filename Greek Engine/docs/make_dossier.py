@@ -101,7 +101,7 @@ SVG_FLOW = r"""
 <rect class="bx" x="270" y="220" width="200" height="56" rx="8"/><text class="t" x="284" y="244">Host C generator</text><text class="s" x="284" y="262">setup/finish for the ARM</text>
 <rect class="bx" x="540" y="150" width="160" height="56" rx="8"/><text class="t" x="554" y="174">Verilog generator</text><text class="s" x="554" y="192">RTL + AXI wrappers</text>
 <rect class="bx3" x="540" y="40" width="160" height="70" rx="8"/><text class="t" x="554" y="64">verify_all.sh</text><text class="s" x="554" y="82">25 checks: RTL == emulator,</text><text class="s" x="554" y="97">bound holds, C == model</text>
-<rect class="bx2" x="748" y="120" width="146" height="110" rx="8"/><text class="t" x="760" y="146">Vivado</text><text class="s" x="760" y="166">ZedBoard (Zynq-7020)</text><text class="s" x="760" y="182">ZCU104 (UltraScale+)</text><text class="s" x="760" y="198">bitstreams, power</text>
+<rect class="bx2" x="748" y="120" width="146" height="110" rx="8"/><text class="t" x="760" y="146">Vivado</text><text class="s" x="760" y="166">ZedBoard (Zynq-7020)</text><text class="s" x="760" y="182">ZCU102 / ZCU104 (US+)</text><text class="s" x="760" y="198">bitstreams, power</text>
 <path class="ar" d="M200,150 C235,150 235,38 268,38"/><path class="ar" d="M200,160 C240,160 240,108 268,108"/>
 <path class="ar" d="M200,170 L268,178"/><path class="ar" d="M200,190 C240,190 240,248 268,248"/>
 <path class="ar" d="M470,178 L538,178"/><path class="ar" d="M700,178 L746,175"/>
@@ -137,7 +137,7 @@ SVG_SYSTEMS = r"""
 <rect class="bx" x="370" y="140" width="150" height="54" rx="8"/><text x="380" y="162">M_AXI_GP0</text><text class="s" x="380" y="180">AXI4-Lite, 71.4 MHz</text>
 <rect class="bx2" x="560" y="140" width="200" height="54" rx="8"/><text x="570" y="162">engine heston_aad_z7h</text><text class="s" x="570" y="180">51 words in, 18 out</text>
 <path class="ar" d="M330,167 L368,167"/><path class="ar" d="M520,167 L558,167"/>
-<text class="t" x="10" y="234">C. ZCU104, JTAG system (built at 100 MHz; board run pending)</text>
+<text class="t" x="10" y="234">C. ZCU102, JTAG system (100 MHz; run bit-exact on the board)</text>
 <rect class="bx3" x="10" y="246" width="150" height="54" rx="8"/><text x="20" y="268">PC: Vivado Tcl</text><text class="s" x="20" y="286">no host steps</text>
 <rect class="bx" x="200" y="246" width="130" height="54" rx="8"/><text x="210" y="268">JTAG-to-AXI</text><text class="s" x="210" y="286">300 MHz board clock</text>
 <rect class="bx" x="370" y="246" width="150" height="54" rx="8"/><text x="380" y="268">AXI4-Lite</text><text class="s" x="380" y="286">19 words in, 20 out</text>
@@ -194,21 +194,22 @@ Supervisor: Prof. Govind Prasad &middot; Course registered under: Prof. Natasha 
 (the Greeks)</b> in one forward and one reverse (adjoint) pass of the COS Fourier pricer. It is produced by a
 generator that, from one description of the computation, emits a bit-accurate model, a first-order rounding-error
 bound for every output, a modulo-scheduled Verilog datapath and the host code. The engine has run on a
-ZedBoard (Zynq-7020) with every output bit-exact against the model, and a 64-bit configuration is built for a
-ZCU104 (Zynq UltraScale+).</p>
+ZedBoard (Zynq-7020) and, as a 64-bit configuration computing everything on chip, on a ZCU102 (Zynq UltraScale+),
+with every output bit-exact against the model on both.</p>
 <div class="kpis">
 <div class="kpi"><div class="l">Greeks cost</div><div class="v">1.04&times;</div><div class="d">price + 9 Greeks: 4,733 cycles against 4,568 for the price alone (Zynq-7020 config.)</div></div>
 <div class="kpi"><div class="l">Against bump-and-reprice</div><div class="v">18.4&times;</div><div class="d">fewer cycles on the same hardware, and 32&ndash;560&times; more accurate</div></div>
-<div class="kpi"><div class="l">On silicon</div><div class="v">450 / 450</div><div class="d">outputs bit-exact on the ZedBoard; worst 0.199 of the error bound</div></div>
-<div class="kpi"><div class="l">ZCU104 latency</div><div class="v">15.9 &micro;s</div><div class="d">whole evaluation at 100 MHz; ~1.8&times; faster than the best CPU method (routed; board run pending)</div></div>
+<div class="kpi"><div class="l">On silicon</div><div class="v">1,460 / 1,460</div><div class="d">outputs bit-exact: 450 on the ZedBoard, 1,010 on the ZCU102 (incl. 50 real NIFTY days); worst 0.255 of the error bound</div></div>
+<div class="kpi"><div class="l">ZCU102 latency</div><div class="v">15.9 &micro;s</div><div class="d">whole evaluation at 100 MHz; ~1.3&times; faster than the best CPU method on one idle core (20.3 &micro;s)</div></div>
 <div class="kpi"><div class="l">Error bound</div><div class="v">&le; 0.378</div><div class="d">worst measured error / first-order bound over 10,500 inputs; never exceeded</div></div>
-<div class="kpi"><div class="l">Energy</div><div class="v">40&ndash;44 &micro;J</div><div class="d">per evaluation (engine power from simulated activity); ~3&ndash;17&times; less than the CPU estimate</div></div>
+<div class="kpi"><div class="l">Energy</div><div class="v">40&ndash;44 &micro;J</div><div class="d">per evaluation (engine power from simulated activity); ~2&ndash;4&times; less than the CPU estimate</div></div>
 </div>
 <div class="box"><b>Verified:</b> bit-exact RTL against the emulator (25 automated checks); bit-exact on the ZedBoard
-(1 + 50 cases, twice); error bound over 10,500 + 10,500 held-out inputs; 50-digit check of the bound; routed
-designs on both devices; activity-based power from bit-exact gate-level simulation.
-<br><b>Pending (needs the boards):</b> the ZCU104 runs, the ZedBoard end-to-end ARM run (bus-transfer timing),
-real NIFTY inputs on silicon, a board supply-power measurement, idle-machine CPU timing and CPU package power.</div>
+(1 + 50 cases, twice) and on the ZCU102 (1 + 50 cases + 50 real NIFTY days); error bound over 10,500 + 10,500 held-out
+inputs and on every board output; 50-digit check of the bound; routed designs on three devices; activity-based power from
+bit-exact gate-level simulation; CPU timings on an idle machine.
+<br><b>Pending (needs the ZedBoard or a meter):</b> the ZedBoard end-to-end ARM run (bus-transfer timing) and its NIFTY run,
+a board supply-power measurement, and CPU package power.</div>
 </section>
 
 <section id="problem">
@@ -286,7 +287,7 @@ against forward mode and finite differences; making the generator derive it auto
 
 <h3 id="m-fixed">2.5 Fixed-point arithmetic and the first-order error bound</h3>
 <p>Every value is an integer times 2<sup>&minus;FL</sup>: the Zynq-7020 engine uses 56-bit words with 28 fraction bits,
-the ZCU104 engine 64-bit words with 32. Normalised quantities (reciprocals, logarithms, CORDIC) use their own mantissa
+the 64-bit engine 64-bit words with 32. Normalised quantities (reciprocals, logarithms, CORDIC) use their own mantissa
 formats; data-dependent shifts are built only as wide as the ranges measured over the verified domain (with margin),
 which saves about a third of the logic, and any input that would exceed them sets <code>range_err</code>. Division,
 square root, exponential and logarithm are built from shared multipliers (Newton&ndash;Raphson reciprocals, Tang-style
@@ -323,7 +324,7 @@ sums, applies the chain rule for delta and &part;<i>V</i>/&part;<i>K</i>, and ad
 <tr><th>Design</th><th>Word</th><th class="n">Multipliers</th><th>CORDIC</th><th>Setup/finish</th><th class="n">Cycles</th><th>Target</th></tr>
 <tr><td><code>heston_aad_z7</code></td><td>56-bit, Q28</td><td class="n">8</td><td>3 rot., 2 vec., iterative</td><td>on chip</td><td class="n">4,733</td><td>Zynq-7020 (not routed)</td></tr>
 <tr class="hi"><td><code>heston_aad_z7h</code></td><td>56-bit, Q28</td><td class="n">8</td><td>3 rot., 2 vec., iterative</td><td>host (Python or ARM C)</td><td class="n">4,572 (loop)</td><td>ZedBoard, on silicon</td></tr>
-<tr class="hi"><td><code>heston_aad_zu</code></td><td>64-bit, Q32</td><td class="n">32</td><td>1 rot., 1 vec., pipelined</td><td>on chip</td><td class="n">1,593</td><td>ZCU104, routed at 100 MHz</td></tr>
+<tr class="hi"><td><code>heston_aad_zu</code></td><td>64-bit, Q32</td><td class="n">32</td><td>1 rot., 1 vec., pipelined</td><td>on chip</td><td class="n">1,593</td><td>ZCU102, on silicon at 100 MHz</td></tr>
 </table></div>
 <p class="cap">One parameter (the number of shared multipliers) moves the design between a small engine for a low-cost FPGA and a fast one for a large FPGA (Section 5.1).</p>
 
@@ -364,13 +365,13 @@ against the adjoint's 250; reaching the same pace takes 10 and 26 multipliers ag
 the 1.04&times; itself is not unique (with 16 multipliers the factored forward method also reaches it); the claim is fewer
 DSP blocks for the same speed.</li>
 <li><b>A first-order rounding-error bound for every Greek of a fixed-point adjoint datapath</b>, never exceeded: worst 0.103 of the
-bound over 21 cases, 0.378 over 10,500 inputs, 0.356 over 10,500 held-out inputs, 0.24 against a 50-digit evaluation, 0.199 on silicon.
+bound over 21 cases, 0.378 over 10,500 inputs, 0.356 over 10,500 held-out inputs, 0.24 against a 50-digit evaluation, 0.199 on the ZedBoard and 0.255 on the ZCU102.
 <span class="pill wn">Wording</span> &ldquo;first-order&rdquo; and &ldquo;rounding only&rdquo;; the method builds on Linnainmaa (1976).</li>
-<li><b>Bit-exact Greeks on silicon:</b> 450 of 450 outputs of 50 random cases on a ZedBoard, run twice on successive designs.</li>
+<li><b>Bit-exact Greeks on silicon, on two FPGA families:</b> 450 of 450 outputs of 50 random cases on a ZedBoard, run twice on successive designs; 1,010 of 1,010 for the 64-bit engine on a ZCU102 (1 vector, 50 random cases, 50 real NIFTY days).</li>
 <li><b>A generator for fixed-point adjoint datapaths</b> that emits the emulator, bound, schedule, Verilog, wrappers and host C from one
 description (tool contribution; Pham et al. 2016 generated Monte Carlo pricers without Greeks).</li>
 </ol>
-<div class="box warn"><b>Not claimed:</b> a latency win on the Zynq-7020 (the CPU is 2.2&times; faster there); throughput against a
+<div class="box warn"><b>Not claimed:</b> a latency win on the Zynq-7020 (the CPU is 3.2&times; faster there), or more than a narrow one on the ZCU102 (1.3&times;); throughput against a
 multi-core CPU; a statistical hedging result; a measured (rather than simulated) energy figure, until the board and CPU
 measurements are done.</div>
 </section>
@@ -463,46 +464,53 @@ are 32&ndash;560 times more accurate than bumping at the best bump size for each
 <tr><td>Zynq-7020 engine alone, 29 Sep design, 100 MHz target</td><td class="n">36,499 (69%)</td><td class="n">28,559</td><td class="n">72</td><td class="n">Fmax ~79 MHz</td><td class="n">&minus;2.639 ns</td></tr>
 <tr class="hi"><td>ZedBoard JTAG system (on silicon)</td><td class="n">38,752 (73%)</td><td class="n">32,134</td><td class="n">72 (33%)</td><td class="n">70 MHz</td><td class="n">+0.458 ns</td></tr>
 <tr><td>ZedBoard processor system</td><td class="n">&ndash;</td><td class="n">&ndash;</td><td class="n">72</td><td class="n">71.4 MHz</td><td class="n">+0.080 ns</td></tr>
-<tr class="hi"><td>ZCU104 JTAG system (xczu7ev)</td><td class="n">77,863 (34%)</td><td class="n">63,796</td><td class="n">510 (30%)</td><td class="n">100 MHz</td><td class="n">+1.469 ns</td></tr>
+<tr class="hi"><td>ZCU102 JTAG system (xczu9eg, on silicon)</td><td class="n">77,515 (28%)</td><td class="n">63,547</td><td class="n">510 (20%)</td><td class="n">100 MHz</td><td class="n">+1.601 ns</td></tr>
+<tr><td>ZCU104 JTAG system (xczu7ev)</td><td class="n">77,863 (34%)</td><td class="n">63,796</td><td class="n">510 (30%)</td><td class="n">100 MHz</td><td class="n">+1.469 ns</td></tr>
 <tr><td>ZCU104 engine alone</td><td class="n">77,128 (33%)</td><td class="n">59,942</td><td class="n">&ndash;</td><td class="n">100 MHz</td><td class="n">+2.189 ns</td></tr>
 </table></div>
 <figure style="max-width:520px">{device}<figcaption>The placed ZedBoard design: the engine fills about three quarters of the Zynq-7020's logic.</figcaption></figure>
 <p>The 64-bit carry chains limit the Zynq-7020 to about 79 MHz (Vivado suggests the DSP blocks' internal registers as the route to 100 MHz).
-On the ZCU104 the engine alone reaches about 128 MHz and the system about 117 MHz; the 100 MHz bitstream keeps a wide margin for the first board run.</p>
+On the ZCU104 the engine alone reaches about 128 MHz and the system about 117 MHz; the ZCU102 system reaches about 119 MHz. The board ran at 100 MHz, with margin.</p>
 
-<h3 id="r-silicon">5.8 On silicon (ZedBoard)</h3>
+<h3 id="r-silicon">5.8 On silicon (ZedBoard and ZCU102)</h3>
 <div class="tbl"><table>
-<tr><th>Run (6 Oct 2026, current design)</th><th class="n">Cases</th><th class="n">Bit-exact</th><th class="n">range_err</th><th class="n">Worst error &divide; bound</th></tr>
-<tr><td>First vector</td><td class="n">1</td><td class="n">9 / 9</td><td class="n">0</td><td class="n">0.049</td></tr>
-<tr class="hi"><td>Sweep, back to back</td><td class="n">50</td><td class="n">450 / 450</td><td class="n">0</td><td class="n">0.199</td></tr>
+<tr><th>Run</th><th class="n">Cases</th><th class="n">Bit-exact</th><th class="n">range_err</th><th class="n">Worst error &divide; bound</th></tr>
+<tr><td>ZedBoard, first vector (6 Oct 2026)</td><td class="n">1</td><td class="n">9 / 9</td><td class="n">0</td><td class="n">0.049</td></tr>
+<tr class="hi"><td>ZedBoard, sweep, back to back</td><td class="n">50</td><td class="n">450 / 450</td><td class="n">0</td><td class="n">0.199</td></tr>
+<tr><td>ZCU102 (64-bit), first vector (25 Oct 2026)</td><td class="n">1</td><td class="n">10 / 10</td><td class="n">0</td><td class="n">0.099</td></tr>
+<tr class="hi"><td>ZCU102, sweep, back to back</td><td class="n">50</td><td class="n">500 / 500</td><td class="n">0</td><td class="n">0.243</td></tr>
+<tr class="hi"><td>ZCU102, 50 real NIFTY days, back to back</td><td class="n">50</td><td class="n">500 / 500</td><td class="n">0</td><td class="n">0.255</td></tr>
 </table></div>
 <p class="cap">2 reference + 48 random cases (22 calls, 28 puts), no reset between cases. Worst price error against double precision 1.5&times;10<sup>&minus;5</sup>,
-down from 2.3&times;10<sup>&minus;3</sup> before put-call parity (the 29 Sep bitstream was also 450/450 bit-exact, worst 0.268).</p>
+down from 2.3&times;10<sup>&minus;3</sup> before put-call parity (the 29 Sep bitstream was also 450/450 bit-exact, worst 0.268). On the ZCU102 the
+64-bit engine computes all ten outputs on chip; its worst price error is 7.3&times;10<sup>&minus;7</sup>. The ZCU102 was built and run in Vivado 2026.1 on a
+lab PC; the board run checks every output but cannot time the engine (JTAG is far slower than an evaluation).</p>
 
 <h3 id="r-power">5.9 Power and energy</h3>
 <div class="tbl"><table>
 <tr><th>Engine alone (routed)</th><th class="n">Default guess</th><th class="n">Simulated activity</th><th class="n">Latency</th><th class="n">Energy / evaluation</th></tr>
 <tr class="hi"><td>ZedBoard engine, 70 MHz</td><td class="n">0.204 W</td><td class="n">0.676 W</td><td class="n">65.3 &micro;s (loop)</td><td class="n">44 &micro;J</td></tr>
-<tr class="hi"><td>ZCU104 64-bit engine, 100 MHz</td><td class="n">1.288 W</td><td class="n">2.485 W</td><td class="n">15.9 &micro;s (whole)</td><td class="n">40 &micro;J</td></tr>
+<tr class="hi"><td>64-bit engine (xczu7ev), 100 MHz</td><td class="n">1.288 W</td><td class="n">2.485 W</td><td class="n">15.9 &micro;s (whole)</td><td class="n">40 &micro;J</td></tr>
 </table></div>
 <p class="cap">Each routed netlist was simulated gate by gate on four evaluations (two board cases, two real NIFTY days; all outputs bit-exact) and the
 activity read back into Vivado's power analysis (confidence High). The default 12.5% toggle rate underestimated dynamic power 3&ndash;6&times;. Engine only;
-a board supply measurement is pending (the ARM program has idle/run windows for it).</p>
+a board supply measurement is pending (the ARM program has idle/run windows for it). The ZCU102's xczu9eg adds 0.03 W of static power, so the
+64-bit engine's energy stays at about 40 &micro;J there.</p>
 
 <h3 id="r-cpu">5.10 Against a CPU (same algorithm)</h3>
 <div class="tbl"><table>
 <tr><th>Price + 9 Greeks</th><th class="n">&micro;s / evaluation</th><th class="n">Cost vs one price</th><th class="n">Evaluations / s</th></tr>
-<tr><td>CPU, price only (1 core)</td><td class="n">17.2</td><td class="n">1&times;</td><td class="n">&ndash;</td></tr>
-<tr><td>CPU, bump-and-reprice</td><td class="n">257.6</td><td class="n">15&times;</td><td class="n">&ndash;</td></tr>
-<tr><td>CPU, adjoint with CoDiPack</td><td class="n">114.9</td><td class="n">6.7&times;</td><td class="n">23,100 (4 cores)</td></tr>
-<tr><td>CPU, forward mode, 9 directions</td><td class="n">91.5</td><td class="n">5.3&times;</td><td class="n">33,900 (4 cores)</td></tr>
-<tr><td>CPU, optimised bump</td><td class="n">158.6</td><td class="n">10.3&times;</td><td class="n">&ndash;</td></tr>
-<tr><td>CPU, hand-derived analytic Greeks</td><td class="n">29.3</td><td class="n">1.9&times;</td><td class="n">41k&ndash;94k (4 cores)</td></tr>
+<tr><td>CPU, price only (1 core)</td><td class="n">13.7</td><td class="n">1&times;</td><td class="n">&ndash;</td></tr>
+<tr><td>CPU, bump-and-reprice</td><td class="n">238.1</td><td class="n">17.4&times;</td><td class="n">&ndash;</td></tr>
+<tr><td>CPU, adjoint with CoDiPack</td><td class="n">103.8</td><td class="n">7.6&times;</td><td class="n">26,900 (4 cores)</td></tr>
+<tr><td>CPU, forward mode, 9 directions</td><td class="n">78.0</td><td class="n">5.7&times;</td><td class="n">34,000 (4 cores)</td></tr>
+<tr><td>CPU, optimised bump</td><td class="n">146.6</td><td class="n">10.7&times;</td><td class="n">&ndash;</td></tr>
+<tr><td>CPU, hand-derived analytic Greeks</td><td class="n">20.3</td><td class="n">1.5&times;</td><td class="n">158,000 (4 cores)</td></tr>
 <tr class="hi"><td>FPGA, ZedBoard at 70 MHz (loop only)</td><td class="n">65.3</td><td class="n">1.04&times;</td><td class="n">15,300 (1 engine)</td></tr>
-<tr class="hi"><td>FPGA, ZCU104 at 100 MHz (whole evaluation; board run pending)</td><td class="n">15.9</td><td class="n">1.55&times;</td><td class="n">62,800 (1 engine)</td></tr>
+<tr class="hi"><td>FPGA, ZCU102 at 100 MHz (whole evaluation; bit-exact on the board)</td><td class="n">15.9</td><td class="n">1.55&times;</td><td class="n">62,800 (1 engine)</td></tr>
 </table></div>
-<p class="cap">Intel Core i5-1155G7 laptop, C++ double precision, g++ -O3 -march=native, CoDiPack v2.3.2; every method matches the reference. The analytic
-and optimised-bump rows were timed on a loaded laptop (provisional until re-timed idle). The CPU's work outside its 128-term loop is about 0.1 &micro;s,
+<p class="cap">Intel Core i5-1155G7 laptop, C++ double precision, g++ -O3 -march=native, CoDiPack v2.3.2; every method matches the reference. All CPU rows
+are from one run on an idle machine (23 Oct 2026; throughput from 8 processes on the 4 cores). The CPU's work outside its 128-term loop is about 0.03 &micro;s,
 so loop-to-loop comparison is fair; the FPGA figures exclude only the bus transfers, which the ARM program will measure.</p>
 
 <h3 id="r-chain">5.11 Many strikes at once (design study)</h3>
@@ -515,7 +523,7 @@ extra strike costs 16 multiplies and one rotation per term (about 7% of one opti
 <tr><td class="n">16</td><td class="n">8,767</td><td class="n">548</td><td class="n">2,854</td><td class="n">178</td></tr>
 <tr><td class="n">32</td><td class="n">12,860</td><td class="n">402</td><td class="n">4,892</td><td class="n">153</td></tr>
 </table></div>
-<p class="cap">The same sharing helps a CPU as much (3.8 &micro;s per strike at 32 strikes on one loaded core), and pricing many strikes from one
+<p class="cap">The same sharing helps a CPU as much (2.3 &micro;s per strike at 32 strikes on one idle core), and pricing many strikes from one
 characteristic function is standard COS practice, so this is a design result, not a novelty claim.</p>
 
 <h3 id="r-hedge">5.12 Illustration: hedging on real NIFTY data</h3>
@@ -548,11 +556,11 @@ confidence. The 50 trading days' calibrated parameters are ready as board vector
 <tr><td>Accuracy</td><td>32&ndash;560&times; more accurate (median 145&times;), nothing to tune</td><td><span class="pill ok">better</span></td></tr>
 <tr><td rowspan="2">Forward mode, same generator and hardware</td><td>Multiplies per term</td><td>250 against 313 (best analytic, +25%) and 802 (AD tool, 3.2&times;)</td><td><span class="pill ok">better</span></td></tr>
 <tr><td>Speed at equal multipliers</td><td>4,731 vs 5,622 and 13,597 cycles (8 mult.); equal once CORDIC-bound with 16</td><td><span class="pill ok">better</span> / <span class="pill wn">equal</span></td></tr>
-<tr><td rowspan="6">CPU, same algorithm (i5-1155G7)</td><td>Greeks overhead</td><td>1.04 pricings vs 1.9 (analytic), 5.3&ndash;6.7 (AD tools), 15 (bump)</td><td><span class="pill ok">better</span></td></tr>
-<tr><td>Latency, Zynq-7020</td><td>65.3 &micro;s vs 29.3 &micro;s analytic (CPU 2.2&times; faster); 1.4&ndash;3.9&times; faster than AD tools and bumping</td><td><span class="pill no">worse</span> vs analytic</td></tr>
-<tr><td>Latency, ZCU104</td><td>15.9 &micro;s vs 29.3 &micro;s (~1.8&times; faster; board run and idle CPU timing pending)</td><td><span class="pill ok">better</span> <span class="pill wn">pending</span></td></tr>
-<tr><td>Throughput</td><td>4 CPU cores 41k&ndash;94k/s vs one engine 15.3k/s (Zynq) or 62.8k/s (ZCU104)</td><td><span class="pill no">worse</span> / <span class="pill wn">similar</span></td></tr>
-<tr><td>Energy</td><td>40&ndash;44 &micro;J vs an estimated 0.13&ndash;0.68 mJ (~3&ndash;17&times; less)</td><td><span class="pill ok">better</span> <span class="pill wn">CPU estimated</span></td></tr>
+<tr><td rowspan="6">CPU, same algorithm (i5-1155G7)</td><td>Greeks overhead</td><td>1.04 pricings vs 1.5 (analytic), 5.7&ndash;7.6 (AD tools), 17.4 (bump)</td><td><span class="pill ok">better</span></td></tr>
+<tr><td>Latency, Zynq-7020</td><td>65.3 &micro;s vs 20.3 &micro;s analytic (CPU 3.2&times; faster); 1.2&ndash;3.6&times; faster than AD tools and bumping</td><td><span class="pill no">worse</span> vs analytic</td></tr>
+<tr><td>Latency, ZCU102</td><td>15.9 &micro;s vs 20.3 &micro;s analytic (~1.3&times; faster); 4.9&ndash;15&times; faster than AD tools and bumping</td><td><span class="pill ok">better</span> (narrowly)</td></tr>
+<tr><td>Throughput</td><td>4 CPU cores 158k/s vs one engine 15.3k/s (Zynq) or 62.8k/s (ZCU102)</td><td><span class="pill no">worse</span> (2.5&ndash;10&times;)</td></tr>
+<tr><td>Energy</td><td>40&ndash;44 &micro;J vs an estimated 76&ndash;177 &micro;J (~2&ndash;4&times; less)</td><td><span class="pill ok">better</span> <span class="pill wn">CPU estimated</span></td></tr>
 <tr><td>Accuracy</td><td>Fixed point is less precise than double, but rounding sits below the COS method's own error in typical cases, and only the FPGA gives a per-Greek bound</td><td><span class="pill wn">trade-off</span></td></tr>
 <tr><td>First generation (hand-written)</td><td>Cycles, area</td><td>92&times; fewer cycles; fits a Zynq-7020; bit-exact on silicon</td><td><span class="pill ok">better</span></td></tr>
 </table></div>
@@ -566,7 +574,7 @@ comparable</b>; the table positions the works by what they compute and how, with
 from the source.</p>
 <div class="tbl"><table>
 <tr><th>Work</th><th>Platform</th><th>Model / pricing</th><th>How the Greeks are computed</th><th>Accuracy guarantee</th><th>Reported result</th></tr>
-<tr class="hi"><td><b>This work</b></td><td>Zynq-7020 (ZedBoard), Zynq UltraScale+ (ZCU104)</td><td>Heston, COS (128 terms), fixed point 56/64-bit</td><td><b>Adjoint datapath</b>, all 9 in one pass, no tape</td><td><b>First-order bound per Greek</b>, never exceeded</td><td>4,733 / 1,593 cycles; 1.04&times; price; 450/450 bit-exact on silicon; 15.9 &micro;s (ZCU104, routed)</td></tr>
+<tr class="hi"><td><b>This work</b></td><td>Zynq-7020 (ZedBoard), Zynq UltraScale+ (ZCU102)</td><td>Heston, COS (128 terms), fixed point 56/64-bit</td><td><b>Adjoint datapath</b>, all 9 in one pass, no tape</td><td><b>First-order bound per Greek</b>, never exceeded</td><td>4,733 / 1,593 cycles; 1.04&times; price; 1,460/1,460 outputs bit-exact on silicon; 15.9 &micro;s (ZCU102)</td></tr>
 <tr><td>Klaisoongnoen, Brown &amp; Thomson Brown, HEART 2022</td><td>Alveo U280 (300 MHz) vs 2&times; 24-core Xeon Platinum 8260M</td><td>STAC-A2: Heston Monte Carlo paths + Longstaff&ndash;Schwartz, up to 1.6&times;10<sup>9</sup> path elements</td><td>Not adjoint or AD; the benchmark re-runs simulation for sensitivities</td><td>None; precision (double, single, half, fixed) explored empirically</td><td>8&ndash;185&times; efficiency improvement over the CPUs</td></tr>
 <tr><td>Klaisoongnoen et al., H2RC 2022</td><td>Xilinx and Intel FPGAs</td><td>Streaming version of the above</td><td>Not adjoint or AD</td><td>None</td><td>Streaming throughput and energy (batch)</td></tr>
 <tr><td>AMD Vitis Quantitative Finance Library</td><td>Alveo (HLS)</td><td>Heston Monte Carlo; Heston closed form (<code>hcfEngine</code>, trapezoidal integration)</td><td>Central finite differences, re-running Monte Carlo per bump; closed form gives the price only</td><td>None</td><td>Library, no Greeks study</td></tr>
@@ -591,10 +599,10 @@ and latency and energy per evaluation.</div>
 <section id="limits">
 <h2>8. Limitations</h2>
 <ul>
-<li><b>Board runs pending</b> for the ZCU104 engine, the ZedBoard processor system and the real NIFTY inputs; the ZCU104 latency is from the routed design's cycle count and clock.</li>
-<li><b>CPU timings provisional</b> (analytic and optimised-bump rows from a loaded laptop) and <b>CPU power estimated</b> from the part's rated 12&ndash;28 W.</li>
+<li><b>Board runs pending</b> for the ZedBoard processor system (bus-transfer timing) and its NIFTY run. The ZCU102 latency is the cycle count at the clock: the board run checks every output but JTAG cannot time the engine.</li>
+<li><b>CPU power estimated</b> from the part's rated 12&ndash;28 W (CPU timings are measured, on an idle machine).</li>
 <li><b>Power is simulated, engine only</b>: no clock generator, bus or board; a supply measurement is pending. 57% of nets were matched by name, the rest propagated.</li>
-<li><b>Latency on the Zynq-7020</b>: one laptop core with hand-derived Greeks is 2.2&times; faster; timing does not close at 100 MHz there (Fmax ~79 MHz).</li>
+<li><b>Latency</b>: on the Zynq-7020 one laptop core with hand-derived Greeks is 3.2&times; faster (timing does not close at 100 MHz there, Fmax ~79 MHz); on the ZCU102 the engine leads by only 1.3&times;, and four cores give 2.5&times; its throughput.</li>
 <li><b>The bound is first order and covers rounding only</b>; the COS method's own error is separate and reaches 7.8&times;10<sup>&minus;3</sup> on vega in the worst board case.</li>
 <li><b>&part;V/&part;&kappa; and &part;V/&part;&xi;</b> carry only about 3 significant figures at the 99th percentile.</li>
 <li><b>The adjoint is hand-derived</b> (verified, not generated by an AD tool); say &ldquo;adjoint differentiation&rdquo;.</li>
@@ -611,9 +619,10 @@ and latency and energy per evaluation.</div>
 <tr><td>ZedBoard on silicon, 450/450 bit-exact (current design)</td><td><span class="pill ok">done</span></td></tr>
 <tr><td>Forward-mode baselines; 50-digit check; held-out sweep; COS method error; claims corrected</td><td><span class="pill ok">done</span></td></tr>
 <tr><td>ZCU104 bitstream (100 MHz); ZedBoard processor design + ARM program; NIFTY vectors; simulated-activity power</td><td><span class="pill ok">done</span></td></tr>
-<tr><td>ZCU104 test, 50-case sweep, NIFTY run</td><td><span class="pill wn">needs the board</span></td></tr>
+<tr><td>ZCU102 build and board runs: test, 50-case sweep, 50 NIFTY days, 1,010/1,010 bit-exact (25 Oct)</td><td><span class="pill ok">done</span></td></tr>
+<tr><td>CPU timings on an idle machine (23 Oct)</td><td><span class="pill ok">done</span></td></tr>
 <tr><td>ZedBoard ARM end-to-end run (bus-transfer timing) and NIFTY run</td><td><span class="pill wn">needs the board</span></td></tr>
-<tr><td>Board supply power; idle CPU timing; CPU package power</td><td><span class="pill wn">needs measurement</span></td></tr>
+<tr><td>Board supply power; CPU package power</td><td><span class="pill wn">needs measurement</span></td></tr>
 <tr><td>Paper: venue, template, authors; writing; supervisor review; final literature check</td><td><span class="pill wn">next</span></td></tr>
 <tr><td>Generator derives the adjoint automatically; more engines per device; 100 MHz on the Zynq-7020</td><td><span class="pill no">after the paper</span></td></tr>
 </table></div>
@@ -631,6 +640,8 @@ and latency and energy per evaluation.</div>
 .venv/bin/python validation/cpu_baseline/run_baseline.py      # CPU comparison
 hardware/vivado/zedboard/run_board.bat build | test | sweep | nifty | ps
 hardware/vivado/zcu104/run_board.bat   build | test | sweep | nifty
+hardware/vivado/zcu102/run_board.sh    dry | build | test | sweep | nifty   (Linux; make_bundle.py packs it)
+.venv/bin/python validation/board_report.py &lt;log&gt; --design zu [--cases-csv ...]   # error vs bound on silicon
 hardware/sw/zedboard: vitis -s build_vitis.py ; xsdb run_app.tcl
 hardware/vivado/power: run_engine_power.tcl &lt;top&gt; &lt;part&gt; &lt;clk_ns&gt;</pre>
 <p>Key files: <code>hardware/gen/</code> (graph, emulator, bound, scheduler, generators), <code>hardware/verilog/gen/</code> (generated RTL),
