@@ -4,9 +4,12 @@
 #   xsdb run_app.tcl            (from this folder; or ../../vivado/zcu102/run_board.sh run)
 # Resets the board, programs the bitstream of bd_ps.tcl, initialises the PS
 # with psu_init from the XSA, downloads heston_app.elf and runs it. The program
-# writes its output into a DDR buffer as well as the UART; once it has had time
-# to finish (correctness, timing, then about a minute of power windows) the
-# processor is stopped and the buffer saved. Boot-mode switch SW6: JTAG.
+# runs from the on-chip memory (OCM) and writes its output into a buffer there as
+# well as to the UART. The buffer is polled through the debug port while the
+# processor runs (no halt, so the timing and power windows are undisturbed) and
+# saved when the program marks it done. Boot-mode switch SW6: JTAG.
+# psu_init also initialises the DDR; on the lab board that step reports a mask
+# poll timeout at 0xFD080030 (DDR training), which the program does not need.
 # ============================================================================
 set here [file dirname [file normalize [info script]]]
 set hw   [file normalize "$here/../../vivado/zcu102"]
@@ -19,8 +22,8 @@ if {[file exists "$here/heston_app.elf"]} { set elf "$here/heston_app.elf" }
 puts "INFO: program $elf"
 set init "$here/xsa_x/psu_init.tcl"
 set log  "$here/zcu102_ps_run.log"
-set LOG_ADDR 0x40000000
-set first_wait_s 80          ;# 3 x (10 s idle + 10 s run) of power windows, plus the rest
+set LOG_ADDR 0xFFFC0000      ;# the first 16 KB of OCM (main.c, build_vitis.py)
+set first_wait_s 60          ;# 3 x (10 s idle + 10 s run) of power windows take about 61 s
 foreach f [list $xsa $bit $elf $init] {
   if {![file exists $f]} { puts "ERROR: missing $f"; exit 1 }
 }
@@ -50,20 +53,27 @@ con
 puts "INFO: running; output also on the UART (115200 8N1). Waiting $first_wait_s s"
 after [expr {$first_wait_s * 1000}]
 
-# Stop only once the run should be over (stopping earlier would disturb the
-# timing and power windows), then read the buffer through the stopped A53.
+# Poll the marker through the APU's memory access port, without halting the A53.
+# The program flushes the buffer from its cache when it finishes, so DONE and the
+# text become visible together.
+targets -set -nocase -filter {name =~ "APU*"}
+proc rd {addr} { return [mrd -force -value $addr] }
 set done 0
-for {set i 0} {$i < 12} {incr i} {
-  stop
-  set magic [mrd -value $LOG_ADDR]
+for {set i 0} {$i < 36} {incr i} {
+  if {[catch {rd $LOG_ADDR} magic]} { puts "INFO: read failed ($magic); retrying"; after 5000; continue }
   if {$magic == 0x444f4e45} { set done 1; break }
-  puts "INFO: not finished yet (marker 0x[format %08x $magic]); waiting 10 s more"
-  con
-  after 10000
+  if {$i % 4 == 0} { puts "INFO: not finished yet (marker 0x[format %08x $magic]); polling every 5 s" }
+  after 5000
 }
-set len [mrd -value [expr {$LOG_ADDR + 4}]]
-if {$len > 0 && $len < 200000} {
-  mrd -bin -file $log [expr {$LOG_ADDR + 8}] [expr {($len + 3) / 4}]
+if {!$done} {
+  # last resort: halt the A53 and read through it
+  targets -set -nocase -filter {name =~ "*A53*#0"}
+  if {[catch {stop} err]} { puts "INFO: could not halt the A53: $err" }
+  targets -set -nocase -filter {name =~ "APU*"}
+}
+set len [rd [expr {$LOG_ADDR + 4}]]
+if {$len > 0 && $len < 16384} {
+  mrd -force -bin -file $log [expr {$LOG_ADDR + 8}] [expr {($len + 3) / 4}]
   set fp [open $log rb]; set text [string range [read $fp] 0 [expr {$len - 1}]]; close $fp
   set fp [open $log wb]; puts -nonewline $fp $text; close $fp
   puts $text

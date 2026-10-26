@@ -86,6 +86,19 @@ try:
     app = client.create_app_component(name="heston_app", platform=xpfm, domain="standalone_a53")
     app.import_files(from_loc=STAGE, files=["main.c", "zu_cases.h"], dest_dir_in_cmp="src")
     app.set_app_config(key="USER_COMPILE_DEFINITIONS", values="ZU_BASE=%su" % base)
+    # Link everything into the on-chip memory, not the DDR (the lab board's DDR did
+    # not train with the preset's settings), keeping OCM's first 16 KB for the log
+    # buffer at 0xFFFC0000 (LOG_ADDR in main.c, run_app.tcl).
+    import re
+    ld = os.path.join(WS, "heston_app", "src", "lscript.ld")
+    text = open(ld).read()
+    text, n_sec = re.subn(r">\s*psu_ddr_0_memory_0", "> psu_ocm_ram_0_memory_0", text)
+    text, n_mem = re.subn(r"(psu_ocm_ram_0_memory_0\s*:\s*ORIGIN\s*=\s*)0x[fF]{3}[cC]0000(\s*,\s*LENGTH\s*=\s*)0x40000",
+                          r"\g<1>0xfffc4000\g<2>0x3c000", text)
+    if n_sec == 0 or n_mem != 1:
+        raise SystemExit("ERROR: could not move the program to OCM in %s (%d sections, %d regions)" % (ld, n_sec, n_mem))
+    open(ld, "w").write(text)
+    print("linker script: %d sections moved to OCM (0xfffc4000, 240 KB); log at 0xfffc0000" % n_sec)
     app.set_app_config(key="USER_COMPILE_OPTIMIZATION_LEVEL", values="-O2")
     try:
         app.build()

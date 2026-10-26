@@ -17,7 +17,10 @@
  *                   that power / evaluations per second
  *
  * Output goes to the UART and, so that no serial console is needed, into a log
- * buffer in DDR at LOG_ADDR, which run_app.tcl saves to a file after the run.
+ * buffer at LOG_ADDR, which run_app.tcl reads through the debug port and saves.
+ * The program runs entirely from the on-chip memory (OCM; build_vitis.py links it
+ * there and keeps the first 16 KB for the log), so it does not depend on the DDR:
+ * on the lab's ZCU102 the board preset's DDR settings did not train.
  *
  * The same file builds on a PC against software stand-ins (pc_test.h), which
  * checks this program's logic before the board.
@@ -65,9 +68,9 @@
 
 /* ---- log: UART and a DDR buffer that xsdb reads after the run ------------------ */
 #ifndef LOG_ADDR
-#define LOG_ADDR 0x40000000u      /* 1 GB into DDR, far above this small program */
+#define LOG_ADDR 0xFFFC0000u      /* the first 16 KB of OCM, kept out of the program by its linker script */
 #endif
-#define LOG_MAX    (192 * 1024)
+#define LOG_MAX    (16 * 1024 - 8)
 #define LOG_RUN    0x52554e21u    /* "RUN!": running; "DONE" when finished */
 #define LOG_DONE   0x444f4e45u
 typedef struct { volatile uint32_t magic, len; char text[LOG_MAX]; } logbuf_t;
@@ -291,7 +294,8 @@ int main(void) {
     for (int i = 0; i < ZU_NOUT; i++)
       if (o[i] != k->want[i]) {
         e++;
-        out("  FAIL %-12s got %lld want %lld\r\n", zu_out_name[i], (long long)o[i], (long long)k->want[i]);
+        if (bad_outputs + e <= 20)            /* keep the log short enough for the summary */
+          out("  FAIL %-12s got %lld want %lld\r\n", zu_out_name[i], (long long)o[i], (long long)k->want[i]);
       }
     if (e) { bad_cases++; bad_outputs += e; per_kind_bad[kind]++; out("CASE %d (%s): FAIL (%d)\r\n", c + 1, k->kind, e); }
   }
