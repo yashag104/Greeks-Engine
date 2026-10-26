@@ -18,7 +18,9 @@ FILES = ["verilog/gen/heston_aad_zu.v", "verilog/gen/heston_aad_zu_lite.v",
          "gen/build/heston_aad_zu_lite_nifty.tcl",
          "vivado/zcu104/bd_jtag.tcl", "vivado/zedboard/run_jtag.tcl", "vivado/zedboard/mock/mock_vivado.tcl"]
 FILES += ["vivado/zcu102/" + f for f in ["bd_jtag.tcl", "run_jtag.tcl", "run_sweep.tcl", "run_nifty.tcl",
-                                         "run_board.sh", "README.md", "mock/drive.tcl"]]
+                                         "run_board.sh", "README.md", "mock/drive.tcl", "bd_ps.tcl"]]
+FILES += ["sw/zcu102/" + f for f in ["main.c", "pc_test.h", "build_vitis.py", "run_app.tcl", "gen_cases.py",
+                                     "generated/zu_cases.h", "README.md"]]
 
 out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(HERE, "greeks_zcu102.zip")
 missing = [f for f in FILES if not os.path.isfile(os.path.join(HW, f))]
