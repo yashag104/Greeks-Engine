@@ -25,7 +25,9 @@ case "$1" in
   psdry) v bd_ps.log bd_ps.tcl dry;      grep -E "^(RESULT|ERROR)" bd_ps.log ;;
   ps)    v bd_ps.log bd_ps.tcl;          grep -E "^(RESULT|WARNING: timing|ERROR)" bd_ps.log ;;
   app)   need vitis Vitis
-         (cd "$SW" && vitis -s build_vitis.py) 2>&1 | tee vitis_build.log | grep -E "^(RESULT|ERROR|engine base)" ;;
+         (cd "$SW" && vitis -s build_vitis.py) > vitis_build.log 2>&1
+         grep -E "^(RESULT|ERROR|engine base)" vitis_build.log
+         grep -q "^RESULT: built" vitis_build.log || { echo "ERROR: the Vitis build failed; the end of vitis_build.log:"; tail -150 vitis_build.log; exit 1; } ;;
   run)   need xsdb Vitis
          rm -rf "$SW/xsa_x" && unzip -o -j -q heston_zcu102_ps.xsa '*psu_init.tcl' -d "$SW/xsa_x" || exit 1
          (cd "$SW" && xsdb run_app.tcl) 2>&1 | tee xsdb_run.log | grep -E "^(PASS|FAIL|TIMING|  |THROUGHPUT|POWER|ENERGY|RESULT|ERROR|INFO|DONE)" ;;
