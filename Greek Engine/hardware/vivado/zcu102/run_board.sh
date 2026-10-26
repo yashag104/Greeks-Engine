@@ -30,6 +30,6 @@ case "$1" in
          grep -q "^RESULT: built" vitis_build.log || { echo "ERROR: the Vitis build failed; the end of vitis_build.log:"; tail -150 vitis_build.log; exit 1; } ;;
   run)   need xsdb Vitis
          rm -rf "$SW/xsa_x" && unzip -o -j -q heston_zcu102_ps.xsa '*psu_init.tcl' -d "$SW/xsa_x" || exit 1
-         (cd "$SW" && xsdb run_app.tcl) 2>&1 | tee xsdb_run.log | grep -E "^(PASS|FAIL|TIMING|  |THROUGHPUT|POWER|ENERGY|RESULT|ERROR|INFO|DONE)" ;;
+         (cd "$SW" && xsdb run_app.tcl) 2>&1 | tee xsdb_run.log | grep --line-buffered -E "^(PASS|FAIL|TIMING|  |THROUGHPUT|POWER|ENERGY|RESULT|ERROR|INFO|DONE)" ;;
   *) echo "usage: ./run_board.sh dry | build [clk_mhz] | test | sweep | nifty | psdry | ps | app | run"; exit 1 ;;
 esac
