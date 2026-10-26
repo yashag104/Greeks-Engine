@@ -14,6 +14,9 @@ set xsa  "$hw/heston_zcu102_ps.xsa"
 set bit  "$hw/proj/heston_ps/heston_ps.runs/impl_1/heston_ps_wrapper.bit"
 set ws   [file normalize "$here/../../../vitis_ws_zcu102"]
 set elf  "$ws/heston_app/build/heston_app.elf"
+# a program built elsewhere (e.g. with another Vitis version) and copied here takes precedence
+if {[file exists "$here/heston_app.elf"]} { set elf "$here/heston_app.elf" }
+puts "INFO: program $elf"
 set init "$here/xsa_x/psu_init.tcl"
 set log  "$here/zcu102_ps_run.log"
 set LOG_ADDR 0x40000000
