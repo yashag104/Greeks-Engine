@@ -20,6 +20,13 @@ Board setup: power, the JTAG micro-USB port, and the boot-mode switch SW6 set
 to JTAG (ZCU102 user guide, UG1182). Close the Vivado GUI's Hardware Manager
 before step 2, or disconnect it there, so the batch run can open the cable.
 
+## Processor system: timing and power
+
+`bd_ps.tcl` builds a second design in which the Cortex-A53 drives the engine, and
+`hardware/sw/zcu102` is the program that times every stage over the bus and reads
+the board's PL power monitors: `./run_board.sh psdry`, `ps`, `app`, `run` (see
+`hardware/sw/zcu102/README.md`). Needs Vitis in PATH as well as Vivado.
+
 `tclsh mock/drive.tcl` tests the run scripts against a model of Vivado's
 hardware manager. `make_bundle.py` packs everything the lab machine needs
 (RTL, these scripts, the shared ones they source, the test vectors) into one

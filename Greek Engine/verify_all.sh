@@ -124,6 +124,16 @@ gcc -O2 -std=gnu99 -DHC_PC_TEST -DHC_PORTABLE -DPOWER_WINDOW_S=0 -I"$SW/generate
 grep -q "^PASS: 100 cases" "$LOG/arm_app.log" || ok=0
 [ $ok = 1 ] && echo PASS > "$LOG/arm_app.chk" || echo FAIL > "$LOG/arm_app.chk"
 record "ARM end-to-end program on a PC register model, 100 cases" "$LOG/arm_app.chk" PASS
+ZSW="$ROOT/hardware/sw/zcu102"
+ok=1
+cp "$ZSW/generated/zu_cases.h" build/zu_cases_committed.h
+"$PY" "$ZSW/gen_cases.py" > "$LOG/zu_app.log" 2>&1 || ok=0
+cmp -s build/zu_cases_committed.h "$ZSW/generated/zu_cases.h" || { echo "  zu_cases.h was out of date"; ok=0; }
+gcc -O2 -std=gnu99 -Wall -DZU_PC_TEST -DPOWER_WINDOW_MS=100 -I"$ZSW/generated" "$ZSW/main.c" \
+    -o build/zu_app_pc_test >> "$LOG/zu_app.log" 2>&1 && build/zu_app_pc_test >> "$LOG/zu_app.log" 2>&1 || ok=0
+grep -q "^PASS: all 101 cases" "$LOG/zu_app.log" && grep -q "^ENERGY RESULT" "$LOG/zu_app.log" || ok=0
+[ $ok = 1 ] && echo PASS > "$LOG/zu_app.chk" || echo FAIL > "$LOG/zu_app.chk"
+record "ZCU102 ARM program on a PC register/monitor model, 101 cases" "$LOG/zu_app.chk" PASS
 
 echo "== 5. emulator accuracy and error bound"
 "$PY" check_accuracy.py 32 > "$LOG/acc32.log" 2>&1
