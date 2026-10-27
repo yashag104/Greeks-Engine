@@ -29,7 +29,19 @@ foreach f [list $xsa $bit $elf $init] {
 }
 
 connect
-targets -set -nocase -filter {name =~ "APU*"}
+# The A53s are reachable only through the DAP's AXI/APB ports. If the PS bus is hung
+# (e.g. a previous program stalled on memory), the DAP reports an AXI AP error and no
+# APU appears: only a power cycle clears that.
+set apu ""
+for {set i 0} {$i < 10 && $apu eq ""} {incr i} {
+  if {[catch {targets -set -nocase -filter {name =~ "APU*"}}]} { after 1000 } else { set apu ok }
+}
+if {$apu eq ""} {
+  puts "ERROR: the processor (APU) is not reachable over JTAG; the debugger sees:"
+  puts [targets]
+  puts "ERROR: switch the ZCU102 off and on, check SW6 = JTAG (all four ON), then run again"
+  exit 1
+}
 rst -system
 after 3000
 targets -set -nocase -filter {name =~ "PSU*"}
