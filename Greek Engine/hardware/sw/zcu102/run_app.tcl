@@ -8,8 +8,9 @@
 # well as to the UART. The buffer is polled through the debug port while the
 # processor runs (no halt, so the timing and power windows are undisturbed) and
 # saved when the program marks it done. Boot-mode switch SW6: JTAG.
-# psu_init also initialises the DDR; on the lab board that step reports a mask
-# poll timeout at 0xFD080030 (DDR training), which the program does not need.
+# The PS is initialised from the XSA's psu_init.tcl without its DDR steps: on the
+# lab board the preset's DDR training fails (a mask poll timeout at 0xFD080030, or
+# a poll loop of 10^8 JTAG reads that never ends), and the program does not use DDR.
 # ============================================================================
 set here [file dirname [file normalize [info script]]]
 set hw   [file normalize "$here/../../vivado/zcu102"]
@@ -32,11 +33,21 @@ connect
 # The A53s are reachable only through the DAP's AXI/APB ports. If the PS bus is hung
 # (e.g. a previous program stalled on memory), the DAP reports an AXI AP error and no
 # APU appears: only a power cycle clears that.
-set apu ""
-for {set i 0} {$i < 10 && $apu eq ""} {incr i} {
-  if {[catch {targets -set -nocase -filter {name =~ "APU*"}}]} { after 1000 } else { set apu ok }
+proc find_apu {} {
+  for {set i 0} {$i < 10} {incr i} {
+    if {![catch {targets -set -nocase -filter {name =~ "APU*"}}]} { return 1 }
+    after 1000
+  }
+  return 0
 }
-if {$apu eq ""} {
+set apu [find_apu]
+if {!$apu} {
+  # recover a hung PS bus the way that worked on the lab board: reset the DAP, then the system
+  puts "INFO: APU not reachable; resetting the debug port and the system"
+  catch {targets -set -nocase -filter {name =~ "DAP*"}; rst -dap; after 1000; rst -system; after 3000}
+  set apu [find_apu]
+}
+if {!$apu} {
   puts "ERROR: the processor (APU) is not reachable over JTAG; the debugger sees:"
   puts [targets]
   puts "ERROR: switch the ZCU102 off and on, check SW6 = JTAG (all four ON), then run again"
@@ -50,7 +61,25 @@ targets -set -nocase -filter {name =~ "APU*"}
 loadhw -hw $xsa -mem-ranges [list {0x80000000 0xbfffffff} {0x400000000 0x5ffffffff} {0x1000000000 0x7fffffffff}] -regs
 configparams force-mem-access 1
 source $init
-psu_init
+# psu_init, minus psu_ddr_init_data, psu_ddr_phybringup_data and psu_ddr_qos_init_data
+proc psu_init_no_ddr {} {
+  set saved_mode [configparams force-mem-accesses]
+  configparams force-mem-accesses 1
+  foreach v {psu_mio_init_data psu_peripherals_pre_init_data psu_pll_init_data psu_clock_init_data
+             psu_peripherals_init_data psu_resetin_init_data psu_serdes_init_data psu_resetout_init_data
+             psu_peripherals_powerdwn_data psu_afi_config} { variable $v }
+  init_ps [subst {$psu_mio_init_data $psu_peripherals_pre_init_data $psu_pll_init_data $psu_clock_init_data}]
+  init_ps [subst {$psu_peripherals_init_data $psu_resetin_init_data}]
+  init_serdes
+  init_ps [subst {$psu_serdes_init_data $psu_resetout_init_data}]
+  init_peripheral
+  init_ps [subst {$psu_peripherals_powerdwn_data}]
+  init_ps [subst {$psu_afi_config}]
+  configparams force-mem-accesses $saved_mode
+}
+puts "INFO: initialising the PS (without DDR)"
+psu_init_no_ddr
+puts "INFO: PS initialised"
 after 1000
 psu_ps_pl_isolation_removal
 after 1000
