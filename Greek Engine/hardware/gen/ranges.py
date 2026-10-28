@@ -83,7 +83,8 @@ def measure(dp, n_samples=N_SAMPLES, seed=11):
 
 
 def get(dp, cache_dir):
-    key = "ranges_wl%d_fl%d_%s.json" % (dp.g.wl, dp.g.fl, "aad" if dp.greeks else "price")
+    kind = getattr(dp, "range_key", "aad" if dp.greeks else "price")
+    key = "ranges_wl%d_fl%d_%s.json" % (dp.g.wl, dp.g.fl, kind)
     path = os.path.join(cache_dir, key)
     if os.path.exists(path):
         data = json.load(open(path))

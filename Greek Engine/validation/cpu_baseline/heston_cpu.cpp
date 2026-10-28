@@ -230,6 +230,182 @@ static void m_analytic(const double* p, bool call, double* out) {
   }
 }
 
+// ---- the analytic method, vectorised across COS terms (SIMD baseline).
+// The same mathematics as m_analytic, written so the compiler can vectorise the
+// 128-term loop: no data-dependent branches (selects instead), and every
+// transcendental a call glibc's vector math library (libmvec) provides. Built
+// separately with -Ofast -fopenmp-simd -lmvec (run_baseline.py: heston_cpu_simd);
+// in the plain -O3 build the loop stays scalar, as m_analytic's does.
+static inline C2 csqrt_bl(const C2& z) {                 // principal branch, branch-free
+  const double r = std::sqrt(z.re * z.re + z.im * z.im);
+  const double wp = std::sqrt(0.5 * (r + z.re)), wn = std::sqrt(0.5 * (r - z.re));
+  const double sg = z.im >= 0 ? 1.0 : -1.0;
+  const bool pos = z.re >= 0;
+  return {pos ? wp : z.im / (2.0 * sg * wn), pos ? z.im / (2.0 * wp) : sg * wn};
+}
+static void m_analytic_simd(const double* p, bool call, double* out) {
+  double a, b; trunc_range(p, a, b);
+  const double S0 = p[0], K = p[1], T = p[2], r = p[3], v0 = p[4], kappa = p[5], theta = p[6], xi = p[7], rho = p[8];
+  const double x = std::log(S0 / K), xi2 = xi * xi, coef = kappa * theta / xi2;
+  const double bma = b - a, ea = std::exp(a);
+  double s0 = 0, s1 = 0, s2 = 0, s3 = 0, s4 = 0, s5 = 0, s6 = 0, s7 = 0, s8 = 0;
+#pragma omp simd reduction(+ : s0, s1, s2, s3, s4, s5, s6, s7, s8)
+  for (int k = 0; k < N_TERMS; ++k) {
+    const C2 one{1.0, 0.0};
+    const double u = k * PI / bma, cu = std::cos(u * a), su = std::sin(u * a);
+    const C2 iu{0.0, u}, uu{u * u, u};
+    const C2 bb{kappa, -rho * xi * u};
+    const C2 d = csqrt_bl(bb * bb + cs(xi2, uu));
+    const C2 bpd = bb + d, bmd = bb - d;
+    const C2 ibpd2 = one / (bpd * bpd);
+    const C2 g = bmd / bpd;
+    const double em = std::exp(-T * d.re);
+    const C2 e{em * std::cos(-T * d.im), em * std::sin(-T * d.im)};
+    const C2 ge = g * e, omge = one - ge, omg = one - g, ome = one - e;
+    const C2 iomge = one / omge, iomg = one / omg;
+    const C2 q = omge * iomg;
+    const C2 L{0.5 * std::log(q.re * q.re + q.im * q.im), std::atan2(q.im, q.re)};
+    const C2 A = cs(T, bmd) - cs(2.0, L);
+    const C2 N = bmd * ome, M = cs(xi2, omge), iM = one / M;
+    const C2 D = N * iM;
+    const C2 ex = cs(r * T, iu) + cs(coef, A) + cs(v0, D) + cs(x, iu);
+    const double pm = std::exp(ex.re);
+    const C2 phi{pm * std::cos(ex.im), pm * std::sin(ex.im)};
+    auto dlog = [&](const C2& dbb, const C2& dd, double dT, double dxi, double dcoef) {
+      const C2 dg = cs(2.0, d * dbb - bb * dd) * ibpd2;
+      const C2 de = cs(-1.0, e * (cs(T, dd) + C2{dT * d.re, dT * d.im}));
+      const C2 dge = dg * e + g * de;
+      const C2 dL = dg * iomg - dge * iomge;
+      const C2 dA = cs(dT, bmd) + cs(T, dbb - dd) - cs(2.0, dL);
+      const C2 dN = (dbb - dd) * ome - bmd * de;
+      const C2 dM = cs(2.0 * xi * dxi, omge) - cs(xi2, dge);
+      const C2 dD = (dN - D * dM) * iM;
+      return cs(dcoef, A) + cs(coef, dA) + cs(v0, dD);
+    };
+    const C2 z{0.0, 0.0};
+    const C2 iD = one / d;
+    const C2 rho_u{0.0, -rho * u}, xi_u{0.0, -xi * u};
+    const C2 lT = cs(r, iu) + dlog(z, z, 1.0, 0.0, 0.0);
+    const C2 lk = dlog({1.0, 0.0}, bb * iD, 0.0, 0.0, theta / xi2);
+    const C2 lxi = dlog(rho_u, (bb * rho_u + cs(xi, uu)) * iD, 0.0, 1.0, -2.0 * coef / xi);
+    const C2 lrho = dlog(xi_u, bb * xi_u * iD, 0.0, 0.0, 0.0);
+    const double chi = (cu - ea - u * su) / (1.0 + u * u);
+    const double kk = k == 0 ? 1.0 : (double)k;
+    const double psi = (k == 0) ? -a : -(bma / (kk * PI)) * su;
+    const double w = (k == 0 ? 0.5 : 1.0) * (2.0 / bma) * K * (psi - chi);
+    auto re_dot = [&](const C2& dl) { const C2 f = phi * dl; return w * (f.re * cu + f.im * su); };
+    s0 += re_dot(one); s1 += re_dot(iu); s2 += re_dot(lT); s3 += re_dot(cs(T, iu)); s4 += re_dot(D);
+    s5 += re_dot(lk); s6 += re_dot(cs(kappa / xi2, A)); s7 += re_dot(lxi); s8 += re_dot(lrho);
+  }
+  const double s[9] = {s0, s1, s2, s3, s4, s5, s6, s7, s8};
+  const double disc = std::exp(-r * T), put = disc * s[0];
+  out[0] = put;
+  out[1] = disc * s[1] / S0;
+  out[2] = -disc * s[1] / K + put / K;
+  out[3] = disc * s[2] - r * put;
+  out[4] = disc * s[3] - T * put;
+  for (int j = 4; j < 9; ++j) out[1 + j] = disc * s[j];
+  if (call) {
+    out[0] += S0 - K * disc; out[1] += 1.0; out[2] -= disc;
+    out[3] += K * r * disc; out[4] += K * T * disc;
+  }
+}
+
+// ---- the analytic method in structure-of-arrays form (SIMD baseline 2).
+// The single-loop m_analytic_simd vectorises but spills: its body keeps ~100 complex
+// temporaries live. Here the same mathematics is split into short loops over
+// arrays of the 128 terms, each with little live state, so each vectorises cleanly.
+#define SOA_LOOP _Pragma("omp simd") for (int k = 0; k < N_TERMS; ++k)
+static void m_analytic_soa(const double* p, bool call, double* out) {
+  double a, b; trunc_range(p, a, b);
+  const double S0 = p[0], K = p[1], T = p[2], r = p[3], v0 = p[4], kappa = p[5], theta = p[6], xi = p[7], rho = p[8];
+  const double x = std::log(S0 / K), xi2 = xi * xi, coef = kappa * theta / xi2;
+  const double bma = b - a, ea = std::exp(a);
+  alignas(64) static double u[N_TERMS], cu[N_TERMS], su[N_TERMS], w[N_TERMS];
+  alignas(64) static double dr[N_TERMS], di[N_TERMS], er[N_TERMS], ei[N_TERMS], qr[N_TERMS], qi[N_TERMS];
+  alignas(64) static double Lr[N_TERMS], Li[N_TERMS], pr[N_TERMS], pi_[N_TERMS], exr[N_TERMS], exi[N_TERMS];
+  // 1: grid, payoff weights, d = sqrt(bb^2 + xi^2 (u^2 + iu))
+  SOA_LOOP {
+    const double uk = k * PI / bma;
+    u[k] = uk; cu[k] = std::cos(uk * a); su[k] = std::sin(uk * a);
+    const double chi = (cu[k] - ea - uk * su[k]) / (1.0 + uk * uk);
+    const double kk = k == 0 ? 1.0 : (double)k;
+    const double psi = (k == 0) ? -a : -(bma / (kk * PI)) * su[k];
+    w[k] = (k == 0 ? 0.5 : 1.0) * (2.0 / bma) * K * (psi - chi);
+    const C2 bb{kappa, -rho * xi * uk};
+    const C2 d = csqrt_bl(bb * bb + C2{xi2 * uk * uk, xi2 * uk});
+    dr[k] = d.re; di[k] = d.im;
+  }
+  // 2: e = exp(-T d)
+  SOA_LOOP { const double m = std::exp(-T * dr[k]); er[k] = m * std::cos(T * di[k]); ei[k] = -m * std::sin(T * di[k]); }
+  // 3: q = (1 - g e) / (1 - g)
+  SOA_LOOP {
+    const C2 one{1.0, 0.0}, bb{kappa, -rho * xi * u[k]}, d{dr[k], di[k]}, e{er[k], ei[k]};
+    const C2 g = (bb - d) / (bb + d);
+    const C2 q = (one - g * e) / (one - g);
+    qr[k] = q.re; qi[k] = q.im;
+  }
+  // 4: L = log q
+  SOA_LOOP { Lr[k] = 0.5 * std::log(qr[k] * qr[k] + qi[k] * qi[k]); Li[k] = std::atan2(qi[k], qr[k]); }
+  // 5: exponent of phi
+  SOA_LOOP {
+    const C2 one{1.0, 0.0}, bb{kappa, -rho * xi * u[k]}, d{dr[k], di[k]}, e{er[k], ei[k]};
+    const C2 bmd = bb - d, g = bmd / (bb + d), omge = one - g * e;
+    const C2 A = cs(T, bmd) - cs(2.0, C2{Lr[k], Li[k]});
+    const C2 D = (bmd * (one - e)) / cs(xi2, omge);
+    exr[k] = coef * A.re + v0 * D.re;
+    exi[k] = (r * T + x) * u[k] + coef * A.im + v0 * D.im;
+  }
+  // 6: phi = exp(exponent)
+  SOA_LOOP { const double m = std::exp(exr[k]); pr[k] = m * std::cos(exi[k]); pi_[k] = m * std::sin(exi[k]); }
+  // 7: derivatives of ln phi and the nine sums
+  double s0 = 0, s1 = 0, s2 = 0, s3 = 0, s4 = 0, s5 = 0, s6 = 0, s7 = 0, s8 = 0;
+#pragma omp simd reduction(+ : s0, s1, s2, s3, s4, s5, s6, s7, s8)
+  for (int k = 0; k < N_TERMS; ++k) {
+    const C2 one{1.0, 0.0}, z{0.0, 0.0};
+    const double uk = u[k];
+    const C2 iu{0.0, uk}, uu{uk * uk, uk}, bb{kappa, -rho * xi * uk}, d{dr[k], di[k]}, e{er[k], ei[k]};
+    const C2 bpd = bb + d, bmd = bb - d, ibpd2 = one / (bpd * bpd), g = bmd / bpd;
+    const C2 ge = g * e, omge = one - ge, omg = one - g, ome = one - e;
+    const C2 iomge = one / omge, iomg = one / omg;
+    const C2 A = cs(T, bmd) - cs(2.0, C2{Lr[k], Li[k]});
+    const C2 iM = one / cs(xi2, omge), D = bmd * ome * iM;
+    auto dlog = [&](const C2& dbb, const C2& dd, double dT, double dxi, double dcoef) {
+      const C2 dg = cs(2.0, d * dbb - bb * dd) * ibpd2;
+      const C2 de = cs(-1.0, e * (cs(T, dd) + C2{dT * d.re, dT * d.im}));
+      const C2 dge = dg * e + g * de;
+      const C2 dL = dg * iomg - dge * iomge;
+      const C2 dA = cs(dT, bmd) + cs(T, dbb - dd) - cs(2.0, dL);
+      const C2 dN = (dbb - dd) * ome - bmd * de;
+      const C2 dM = cs(2.0 * xi * dxi, omge) - cs(xi2, dge);
+      const C2 dD = (dN - D * dM) * iM;
+      return cs(dcoef, A) + cs(coef, dA) + cs(v0, dD);
+    };
+    const C2 iD = one / d, rho_u{0.0, -rho * uk}, xi_u{0.0, -xi * uk};
+    const C2 lT = cs(r, iu) + dlog(z, z, 1.0, 0.0, 0.0);
+    const C2 lk = dlog({1.0, 0.0}, bb * iD, 0.0, 0.0, theta / xi2);
+    const C2 lxi = dlog(rho_u, (bb * rho_u + cs(xi, uu)) * iD, 0.0, 1.0, -2.0 * coef / xi);
+    const C2 lrho = dlog(xi_u, bb * xi_u * iD, 0.0, 0.0, 0.0);
+    const C2 phi{pr[k], pi_[k]};
+    const double wk = w[k], c = cu[k], sn = su[k];
+    auto re_dot = [&](const C2& dl) { const C2 f = phi * dl; return wk * (f.re * c + f.im * sn); };
+    s0 += re_dot(one); s1 += re_dot(iu); s2 += re_dot(lT); s3 += re_dot(cs(T, iu)); s4 += re_dot(D);
+    s5 += re_dot(lk); s6 += re_dot(cs(kappa / xi2, A)); s7 += re_dot(lxi); s8 += re_dot(lrho);
+  }
+  const double s[9] = {s0, s1, s2, s3, s4, s5, s6, s7, s8};
+  const double disc = std::exp(-r * T), put = disc * s[0];
+  out[0] = put;
+  out[1] = disc * s[1] / S0;
+  out[2] = -disc * s[1] / K + put / K;
+  out[3] = disc * s[2] - r * put;
+  out[4] = disc * s[3] - T * put;
+  for (int j = 4; j < 9; ++j) out[1 + j] = disc * s[j];
+  if (call) {
+    out[0] += S0 - K * disc; out[1] += 1.0; out[2] -= disc;
+    out[3] += K * r * disc; out[4] += K * T * disc;
+  }
+}
+
 // ---- the analytic method for a strike chain: M strikes of one expiry share the
 // COS grid (b - a does not depend on K), and with the payoff's phase folded in,
 // Phi_k = phi(u_k) e^{-i u_k a} = exp(C + v0 D + i u_k (x - a)) and its
@@ -392,6 +568,8 @@ static Method pick(const char* m) {
   if (!std::strcmp(m, "aad")) return m_aad;
   if (!std::strcmp(m, "fwdvec")) return m_fwdvec;
   if (!std::strcmp(m, "analytic")) return m_analytic;
+  if (!std::strcmp(m, "analytic_simd")) return m_analytic_simd;
+  if (!std::strcmp(m, "analytic_soa")) return m_analytic_soa;
   if (!std::strcmp(m, "bumpopt")) return m_bumpopt;
   std::fprintf(stderr, "unknown method %s\n", m); std::exit(2);
 }
@@ -411,7 +589,7 @@ static void make_inputs(int n, std::vector<double>& P, std::vector<char>& call) 
 
 int main(int argc, char** argv) {
   const char* mode = argc > 1 ? argv[1] : "check";
-  const char* names[7] = {"price", "bump", "bumpopt", "aad", "fwdvec", "analytic", "steps"};
+  const char* names[9] = {"price", "bump", "bumpopt", "aad", "fwdvec", "analytic", "steps", "analytic_simd", "analytic_soa"};
   if (!std::strcmp(mode, "check")) {
     double base[9] = {100, 100, 1, 0.05, 0.04, 1.5, 0.04, 0.3, -0.9};
     for (const char* m : names) {

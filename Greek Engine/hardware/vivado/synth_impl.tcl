@@ -10,6 +10,8 @@
 #            heston_top_level   (previous FSM AAD engine: price + 9 sensitivities)
 #            heston_bump_top    (bump-and-reprice baseline, same pricing core)
 #            heston_cos_forward (price only; one "reprice")
+#            heston_cmp_*       (equal-throughput comparison engines: price only with 4
+#                                multipliers, factored forward mode with 10; gen_tb.py)
 #   <part>   e.g. xc7z020clg400-1 (Zynq-7000, PYNQ-Z2 / Zybo Z7-20)
 #                 xczu7ev-ffvc1156-2-e (Zynq UltraScale+, ZCU104)
 #   <clk_ns> target clock period in ns (e.g. 10.0)
@@ -31,7 +33,7 @@ set here   [file dirname [file normalize [info script]]]
 set vdir   [file normalize "$here/../verilog"]
 file mkdir $outdir
 
-if {[string match "heston_aad_*" $top] || [string match "heston_bump_z*" $top]} {
+if {[string match "heston_aad_*" $top] || [string match "heston_bump_z*" $top] || [string match "heston_cmp_*" $top]} {
   # generated shared-multiplier designs (hardware/gen): self-contained files
   read_verilog [list "$vdir/gen/$top.v"]
   if {[string match "heston_bump_z7" $top]} { read_verilog [list "$vdir/gen/z7_pricer.v"] }

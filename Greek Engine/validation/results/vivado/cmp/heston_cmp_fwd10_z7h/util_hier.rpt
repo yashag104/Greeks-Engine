@@ -1,0 +1,35 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2025 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2025.2 (win64) Build 6299465 Fri Nov 14 19:35:11 GMT 2025
+| Date         : Wed Oct 28 20:07:06 2026
+| Host         : SaY-PC running 64-bit major release  (build 9200)
+| Command      : report_utilization -hierarchical -file ../../validation/results/vivado/cmp/heston_cmp_fwd10_z7h/util_hier.rpt
+| Design       : heston_cmp_fwd10_z7h
+| Device       : xc7z020clg484-1
+| Speed File   : -1
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Utilization Design Information
+
+Table of Contents
+-----------------
+1. Utilization by Hierarchy
+
+1. Utilization by Hierarchy
+---------------------------
+
++--------------------------+----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+|         Instance         |           Module           | Total LUTs | Logic LUTs | LUTRAMs | SRLs |  FFs  | RAMB36 | RAMB18 | DSP Blocks |
++--------------------------+----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+| heston_cmp_fwd10_z7h     |                      (top) |      38199 |      37288 |       0 |  911 | 30514 |      0 |      4 |         90 |
+|   (heston_cmp_fwd10_z7h) |                      (top) |      31247 |      30336 |       0 |  911 | 29075 |      0 |      4 |         90 |
+|   cr0_inst               |   heston_cmp_fwd10_z7h_rot |       1969 |       1969 |       0 |    0 |   313 |      0 |      0 |          0 |
+|   cr1_inst               | heston_cmp_fwd10_z7h_rot_0 |       1973 |       1973 |       0 |    0 |   313 |      0 |      0 |          0 |
+|   cr2_inst               | heston_cmp_fwd10_z7h_rot_1 |        822 |        822 |       0 |    0 |   313 |      0 |      0 |          0 |
+|   cv0_inst               |   heston_cmp_fwd10_z7h_vec |       1216 |       1216 |       0 |    0 |   190 |      0 |      0 |          0 |
+|   cv1_inst               | heston_cmp_fwd10_z7h_vec_2 |       1040 |       1040 |       0 |    0 |   310 |      0 |      0 |          0 |
++--------------------------+----------------------------+------------+------------+---------+------+-------+--------+--------+------------+
+* Note: The sum of lower-level cells may be larger than their parent cells total, due to cross-hierarchy LUT combining
+
+
