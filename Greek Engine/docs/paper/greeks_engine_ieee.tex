@@ -19,6 +19,9 @@
 \usepackage[hidelinks]{hyperref}
 
 \newcommand{\TBD}[1]{\textcolor{red}{\textbf{[#1]}}}
+% vectorised CPU baseline (validation/cpu_baseline/run_simd.py -> results/cpu_simd.csv)
+\newcommand{\SIMDUS}{\TBD{SIMD}}
+\newcommand{\SIMDTP}{\TBD{SIMD}}
 \definecolor{acc}{HTML}{0072B2}
 \definecolor{accsoft}{HTML}{DCEBF5}
 \definecolor{ink}{HTML}{16202A}
@@ -33,7 +36,7 @@
 
 \begin{document}
 
-\title{Tape-Free Adjoint Greeks on FPGAs: Heston-Model\\ Option Sensitivities with Per-Greek Rounding-Error Bounds}
+\title{Co-Scheduled Adjoint Greeks in a Fixed-Point FPGA Datapath:\\ Heston-Model Option Sensitivities with First-Order Rounding Bounds}
 
 \author{\IEEEauthorblockN{Yash Agrawal}
 \IEEEauthorblockA{Birla Institute of Technology and Science, Pilani\\ Pilani, India}
@@ -44,118 +47,139 @@
 \maketitle
 
 \begin{abstract}
-Option Greeks, the sensitivities of a price to its inputs, drive hedging and risk
-limits, and on hardware they are still computed by bump-and-reprice: one extra pricing
-per input, at an accuracy that depends on an arbitrary bump size. This paper presents
-the first FPGA engine that computes Greeks by adjoint (reverse-mode) differentiation.
-It prices a European option under the Heston stochastic-volatility model with the COS
-Fourier-cosine method and returns the price and all nine first-order Greeks in one pass.
-Because the COS pricer performs the same operations for every input, its reverse sweep
-is compiled into the same statically scheduled fixed-point datapath as the forward
-pass, with no tape memory or replay logic, and fills multiplier slots the forward pass
-leaves idle. A generator produces, from one operation graph, a bit-accurate model, a
-first-order rounding-error bound for the price and each Greek, a modulo-scheduled
-Verilog datapath and the host code. On a Zynq-7020 the price and nine Greeks take
-4,733 cycles, 1.04 times the price alone and 18.4 times fewer than bump-and-reprice on
-the same hardware; the adjoint Greeks are 32--560 times more accurate than the best
-bump-and-reprice. The bound was never exceeded over 21,000 test inputs (worst 0.378 of
-the bound), and the engine ran bit-exact on silicon on two FPGA families: 450/450
-results on a ZedBoard and 1,010/1,010 on a Zynq UltraScale+ ZCU102, including 50
-calibrations to real NIFTY option data. On the ZCU102 an evaluation takes 15.9\,$\mu$s,
-4.9--15 times faster than forward-mode AD, taped adjoint AD and bump-and-reprice on a
-laptop core and 1.3 times faster than hand-derived analytic Greeks.
+FPGA option-pricing engines obtain Greeks, the sensitivities of a price to its inputs,
+by bump-and-reprice or by re-simulation. We present an FPGA engine for European options
+under the Heston model, priced with the COS Fourier-cosine method, in which a
+hand-derived reverse (adjoint) sweep is co-scheduled with the forward pass in one
+statically scheduled fixed-point datapath. Because the COS loop has no data-dependent
+control flow, the values the reverse sweep needs are held in a statically allocated,
+register-resident tape rather than in memory. A generator emits, from one operation
+graph, a bit-accurate model, the modulo-scheduled Verilog and a first-order rounding-error
+bound for the price and each of nine first-order Greeks, used at design time to size and
+certify the word length. Implemented in Vivado on a Zynq-7020 at equal throughput, the
+price-and-Greeks engine takes 1.03$\times$ the cycles of a price-only engine at
+1.68$\times$ its LUTs and 2$\times$ its DSP blocks; a factored forward-mode engine built by
+the same flow needs 7\% more LUTs, 12\% more flip-flops and 25\% more DSP blocks and is
+6$\times$ less accurate at the same word length. The bound was never exceeded over 21,000
+inputs, and the engine ran bit-exact on two FPGA families (1,469/1,469 outputs, including
+50 calibrations to NIFTY options). The bound covers rounding only; the COS truncation error
+dominates in a few in-domain cases. The computed engine latency on a ZCU102, 15.9\,$\mu$s
+excluding bus transfers, is 4.9--15$\times$ below general-purpose AD and bump-and-reprice
+on a laptop core but not below a vectorised implementation of hand-derived Greeks
+(\SIMDUS\,$\mu$s).
 \end{abstract}
 
 \begin{IEEEkeywords}
-FPGA, adjoint algorithmic differentiation, option Greeks, Heston model, COS method,
-fixed-point arithmetic, rounding-error analysis, high-level synthesis
+FPGA, adjoint differentiation, option Greeks, Heston model, COS method, fixed-point
+arithmetic, rounding-error analysis, modulo scheduling
 \end{IEEEkeywords}
 
 % =============================================================================
 \section{Introduction}
-A trading desk needs not only the prices of the options it holds but their Greeks,
-the partial derivatives of each price with respect to spot, strike, maturity, rate and
-the model's parameters. Greeks set hedge ratios and risk limits and feed model
-calibration, so they are recomputed whenever the market moves. Under the Heston
-stochastic-volatility model~\cite{heston} the price has no closed form and is computed
-numerically, here by the COS method~\cite{fang}.
+Option Greeks, the partial derivatives of a price with respect to spot, strike,
+maturity, rate and the model's parameters, set hedge ratios and risk limits and drive
+model calibration. Under the Heston stochastic-volatility model~\cite{heston} the price
+has no closed form and is computed numerically, here by the COS method~\cite{fang}.
 
-The usual way to obtain Greeks, in software and in every FPGA design we know of, is
-\emph{bump-and-reprice}: perturb one input and price again. Nine Greeks by central
-differences cost 19 pricings, and the result depends on a bump size for which no
-setting is safe for every Greek (Fig.~\ref{fig:bump}). Software replaced this with
-\emph{adjoint algorithmic differentiation} (AAD)~\cite{giles,capriotti}, which obtains
-the derivatives of one output with respect to all inputs in a single reverse sweep. In
-software, however, the reverse sweep reads a \emph{tape} of the forward computation;
-on our CPU baseline taped AAD costs 7.6 pricings and forward-mode AD 5.7. No FPGA work
-has computed Greeks by an adjoint~\cite{klai,deschryver,vitisquant,capgiles24}.
+On FPGAs, published engines compute Greeks by bump-and-reprice or by re-running the
+simulation for each sensitivity~\cite{klai,klaih2rc,vitisquant}. Nine Greeks by central
+differences cost 19 pricings, and the result depends on a bump size with no setting that
+is safe for every Greek (Fig.~\ref{fig:bump}). Software replaced bumping with adjoint
+algorithmic differentiation (AAD)~\cite{giles,capriotti,capgiles24}, which returns the
+derivatives of one output with respect to all inputs in a single reverse sweep, at the
+cost of recording a tape of the forward computation; our taped CPU baseline costs 7.6
+pricings.
 
-This paper shows that, for a Fourier pricer, the adjoint maps onto hardware unusually
-well. The COS method performs exactly the same operations for every input, so the
-lifetime of every forward value is known at design time and the reverse sweep can be
-scheduled statically, alongside the forward pass, on shared arithmetic units. The
-contributions are:
+The reverse sweep of a computation with no data-dependent control flow can be scheduled
+statically, a property exploited by source-transformation AD~\cite{tapenade} and by
+neural-network training accelerators. The COS pricer has this property: every one of its
+128 terms runs the same operations. We use it to co-schedule a hand-derived reverse sweep
+with the forward pass in one fixed-point datapath, and ask what the Greeks then cost in
+time, area and accuracy, measured against the alternatives built through the same flow.
+The contributions are:
 \begin{enumerate}
-\item \textbf{A tape-free adjoint datapath} for Heston--COS Greeks: the reverse sweep
-is compiled into the forward pass's fixed-point datapath with no tape memory or replay
-logic (Section~\ref{sec:method}). To our knowledge this is the first FPGA computation of
-option Greeks by adjoint differentiation, and the first FPGA implementation of the COS
-method.
-\item \textbf{All nine Greeks for 1.04 times the cost of the price}: the reverse sweep
-fills multiplier slots left idle by the CORDIC-bound forward pass. Against forward-mode
-datapaths built by the same generator, the adjoint needs the fewest multipliers for the
-same throughput (Section~\ref{sec:res-modes}).
-\item \textbf{A first-order rounding-error bound for every Greek} of a fixed-point
-datapath that itself performs the adjoint, computed from the same operation graph as
-the hardware and never exceeded over 21,000 inputs and on silicon
-(Section~\ref{sec:res-acc}).
-\item \textbf{A generator} that emits, from one description, the bit-accurate model,
-the bound, the modulo schedule, the Verilog, the bus wrappers and the host C code, and
-\textbf{bit-exact silicon results on two FPGA families} (Section~\ref{sec:res-silicon}).
+\item \textbf{A co-scheduled adjoint datapath} for Heston--COS Greeks, in which forward
+values live in a statically allocated, register-resident tape (Section~\ref{sec:method}).
+After a search of the FPGA and finance-acceleration literature
+(Section~\ref{sec:background}) we know of no prior FPGA computation of option Greeks by an
+adjoint, and no prior FPGA implementation of the COS method.
+\item \textbf{A measured cost of the Greeks}: three engines of equal throughput (price
+only, adjoint, factored forward mode) implemented in Vivado through the same generator
+and flow, with resources, cycles and fixed-point accuracy side by side
+(Section~\ref{sec:res-cost}).
+\item \textbf{A first-order rounding-error bound for every Greek} of a datapath that
+contains its own reverse sweep, extending AD-based precision analysis for
+FPGAs~\cite{gaffar,lee06} to a datapath that itself differentiates; with the scope of the
+bound, the modelling of the arithmetic primitives and its empirical validation stated
+explicitly (Sections~\ref{sec:bound},~\ref{sec:res-acc}).
+\item \textbf{A generator and bit-exact silicon results} on two FPGA families, including
+calibrations to real market data (Section~\ref{sec:res-silicon}).
 \end{enumerate}
-We state plainly what is not claimed: the reverse sweep is derived by hand in the
-generator's graph, not by an AD tool; the bound is first order and covers rounding
-only; and on the small FPGA a CPU core with hand-derived analytic Greeks is faster
+What is not claimed: the reverse sweep is derived by hand, not by an AD tool; the bound
+covers rounding only and is computed at design time, not by the engine; and the engine is
+not faster than a vectorised CPU implementation of hand-derived Greeks
 (Section~\ref{sec:discussion}).
 
 % =============================================================================
 \section{Background and Related Work}
 \label{sec:background}
-\subsection{Heston model and the COS method}
+\subsection{Heston model, the COS method and its Greeks}
 Under the risk-neutral measure the Heston model is
 $\mathrm{d}S_t = rS_t\,\mathrm{d}t + \sqrt{v_t}S_t\,\mathrm{d}W_1$,
 $\mathrm{d}v_t = \kappa(\theta-v_t)\,\mathrm{d}t + \xi\sqrt{v_t}\,\mathrm{d}W_2$,
 $\mathrm{d}W_1\mathrm{d}W_2=\rho\,\mathrm{d}t$, with nine pricing inputs
-$p=(S_0,K,T,r,v_0,\kappa,\theta,\xi,\rho)$. The characteristic function $\varphi$ of
-the log-price is known in closed form; we use the form of Albrecher
-et al.~\cite{albrecher}, which avoids the complex-logarithm discontinuity. The COS
-method~\cite{fang} expands the density on a truncation range $[a,b]$ in a cosine
-series, giving for a European put
+$p=(S_0,K,T,r,v_0,\kappa,\theta,\xi,\rho)$. We use the characteristic function $\varphi$
+of the log-price in the form of Albrecher et al.~\cite{albrecher}, which avoids the
+complex-logarithm discontinuity. The COS method~\cite{fang} expands the density on a
+truncation range $[a,b]$ in a cosine series; for a European put
 \begin{equation}
 V_{\mathrm{put}} \approx K e^{-rT}\,{\sum_{k=0}^{N-1}}{}^{\prime}\,
 \mathrm{Re}\!\left[\varphi(u_k)\,e^{\,iu_k(x-a)}\right] U_k,\quad u_k=\tfrac{k\pi}{b-a},
 \label{eq:cos}
 \end{equation}
-with $x=\ln(S_0/K)$, closed-form payoff coefficients $U_k$, and $\sum'$ halving the
-first term. Calls follow from put--call parity, $V_{\mathrm{call}} = V_{\mathrm{put}} +
-S_0 - Ke^{-rT}$. The $N$ terms are \emph{independent}, which the hardware pipelines.
+with $x=\ln(S_0/K)$, closed-form payoff coefficients $U_k$, and $\sum'$ halving the first
+term. Calls follow from put--call parity. The $N$ terms are independent.
+
+Delta and Gamma have closed-form COS expressions from the same sum~\cite[Remark~3.2]{fang},
+analysed by Junike~\cite{junike}: since $x$ enters (\ref{eq:cos}) only through
+$e^{iu_kx}$, $\partial/\partial S_0$ multiplies each term by $iu_k/S_0$, and
+$\partial/\partial K$ follows from $x$ and the linearity of $U_k$ in $K$. These two
+Greeks are therefore nearly free in any COS implementation. The derivatives with respect to
+$T$, $r$ and the five model parameters ($v_0,\kappa,\theta,\xi,\rho$) enter through
+$\varphi$, and these are where differentiation does real work.
 
 \subsection{Computing Greeks}
-\emph{Bump-and-reprice} approximates $\partial V/\partial p_j$ by
-$[V(p+h e_j)-V(p-h e_j)]/2h$: 19 pricings for nine Greeks, with a truncation error
-$O(h^2)$ and a rounding error $O(\epsilon/h)$, so the error is U-shaped in $h$.
-\emph{Forward-mode} AD carries a tangent per input direction. \emph{Reverse-mode} (adjoint)
-AD propagates $\bar v=\partial V/\partial v$ backwards from the output and returns all
-nine derivatives in one sweep at a small constant multiple of the pricing
-cost~\cite{griewank}; it is standard for Greeks in software~\cite{giles,capriotti}. For
-the Heston--Fourier price, Cui et al.~\cite{cui} derived the gradient by hand.
+Bump-and-reprice approximates $\partial V/\partial p_j$ by central differences: 19
+pricings for nine Greeks, with truncation error $O(h^2)$ and rounding error $O(\epsilon/h)$.
+Forward-mode AD carries one tangent per input direction. Reverse-mode (adjoint) AD
+propagates $\bar v=\partial V/\partial v$ backwards from the output and returns all
+derivatives in one sweep at a small constant multiple of the pricing cost~\cite{griewank};
+software tools store the forward values on a tape, or recompute them under
+checkpointing~\cite{griewank92}. For the Heston--Fourier price, Cui et al.~\cite{cui}
+derived the gradient by hand.
 
-\subsection{Hardware option pricing}
-Published FPGA finance work is mostly Monte Carlo pricing reported as batch runtime or
-energy against multi-core servers. Table~\ref{tab:related} positions this work; the
-reported figures measure different things and are not directly comparable. None of the
-hardware works computes Greeks by an adjoint, none uses a Fourier method, and none gives
-a per-Greek accuracy guarantee for its fixed-point arithmetic.
+\subsection{Hardware acceleration of option pricing}
+FPGA work on option pricing covers Monte Carlo for the Heston model~\cite{deschryver,deschryver13},
+binomial and trinomial trees~\cite{jin}, and multi-dimensional quadrature~\cite{tse}. For
+Greeks, Klaisoongnoen et al.\ ported the STAC-A2 risk benchmark (Heston Monte Carlo with
+Greeks by re-simulation, i.e.\ finite differences) to Alveo, Stratix-10 and
+Versal devices~\cite{klai,klaih2rc,klai24}, and AMD's Vitis Quantitative Finance Library
+computes Greeks by central differences~\cite{vitisquant}. The COS method has been
+accelerated on GPUs, for multiple strikes and the Heston model~\cite{zhang09,zhang14}, and
+adjoint AD runs on GPUs with a tape~\cite{gremse}. Table~\ref{tab:related} positions this
+work; the reported figures measure different things and are not directly comparable. We
+found no FPGA computation of Greeks by an adjoint and no FPGA COS implementation after
+searching FPL, FCCM, FPT, ReConFig, TRETS, the HEART and H2RC workshops and general
+indexes; absence from a search is not proof of absence.
+
+\subsection{Precision analysis for FPGA datapaths}
+Sizing fixed-point word lengths from sensitivities obtained by automatic differentiation
+was introduced for FPGAs by Gaffar et al.~\cite{gaffar}, and accuracy-guaranteed
+bit-width optimisation by affine arithmetic by Lee et al.~\cite{lee06}; Gappa~\cite{gappa}
+gives machine-checked error enclosures. Our bound is Linnainmaa's first-order
+analysis~\cite{linnainmaa}, applied to a datapath that contains its own adjoint operations,
+so that it bounds the rounding error of each Greek as the hardware computes it. We do not
+compare its tightness with an affine-arithmetic or Gappa enclosure.
 
 \begin{table*}[!t]
 \centering
@@ -163,17 +187,20 @@ a per-Greek accuracy guarantee for its fixed-point arithmetic.
 \label{tab:related}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}L{2.55cm}L{2.5cm}L{2.6cm}L{3.0cm}L{2.3cm}L{3.6cm}@{}}
+\begin{tabular}{@{}L{2.6cm}L{2.5cm}L{2.8cm}L{3.0cm}L{2.2cm}L{3.4cm}@{}}
 \toprule
 \textbf{Work} & \textbf{Platform} & \textbf{Model / pricing} & \textbf{Greeks computed by} & \textbf{Accuracy guarantee} & \textbf{Reported result}\\
 \midrule
-de Schryver et al.~\cite{deschryver} & FPGA (Xilinx) & Heston, Monte Carlo & --- (price only) & none & energy-efficient pricing\\
-Klaisoongnoen et al.~\cite{klai} & Alveo U280, 300\,MHz & STAC-A2: Heston MC, Longstaff--Schwartz & re-simulation (finite differences) & none (precision explored) & 8--185$\times$ efficiency vs.\ 2$\times$ Xeon 8260M\\
-AMD Vitis Quant.\ Library~\cite{vitisquant} & Alveo (HLS) & Heston MC; Heston closed form & central differences; price only & none & library\\
+de Schryver et al.~\cite{deschryver,deschryver13} & FPGA (Virtex-6) & Heston, (multi-level) Monte Carlo & --- (price only) & none & energy-efficient pricing\\
+Jin et al.~\cite{jin} & FPGA (Virtex-4) & binomial / trinomial trees & --- & none & $>$160$\times$ vs.\ one CPU core\\
+Tse et al.~\cite{tse} & FPGA, GPU & multi-dimensional quadrature & --- & none & quadrature-core design space\\
+Klaisoongnoen et al.~\cite{klai,klaih2rc,klai24} & Alveo U280, Stratix-10, Versal & STAC-A2: Heston MC, Longstaff--Schwartz & re-simulation (finite differences) & none (precision explored) & 8--185$\times$ efficiency vs.\ 2$\times$ Xeon 8260M~\cite{klai}\\
+AMD Vitis Quant.\ Library~\cite{vitisquant} & Alveo (HLS) & Heston MC; Heston closed form & central differences & none & library\\
+Zhang \& Oosterlee~\cite{zhang09,zhang14} & GPU & COS, incl.\ Heston, many strikes & --- (price only) & none & GPU speed-up of COS\\
 Gremse et al.~\cite{gremse} & GPU & general & taped adjoint AD & none & AAD on GPUs\\
-Cui et al.~\cite{cui} & CPU & Heston, Fourier & analytic gradient (by hand) & --- & $\approx$10$\times$ faster than numerical gradient\\
+Cui et al.~\cite{cui} & CPU & Heston, Fourier & analytic gradient (by hand) & --- & faster than numerical gradient\\
 \midrule
-\textbf{This work} & Zynq-7020, Zynq US+ & Heston, COS ($N{=}128$), 56/64-bit fixed point & \textbf{tape-free adjoint datapath}, all 9 in one pass & \textbf{first-order bound per Greek} & 1.04$\times$ price cost; 15.9\,$\mu$s; bit-exact on silicon\\
+\textbf{This work} & Zynq-7020, Zynq US+ & Heston, COS ($N{=}128$), 56/64-bit fixed point & \textbf{hand-derived adjoint, co-scheduled}, 9 Greeks in one pass & \textbf{first-order rounding bound per Greek} & 1.03$\times$ cycles, 1.68$\times$ LUT of price-only; bit-exact on silicon\\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -181,70 +208,88 @@ Cui et al.~\cite{cui} & CPU & Heston, Fourier & analytic gradient (by hand) & --
 % =============================================================================
 \section{Method}
 \label{sec:method}
-\subsection{Why the adjoint needs no tape here}
-In software, a reverse sweep needs the forward values in reverse order, which is why
-AAD tools record a tape. In (\ref{eq:cos}) the control flow does not depend on the
-input: every term runs the same operations, the truncation range is fixed per
-evaluation, and there are no data-dependent branches. The forward and reverse
-computations of one term therefore form a fixed operation graph whose every value has a
-lifetime known at design time. The scheduler keeps each forward value in a register for
-exactly as long as the reverse sweep needs it (447 storage registers per term in the
-Zynq-7020 design), so the ``tape'' is compiled into the schedule and costs no memory
-traffic.
+\subsection{A register-resident tape}
+A reverse sweep needs the forward values in reverse order; software AD stores them on a
+tape. In (\ref{eq:cos}) the control flow does not depend on the input: every term runs the
+same operations, the truncation range is fixed per evaluation, and there are no
+data-dependent branches. The forward and reverse computations of one term therefore form a
+fixed operation graph whose every value has a lifetime known at design time, and the
+modulo scheduler allocates for each value the rotating registers that hold it across the
+terms in flight. The tape is thus compiled into the schedule: it costs registers, not memory
+traffic. Over all terms in flight, the 56-bit adjoint datapath needs 447 such registers,
+against 150 for a price-only datapath of the same throughput and 374 for the factored
+forward datapath; in Vivado the Greeks add 11,901 flip-flops and 1,129 shift-register LUTs
+to the price-only engine (Section~\ref{sec:res-cost}).
 
-The Greeks returned are the derivatives of the COS approximation itself, including the
-put--call parity terms, with $[a,b]$ held fixed (Section~\ref{sec:assumptions}). Per term the
-reverse sweep propagates adjoints from the term's contribution back to the eight model
-inputs, reusing the forward pass's reciprocals; a power-of-two normalisation keeps the
-small adjoints of high-frequency terms at full precision; and nine accumulators sum the
-price and the Greek contributions.
+The Greeks returned are the derivatives of the COS approximation, including the put--call
+parity terms, with $[a,b]$ held fixed (A4 in Table~\ref{tab:assumptions}). Per term the
+reverse sweep propagates adjoints from the term's contribution back to the model inputs,
+reusing the forward pass's reciprocals; a power-of-two normalisation keeps the small
+adjoints of high-frequency terms at full precision; nine accumulators sum the price and the
+Greek contributions.
 
-\subsection{Arithmetic and fixed point}
-The datapath has no dividers. Reciprocals and square roots use Newton--Raphson
-iterations from table seeds, the exponential uses Tang's method~\cite{tang}, the
-logarithm a table and a short series, and sines, cosines and complex magnitudes and
-angles CORDIC~\cite{volder}. Each COS term costs exactly 250 multiplications, three
-CORDIC rotations and two CORDIC vectorings (126 multiplications for the price alone).
-Values are two's-complement fixed point with $FL$ fraction bits (56-bit words with
-$FL=28$ on the Zynq-7020, 64-bit with $FL=32$ on UltraScale+), rounded to nearest after
-every operation. Data-dependent shifts are built only as wide as the ranges measured
-over the input domain with margin, which cut logic by 35\%; an input that would exceed
-a measured range raises a \texttt{range\_err} flag rather than return a wrong value.
+\subsection{Arithmetic}
+The datapath has no dividers. Reciprocals and square roots use Newton--Raphson iterations
+from table seeds, the exponential Tang's method~\cite{tang}, the logarithm a table and a
+short series, and sines, cosines and complex magnitudes and angles CORDIC~\cite{volder}.
+Each COS term costs 250 multiplications, three CORDIC rotations and two CORDIC vectorings
+(126 multiplications for the price alone). Values are two's-complement fixed point with
+$FL$ fraction bits (56-bit words with $FL=28$, or 64 with $FL=32$), rounded to nearest after
+every operation. Data-dependent shifts are built only as wide as the ranges measured over
+the input domain with margin, which cut logic by 35\%; an input that would exceed a range
+raises a \texttt{range\_err} flag rather than return a wrong value.
 
 \subsection{First-order rounding-error bound}
-Let $\delta_i$ be the rounding error introduced at operation $i$, with
-$|\delta_i|\le 2^{-(FL+1)}$ for round-to-nearest. To first order the error in an output
-$y$ is $\sum_i (\partial y/\partial w_i)\,\delta_i$, where $w_i$ is the result of
-operation $i$, so
+\label{sec:bound}
+Let $\delta_i$ be the local error introduced at operation $i$, with $|\delta_i|\le\epsilon_i$.
+To first order the error in an output $y$ is $\sum_i (\partial y/\partial w_i)\,\delta_i$,
+where $w_i$ is the result of operation $i$, so
 \begin{equation}
-|\hat y - y| \;\le\; \sum_i \left|\frac{\partial y}{\partial w_i}\right| 2^{-(FL+1)}
+|\hat y - y| \;\le\; \sum_i \left|\frac{\partial y}{\partial w_i}\right| \epsilon_i
 \;=:\; B_y ,
 \label{eq:bound}
 \end{equation}
-Linnainmaa's first-order analysis~\cite{linnainmaa}. The sensitivities
-$\partial y/\partial w_i$ are themselves obtained by a reverse sweep over the operation
-graph, which here includes the hardware's own adjoint operations, so $B_y$ bounds the
-rounding error of each Greek as the hardware computes it. $B_y$ is computed in software
-from the same graph (0.1\,s per parameter set); the engine does not output it. Products
-of rounding errors are dropped; they are about $2^{-FL}$ times smaller, and two checks in
-Section~\ref{sec:res-acc} confirm this.
+Linnainmaa's first-order analysis~\cite{linnainmaa}. The sensitivities are obtained by a
+reverse sweep over the operation graph, which includes the hardware's own adjoint
+operations, so $B_y$ bounds the rounding error of each Greek as the hardware computes it.
+Products of local errors are dropped; they are about $2^{-FL}$ times smaller
+(Section~\ref{sec:res-acc}).
 
-\subsection{The generator and modulo scheduling}
-Fig.~\ref{fig:flow} shows the flow. One Python description of setup (once per
-evaluation), term ($N=128$ times) and finish (once) is an operation graph from which the
-generator derives the bit-accurate fixed-point model, a double-precision model, the
-bound (\ref{eq:bound}), and a modulo schedule~\cite{rau} that is emitted as Verilog.
-Because the RTL and the model come from the same graph, the testbench compares every
-register at the cycle it becomes valid (1,213--1,962 checks per design), and every
-property shown for the model holds for the hardware.
+\textbf{What the bound covers.} $B_y$ bounds the difference between the fixed-point
+datapath and the \emph{same graph} evaluated in exact arithmetic. The primitives are
+expanded into elementary operations in the graph (the Newton--Raphson iterations, table
+lookups and series terms), so every internal rounding has its own
+$\epsilon_i = 2^{-(FL+1)}$; their approximation error (finite iterations, table resolution,
+series truncation) is common to the fixed-point and exact evaluations of the graph and is
+measured separately: at most $1.1\times10^{-8}$ relative, against an exact-function
+reference, on the 21-case grid of Section~\ref{sec:res-acc}. Each CORDIC unit is one
+operation whose local error was measured against its exact integer model over 30,000
+inputs: rotation outputs are within 1.14\,ulp, modelled as $\epsilon = 2$\,ulp;
+vectoring magnitudes within 0.8\,ulp; the vectoring angle loses precision as the input
+magnitude falls (at most $1.75/|z|$\,ulp), and is modelled as
+$\epsilon = 2\max(1, 1/|z|)$\,ulp at the evaluation point. The bound excludes the COS
+truncation error (Section~\ref{sec:res-method}).
 
-The terms are independent, so a new term starts every initiation interval (II) while
-earlier terms are in flight (Fig.~\ref{fig:sched}). With 8 shared multipliers, 3 CORDIC
-rotators and 2 vectorers, all three resource classes give the same interval,
-$\lceil 250/8\rceil = 3{\cdot}32/3 = 2{\cdot}32/2 = 32$ cycles, and an evaluation takes
-$127\cdot 32 + 506 + 2 = 4{,}572$ cycles for the loop. Because the CORDIC units set the
-pace, the forward pass leaves multiplier slots idle in every 32-cycle window; the reverse
-sweep's 124 extra multiplications fill them, which is why the Greeks cost 4\%.
+\textbf{How it is used.} $B_y$ is computed in software from the graph in 0.1\,s per
+parameter set, so the engine does not attach it to each result. It serves at design time
+to choose the word length and to certify, over a sampled input domain, the accuracy the
+engine delivers (Table~\ref{tab:apriori}).
+
+\subsection{Generator and modulo scheduling}
+Fig.~\ref{fig:flow} shows the flow. One Python description of setup (once per evaluation),
+term ($N=128$ times) and finish (once) is an operation graph from which the generator
+derives the bit-accurate model, a double-precision model, the bound (\ref{eq:bound}) and a
+modulo schedule~\cite{rau} emitted as Verilog. The testbench compares every register at the
+cycle it becomes valid against the model (999 to 2,004 checks per design), so every
+property shown for the model holds for the hardware. The terms are independent, so a new
+term starts every initiation interval (II) while earlier ones are in flight
+(Fig.~\ref{fig:sched}). With 8 multipliers, 3 CORDIC rotators and 2 vectorers, all three
+resource classes give $\mathrm{II}=\lceil 250/8\rceil = 3{\cdot}32/3 = 2{\cdot}32/2 = 32$
+cycles, and the loop takes $127\cdot 32 + 506 + 2 = 4{,}572$ cycles. The CORDIC units set
+the pace, so the reverse sweep's 124 extra multiplications per term fit into multiplier
+slots the forward pass leaves idle --- but only because the price-and-Greeks engine has
+twice the multipliers a price-only engine needs for the same II: the price alone needs
+$\lceil 126/32\rceil = 4$.
 
 \begin{figure*}[!t]
 \centering
@@ -275,11 +320,11 @@ sweep's 124 extra multiplications fill them, which is why the Greeks cost 4\%.
 \begin{tikzpicture}[node distance=0.18cm]
   \node[blk, text width=1.1cm] (in) {inputs,\\constants};
   \node[blk, right=of in, text width=1.45cm] (fwd) {\textbf{forward}\\$U_k$, $\varphi(u_k)$};
-  \node[blk, right=of fwd, text width=1.45cm] (rev) {\textbf{reverse}\\adjoints of\\8 inputs};
+  \node[blk, right=of fwd, text width=1.45cm] (rev) {\textbf{reverse}\\adjoints of\\the inputs};
   \node[blk, right=of rev, text width=1.15cm] (nrm) {power-of-2\\normalise};
   \node[key, right=of nrm, text width=0.95cm] (acc) {9 accu-\\mulators};
   \draw[arr] (in) -- (fwd); \draw[arr] (fwd) -- (rev); \draw[arr] (rev) -- (nrm); \draw[arr] (nrm) -- (acc);
-  \draw[darr] (fwd.south) -- ++(0,-0.3) -| node[lbl, below, pos=0.25] {447 registers, no tape} (rev.south);
+  \draw[darr] (fwd.south) -- ++(0,-0.3) -| node[lbl, below, pos=0.25] {register-resident tape (scheduled)} (rev.south);
 \end{tikzpicture}
 \\[4pt]
 \begin{tikzpicture}[x=0.0068cm, y=0.22cm]
@@ -295,21 +340,20 @@ sweep's 124 extra multiplications fill them, which is why the Greeks cost 4\%.
   \node[font=\tiny] at (500,-12.2) {clock cycle (each bar is one term, 506 cycles long)};
   \draw[{Stealth[length=1mm]}-{Stealth[length=1mm]}] (0,1.0) -- node[above, font=\tiny] {II\,=\,32} (32,1.0);
 \end{tikzpicture}
-\caption{Top: one COS term; the reverse sweep shares the forward pass's datapath and reads forward values from scheduled registers. Bottom: the modulo schedule (first 10 of 128 terms); 8 multipliers and 5 CORDIC units are shared by about 16 overlapping terms.}
+\caption{Top: one COS term; the reverse sweep shares the forward pass's datapath and reads forward values from scheduled rotating registers. Bottom: the modulo schedule (first 10 of 128 terms); 8 multipliers and 5 CORDIC units are shared by about 16 overlapping terms.}
 \label{fig:sched}
 \end{figure}
 
 % =============================================================================
 \section{Implementation}
 \label{sec:impl}
-Three configurations come from the same generator (Table~\ref{tab:configs}). On the
-Zynq-7020 the setup and finish steps (about 100 multiplications and a few
-transcendental functions per evaluation) run on the host, as generated C that is
-bit-exact with the model, and the FPGA runs the 128-term loop; the 64-bit configuration
-computes everything on chip. Each engine sits behind an AXI4-Lite register file. For
-testing, a JTAG-to-AXI master drives the register file from the host with no processor
-software, so the test exercises the datapath alone. Table~\ref{tab:impl} gives the
-implementation results in Vivado.
+Three configurations come from the same generator (Table~\ref{tab:configs}). In the
+host-setup configuration the setup and finish steps (about 100 multiplications and a few
+transcendental functions per evaluation) run on the host as generated C that is bit-exact
+with the model, and the FPGA runs the 128-term loop; the 64-bit configuration computes
+everything on chip. Each engine sits behind an AXI4-Lite register file, driven for testing by
+a JTAG-to-AXI master with no processor software. Table~\ref{tab:impl} gives the board
+implementations.
 
 \begin{table}[!t]
 \centering
@@ -330,7 +374,7 @@ implementation results in Vivado.
 
 \begin{table}[!t]
 \centering
-\caption{Implementation results (Vivado, post-route, JTAG test systems)}
+\caption{Board implementations (Vivado, post-route, JTAG test systems)}
 \label{tab:impl}
 \footnotesize
 \setlength{\tabcolsep}{2.6pt}
@@ -359,25 +403,37 @@ Run on silicon & yes & yes & no\\
 \textbf{Input sets.} (i) A 21-case grid over moneyness, maturity, vol-of-vol and
 correlation, calls and puts. (ii) A 10,500-input sweep: 6,000 uniform over the verified
 domain ($S_0{=}100$, $K\in[60,150]$, $T\in[0.1,3]$, $r\in[0,0.1]$, $v_0,\theta\in[0.005,0.25]$,
-$\kappa\in[0.2,6]$, $\xi\in[0.1,1]$, $\rho\in[-0.95,0.6]$), 500 in each of seven hard
-regimes (Feller condition violated, $\rho$ near its limits, deep strikes, very short and
-long maturities, high vol-of-vol, very low variance) and 1,000 with one input outside the
-domain. (iii) A held-out sweep of the same composition with a fresh seed. (iv) 50 board
-cases (2 fixed, 48 random). (v) 50 calibrations of the model to NIFTY index option
-quotes on 50 trading days.
+$\kappa\in[0.2,6]$, $\xi\in[0.1,1]$, $\rho\in[-0.95,0.6]$), 500 in each of seven hard regimes
+(Feller condition violated, $\rho$ near its limits, deep strikes, very short and long
+maturities, high vol-of-vol, very low variance) and 1,000 with one input outside the
+domain. (iii) A held-out sweep of the same composition with a fresh seed, drawn after the
+shift ranges were fitted. (iv) 50 board cases (2 fixed, 48 random). (v) 50 calibrations of
+the model to NIFTY index options on 50 trading days.
 
-\textbf{References.} Accuracy is measured against the same algorithm in double
-precision (rounding error) and, separately, the COS result against an independent
-Fourier-integral price (method error).
+\textbf{References.} Rounding error is measured against the same graph in double precision;
+the COS result is compared separately with an independent Fourier-integral price (method
+error).
 
-\textbf{CPU baselines.} The identical algorithm in C++ (double precision, g++~13,
-\texttt{-O3 -march=native}) on an Intel Core i5-1155G7 laptop (4 cores, 8 threads):
-price only, bump-and-reprice (19 pricings), an optimised bump that reuses the
-characteristic function, forward-mode AD (9 directions in one pass), taped adjoint AD
-with CoDiPack~\cite{codipack}, and hand-derived analytic Greeks after Cui et
-al.~\cite{cui}. Every method matches the reference model (adjoint to
-$1.3\times10^{-10}$ relative). Latency is the best of five passes over 2,000 inputs on
-one core of an otherwise idle machine; throughput uses eight independent processes.
+\textbf{Equal-throughput engines.} Three host-setup engines with II\,$=$\,32 were generated,
+checked bit-exact against their models by the same testbench generator, and implemented out
+of context in Vivado 2025.2 on the xc7z020clg484-1 at 70\,MHz: price only (4 multipliers),
+adjoint (8) and factored forward mode (10). The forward datapath carries its tangents without
+the per-term rescaling the adjoint applies to its adjoints, as a forward-mode AD tool would;
+this leaves it less accurate, not larger.
+
+\textbf{CPU baselines.} The identical algorithm in C++ (double precision, g++~13) on an Intel
+Core i5-1155G7 laptop (4 cores, 8 threads): price only, bump-and-reprice (19 pricings), an
+optimised bump that reuses the characteristic function, forward-mode AD (9 directions in one
+pass), taped adjoint AD with CoDiPack~\cite{codipack}, and hand-derived analytic Greeks after
+Cui et al.~\cite{cui}, all with \texttt{-O3 -march=native}. In that build the compiler leaves
+the 128-term loop scalar. Two vectorised variants of the analytic method, built with
+\texttt{-Ofast -fopenmp-simd} and glibc's vector math library, compute across terms: the
+single loop made branch-free, which vectorises but spills its live complex temporaries and runs
+slower than the scalar code, and the same work split into seven short loops over arrays of the
+128 terms (structure of arrays), which vectorises cleanly and is the vectorised baseline
+reported. Every method matches the reference model (adjoint to $1.3\times10^{-10}$ relative; the
+vectorised variants agree with forward mode to $9.3\times10^{-12}$). Latency is the best of five passes over 2,000 inputs on one core of an
+idle machine; throughput uses eight independent processes.
 
 \subsection{Assumptions and their rationale}
 \label{sec:assumptions}
@@ -394,20 +450,20 @@ made, and how its effect was checked.
 \toprule
 & \textbf{Assumption} & \textbf{Why it was made} & \textbf{How its effect was checked or bounded}\\
 \midrule
-A1 & Bounded input domain (Section~\ref{sec:methodology}) & Fixed-point shifters are sized from ranges measured over a domain; an unbounded domain would need floating point. The domain covers typical equity-index calibrations. & Inputs outside raise \texttt{range\_err}; held-out sweep: no in-domain flag, every unflagged out-of-domain result within its bound.\\
-A2 & $S_0$ normalised to 100 & The price is homogeneous of degree one in $(S_0,K)$, so one scale suffices; the host rescales inputs and outputs. & Exact identity; real NIFTY cases were rescaled this way.\\
-A3 & COS with $N{=}128$ terms and range $c_1\pm10\sqrt{c_2}$ (cumulants) & Standard choices for Heston--COS~\cite{fang}; 128 fixes the pipeline length. & Method error measured separately against a Fourier integral (Section~\ref{sec:res-method}).\\
-A4 & Range $[a,b]$ held fixed when differentiating & $[a,b]$ is a numerical parameter, not a model input; its derivative only affects the truncated tails. The CPU reference uses the same convention. & Greeks compared with an independent Fourier-integral reference; differences are within the method error.\\
-A5 & Puts priced; calls by put--call parity & Call payoff coefficients grow like $e^{b}$ and cancel badly in fixed point. & Worst call price error 75$\times$ smaller with parity.\\
-A6 & First-order bound (products of rounding errors dropped) & Second-order terms are $\approx2^{-FL}$ smaller; a rigorous enclosure (interval arithmetic) would be far looser. & 50-digit evaluation: error $\le$0.24 of the bound; bound still holds at 44 bits, where second-order terms are 4,096$\times$ larger.\\
-A7 & Round-to-nearest, $|\delta_i|\le 2^{-(FL+1)}$, at every operation & This is what the generated RTL implements. & RTL bit-exact with the model, which applies the same rounding.\\
-A8 & Word lengths 56/64 bits & 56 bits is the shortest word at which every Greek's worst relative error is $\le1.2\times10^{-5}$ on the grid (52 bits: $5.8\times10^{-4}$), and a 56$\times$56 multiplier maps to 9 DSP48 blocks. & Word-length sweep 44--64 bits; bound held at every length.\\
-A9 & Latency = cycle count $\times$ clock period, engine only & Over JTAG each register access takes milliseconds, so the board run checks outputs but cannot time the engine. & Cycle counts are exact (RTL simulation equals the schedule); bus transfers (19 words in, 20 out) are excluded and stated as such.\\
-A10 & FPGA power from simulated switching activity of the routed engine & A board-rail measurement was not available; Vivado's default 12.5\% toggle rate underestimated dynamic power 3--6$\times$. & Routed netlist simulated gate by gate on four bit-exact evaluations; activity read back into Vivado (confidence High).\\
-A11 & CPU package power from \TBD{HWiNFO measurement} & The CPU energy needs a measured power; until then the part's rated 12--28\,W were used. & \TBD{measured CPU package power, idle and under load}\\
-A12 & Vega is $\partial V/\partial v_0$ (variance) & $v_0$ is the model input; $\partial V/\partial\sigma_0 = 2\sigma_0\,\partial V/\partial v_0$. & Exact conversion.\\
-A13 & Adjoint written by hand in the operation graph & Automatic derivation of the reverse sweep in the generator is future work. & Agrees with three independent forward-mode datapaths to $6\times10^{-14}$ and with CoDiPack to $1.3\times10^{-10}$.\\
-A14 & NIFTY cases: calibrated parameters, $r = 0.06$ & Used only as realistic inputs for the silicon test, not to evaluate trading. & All 50 inside the domain; 500/500 outputs bit-exact.\\
+A1 & Bounded input domain (Section~\ref{sec:methodology}) & Fixed-point shifters are sized from ranges measured over a domain; an unbounded domain would need floating point. & Inputs outside raise \texttt{range\_err}; held-out sweep: no in-domain flag, every unflagged out-of-domain result within its bound.\\
+A2 & $S_0$ normalised to 100 & The price is homogeneous of degree one in $(S_0,K)$; the host rescales inputs and outputs. & Exact identity; the NIFTY cases were rescaled this way.\\
+A3 & COS with $N{=}128$ and range $c_1\pm10\sqrt{c_2}$ & Standard choices for Heston--COS~\cite{fang}; 128 fixes the pipeline length. & Method error measured against a Fourier integral; it dominates in a few cases (Section~\ref{sec:res-method}).\\
+A4 & Range $[a,b]$ held fixed when differentiating & $[a,b]$ is a numerical parameter, not a model input; the CPU reference uses the same convention. & Greeks compared with an independent Fourier-integral reference; differences within the method error.\\
+A5 & Puts priced; calls by put--call parity & Call payoff coefficients grow like $e^{b}$ and cancel in fixed point. & Worst call price error 75$\times$ smaller with parity.\\
+A6 & First-order bound (products of local errors dropped) & Second-order terms are $\approx2^{-FL}$ smaller. & 50-digit evaluation: error $\le$0.24 of the bound; bound still holds at 44 bits, where second-order terms are 4,096$\times$ larger.\\
+A7 & Local errors: $2^{-(FL+1)}$ per rounding; CORDIC as in Section~\ref{sec:bound} & Round-to-nearest is what the RTL implements; the CORDIC models were measured. & RTL bit-exact with the model; CORDIC errors measured over 30,000 inputs per unit.\\
+A8 & Word lengths 56/64 bits & On the 21-case grid, 56 bits is the shortest word with every Greek's worst relative error $\le1.2\times10^{-5}$ (52 bits: $5.8\times10^{-4}$); a 56$\times$56 multiplier maps to 9 DSP48 blocks. & The grid understates the tail: on the held-out sweep $\partial V/\partial\xi$ keeps 3.0 significant figures at the 99th percentile and 1.4 at worst (Table~\ref{tab:sigfig}).\\
+A9 & Latency = cycle count $\times$ clock period, engine only & Over JTAG each register access takes milliseconds, so the board run checks outputs but cannot time the engine. & Cycle counts are exact; the bus transfers (19 words in, 20 out) and, for \texttt{z7h}, the host's setup and finish are excluded and stated.\\
+A10 & FPGA power from simulated switching activity of the routed engine & Vivado's default 12.5\% toggle rate underestimated dynamic power 3--6$\times$. & Routed netlist simulated gate by gate on four bit-exact evaluations; chip-level boundary stated in Section~\ref{sec:res-cpu}.\\
+A11 & CPU package power from \TBD{HWiNFO measurement} & The CPU energy needs a measured power. & \TBD{measured CPU package power, idle and under load}\\
+A12 & First-order Greeks only; vega is $\partial V/\partial v_0$ & The adjoint gives first derivatives; Gamma is second order. $\partial V/\partial\sigma_0 = 2\sigma_0\,\partial V/\partial v_0$. & Gamma has a closed-form COS expression~\cite{fang} that would add one accumulator; not built.\\
+A13 & Adjoint written by hand in the operation graph & Automatic derivation in the generator is future work. & Agrees with three forward-mode datapaths to $6\times10^{-14}$ and with CoDiPack to $1.3\times10^{-10}$.\\
+A14 & NIFTY cases: calibrated parameters, $r = 0.06$ & Realistic inputs for the silicon test, not a trading evaluation. & All 50 inside the domain; 500/500 outputs bit-exact.\\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -416,47 +472,83 @@ A14 & NIFTY cases: calibrated parameters, $r = 0.06$ & Used only as realistic in
 \section{Results}
 \label{sec:results}
 \subsection{Cost of the Greeks}
-\label{sec:res-cycles}
-Fig.~\ref{fig:cycles} compares, on identical hardware, the price alone, the price with
-nine adjoint Greeks, and bump-and-reprice. On the 56-bit design the nine Greeks add 165
-cycles (3.6\%) to the price; bump-and-reprice needs 18.4$\times$ more cycles. On the 64-bit
-design, where the 32 multipliers rather than the CORDIC units set the pace, the Greeks
-cost 1.55 pricings and bump-and-reprice 12.3$\times$ the adjoint. Against our own
-first-generation, hand-written engine (433,779 cycles, which did not fit a Zynq-7020) the
-generated design is 92$\times$ faster.
+\label{sec:res-cost}
+Fig.~\ref{fig:cycles} gives cycles per evaluation. On the same hardware the price and nine
+Greeks take 1.04$\times$ the price alone on the 56-bit design (4,733 vs.\ 4,568 cycles) and
+1.55$\times$ on the 64-bit design, where the 32 multipliers rather than the CORDIC units set
+the pace. These figures flatter the adjoint: a price-only engine reaches the same II with half
+the multipliers. At equal throughput the Greeks cost about 3\% in cycles on both
+configurations (4,733 vs.\ 4,613; 1,593 vs.\ 1,540) and twice the multipliers.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_cycles.pdf}
-\caption{Clock cycles per evaluation on the same hardware (cycle-exact RTL simulation, 128 COS terms).}
+\caption{Clock cycles per evaluation (cycle-exact RTL simulation, 128 COS terms): price only on the same hardware as the adjoint engine and at the same initiation interval with half the multipliers, the adjoint engine, and bump-and-reprice.}
 \label{fig:cycles}
+\end{figure}
+
+Table~\ref{tab:equal} and Fig.~\ref{fig:equal} give the area at equal throughput, from
+Vivado. Relative to a right-sized price-only engine, the price and nine Greeks cost
+1.03$\times$ the cycles, 1.68$\times$ the LUTs, 1.78$\times$ the flip-flops and 2$\times$ the DSP
+blocks; the Zynq-7020 design is LUT-bound. For comparison, hand-derived analytic Greeks cost
+1.5 pricings in time on the CPU. Of the 11,901 flip-flops the Greeks add, the register-resident
+tape accounts for most: 297 more rotating 56-bit registers (about 16.6\,kbit) than the
+price-only schedule, part of which Vivado maps to shift-register LUTs (1,129 more).
+
+\begin{table}[!t]
+\centering
+\caption{Three engines of equal throughput (II = 32), Zynq-7020, out of context, 70\,MHz}
+\label{tab:equal}
+\footnotesize
+\setlength{\tabcolsep}{2.4pt}
+\begin{tabular}{@{}lrrrrrrr@{}}
+\toprule
+\textbf{Engine} & \textbf{Mult.} & \textbf{LUT} & \textbf{FF} & \textbf{DSP} & \textbf{BRAM} & \textbf{Cycles} & \textbf{Worst err.}\\
+\midrule
+Price only & 4 & 21,251 & 15,303 & 36 & 0 & 4,457 & ---\\
+\textbf{Adjoint} & \textbf{8} & \textbf{35,782} & \textbf{27,204} & \textbf{72} & 6 & 4,572 & $\mathbf{1.2\times10^{-5}}$\\
+Fwd., factored & 10 & 38,199 & 30,514 & 90 & 2 & 4,449 & $7.4\times10^{-5}$\\
+\bottomrule
+\end{tabular}
+\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize All three generated, checked bit-exact against their models, and implemented in the same flow (WNS $+0.377$, $+0.109$, $+0.275$\,ns). Shift-register LUTs: 284, 1,413, 911. Worst error: worst relative error of any Greek over the 21-case grid against the same graph in double precision.}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\columnwidth]{figures/fig_equal.pdf}
+\caption{The three engines of Table~\ref{tab:equal}, normalised to the price-only engine.}
+\label{fig:equal}
 \end{figure}
 
 \subsection{Adjoint against forward mode}
 \label{sec:res-modes}
 Three forward-mode (tangent) datapaths were built by the same generator, with the same
-primitives, range and scheduler: \emph{dense} (all eight directions through every
-operation, as a vector forward-mode AD tool does), \emph{sparse} (structural zeros
-skipped) and \emph{factored} (derivatives of the exponent with respect to its inner
-complex quantities formed once per term, as a hand derivation of analytic Greeks does).
-All return the same price and Greeks as the adjoint to $6\times10^{-14}$ in double
-precision. Fig.~\ref{fig:modes} and Table~\ref{tab:modes} show that the adjoint needs the
-fewest multiplications: 124 per term beyond the price, against 187 for the best
-forward method. The 1.04$\times$ cost is not unique to the adjoint: with 16 multipliers all
-but the dense datapath become CORDIC-bound at about 4,570 cycles. What the adjoint saves is
-hardware: it reaches that pace with 8 multipliers (72 DSP blocks), where the factored
-forward datapath needs 10 (90) and the dense one 26 (234, more than the device has).
+primitives, range and scheduler: \emph{dense} (all eight directions through every operation,
+as a vector forward-mode AD tool does; a weak baseline, shown for completeness),
+\emph{sparse} (structural zeros skipped) and \emph{factored} (derivatives of the exponent with
+respect to its inner complex quantities formed once per term, as a hand derivation of
+analytic Greeks does). The factored one is the competitor that matters. All return the same
+price and Greeks as the adjoint to $6\times10^{-14}$ in double precision. Per term the adjoint
+needs 250 multiplications, the factored forward datapath 313 (Fig.~\ref{fig:modes},
+Table~\ref{tab:modes}). With 8 multipliers this is 4,731 against 5,622 cycles; with 16, all but
+the dense datapath are CORDIC-bound, and the factored one is slightly faster (4,571 against
+4,619). At equal throughput (Table~\ref{tab:equal}) the factored forward engine is 2.7\% faster
+in cycles but needs 6.8\% more LUTs, 12.2\% more flip-flops and 25\% more DSP blocks, and at
+the same word length it is 6$\times$ less accurate (worst Greek error $7.4\times10^{-5}$ against
+$1.2\times10^{-5}$), because its tangents are not rescaled per term. The adjoint's advantage over
+a well-factored forward datapath is therefore real but modest: about a fifth of the
+multipliers, a few percent of the logic, and accuracy.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_modes.pdf}
-\caption{Price and nine Greeks by datapath type, 56-bit design: multiplies per COS term and cycles with 8 shared multipliers.}
+\caption{Price and nine Greeks by datapath type, 56-bit design: multiplies per COS term and cycles with 8 shared multipliers (scheduler).}
 \label{fig:modes}
 \end{figure}
 
 \begin{table}[!t]
 \centering
-\caption{Cycles per evaluation by datapath and shared multipliers}
+\caption{Cycles per evaluation by datapath and shared multipliers (scheduler)}
 \label{tab:modes}
 \footnotesize
 \setlength{\tabcolsep}{3pt}
@@ -473,49 +565,67 @@ Forward, sparse & 396 & 6,968 & 4,571 & 3,690 & 2,171\\
 Forward, dense & 802 & 13,597 & 7,150 & 7,155 & 3,822\\
 \bottomrule
 \end{tabular}
-\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize Forward datapaths omit the fixed-point rescaling of tangents a working engine would need, so their counts are lower bounds.}
 \end{table}
 
 \subsection{Design space}
-Fig.~\ref{fig:dse} sweeps the number of shared 64-bit multipliers. Cycles halve as
-multipliers double until the dependency chain of a term dominates beyond about 64; the
-adjoint stays within 1.1--1.9$\times$ of the price and 9.8--18$\times$ below bump-and-reprice
-throughout. The same generator thus targets a small or a large device from one parameter.
+Fig.~\ref{fig:dse} sweeps the number of shared 64-bit multipliers. Cycles halve as multipliers
+double until the dependency chain of a term dominates beyond about 64; at equal multipliers
+the adjoint takes 1.1--1.9$\times$ the cycles of the price and 9.8--18$\times$ fewer than
+bump-and-reprice.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_dse.pdf}
-\caption{Cycles against the number of shared multipliers (64-bit configuration).}
+\caption{Cycles against the number of shared multipliers (64-bit configuration, scheduler).}
 \label{fig:dse}
 \end{figure}
 
-\subsection{Accuracy and the error bound}
+\subsection{Against bump-and-reprice}
+\label{sec:res-bump}
+On the same hardware, bump-and-reprice (19 pricings) needs 18.4$\times$ the adjoint's cycles on
+the 56-bit design and 12.3$\times$ on the 64-bit design. A fairer bump baseline takes Delta and
+$\partial V/\partial K$ from the COS sum in closed form (Section~\ref{sec:background}) and bumps
+only the other seven inputs: 15 pricings, about 14.5$\times$ the adjoint's cycles on the 56-bit
+design (estimated from the measured cost per pricing; not built). Fig.~\ref{fig:bump} shows the
+accuracy: bump-and-reprice error is U-shaped in the bump size, with the optimum at a different
+size for each Greek, and the adjoint is 32--560$\times$ more accurate (median 145$\times$) than
+bump-and-reprice even with the best bump size chosen afterwards for each Greek.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_bump.pdf}
+\caption{Relative error of bump-and-reprice (central differences) against relative bump size, and of the adjoint engine, for four Greeks (56-bit design, base case). The other five Greeks behave alike.}
+\label{fig:bump}
+\end{figure*}
+
+\subsection{Rounding accuracy and the bound}
 \label{sec:res-acc}
-Fig.~\ref{fig:accuracy} gives the worst relative error of each output over the 21-case
-grid against the same algorithm in double precision, and the worst error as a fraction
-of its bound (\ref{eq:bound}). The 56-bit price is accurate to $6.1\times10^{-7}$ and the
-Greeks to at most $1.2\times10^{-5}$; the 64-bit design gains one to two orders of
-magnitude. No output reaches more than 0.103 of its bound.
+The bound covers rounding only; Section~\ref{sec:res-method} shows that the COS method's own
+error can be far larger. Fig.~\ref{fig:accuracy} gives, on the 21-case grid, the worst
+relative rounding error of each output against the same graph in double precision, and the
+worst error as a fraction of its bound. On the 56-bit design the price is accurate to
+$6.1\times10^{-7}$ and the Greeks to at most $1.2\times10^{-5}$; the 64-bit design gains one
+to two orders of magnitude; no output reaches more than 0.103 of its bound.
 
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=\textwidth]{figures/fig_accuracy.pdf}
-\caption{Accuracy over the 21-case grid. (a) Worst relative error of the price $V$ and each Greek against the same algorithm in double precision. (b) Worst measured error divided by the first-order bound (\ref{eq:bound}); 1 would mean the bound is met with equality.}
+\caption{Rounding accuracy over the 21-case grid. (a) Worst relative error of the price $V$ and each Greek against the same graph in double precision. (b) Worst measured error divided by the first-order bound (\ref{eq:bound}); 1 would mean the bound is met with equality.}
 \label{fig:accuracy}
 \end{figure*}
 
-Over the 10,500-input sweep no unflagged result exceeded its bound (worst 0.378), and
-there was no overflow. On the held-out sweep (Fig.~\ref{fig:boundsweep}) none of the
-9,500 in-domain inputs raised \texttt{range\_err}, the worst in-domain ratio was 0.356,
-and every unflagged out-of-domain result also stayed within its bound. Two checks support
-the first-order assumption (A6): evaluated in 50-digit arithmetic on 100 held-out inputs,
-the hardware error is at most 0.24 of the bound, the same to three decimals as against
-double precision; and the bound still holds at 44 bits, where second-order terms are
-4,096$\times$ larger. Table~\ref{tab:sigfig} gives the significant figures delivered: the
-price and the market Greeks keep at least 5.3 figures for 99\% of inputs, while
-$\partial V/\partial\kappa$ and $\partial V/\partial\xi$, small and computed through long
-chains with cancellation, keep 3.5 and 3.0. Each comes with its bound, so a user knows
-its accuracy before using it.
+The grid understates the tail. Over the 10,500-input sweep no unflagged result exceeded its
+bound (worst 0.378) and there was no overflow; on the held-out sweep (Fig.~\ref{fig:boundsweep})
+no in-domain input raised \texttt{range\_err}, the worst in-domain ratio was 0.356, and every
+unflagged out-of-domain result stayed within its bound. Two checks support the first-order
+assumption (A6): evaluated in 50-digit arithmetic on 100 held-out inputs, the hardware error
+is at most 0.24 of the bound; and the bound still holds at 44 bits, where second-order terms
+are 4,096$\times$ larger. Table~\ref{tab:sigfig} gives the significant figures delivered on the
+held-out inputs, and Table~\ref{tab:apriori} the bound itself, relative to each value, as an
+a-priori accuracy guide over the sampled domain. The price and the market Greeks keep at least
+5.3 figures for 99\% of inputs; $\partial V/\partial\kappa$ and $\partial V/\partial\xi$, small
+and computed through long chains with cancellation, keep 3.5 and 3.0 at the 99th percentile and
+only 2.2 and 1.4 at worst, and for $\partial V/\partial\xi$ the bound can exceed the value.
 
 \begin{figure}[!t]
 \centering
@@ -526,7 +636,7 @@ its accuracy before using it.
 
 \begin{table}[!t]
 \centering
-\caption{Significant figures, 56-bit design, 9,500 held-out in-domain inputs}
+\caption{Significant figures delivered, 56-bit design, 9,500 held-out in-domain inputs}
 \label{tab:sigfig}
 \footnotesize
 \setlength{\tabcolsep}{4pt}
@@ -541,40 +651,47 @@ $\partial_{T}$ & 7.6 & 5.5 & 4.0 & $\partial_{\xi}$ & 5.9 & 3.0 & 1.4\\
 $\partial_{r}$ & 7.9 & 5.9 & 4.4 & $\partial_{\rho}$ & 7.0 & 4.9 & 3.7\\
 \bottomrule
 \end{tabular}
-\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize $-\log_{10}$ of the relative error against double precision; inputs where a Greek is within 1\% of zero are excluded.}
+\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize $-\log_{10}$ of the relative error against the same graph in double precision; inputs where a Greek is within 1\% of zero are excluded.}
 \end{table}
 
-\subsection{Against bump-and-reprice accuracy}
-Fig.~\ref{fig:bump} shows bump-and-reprice error against the relative bump size on the
-same pricer and word length. The curves are U-shaped, with the optimum at a different $h$
-for each Greek; the adjoint is a single point well below every curve. Over the nine Greeks
-the adjoint is 32--560$\times$ more accurate (median 145$\times$) than bump-and-reprice even
-with the best bump size chosen afterwards for each Greek, and has nothing to tune.
-
-\begin{figure*}[!t]
+\begin{table}[!t]
 \centering
-\includegraphics[width=\textwidth]{figures/fig_bump.pdf}
-\caption{Relative error of bump-and-reprice (central differences) against relative bump size, and of the adjoint engine, for four Greeks (56-bit design, base case). The other five Greeks behave alike.}
-\label{fig:bump}
-\end{figure*}
+\caption{The bound relative to each value, 56-bit design, 9,500 held-out in-domain inputs}
+\label{tab:apriori}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}lccc|lccc@{}}
+\toprule
+\textbf{Out.} & \textbf{Med.} & \textbf{P99} & \textbf{Max} & \textbf{Out.} & \textbf{Med.} & \textbf{P99} & \textbf{Max}\\
+\midrule
+$V$ & 1e-6 & 6e-5 & 6e-4 & $\partial_{v_0}$ & 8e-7 & 2e-4 & 4e-2\\
+$\partial_{S_0}$ & 3e-7 & 5e-5 & 3e-3 & $\partial_{\kappa}$ & 3e-5 & 4e-3 & 7e-2\\
+$\partial_{K}$ & 7e-7 & 6e-5 & 3e-3 & $\partial_{\theta}$ & 2e-6 & 3e-4 & 6e-3\\
+$\partial_{T}$ & 1e-6 & 9e-5 & 3e-3 & $\partial_{\xi}$ & 4e-5 & 2e-2 & 1.1\\
+$\partial_{r}$ & 6e-7 & 4e-5 & 7e-4 & $\partial_{\rho}$ & 4e-6 & 3e-4 & 6e-3\\
+\bottomrule
+\end{tabular}
+\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize $B_y/|y|$, the bound (\ref{eq:bound}) divided by the value; same exclusion as Table~\ref{tab:sigfig}. A sample of the domain, not a supremum over it.}
+\end{table}
 
 \subsection{COS method error}
 \label{sec:res-method}
-The bound covers rounding only. On the 50 board cases the COS result was compared with an
-independent Fourier-integral price: the method error has a median of $2\times10^{-11}$ for
-the price but reaches $7.8\times10^{-3}$ for vega in the worst case ($\xi=1$, $T=0.34$),
-where 128 terms are too few (256 terms remove it), and a deep out-of-the-money put needs a
-1.5$\times$ wider range. The total error against the Heston model is at most the rounding
-bound plus this method error, and only the former is bounded. Any implementation of this
-COS configuration, in hardware or software, shares the method error.
+On the 50 board cases the COS result was compared with an independent Fourier-integral price.
+The method error has a median of $2\times10^{-11}$ for the price, but in a few in-domain cases
+it far exceeds the bounded rounding error: for vega it reaches $7.8\times10^{-3}$ at $\xi=1$,
+$T=0.34$, where 128 terms are too few (256 remove it), and a deep out-of-the-money put needs a
+1.5$\times$ wider range. The engine does not flag these cases. The total error against the Heston
+model is at most the rounding bound plus the method error, and only the former is bounded;
+any implementation of this COS configuration shares the method error. A deployment would
+restrict the domain where 128 terms suffice or use $N=256$, which roughly doubles the cycles.
 
 \subsection{Silicon validation}
 \label{sec:res-silicon}
 Table~\ref{tab:silicon} summarises the board runs. Cases ran back to back with no reset
-between them. Every output of every case matched the bit-accurate model, so every
-accuracy result above, including the bound, holds on silicon. The worst error/bound ratio
-on silicon was 0.255, and the worst price error against double precision $7.3\times10^{-7}$
-on the 64-bit engine.
+between them; every output of every case matched the bit-accurate model, so the accuracy
+results above, including the bound, hold on silicon. The worst error/bound ratio on silicon
+was 0.255, and the worst price error against double precision $7.3\times10^{-7}$ on the 64-bit
+engine.
 
 \begin{table}[!t]
 \centering
@@ -599,18 +716,23 @@ ZCU102 & real NIFTY calibrations & 50 & 500 / 500 & 0.255\\
 
 \subsection{Against a CPU: latency, throughput and energy}
 \label{sec:res-cpu}
-Fig.~\ref{fig:latency} and Table~\ref{tab:cpu} compare the same algorithm on the FPGA and
-on one laptop core. The engine is faster than every general-purpose method: on the
-ZCU102, 4.9$\times$ faster than forward-mode AD, 6.5$\times$ than taped adjoint AD and
-15$\times$ than bump-and-reprice. Against hand-derived analytic Greeks, the strongest
-software baseline, the ZedBoard's loop is 3.2$\times$ slower and the ZCU102's whole
-evaluation 1.3$\times$ faster. Four CPU cores give 2.5$\times$ the throughput of one 64-bit
-engine, which uses a fifth of the ZCU102's DSP blocks.
+Fig.~\ref{fig:latency} and Table~\ref{tab:cpu} compare the same algorithm on the FPGA and on
+one laptop core. The FPGA figures are computed engine latencies (A9): they exclude the bus
+transfers (39 register accesses) and, for the ZedBoard, the host's setup and finish, while the
+CPU figures are measured whole evaluations. Against the general-purpose methods the ZCU102 engine
+is faster: 4.9$\times$ than forward-mode AD, 6.5$\times$ than taped adjoint AD and 15$\times$ than
+bump-and-reprice. Against hand-derived analytic Greeks it is 1.3$\times$ faster than the scalar
+build (20.3\,$\mu$s) but slower than the vectorised one (\SIMDUS\,$\mu$s), and the omitted
+transfers would reduce any margin further; the ZedBoard's loop is 3.2$\times$ slower than the
+scalar build. We therefore claim no latency advantage over a well-optimised CPU implementation.
+Four CPU cores give \SIMDTP\ evaluations per second with the vectorised method (158,000 with the
+scalar one), against 62,800 for one 64-bit engine; by LUTs, three engines would fit on the
+ZCU102 (a projection, not built), giving about 188,000 per second.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=\columnwidth]{figures/fig_latency.pdf}
-\caption{Latency of one price and nine Greeks: one CPU core (Intel i5-1155G7, idle machine) and one FPGA engine (cycle count $\times$ clock period; A9).}
+\caption{Latency of one price and nine Greeks: one CPU core (Intel i5-1155G7, idle machine; measured) and one FPGA engine (cycle count $\times$ clock period, bus transfers excluded; A9).}
 \label{fig:latency}
 \end{figure}
 
@@ -619,7 +741,7 @@ engine, which uses a fifth of the ZCU102's DSP blocks.
 \caption{Latency, throughput and energy per evaluation (price + 9 Greeks)}
 \label{tab:cpu}
 \footnotesize
-\setlength{\tabcolsep}{2.2pt}
+\setlength{\tabcolsep}{2.0pt}
 \begin{tabular}{@{}lrrrr@{}}
 \toprule
 \textbf{Method} & \textbf{$\mu$s} & \textbf{Cost} & \textbf{Eval./s} & \textbf{Energy}\\
@@ -630,72 +752,95 @@ CPU, optimised bump & 146.6 & 10.7$\times$ & --- & ---\\
 CPU, adjoint (CoDiPack) & 103.8 & 7.6$\times$ & 26,900$^{a}$ & ---\\
 CPU, forward mode & 78.0 & 5.7$\times$ & 34,000$^{a}$ & ---\\
 CPU, analytic Greeks & 20.3 & 1.5$\times$ & 158,000$^{a}$ & \TBD{HWiNFO}$^{b}$\\
+CPU, analytic, vectorised & \SIMDUS & --- & \SIMDTP$^{a}$ & \TBD{HWiNFO}$^{b}$\\
 \midrule
-FPGA, ZedBoard, 70\,MHz (loop) & 65.3 & 1.04$\times$ & 15,300 & 44\,$\mu$J$^{c}$\\
-FPGA, ZCU102, 100\,MHz (whole) & 15.9 & 1.55$\times$ & 62,800 & 40\,$\mu$J$^{c}$\\
+FPGA, ZedBoard, 70\,MHz (loop)$^{d}$ & 65.3 & 1.04$\times$ & 15,300 & 44\,$\mu$J$^{c}$\\
+FPGA, ZCU102, 100\,MHz$^{d}$ & 15.9 & 1.55$\times$ & 62,800 & 40\,$\mu$J$^{c}$\\
 \bottomrule
 \end{tabular}
-\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize Cost: time relative to the price alone on the same platform. $^{a}$4 cores, 8 processes. $^{b}$Measured package power under the 8-process load divided by throughput: \TBD{P$_{\rm pkg}$ W / 158,000 s$^{-1}$ = E $\mu$J}; single core \TBD{P$_{\rm 1}$ W $\times$ 20.3\,$\mu$s}. $^{c}$Engine power from simulated activity (A10): 0.676\,W $\times$ 65.3\,$\mu$s and 2.485\,W $\times$ 15.9\,$\mu$s.}
+\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize Cost: time relative to the price alone on the same platform and hardware. $^{a}$4 cores, 8 processes. $^{b}$Measured package power under the 8-process load divided by throughput: \TBD{P$_{\rm pkg}$ W / throughput = E $\mu$J}; single core \TBD{P$_{\rm 1}$ W $\times$ latency}. $^{c}$Chip-level, from simulated activity (A10): 0.676\,W $\times$ 65.3\,$\mu$s and 2.485\,W $\times$ 15.9\,$\mu$s. $^{d}$Computed engine latency; bus transfers excluded.}
 \end{table}
 
-On energy, the engine draws 0.676\,W on the Zynq-7020 and 2.485\,W on the 64-bit design
-under simulated activity, giving 44 and 40\,$\mu$J per evaluation. The CPU, at its measured
-package power of \TBD{HWiNFO: P$_{\rm pkg}$\,W} under full load, uses \TBD{E$_{\rm CPU}$\,$\mu$J}
-per evaluation at its full throughput, so the FPGA uses \TBD{ratio}$\times$ less energy per
-evaluation. (With the CPU's rated 12--28\,W instead of a measurement, the ratio is
-2--4$\times$.)
+\textbf{Energy.} Both sides are counted at chip level: for the FPGA, the device's on-chip power
+with the engine as its only logic (engine dynamic power from simulated activity, plus the whole
+device's static power): 0.676\,W on the Zynq-7020 and 2.485\,W for the 64-bit engine, giving 44 and
+40\,$\mu$J per evaluation; for the CPU, the package power. Neither includes DRAM or the board, and
+the FPGA side excludes the host processor and the bus that a deployed system needs, so the FPGA
+figure is optimistic. The CPU, at its measured package power of \TBD{HWiNFO: P$_{\rm pkg}$\,W} under
+full load, uses \TBD{E$_{\rm CPU}$\,$\mu$J} per evaluation at its full throughput, so the FPGA engine uses
+\TBD{ratio}$\times$ less energy per evaluation on this accounting; a board-level measurement would be
+needed to claim a system-level energy advantage.
 
 % =============================================================================
 \section{Discussion and Limitations}
 \label{sec:discussion}
-\textbf{Where the advantage lies.} The engine's case against a CPU is the cost and the
-certified accuracy of its Greeks, not raw speed: the nine Greeks cost 4\% over the price in
-hardware against 50\% for the best hand-written software and 470--660\% for AD tools, each
-Greek carries a bound, and the latency is deterministic. The latency lead over hand-derived
-Greeks is narrow (1.3$\times$) and exists only on the larger device.
+\textbf{What the results support.} For a pricer without data-dependent control flow, a
+hand-derived reverse sweep can share one statically scheduled datapath with the forward pass,
+with its tape in scheduled registers. At equal throughput this costs about 1.7$\times$ the area of
+a price-only engine at 1.03$\times$ its cycles, and it is cheaper in multipliers and logic, and
+more accurate at the same word length, than a well-factored forward-mode datapath built by the
+same flow. Each Greek has a first-order rounding bound that held on every input tested and on
+silicon. These are the claims; speed against a CPU is not.
 
-\textbf{Strike chains.} All strikes of one expiry share the COS grid, so one
-characteristic function and one reverse sweep per term can serve every strike, with each
-extra strike costing about 7\% of one option. This was scheduled and emulated
-(32 strikes in 4,892 cycles on the 64-bit design) but not built, and the same sharing
-helps a CPU (2.3\,$\mu$s per strike at 32 strikes on one core), so it is not claimed as an
-advantage.
+\textbf{What they do not.} The adjoint's advantage over a factored forward datapath is modest
+(Section~\ref{sec:res-modes}). Delta and the strike sensitivity are nearly free in any COS
+implementation, so the adjoint's work is in the seven Greeks that enter through $\varphi$. The
+bound does not cover the COS method error, which dominates in a few in-domain cases, and it is a
+design-time tool, not attached to each result. Against a vectorised CPU implementation of
+hand-derived Greeks the engine is not faster, and its latency was computed, not measured.
+Gamma, the most-used second-order Greek, is not computed (A12).
 
-\textbf{Limitations.} (i) The reverse sweep is derived by hand (A13); generating it
-automatically from the forward graph is the natural next step. (ii) The bound is first
-order and covers rounding only (A6, Section~\ref{sec:res-method}). (iii) The FPGA energy is
-from simulated activity of the engine alone (A10), and the bus transfers are not timed
-(A9); a processor-based ZCU102 design that times every stage and reads the board's power
-monitors has been built but not yet run successfully. (iv) The Zynq-7020 design closes
-timing at 79\,MHz, not 100\,MHz. (v) The input domain is bounded (A1).
+\textbf{Strike chains.} All strikes of one expiry share the COS grid, so one characteristic
+function and one reverse sweep per term can serve every strike, each extra strike costing about
+7\% of one option; this was scheduled and emulated (32 strikes in 4,892 cycles on the 64-bit
+design) but not built, and the same sharing helps a CPU (2.3\,$\mu$s per strike at 32 strikes on
+one core).
+
+\textbf{Further limitations.} The Zynq-7020 design closes timing at 79\,MHz, not 100\,MHz; the
+input domain is bounded (A1); and end-to-end latency over the processor bus and board-level power
+have not been measured.
 
 % =============================================================================
 \section{Conclusion}
-For the COS method, whose operations do not depend on the input, adjoint differentiation
-needs no tape: the reverse sweep can be compiled into the forward pass's datapath and fill
-the multiplier slots the forward pass leaves idle. The resulting FPGA engine returns a
-Heston price and all nine Greeks for 1.04 times the cost of the price, 18.4$\times$ fewer
-cycles and 32--560$\times$ more accurate than bump-and-reprice on the same hardware, with a
-first-order rounding-error bound on every Greek that was never exceeded, and it ran
-bit-exact on two FPGA families, including on real market calibrations. Generating the
-reverse sweep automatically and placing several engines per device are the next steps.
+For the COS method, whose operations do not depend on the input, a hand-derived reverse sweep can
+be co-scheduled with the forward pass in one fixed-point datapath, with its tape held in
+statically allocated registers. Measured against price-only and forward-mode engines of equal
+throughput built by the same flow, the nine Greeks cost 1.03$\times$ the cycles and about
+1.7$\times$ the area of the price, with fewer resources and better accuracy than the forward-mode
+alternative; each Greek carries a first-order rounding bound that was never exceeded, and the
+engine ran bit-exact on two FPGA families, including on real market calibrations. Deriving the
+reverse sweep automatically, adding Gamma, measuring end-to-end latency and board power, and
+placing several engines per device are the next steps.
 
 % =============================================================================
 \begin{thebibliography}{99}
 \bibitem{heston} S.~L. Heston, ``A closed-form solution for options with stochastic volatility with applications to bond and currency options,'' \emph{Rev. Financial Stud.}, vol.~6, no.~2, pp.~327--343, 1993.
 \bibitem{fang} F.~Fang and C.~W. Oosterlee, ``A novel pricing method for European options based on Fourier-cosine series expansions,'' \emph{SIAM J. Sci. Comput.}, vol.~31, no.~2, pp.~826--848, 2008.
+\bibitem{junike} G.~Junike, ``On the number of terms in the COS method for European option pricing,'' \emph{Numer. Math.}, 2024, doi:10.1007/s00211-024-01402-1.
 \bibitem{albrecher} H.~Albrecher, P.~Mayer, W.~Schoutens, and J.~Tistaert, ``The little Heston trap,'' \emph{Wilmott Mag.}, pp.~83--92, Jan. 2007.
 \bibitem{giles} M.~Giles and P.~Glasserman, ``Smoking adjoints: Fast Monte Carlo Greeks,'' \emph{Risk}, vol.~19, pp.~88--92, Jan. 2006.
 \bibitem{capriotti} L.~Capriotti, ``Fast Greeks by algorithmic differentiation,'' \emph{J. Comput. Finance}, vol.~14, no.~3, pp.~3--35, 2011.
-\bibitem{capgiles24} L.~Capriotti and M.~Giles, ``Fifteen years of adjoint algorithmic differentiation (AAD) in finance,'' \emph{Quant. Finance}, vol.~24, no.~9, 2024.
+\bibitem{capgiles24} L.~Capriotti and M.~Giles, ``15 years of adjoint algorithmic differentiation (AAD) in finance,'' \emph{Quant. Finance}, vol.~24, no.~9, pp.~1353--1379, 2024.
 \bibitem{griewank} A.~Griewank and A.~Walther, \emph{Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation}, 2nd~ed. Philadelphia, PA, USA: SIAM, 2008.
+\bibitem{griewank92} A.~Griewank, ``Achieving logarithmic growth of temporal and spatial complexity in reverse automatic differentiation,'' \emph{Optim. Methods Softw.}, vol.~1, no.~1, pp.~35--54, 1992.
+\bibitem{tapenade} L.~Hasco\"et and V.~Pascual, ``The Tapenade automatic differentiation tool: Principles, model, and specification,'' \emph{ACM Trans. Math. Softw.}, vol.~39, no.~3, 2013.
 \bibitem{linnainmaa} S.~Linnainmaa, ``Taylor expansion of the accumulated rounding error,'' \emph{BIT Numer. Math.}, vol.~16, no.~2, pp.~146--160, 1976.
 \bibitem{cui} Y.~Cui, S.~del~Ba\~no~Rollin, and G.~Germano, ``Full and fast calibration of the Heston stochastic volatility model,'' \emph{Eur. J. Oper. Res.}, vol.~263, no.~2, pp.~625--638, 2017.
 \bibitem{codipack} M.~Sagebaum, T.~Albring, and N.~R. Gauger, ``High-performance derivative computations using CoDiPack,'' \emph{ACM Trans. Math. Softw.}, vol.~45, no.~4, 2019.
-\bibitem{klai} M.~Klaisoongnoen, N.~Brown, and O.~Thomson~Brown, ``Low-power option Greeks: Efficiency-driven market risk analysis using FPGAs,'' in \emph{Proc. Int. Symp. Highly-Efficient Accelerators and Reconfigurable Technologies (HEART)}, 2022.
+\bibitem{klai} M.~Klaisoongnoen, N.~Brown, and O.~Thomson~Brown, ``Low-power option Greeks: Efficiency-driven market risk analysis using FPGAs,'' in \emph{Proc. Int. Symp. Highly-Efficient Accelerators and Reconfigurable Technologies (HEART)}, 2022, pp.~95--101.
+\bibitem{klaih2rc} M.~Klaisoongnoen, N.~Brown, and O.~Thomson~Brown, ``Fast and energy-efficient derivatives risk analysis: Streaming option Greeks on Xilinx and Intel FPGAs,'' in \emph{Proc. Int. Workshop Heterogeneous High-Performance Reconfigurable Computing (H2RC), SC22}, 2022.
+\bibitem{klai24} M.~Klaisoongnoen, N.~Brown, T.~Dykes, J.~R. Jones, and U.-U. Haus, ``Evaluating Versal AI Engines for option price discovery in market risk analysis,'' in \emph{Proc. ACM/SIGDA Int. Symp. Field-Programmable Gate Arrays (FPGA)}, 2024.
 \bibitem{deschryver} C.~de~Schryver \emph{et~al.}, ``An energy efficient FPGA accelerator for Monte Carlo option pricing with the Heston model,'' in \emph{Proc. Int. Conf. Reconfigurable Computing and FPGAs (ReConFig)}, 2011.
+\bibitem{deschryver13} C.~de~Schryver, P.~Torruella, and N.~Wehn, ``A multi-level Monte Carlo FPGA accelerator for option pricing in the Heston model,'' in \emph{Proc. Design, Automation \& Test in Europe (DATE)}, 2013, pp.~248--253.
+\bibitem{jin} Q.~Jin, D.~B. Thomas, W.~Luk, and B.~Cope, ``Exploring reconfigurable architectures for tree-based option pricing models,'' \emph{ACM Trans. Reconfigurable Technol. Syst.}, vol.~2, no.~4, art.~21, 2009.
+\bibitem{tse} A.~H.~T. Tse, D.~Thomas, and W.~Luk, ``Design exploration of quadrature methods in option pricing,'' \emph{IEEE Trans. Very Large Scale Integr. (VLSI) Syst.}, vol.~20, no.~5, pp.~818--826, 2012.
 \bibitem{vitisquant} AMD, ``Vitis Libraries: Quantitative Finance Library,'' [Online]. Available: \url{https://github.com/Xilinx/Vitis_Libraries}
+\bibitem{zhang09} B.~Zhang and C.~W. Oosterlee, ``Option pricing with COS method on graphics processing units,'' in \emph{Proc. IEEE Int. Symp. Parallel \& Distributed Processing (IPDPS)}, 2009, pp.~1--8.
+\bibitem{zhang14} B.~Zhang and C.~W. Oosterlee, ``Acceleration of option pricing technique on graphics processing units,'' \emph{Concurrency Computat.: Pract. Exper.}, vol.~26, no.~9, pp.~1626--1639, 2014.
 \bibitem{gremse} F.~Gremse, A.~H\"ofter, L.~Razik, F.~Kiessling, and U.~Naumann, ``GPU-accelerated adjoint algorithmic differentiation,'' \emph{Comput. Phys. Commun.}, vol.~200, pp.~300--311, 2016.
+\bibitem{gaffar} A.~A. Gaffar, O.~Mencer, W.~Luk, P.~Y.~K. Cheung, and N.~Shirazi, ``Floating-point bitwidth analysis via automatic differentiation,'' in \emph{Proc. IEEE Int. Conf. Field-Programmable Technology (FPT)}, 2002, pp.~158--165.
+\bibitem{lee06} D.-U. Lee, A.~A. Gaffar, R.~C.~C. Cheung, O.~Mencer, W.~Luk, and G.~A. Constantinides, ``Accuracy-guaranteed bit-width optimization,'' \emph{IEEE Trans. Comput.-Aided Design Integr. Circuits Syst.}, vol.~25, no.~10, pp.~1990--2000, 2006.
+\bibitem{gappa} F.~de~Dinechin, C.~Lauter, and G.~Melquiond, ``Certifying the floating-point implementation of an elementary function using Gappa,'' \emph{IEEE Trans. Comput.}, vol.~60, no.~2, pp.~242--253, 2011.
 \bibitem{tang} P.~T.~P. Tang, ``Table-driven implementation of the exponential function in IEEE floating-point arithmetic,'' \emph{ACM Trans. Math. Softw.}, vol.~15, no.~2, pp.~144--157, 1989.
 \bibitem{volder} J.~E. Volder, ``The CORDIC trigonometric computing technique,'' \emph{IRE Trans. Electron. Comput.}, vol.~EC-8, no.~3, pp.~330--334, 1959.
 \bibitem{rau} B.~R. Rau, ``Iterative modulo scheduling: An algorithm for software pipelining loops,'' in \emph{Proc. 27th Annu. Int. Symp. Microarchitecture (MICRO)}, 1994, pp.~63--74.

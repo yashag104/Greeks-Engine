@@ -256,6 +256,9 @@ class TangentDatapath:
 
     def __init__(self, wl=64, fl=32, dense=False, simplify=True, factored=False):
         self.g = Graph(wl, fl)
+        self.greeks = True
+        # own shift-range file per variant (ranges.get), so RTL can be generated for it
+        self.range_key = "fwd_" + ("factored" if factored else "dense" if dense else "sparse")
         self.acc_names = H.ACC
         self.outputs = H.OUTPUTS
         P.install_tables(self.g)

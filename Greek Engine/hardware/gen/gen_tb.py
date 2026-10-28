@@ -41,12 +41,18 @@ def main():
     ap.add_argument("--cases", type=int, default=3)
     ap.add_argument("--pipe-cordic", action="store_true")
     ap.add_argument("--price-only", action="store_true")
+    ap.add_argument("--tangent", choices=["factored", "sparse", "dense"], default=None,
+                    help="a forward-mode datapath from tangent.py instead of the adjoint")
     ap.add_argument("--host-setup", action="store_true")
     ap.add_argument("--name", default="heston_aad_z7")
     a = ap.parse_args()
     cfg = Config(wl=a.wl, fl=a.fl, mults=a.mults, crot=a.crot, cvec=a.cvec, cordic_pipelined=a.pipe_cordic,
                  n_terms=a.terms, host_setup=a.host_setup)
-    dp = H.Datapath(a.wl, a.fl, greeks=not a.price_only)
+    if a.tangent:
+        import tangent as TG
+        dp = TG.TangentDatapath(a.wl, a.fl, factored=a.tangent == "factored", dense=a.tangent == "dense")
+    else:
+        dp = H.Datapath(a.wl, a.fl, greeks=not a.price_only)
     gen = Gen(dp, cfg, a.name)
     rtl = gen.emit()
     os.makedirs(BUILD, exist_ok=True)

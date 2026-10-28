@@ -49,29 +49,86 @@ def save(fig, name):
     print("wrote figures/%s.pdf" % name)
 
 
-# ---- Fig. cycles: price only / adjoint / bump-and-reprice on the same hardware ----------
+# ---- Fig. cycles: price only / adjoint / bump-and-reprice ------------------------------
+# Two price-only references: the same hardware as the adjoint engine (8 / 32
+# multipliers), and the smallest price-only engine with the same initiation
+# interval, i.e. the same throughput (4 / 16 multipliers).
 def fig_cycles():
     g = {(r["family"], int(r["mults"])): r for r in rows("gen_cycles.csv")}
-    cfgs = [(("z7", 8), "56-bit, 8 mult.\n(Zynq-7020)"), (("zu", 32), "64-bit, 32 mult.\n(Zynq US+)")]
+    cfgs = [("z7", 8, 4, "56-bit (Zynq-7020)\nII = 32"), ("zu", 32, 16, "64-bit (Zynq US+)\nII = 8")]
     x = np.arange(len(cfgs))
-    w = 0.25
-    fig, ax = plt.subplots(figsize=(COL1, 1.9))
-    series = [("cycles_price", "Price only", C_PRICE, ""), ("cycles_aad", "Price + 9 Greeks, adjoint (this work)", C_ADJ, ""),
-              ("cycles_bump", "Price + 9 Greeks, bump-and-reprice", C_BUMP, "////")]
-    for i, (key, lab, col, hatch) in enumerate(series):
-        vals = [int(g[c][key]) for c, _ in cfgs]
-        b = ax.bar(x + (i - 1) * w, vals, w, label=lab, color=col, hatch=hatch, edgecolor="black", linewidth=0.4)
+    w = 0.2
+    fig, ax = plt.subplots(figsize=(COL1, 2.0))
+    series = [(lambda f, m, m2: int(g[(f, m)]["cycles_price"]), "Price only, same multipliers", "#BBBBBB", ""),
+              (lambda f, m, m2: int(g[(f, m2)]["cycles_price"]), "Price only, same throughput (half the multipliers)", C_PRICE, "...."),
+              (lambda f, m, m2: int(g[(f, m)]["cycles_aad"]), "Price + 9 Greeks, adjoint (this work)", C_ADJ, ""),
+              (lambda f, m, m2: int(g[(f, m)]["cycles_bump"]), "Price + 9 Greeks, bump-and-reprice", C_BUMP, "////")]
+    for i, (fn, lab, col, hatch) in enumerate(series):
+        vals = [fn(f, m, m2) for f, m, m2, _ in cfgs]
+        b = ax.bar(x + (i - 1.5) * w, vals, w, label=lab, color=col, hatch=hatch, edgecolor="black", linewidth=0.4)
         for rect, v in zip(b, vals):
-            ax.text(rect.get_x() + rect.get_width() / 2, v * 1.12, "{:,}".format(v), ha="center", va="bottom", fontsize=6)
+            ax.text(rect.get_x() + rect.get_width() / 2, v * 1.12, "{:,}".format(v), ha="center", va="bottom",
+                    fontsize=5.5, rotation=90)
     ax.set_yscale("log")
-    ax.set_ylim(500, 3e5)
+    ax.set_ylim(500, 6e5)
     ax.set_xticks(x)
-    ax.set_xticklabels([l for _, l in cfgs])
+    ax.set_xticklabels([c[3] for c in cfgs])
     ax.set_ylabel("Clock cycles per evaluation")
     ax.grid(axis="y", which="major")
     ax.set_axisbelow(True)
     ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), frameon=False, ncol=1)
     save(fig, "fig_cycles")
+
+
+# ---- Fig. equal throughput: three engines implemented in Vivado, normalised to price only --
+VIV = os.path.join(RES, "vivado")
+ENGINES = [("Price only (4 mult.)", os.path.join(VIV, "cmp", "heston_cmp_price4_z7h"), 4457, None, C_PRICE, "...."),
+           ("Adjoint (8 mult.)", os.path.join(VIV, "power", "heston_aad_z7h_xc7z020clg484-1"), 4572, "adjoint", C_ADJ, ""),
+           ("Forward, factored (10 mult.)", os.path.join(VIV, "cmp", "heston_cmp_fwd10_z7h"), 4449, "forward factored",
+            C_FWD, "\\\\\\\\")]
+
+
+def util(path):
+    import re
+    t = open(os.path.join(path, "util.rpt")).read()
+    get = lambda name: float(re.search(r"^\| %s\s*\|\s*([\d.]+)" % re.escape(name), t, re.M).group(1))
+    return {"LUT": get("Slice LUTs"), "FF": get("Slice Registers"), "DSP": get("DSPs")}
+
+
+def engine_table():
+    acc = {}
+    for r in rows("fwd_accuracy.csv"):
+        e = abs(float(r["fixed"]) - float(r["float_alg"])) / max(abs(float(r["float_alg"])), 1e-12)
+        acc[r["datapath"]] = max(acc.get(r["datapath"], 0.0), e)
+    out = []
+    for name, path, cyc, key, col, hatch in ENGINES:
+        u = util(path)
+        out.append(dict(name=name, cycles=cyc, err=acc.get(key), col=col, hatch=hatch, **u))
+    return out
+
+
+def fig_equal():
+    eng = engine_table()
+    base = eng[0]
+    metrics = [("LUT", "LUT"), ("FF", "FF"), ("DSP", "DSP"), ("cycles", "Cycles")]
+    fig, ax = plt.subplots(figsize=(COL1, 1.75))
+    x = np.arange(len(metrics))
+    w = 0.26
+    for i, e in enumerate(eng):
+        vals = [e[k] / base[k] for k, _ in metrics]
+        b = ax.bar(x + (i - 1) * w, vals, w, color=e["col"], hatch=e["hatch"], edgecolor="black", linewidth=0.4,
+                   label=e["name"])
+        for rect, v in zip(b, vals):
+            ax.text(rect.get_x() + rect.get_width() / 2, v + 0.04, "%.2f" % v, ha="center", va="bottom", fontsize=5.5)
+    ax.axhline(1.0, color="black", lw=0.5)
+    ax.set_xticks(x)
+    ax.set_xticklabels([m[1] for m in metrics])
+    ax.set_ylabel("Relative to price only")
+    ax.set_ylim(0, 2.75)
+    ax.grid(axis="y")
+    ax.set_axisbelow(True)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), frameon=False, ncol=2)
+    save(fig, "fig_equal")
 
 
 # ---- Fig. modes: adjoint against forward-mode datapaths ---------------------------------
@@ -221,13 +278,18 @@ def fig_latency():
     bars = [("CPU, bump-and-reprice", cpu["bump"], C_CPU, "////"), ("CPU, AAD (CoDiPack)", cpu["aad"], C_CPU, "...."),
             ("CPU, forward mode", cpu["fwdvec"], C_CPU, "\\\\\\\\"), ("CPU, analytic Greeks", cpu["analytic"], C_CPU, ""),
             ("FPGA, Zynq-7020 (loop)", zed_us, C_ADJ, "...."), ("FPGA, Zynq US+ (whole)", zu_us, C_ADJ, "")]
-    fig, ax = plt.subplots(figsize=(COL1, 1.75))
+    if os.path.exists(os.path.join(RES, "cpu_simd.csv")):
+        vec = [r for r in rows("cpu_simd.csv") if r["method"].startswith(("analytic_simd", "analytic_soa"))]
+        if vec:
+            best = min(vec, key=lambda r: float(r["us_per_eval_one_core"]))
+            bars.insert(4, ("CPU, analytic, vectorised", float(best["us_per_eval_one_core"]), "#222222", "xxxx"))
+    fig, ax = plt.subplots(figsize=(COL1, 1.9))
     y = np.arange(len(bars))[::-1]
     for yi, (lab, v, col, hatch) in zip(y, bars):
         ax.barh(yi, v, 0.62, color=col, hatch=hatch, edgecolor="black", linewidth=0.4)
         ax.text(v * 1.06, yi, "%.1f" % v, va="center", fontsize=6)
     ax.set_xscale("log")
-    ax.set_xlim(8, 600)
+    ax.set_xlim(2, 600)
     ax.set_yticks(y)
     ax.set_yticklabels([b[0] for b in bars])
     ax.set_xlabel(r"Latency, price + 9 Greeks ($\mu$s, one core / one engine)")
@@ -238,6 +300,7 @@ def fig_latency():
 
 if __name__ == "__main__":
     fig_cycles()
+    fig_equal()
     fig_modes()
     fig_dse()
     fig_accuracy()

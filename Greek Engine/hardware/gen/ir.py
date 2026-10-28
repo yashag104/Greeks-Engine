@@ -169,7 +169,8 @@ class Graph:
                          frac=None, width="T")
 
     def cvec(self, x, y):
-        """CORDIC vectoring -> (K*|z|, atan2(y, x)) at frac FL"""
+        """CORDIC vectoring -> (K*|z|, atan2(y, x)) at frac FL. Local errors: 2 ulp for
+        the magnitude; 2 ulp * max(1, 1/|z|) for the angle (applied in error_bound)."""
         return self._add("cvec", (x, y), {"out_frac": (self.fl, self.fl), "out_eps": (2.0 * 2.0 ** -self.fl,) * 2},
                          frac=None, width="T")
 
@@ -397,6 +398,15 @@ class Graph:
                     else:
                         par[n.id] = ((src.args[0], -y / r2), (src.args[1], x / r2))
         eps = [0.0 if n.frac == 0 else n.eps for n in self.nodes]
+        # The CORDIC vectoring angle loses precision as |z| shrinks: its error,
+        # measured against the exact integer model (cordic_vec_fixed) over 30,000
+        # inputs with |z| from 1e-6 to 2, is at most 1.75 ulp / |z| at FL 28 and 32.
+        # So its local error is 2 ulp * max(1, 1/|z|), evaluated at the float point.
+        for n in self.nodes:
+            if n.op == "pick" and n.attrs["i"] == 1 and self.nodes[n.args[0]].op == "cvec":
+                src = self.nodes[n.args[0]]
+                r = math.hypot(fvals[src.args[0]], fvals[src.args[1]])
+                eps[n.id] = n.eps * max(1.0, 1.0 / max(r, 2.0 ** -self.fl))
         res = {}
         for name, out in outputs.items():
             adj = [0.0] * N
