@@ -1,0 +1,5 @@
+method,us_per_eval_one_core,evals_per_s_8_processes,worst_diff_vs_fwdvec_2000_inputs
+"analytic, -O3 (scalar term loop)",21.806,136088,9.2e-12
+"analytic_simd, one loop, -Ofast + libmvec",22.045,122730,7.6e-12
+"analytic_soa, seven loops, -Ofast + libmvec",13.371,76989,9.3e-12
+vectorised,optimized: loop vectorized using 32 byte vectors,,

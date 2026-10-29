@@ -20,8 +20,8 @@
 
 \newcommand{\TBD}[1]{\textcolor{red}{\textbf{[#1]}}}
 % vectorised CPU baseline (validation/cpu_baseline/run_simd.py -> results/cpu_simd.csv)
-\newcommand{\SIMDUS}{\TBD{SIMD}}
-\newcommand{\SIMDTP}{\TBD{SIMD}}
+\newcommand{\SIMDUS}{13.4}
+\newcommand{\SIMDTP}{77,000}
 \definecolor{acc}{HTML}{0072B2}
 \definecolor{accsoft}{HTML}{DCEBF5}
 \definecolor{ink}{HTML}{16202A}
@@ -722,12 +722,14 @@ transfers (39 register accesses) and, for the ZedBoard, the host's setup and fin
 CPU figures are measured whole evaluations. Against the general-purpose methods the ZCU102 engine
 is faster: 4.9$\times$ than forward-mode AD, 6.5$\times$ than taped adjoint AD and 15$\times$ than
 bump-and-reprice. Against hand-derived analytic Greeks it is 1.3$\times$ faster than the scalar
-build (20.3\,$\mu$s) but slower than the vectorised one (\SIMDUS\,$\mu$s), and the omitted
-transfers would reduce any margin further; the ZedBoard's loop is 3.2$\times$ slower than the
-scalar build. We therefore claim no latency advantage over a well-optimised CPU implementation.
-Four CPU cores give \SIMDTP\ evaluations per second with the vectorised method (158,000 with the
-scalar one), against 62,800 for one 64-bit engine; by LUTs, three engines would fit on the
-ZCU102 (a projection, not built), giving about 188,000 per second.
+build (20.3\,$\mu$s) but slower than the vectorised one: at \SIMDUS\,$\mu$s, one vectorised
+core is 1.19$\times$ faster than the engine's computed latency, before the engine's omitted
+transfers are counted; the ZedBoard's loop is 3.2$\times$ slower than the scalar build. We therefore claim
+no latency advantage over a well-optimised CPU implementation. For throughput the scalar build is
+the CPU's best: with eight processes on the four cores the vectorised build reaches only
+\SIMDTP\ evaluations per second, against 136,000 for the scalar build in the same session (158,000
+in the main session of Table~\ref{tab:cpu}). One 64-bit engine gives 62,800; by LUTs, three engines
+would fit on the ZCU102 (a projection, not built), giving about 188,000 per second.
 
 \begin{figure}[!t]
 \centering
@@ -752,13 +754,13 @@ CPU, optimised bump & 146.6 & 10.7$\times$ & --- & ---\\
 CPU, adjoint (CoDiPack) & 103.8 & 7.6$\times$ & 26,900$^{a}$ & ---\\
 CPU, forward mode & 78.0 & 5.7$\times$ & 34,000$^{a}$ & ---\\
 CPU, analytic Greeks & 20.3 & 1.5$\times$ & 158,000$^{a}$ & \TBD{HWiNFO}$^{b}$\\
-CPU, analytic, vectorised & \SIMDUS & --- & \SIMDTP$^{a}$ & \TBD{HWiNFO}$^{b}$\\
+CPU, analytic, vectorised$^{e}$ & \SIMDUS & --- & \SIMDTP$^{a}$ & \TBD{HWiNFO}$^{b}$\\
 \midrule
 FPGA, ZedBoard, 70\,MHz (loop)$^{d}$ & 65.3 & 1.04$\times$ & 15,300 & 44\,$\mu$J$^{c}$\\
 FPGA, ZCU102, 100\,MHz$^{d}$ & 15.9 & 1.55$\times$ & 62,800 & 40\,$\mu$J$^{c}$\\
 \bottomrule
 \end{tabular}
-\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize Cost: time relative to the price alone on the same platform and hardware. $^{a}$4 cores, 8 processes. $^{b}$Measured package power under the 8-process load divided by throughput: \TBD{P$_{\rm pkg}$ W / throughput = E $\mu$J}; single core \TBD{P$_{\rm 1}$ W $\times$ latency}. $^{c}$Chip-level, from simulated activity (A10): 0.676\,W $\times$ 65.3\,$\mu$s and 2.485\,W $\times$ 15.9\,$\mu$s. $^{d}$Computed engine latency; bus transfers excluded.}
+\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize Cost: time relative to the price alone on the same platform and hardware. $^{a}$4 cores, 8 processes. $^{b}$Measured package power under the 8-process load divided by throughput: \TBD{P$_{\rm pkg}$ W / throughput = E $\mu$J}; single core \TBD{P$_{\rm 1}$ W $\times$ latency}. $^{c}$Chip-level, from simulated activity (A10): 0.676\,W $\times$ 65.3\,$\mu$s and 2.485\,W $\times$ 15.9\,$\mu$s. $^{d}$Computed engine latency; bus transfers excluded. $^{e}$Structure-of-arrays variant, measured in a separate session in which the scalar analytic method took 21.8\,$\mu$s and gave 136,000\,s$^{-1}$.}
 \end{table}
 
 \textbf{Energy.} Both sides are counted at chip level: for the FPGA, the device's on-chip power
