@@ -1,7 +1,7 @@
 % =============================================================================
 % Greeks Engine -- IEEE conference paper (IEEEtran, conference mode).
 % Build: pdflatex greeks_engine_ieee.tex (twice). Figures: make_paper_figures.py.
-% Items marked \TBD{...} (red) await the CPU package-power measurement (HWiNFO).
+% CPU energy: validation/cpu_baseline/cpu_energy.py (HWiNFO session, 29 Oct 2026).
 % =============================================================================
 \documentclass[conference]{IEEEtran}
 \IEEEoverridecommandlockouts
@@ -20,8 +20,8 @@
 
 \newcommand{\TBD}[1]{\textcolor{red}{\textbf{[#1]}}}
 % vectorised CPU baseline (validation/cpu_baseline/run_simd.py -> results/cpu_simd.csv)
-\newcommand{\SIMDUS}{13.4}
-\newcommand{\SIMDTP}{77,000}
+\newcommand{\SIMDUS}{13.6}
+\newcommand{\SIMDTP}{216,000}
 \definecolor{acc}{HTML}{0072B2}
 \definecolor{accsoft}{HTML}{DCEBF5}
 \definecolor{ink}{HTML}{16202A}
@@ -460,7 +460,7 @@ A7 & Local errors: $2^{-(FL+1)}$ per rounding; CORDIC as in Section~\ref{sec:bou
 A8 & Word lengths 56/64 bits & On the 21-case grid, 56 bits is the shortest word with every Greek's worst relative error $\le1.2\times10^{-5}$ (52 bits: $5.8\times10^{-4}$); a 56$\times$56 multiplier maps to 9 DSP48 blocks. & The grid understates the tail: on the held-out sweep $\partial V/\partial\xi$ keeps 3.0 significant figures at the 99th percentile and 1.4 at worst (Table~\ref{tab:sigfig}).\\
 A9 & Latency = cycle count $\times$ clock period, engine only & Over JTAG each register access takes milliseconds, so the board run checks outputs but cannot time the engine. & Cycle counts are exact; the bus transfers (19 words in, 20 out) and, for \texttt{z7h}, the host's setup and finish are excluded and stated.\\
 A10 & FPGA power from simulated switching activity of the routed engine & Vivado's default 12.5\% toggle rate underestimated dynamic power 3--6$\times$. & Routed netlist simulated gate by gate on four bit-exact evaluations; chip-level boundary stated in Section~\ref{sec:res-cpu}.\\
-A11 & CPU package power from \TBD{HWiNFO measurement} & The CPU energy needs a measured power. & \TBD{measured CPU package power, idle and under load}\\
+A11 & CPU package power read with HWiNFO, average over each run & The CPU energy needs a measured power, which WSL cannot read. & Idle 5.5\,W; energy from the power and throughput of the same run (\texttt{cpu\_energy.csv}); Windows Balanced plan, on mains.\\
 A12 & First-order Greeks only; vega is $\partial V/\partial v_0$ & The adjoint gives first derivatives; Gamma is second order. $\partial V/\partial\sigma_0 = 2\sigma_0\,\partial V/\partial v_0$. & Gamma has a closed-form COS expression~\cite{fang} that would add one accumulator; not built.\\
 A13 & Adjoint written by hand in the operation graph & Automatic derivation in the generator is future work. & Agrees with three forward-mode datapaths to $6\times10^{-14}$ and with CoDiPack to $1.3\times10^{-10}$.\\
 A14 & NIFTY cases: calibrated parameters, $r = 0.06$ & Realistic inputs for the silicon test, not a trading evaluation. & All 50 inside the domain; 500/500 outputs bit-exact.\\
@@ -723,13 +723,14 @@ CPU figures are measured whole evaluations. Against the general-purpose methods 
 is faster: 4.9$\times$ than forward-mode AD, 6.5$\times$ than taped adjoint AD and 15$\times$ than
 bump-and-reprice. Against hand-derived analytic Greeks it is 1.3$\times$ faster than the scalar
 build (20.3\,$\mu$s) but slower than the vectorised one: at \SIMDUS\,$\mu$s, one vectorised
-core is 1.19$\times$ faster than the engine's computed latency, before the engine's omitted
+core is 1.17$\times$ faster than the engine's computed latency, before the engine's omitted
 transfers are counted; the ZedBoard's loop is 3.2$\times$ slower than the scalar build. We therefore claim
-no latency advantage over a well-optimised CPU implementation. For throughput the scalar build is
-the CPU's best: with eight processes on the four cores the vectorised build reaches only
-\SIMDTP\ evaluations per second, against 136,000 for the scalar build in the same session (158,000
-in the main session of Table~\ref{tab:cpu}). One 64-bit engine gives 62,800; by LUTs, three engines
-would fit on the ZCU102 (a projection, not built), giving about 188,000 per second.
+no latency advantage over a well-optimised CPU implementation. With eight processes on the four
+cores the vectorised build reaches \SIMDTP\ evaluations per second (the scalar build 144,000 in the
+same session); one 64-bit engine gives 62,800, and the three engines that would fit on the ZCU102 by
+LUTs (a projection, not built) about 188,000 per second, so the CPU also leads in throughput.
+Throughput on the laptop varies by about $\pm$25\% with its temperature, so the figures used for
+energy are those measured in the same run as the power.
 
 \begin{figure}[!t]
 \centering
@@ -753,25 +754,27 @@ CPU, bump-and-reprice & 238.1 & 17.4$\times$ & --- & ---\\
 CPU, optimised bump & 146.6 & 10.7$\times$ & --- & ---\\
 CPU, adjoint (CoDiPack) & 103.8 & 7.6$\times$ & 26,900$^{a}$ & ---\\
 CPU, forward mode & 78.0 & 5.7$\times$ & 34,000$^{a}$ & ---\\
-CPU, analytic Greeks & 20.3 & 1.5$\times$ & 158,000$^{a}$ & \TBD{HWiNFO}$^{b}$\\
-CPU, analytic, vectorised$^{e}$ & \SIMDUS & --- & \SIMDTP$^{a}$ & \TBD{HWiNFO}$^{b}$\\
+CPU, analytic Greeks & 20.3 & 1.5$\times$ & 158,000$^{a}$ & 54.6\,$\mu$J$^{b}$\\
+CPU, analytic, vectorised$^{e}$ & \SIMDUS & --- & \SIMDTP$^{a}$ & 40.9\,$\mu$J$^{b}$\\
 \midrule
 FPGA, ZedBoard, 70\,MHz (loop)$^{d}$ & 65.3 & 1.04$\times$ & 15,300 & 44\,$\mu$J$^{c}$\\
 FPGA, ZCU102, 100\,MHz$^{d}$ & 15.9 & 1.55$\times$ & 62,800 & 40\,$\mu$J$^{c}$\\
 \bottomrule
 \end{tabular}
-\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize Cost: time relative to the price alone on the same platform and hardware. $^{a}$4 cores, 8 processes. $^{b}$Measured package power under the 8-process load divided by throughput: \TBD{P$_{\rm pkg}$ W / throughput = E $\mu$J}; single core \TBD{P$_{\rm 1}$ W $\times$ latency}. $^{c}$Chip-level, from simulated activity (A10): 0.676\,W $\times$ 65.3\,$\mu$s and 2.485\,W $\times$ 15.9\,$\mu$s. $^{d}$Computed engine latency; bus transfers excluded. $^{e}$Structure-of-arrays variant, measured in a separate session in which the scalar analytic method took 21.8\,$\mu$s and gave 136,000\,s$^{-1}$.}
+\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize Cost: time relative to the price alone on the same platform and hardware. $^{a}$4 cores, 8 processes. $^{b}$Measured package power $\times$ run time / evaluations, 8 processes (7.87 and 8.83\,W at 144,000 and 216,000\,s$^{-1}$); one core: 167 and 115\,$\mu$J (A11). $^{c}$Chip-level, from simulated activity (A10): 0.676\,W $\times$ 65.3\,$\mu$s and 2.485\,W $\times$ 15.9\,$\mu$s. $^{d}$Computed engine latency; bus transfers excluded. $^{e}$Structure-of-arrays variant, measured on 29 Oct (scalar analytic 22.7\,$\mu$s in the same session); throughput from the energy run.}
 \end{table}
 
-\textbf{Energy.} Both sides are counted at chip level: for the FPGA, the device's on-chip power
-with the engine as its only logic (engine dynamic power from simulated activity, plus the whole
+\textbf{Energy.} Both sides are counted at chip level. For the FPGA, the device's on-chip power
+with the engine as its only logic (the engine's dynamic power from simulated activity, plus the whole
 device's static power): 0.676\,W on the Zynq-7020 and 2.485\,W for the 64-bit engine, giving 44 and
-40\,$\mu$J per evaluation; for the CPU, the package power. Neither includes DRAM or the board, and
-the FPGA side excludes the host processor and the bus that a deployed system needs, so the FPGA
-figure is optimistic. The CPU, at its measured package power of \TBD{HWiNFO: P$_{\rm pkg}$\,W} under
-full load, uses \TBD{E$_{\rm CPU}$\,$\mu$J} per evaluation at its full throughput, so the FPGA engine uses
-\TBD{ratio}$\times$ less energy per evaluation on this accounting; a board-level measurement would be
-needed to claim a system-level energy advantage.
+40\,$\mu$J per evaluation. For the CPU, the package power measured with HWiNFO (A11): 5.5\,W idle, and
+7.9 and 8.8\,W with eight processes of the scalar and vectorised analytic methods, giving 54.6 and
+40.9\,$\mu$J per evaluation at full throughput (167 and 115\,$\mu$J on one core). Neither side includes
+DRAM or the board, and the FPGA side also excludes the host processor and bus a deployed system needs.
+On this accounting the 64-bit engine matches the vectorised CPU (40 against 40.9\,$\mu$J) and uses
+1.4$\times$ less energy than the scalar build; counting only the power above idle on the CPU (15.4\,$\mu$J,
+vectorised) against the engine's dynamic power alone (30\,$\mu$J), the CPU is ahead. We therefore claim
+no energy advantage.
 
 % =============================================================================
 \section{Discussion and Limitations}
@@ -782,7 +785,8 @@ with its tape in scheduled registers. At equal throughput this costs about 1.7$\
 a price-only engine at 1.03$\times$ its cycles, and it is cheaper in multipliers and logic, and
 more accurate at the same word length, than a well-factored forward-mode datapath built by the
 same flow. Each Greek has a first-order rounding bound that held on every input tested and on
-silicon. These are the claims; speed against a CPU is not.
+silicon. These are the claims; speed and energy against a CPU are not: a vectorised laptop core is
+faster, four cores give more throughput, and the energy per evaluation is the same at chip level.
 
 \textbf{What they do not.} The adjoint's advantage over a factored forward datapath is modest
 (Section~\ref{sec:res-modes}). Delta and the strike sensitivity are nearly free in any COS

@@ -1,0 +1,6 @@
+run,command,package_W,real_s,evaluations,evals_per_s,us_per_eval_wall,uJ_per_eval_package,uJ_per_eval_above_idle
+idle,,5.497,,,,,,
+"scalar analytic, 1 core",heston_cpu run analytic 3000000,7.328,68.367,3000000,43881,22.79,167.0,41.7
+"scalar analytic, 8 processes",8 x heston_cpu run analytic 1000000,7.867,55.48,8000000,144196,6.93,54.6,16.4
+"vectorised analytic (SoA), 1 core",heston_cpu_simd run analytic_soa 4000000,8.338,55.241,4000000,72410,13.81,115.1,39.2
+"vectorised analytic (SoA), 8 processes",8 x heston_cpu_simd run analytic_soa 1000000,8.832,37.022,8000000,216088,4.63,40.9,15.4
