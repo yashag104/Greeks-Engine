@@ -86,12 +86,15 @@ on the host, its loop takes 65.3\,$\mu$s per evaluation on a ZedBoard and produc
 results bit-identical to the model on 50 random cases in silicon. Hand-derived
 analytic Greeks on one laptop CPU core are faster than that (20.3\,$\mu$s). The 64-bit
 configuration, run bit-exact on a ZCU102 (101 evaluations), takes 15.9\,$\mu$s for the
-whole evaluation: about 1.3 times faster than analytic Greeks on one core and 4.9--15
-times faster than forward-mode, adjoint and bump-and-reprice software. The engine's
-main gains are the cost of its Greeks and a rounding-error bound on each. Forward-mode
-datapaths built by the same generator need more multipliers for the same Greeks: 25\%
-more when hand-factored like analytic Greeks, 3.2 times more as an AD tool would
-build them. A small case study on a year of real NIFTY option data illustrates the
+whole evaluation (computed from its cycle count): 4.9--15 times faster than forward-mode,
+adjoint and bump-and-reprice software on a laptop core, but not faster than hand-derived
+Greeks vectorised across terms (13.6\,$\mu$s). At equal throughput the nine Greeks cost 1.03
+times the cycles and about 1.7 times the area of a price-only engine. The engine's gains are
+the cost and accuracy of its Greeks and a rounding-error bound on each; it has no speed or
+energy advantage over a well-optimised CPU. Forward-mode datapaths built by the same
+generator need more resources for the same Greeks: implemented at equal throughput, the
+hand-factored one needs 7\% more LUTs and 25\% more DSP blocks and is 6 times less accurate
+at the same word length; one built as an AD tool would needs 3.2 times the multiplies. A small case study on a year of real NIFTY option data illustrates the
 Greeks in use for hedging.
 \end{abstract}
 
@@ -160,14 +163,18 @@ laptop CPU.
   \item \textbf{The first FPGA implementation of the COS method.} COS pricing had
   run on CPUs and GPUs~\cite{zhang}; the only FPGA Fourier pricer~\cite{vitis} uses
   trapezoidal integration and returns the price alone.
-  \item \textbf{A tape-free adjoint datapath.} The reverse sweep is compiled into a
-  statically scheduled fixed-point datapath that shares its arithmetic units with the
-  forward pass: no tape memory and no replay logic. This is possible because the COS
-  pricer performs the same operations for every input.
+  \item \textbf{A co-scheduled adjoint datapath with a register-resident tape.} The
+  hand-derived reverse sweep is scheduled into the same fixed-point datapath as the forward
+  pass and shares its arithmetic units; the forward values it needs live in statically
+  allocated rotating registers (447 across the terms in flight), not in tape memory, and
+  there is no replay logic. This is possible because the COS pricer performs the same
+  operations for every input.
   \item \textbf{All nine Greeks for 1.04 times the cost of one price.} On the same
   hardware the price alone takes 4,568 cycles and the price with all nine Greeks
   4,733. On the measured CPU, Greeks derived by hand cost 1.5 pricings, AD tools
-  5.7--7.6, and bump-and-reprice 19.
+  5.7--7.6, and bump-and-reprice 19. A price-only engine reaches the same throughput with
+  half the multipliers: against it the Greeks cost 1.03 times the cycles, 1.68 times the
+  LUTs and twice the DSP blocks (Section~\ref{sec:review}).
   \item \textbf{A first-order rounding-error bound for every Greek of a fixed-point
   adjoint datapath.} Measured error never exceeds 0.103 of the bound over 21 test cases, 0.378
   over 10,500 inputs including hard regimes, and the bound held on silicon.
@@ -284,7 +291,7 @@ precision; and nine accumulators sum the price and Greek contributions.
   \node[lbl, below=1.35cm of rev.south] {every operation runs on 8 shared multipliers and 5 CORDIC units, assigned by the modulo schedule};
 \end{tikzpicture}
 \caption{One COS term inside the engine. The adjoint sweep is part of the same
-datapath as the forward pass; there is no tape memory.}
+datapath as the forward pass; the forward values it needs are held in scheduled registers, not in tape memory.}
 \label{fig:term}
 \end{figure}
 
@@ -343,8 +350,8 @@ is useful and what is new.
 Cycles, price + 9 Greeks & 4,733 & 92$\times$ fewer than the first-generation engine; 18.4$\times$ fewer than bump-and-reprice\\
 Cost of the 9 Greeks & 1.04 pricings & hand-derived software 1.5; AD tools 5.7--7.6; bump-and-reprice 19\\
 Latency on the ZedBoard (loop only) & 65.3\,$\mu$s (57.8\,$\mu$s at 79\,MHz) & 1.2--3.6$\times$ faster than AD tools and bumping on one CPU core; 3.2$\times$ slower than hand-derived Greeks (20.3\,$\mu$s)\\
-Latency, 64-bit on a ZCU102 & 15.9\,$\mu$s, whole evaluation (100\,MHz; 101 board evaluations bit-exact) & about 1.3$\times$ faster than hand-derived Greeks on one core; 4.9--15$\times$ faster than AD tools and bumping\\
-Energy per evaluation & 44\,$\mu$J (ZedBoard loop), 40\,$\mu$J (64-bit, whole evaluation); engine power from simulated activity & about 2--4$\times$ less than the CPU at full throughput (CPU power estimated)\\
+Latency, 64-bit on a ZCU102 & 15.9\,$\mu$s, whole evaluation (100\,MHz; 101 board evaluations bit-exact) & 4.9--15$\times$ faster than AD tools and bumping; 1.3$\times$ faster than scalar hand-derived Greeks, 1.17$\times$ slower than vectorised ones (13.6\,$\mu$s)\\
+Energy per evaluation & 44\,$\mu$J (ZedBoard loop), 40\,$\mu$J (64-bit, whole evaluation); engine power from simulated activity & parity with the vectorised CPU (40.9\,$\mu$J, measured package power); 1.4$\times$ less than the scalar build\\
 Accuracy (21 cases) & price $6.1\times10^{-7}$, Greeks $\le 1.2\times10^{-5}$ & relative to double precision; over 10,500 inputs worst absolute $1.2\times10^{-3}$ ($\partial V/\partial\xi$)\\
 Error bound & never exceeded ($\le 0.378$) & every output, 10,500 inputs\\
 On silicon & 450 / 450 bit-exact & 50 random cases\\
@@ -802,10 +809,10 @@ since each JTAG transaction takes far longer than an evaluation.}
 \end{table}
 
 \useful{On a larger FPGA the same generator gives an engine 4 times faster than the
-ZedBoard's loop and, narrowly, faster than the best hand-written software: 15.9\,$\mu$s
-for the whole evaluation against 20.3\,$\mu$s for analytic Greeks on one idle CPU core
-(Table below), about 1.3 times (1.5 times at the 119\,MHz the routing allows, not tested
-on the board). It computes exactly what the model computes on a second FPGA family, and
+ZedBoard's loop: 15.9\,$\mu$s for the whole evaluation (computed from the cycle count; bus
+transfers excluded), against 20.3\,$\mu$s for scalar analytic Greeks on one idle CPU core but
+13.6\,$\mu$s for the same Greeks vectorised across terms (Section~\ref{sec:review}), so it is
+not faster than a well-optimised CPU. It computes exactly what the model computes on a second FPGA family, and
 uses about a quarter of the ZCU102's logic, leaving room for more engines (not built).}
 
 \subsection{Power from simulated switching activity}
@@ -862,6 +869,7 @@ CPU, adjoint with CoDiPack (1 core) & 103.8 & 7.6$\times$ & 26,900 (4 cores)\\
 CPU, forward mode, 9 directions (1 core) & 78.0 & 5.7$\times$ & 34,000 (4 cores)\\
 CPU, optimised bump$^{*}$ (1 core) & 146.6 & 10.7$\times$ & --\\
 CPU, analytic Greeks$^{*}$ (1 core) & \textbf{20.3} & 1.5$\times$ & 158,000 (4 cores)\\
+CPU, analytic Greeks, vectorised$^{\ddagger}$ (1 core) & \textbf{13.6} & -- & 216,000 (4 cores)\\
 \hi FPGA engine, ZedBoard at 70\,MHz & \textbf{65.3} & \textbf{1.04$\times$} & 15,300 (1 engine)\\
 FPGA engine at the routed 79\,MHz & 57.8 & 1.04$\times$ & 17,300 (1 engine)\\
 \hi FPGA, 64-bit engine, ZCU102 at 100\,MHz$^{\dagger}$ & \textbf{15.9} & 1.55$\times$ & 62,800 (1 engine)\\
@@ -878,7 +886,9 @@ outside its 128-term loop (truncation range, constants, discounting, parity) tak
 is the transfer of 51 input and 10 output words over the processor bus, which has not
 been measured. $^{\dagger}$Whole evaluation, setup and finish on chip
 (Section~\ref{sec:zcu104}); from the cycle count and clock, run bit-exact on the ZCU102,
-where JTAG cannot time it.}
+where JTAG cannot time it. $^{\ddagger}$Structure-of-arrays variant built with
+\texttt{-Ofast -fopenmp-simd} and glibc's vector maths, measured on 29 October
+(Section~\ref{sec:review}).}
 \end{table}
 
 The analytic method writes out by hand the derivative of the characteristic function
@@ -893,17 +903,83 @@ times faster than forward mode, 1.6 times faster than adjoint differentiation wi
 CoDiPack and 3.6 times faster than bump-and-reprice, but not faster than the best
 hand-written software: analytic Greeks on one idle laptop core take 20.3\,$\mu$s, about
 3.2 times faster than the ZedBoard's loop, and several cores give far more throughput.
-The 64-bit engine on the ZCU102 reverses this, narrowly: 15.9\,$\mu$s for the whole
-evaluation, about 1.3 times faster than the analytic method on one core, and 4.9, 6.5
-and 15 times faster than forward mode, CoDiPack and bump-and-reprice. Four cores still
-give 2.5 times the throughput of one engine.
-What the engine keeps is the cost of its Greeks, 1.04 pricings against 1.5 for the best
-software and 5.7--7.6 for AD tools, a first-order rounding-error bound on every Greek, and
-energy: about 44\,$\mu$J per evaluation on the ZedBoard and 40\,$\mu$J for the 64-bit
-engine, from the engine's power under simulated activity (Section~\ref{sec:power}), against
-an estimated 76--177\,$\mu$J for the CPU at full throughput (158,000 evaluations per
-second) at its rated 12--28\,W, about 2--4 times less. The CPU's power was not measured,
-so the energy ratio is still an estimate.}
+The 64-bit engine on the ZCU102 (15.9\,$\mu$s) is 1.3 times faster than the scalar analytic
+method and 4.9, 6.5 and 15 times faster than forward mode, CoDiPack and bump-and-reprice, but
+the analytic method vectorised across terms takes 13.6\,$\mu$s on one core and four cores give
+216,000 evaluations per second (Section~\ref{sec:review}). What the engine keeps is the cost
+and accuracy of its Greeks and a first-order rounding-error bound on every Greek. Energy is a
+draw: 40\,$\mu$J per evaluation for the 64-bit engine at chip level (simulated activity) against
+40.9\,$\mu$J for the vectorised CPU from its measured package power.}
+
+\subsection{Revisions after review (29 October)}
+\label{sec:review}
+An external review of the paper draft questioned the baselines behind several claims. Each
+point was answered with a measurement rather than a rewording; the results below change some
+of the conclusions above and are the ones the paper now uses.
+
+\textbf{Equal-throughput engines in Vivado.} The 1.04 pricings of Table~\ref{tab:cycles}
+compare engines with the same 8 multipliers, but a price-only engine reaches the same initiation
+interval (32) with 4. Three host-setup engines of equal throughput were therefore generated,
+checked bit-exact against their models and implemented out of context on the Zynq-7020 at
+70\,MHz:
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}lrrrrrr@{}}
+\toprule
+\textbf{Engine} & \textbf{Mult.} & \textbf{LUT} & \textbf{FF} & \textbf{DSP} & \textbf{Cycles} & \textbf{Worst Greek error}\\
+\midrule
+Price only & 4 & 21,251 & 15,303 & 36 & 4,457 & --\\
+\hi Adjoint & 8 & 35,782 & 27,204 & 72 & 4,572 & $1.2\times10^{-5}$\\
+Forward, factored & 10 & 38,199 & 30,514 & 90 & 4,449 & $7.4\times10^{-5}$\\
+\bottomrule
+\end{tabular}
+\caption{Engines of equal throughput (\texttt{validation/results/vivado/cmp},
+\texttt{run\_fwd\_accuracy.py}); worst relative error of any Greek over the 21-case grid.}
+\end{table}
+
+\useful{At equal throughput the nine Greeks cost 1.03 times the cycles, 1.68 times the LUTs,
+1.78 times the flip-flops and twice the DSP blocks of the price alone. The factored forward
+engine is 2.7\% faster but needs 6.8\% more LUTs, 12.2\% more flip-flops and 25\% more DSP
+blocks, and it is 6 times less accurate at the same word length because its tangents are not
+rescaled per term. The adjoint's advantage over a well-factored forward datapath is real but
+modest. The ``447 registers'' are the rotating registers of all terms in flight; the price-only
+schedule needs 150, so the Greeks' register-resident tape is about 297 56-bit registers.}
+
+\textbf{The CORDIC model in the bound.} Measuring each CORDIC unit against its exact integer
+model over 30,000 inputs showed rotation within 1.14\,ulp (modelled as 2), but the vectoring
+angle losing precision as the input magnitude falls: up to $1.75/|z|$\,ulp, 11\,ulp at
+$|z|=0.01$. The bound now uses $2\max(1,1/|z|)$\,ulp for that output. Every bound result was
+recomputed; none changed in the published digits (0.103, 0.378, 0.356, 0.255, 0.24), because
+inside the domain the vectoring inputs stay near $|z|=1$. The primitives' own approximation
+error (Newton--Raphson iterations, tables, series), which the bound does not model, is at most
+$1.1\times10^{-8}$ relative. The bound is used at design time; over the 9,500 held-out inputs its
+99th percentile relative to the value is below $4\times10^{-4}$ for the price and market Greeks
+but reaches $2\times10^{-2}$ for $\partial V/\partial\xi$, and the COS method error, which it does
+not cover, dominates in a few in-domain cases (Section~\ref{sec:methoderr}). Using sensitivities
+from automatic differentiation to size FPGA word lengths goes back to Gaffar et
+al.~\cite{gaffar}, with accuracy-guaranteed variants by Lee et al.~\cite{lee06}.
+
+\textbf{A vectorised CPU baseline.} With \texttt{-O3} the compiler leaves the analytic method's
+128-term loop scalar. Written as seven short loops over arrays of the terms and built with
+\texttt{-Ofast -fopenmp-simd} and glibc's vector maths, the same Greeks take \textbf{13.6\,$\mu$s}
+on one core (scalar 22.7\,$\mu$s in the same session) and agree with forward mode to
+$9.3\times10^{-12}$; four cores give 216,000 evaluations per second. The 64-bit engine's computed
+15.9\,$\mu$s is therefore not faster than a well-optimised CPU, and no latency advantage is claimed.
+
+\textbf{Measured CPU energy.} The CPU package power was read with HWiNFO (idle 5.5\,W; 7.9\,W and
+8.8\,W with eight processes of the scalar and vectorised methods), giving 54.6 and 40.9\,$\mu$J per
+evaluation at full throughput (\texttt{validation/results/cpu\_energy.csv}). At chip level the
+64-bit engine's 40\,$\mu$J matches the vectorised CPU, so no energy advantage is claimed.
+
+\textbf{Greeks the COS sum gives directly.} Delta and Gamma have closed-form COS
+expressions~\cite{fang,junike}, and $\partial V/\partial K$ follows from Delta; a fair
+bump-and-reprice baseline that takes these from the sum needs 15 pricings, about 14.5 times the
+adjoint's cycles rather than 18.4. Gamma, a second-order Greek, is not computed by the engine.
+
+\textbf{Related work.} COS pricing has been accelerated on GPUs~\cite{zhang}; FPGA work
+includes quadrature and tree pricers, and several further references were added to the paper.
 
 \subsection{Many strikes at once (design study)}
 \label{sec:chain}
@@ -948,8 +1024,8 @@ same sharing applies to software: the analytic C++ method prices and differentia
 strikes in 74.4\,$\mu$s on one idle laptop core, 2.3\,$\mu$s per strike. On a
 Zynq-7020 at 70\,MHz two strikes take 70\,$\mu$s, so the CPU remains faster; a 64-bit
 chain engine at the ZCU102's 100\,MHz would take 48.9\,$\mu$s for 32 strikes (scheduled,
-not built), 1.5 times faster than one core but slower than four. The FPGA's case against a CPU is the cost and accuracy of its Greeks and,
-if measured, energy, not speed.}
+not built), 1.5 times faster than one core but slower than four. The FPGA's case against a CPU is the cost and accuracy of its Greeks, not speed or
+energy.}
 
 \subsection{Illustration: hedging on real market data}
 \label{sec:hedging}
@@ -1079,7 +1155,9 @@ Figure~\ref{fig:gantt}).
 21--22 Oct & ZCU104 build of the 64-bit engine (\S\ref{sec:zcu104}); ARM end-to-end design with the host steps in C; real NIFTY inputs as board vectors & Done\\
 21--22 Oct & Power from simulated switching activity, both engines (\S\ref{sec:power}) & Done\\
 25 Oct & ZCU102 build (xczu9eg, Vivado 2026.1) and board runs: one vector, 50-case sweep, 50 NIFTY days, 1,010 / 1,010 outputs bit-exact (\S\ref{sec:zcu104}) & Done\\
-Next & ZedBoard ARM end to end and NIFTY; a board power measurement and CPU package power & Needs the board\\
+27 Oct & IEEE paper draft; review-preparation guide & Done\\
+28--29 Oct & Review answered with measurements: equal-throughput engines in Vivado, CORDIC model corrected in the bound, vectorised CPU baseline, CPU package power (\S\ref{sec:review}) & Done\\
+Next & End-to-end latency and board power on the ZCU102 processor system; ZedBoard ARM run & Needs the board\\
 
 13--15 Oct & Freeze results; regenerate all figures and tables & Planned\\
 13--22 Oct & Write the paper: introduction, related work, architecture, results & Planned\\
@@ -1156,6 +1234,12 @@ library, \url{https://github.com/Xilinx/Vitis_Libraries}.
 option pricing techniques: a survey,'' \emph{Electronics}, 13(16):3186, 2024.
 \bibitem{zhang} B. Zhang and C. W. Oosterlee, ``Option pricing with COS method on
 graphics processing units,'' \emph{IEEE IPDPS Workshops}, 2009.
+\bibitem{gaffar} A. A. Gaffar, O. Mencer, W. Luk, P. Y. K. Cheung and N. Shirazi,
+``Floating-point bitwidth analysis via automatic differentiation,'' \emph{Proc. FPT}, 2002, pp. 158--165.
+\bibitem{lee06} D.-U. Lee, A. A. Gaffar, R. C. C. Cheung, O. Mencer, W. Luk and G. A. Constantinides,
+``Accuracy-guaranteed bit-width optimization,'' \emph{IEEE Trans. CAD}, vol. 25, no. 10, pp. 1990--2000, 2006.
+\bibitem{junike} G. Junike, ``On the number of terms in the COS method for European option pricing,''
+\emph{Numer. Math.}, 2024.
 \bibitem{linnainmaa} S. Linnainmaa, ``Taylor expansion of the accumulated rounding
 error,'' \emph{BIT Numerical Mathematics}, 16:146--160, 1976.
 \bibitem{codipack} M. Sagebaum, T. Albring and N. R. Gauger, ``High-performance

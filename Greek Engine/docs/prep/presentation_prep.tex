@@ -52,8 +52,13 @@ multiplications fill multiplier slots the forward pass leaves idle.
 
 \textbf{Headline results.}
 \begin{itemize}
-\item Price + 9 Greeks for \textbf{1.04$\times$} the cost of the price alone (4,733 vs.\ 4,568
-cycles); bump-and-reprice needs 18.4$\times$ more cycles on the same hardware.
+\item Price + 9 Greeks for \textbf{1.04$\times$} the cycles of the price alone on the same hardware
+(4,733 vs.\ 4,568); against a price-only engine of the \emph{same throughput} (half the multipliers),
+\textbf{1.03$\times$ the cycles, 1.68$\times$ the LUTs, 2$\times$ the DSPs} (Vivado). Bump-and-reprice needs
+18.4$\times$ more cycles on the same hardware.
+\item \textbf{No speed or energy advantage over a well-optimised CPU}: vectorised analytic Greeks take
+13.6\,$\mu$s on one laptop core (ZCU102 engine: 15.9\,$\mu$s computed), and energy is at parity
+(40 vs.\ 40.9\,$\mu$J, CPU package power measured).
 \item A \textbf{first-order rounding-error bound} for every Greek, never exceeded: worst 0.378 of
 the bound over 10,500 inputs, 0.356 on a held-out 10,500, $\le$ 0.255 on silicon.
 \item \textbf{Bit-exact on two FPGA families}: ZedBoard (Zynq-7020) 450/450; ZCU102 (Zynq
@@ -106,10 +111,12 @@ this costs a small constant multiple of the function (theory: $\le$ 4--5$\times$
 
 In software the forward values needed by the backward sweep are stored on a \textbf{tape},
 which is memory-bound: 5.7--7.6 pricings on our CPU (CoDiPack 7.6). In our engine there is
-\textbf{no tape}: control flow never depends on the input, so every forward value's lifetime
-is known at design time, and the scheduler keeps it in a register exactly as long as the
-reverse sweep needs it (447 storage registers per term). It is \emph{the tape compiled into
-the schedule}.
+\textbf{no tape memory}: control flow never depends on the input, so every forward value's
+lifetime is known at design time, and the scheduler keeps it in a rotating register exactly as
+long as the reverse sweep needs it. It is a \emph{register-resident tape compiled into the
+schedule}: 447 rotating registers across all terms in flight (the price-only schedule needs 150),
+which is why the Greeks add 11,901 flip-flops in Vivado. Say ``register-resident tape'', not
+``tape-free''.
 
 \textbf{State this yourself:} the reverse sweep is \textbf{hand-derived} as operations in the
 generator's graph (\texttt{heston.py}) and verified numerically. The generator does not
@@ -212,7 +219,7 @@ skips the DDR steps; \textbf{this run is still pending}.
 
 % =====================================================================
 \section{The figures in the paper and how to explain them}
-The paper (\texttt{docs/paper/greeks\_engine\_ieee.pdf}) has nine figures, in IEEE style.
+The paper (\texttt{docs/paper/greeks\_engine\_ieee.pdf}) has ten figures, in IEEE style.
 Below, in order of importance, is each figure with how to read it and what to say.
 
 \subsection*{Fig.~1 -- Design flow (diagram)}
@@ -227,24 +234,35 @@ to the model, and the bound applies to the hardware.}
 Top: forward pass $\rightarrow$ reverse sweep $\rightarrow$ normalisation $\rightarrow$ 9
 accumulators, one datapath; forward values held in 447 registers. Bottom: bars 506 cycles long
 starting every 32 cycles; about 16 overlap.
-\say{There is no tape memory: the adjoint is part of the datapath. II = 32 is set equally by
-the multipliers and the CORDIC units, and that balance is why the Greeks cost 4\%.}
+\say{The forward values the reverse sweep needs sit in scheduled registers, not in tape memory.
+II = 32 is set equally by the multipliers and the CORDIC units; the reverse sweep fits into the
+idle multiplier slots because the engine has twice the multipliers a price-only engine needs.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.62\linewidth]{fig_cycles.pdf}
-\caption*{Fig.~3 -- Cycles: price only, adjoint, bump-and-reprice on the same hardware.}
+\caption*{Fig.~3 -- Cycles: price only (same multipliers, and same throughput with half the multipliers), adjoint, bump-and-reprice.}
 \end{figure}
-\noindent\textbf{How to read it:} log scale. On the 56-bit design the adjoint bar (4,733) is
-almost level with the price bar (4,568), while bump-and-reprice is 86,860. On the 64-bit design
-the adjoint costs 1.55$\times$ the price because there the 32 multipliers, not the CORDIC units,
-set the pace.
-\say{All nine Greeks cost 3.6\% more than the price: 165 cycles. Bump-and-reprice needs
-18.4$\times$ more cycles on identical hardware, and the generated design is 92$\times$ faster
-than our hand-written first generation.}
+\noindent\textbf{How to read it:} log scale. The first two bars are price-only engines: with the
+adjoint's multipliers, and with half of them (the same initiation interval, i.e.\ the same
+throughput). The adjoint bar is about 3\% above the second on both designs (4,733 vs.\ 4,613;
+1,593 vs.\ 1,540); bump-and-reprice is 86,860 and 19,562.
+\say{At the same throughput the Greeks cost about 3\% in cycles but twice the multipliers.
+Bump-and-reprice needs 18.4$\times$ the cycles on identical hardware.}
+
+\begin{figure}[H]\centering
+\includegraphics[width=0.62\linewidth]{fig_equal.pdf}
+\caption*{Fig.~4 -- Three engines of equal throughput implemented in Vivado, normalised to price only.}
+\end{figure}
+\noindent\textbf{How to read it:} price only (4 multipliers), adjoint (8), factored forward mode
+(10), all at II = 32 on the Zynq-7020. The adjoint costs 1.68$\times$ the LUTs, 1.78$\times$ the
+flip-flops and 2$\times$ the DSPs of the price; forward mode costs more on every resource.
+\say{This is the real cost of the Greeks: about 1.7$\times$ the area at the same speed. Against a
+well-factored forward-mode engine the adjoint saves 7\% of LUTs, 12\% of flip-flops and 20\% of
+DSPs and is 6$\times$ more accurate at the same word length. A real but modest advantage.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.62\linewidth]{fig_modes.pdf}
-\caption*{Fig.~4 -- Adjoint against three forward-mode datapaths built by the same generator.}
+\caption*{Fig.~5 -- Adjoint against three forward-mode datapaths built by the same generator (scheduler).}
 \end{figure}
 \noindent\textbf{How to read it:} left, multiplies per term (126 price, \textbf{250 adjoint},
 313 factored, 396 sparse, 802 dense); right, cycles with 8 multipliers (4,731 vs.\ 5,622,
@@ -256,7 +274,7 @@ factored forward method and 26 (234, more than the chip has) for the dense one.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.62\linewidth]{fig_dse.pdf}
-\caption*{Fig.~5 -- Cycles against the number of shared 64-bit multipliers.}
+\caption*{Fig.~6 -- Cycles against the number of shared 64-bit multipliers.}
 \end{figure}
 \noindent\textbf{How to read it:} log--log; cycles halve as multipliers double until the
 dependency chain of a term dominates past 64. The adjoint stays 1.1--1.9$\times$ the price and
@@ -266,7 +284,7 @@ FPGA, and the figure shows where extra hardware stops paying.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=\linewidth]{fig_accuracy.pdf}
-\caption*{Fig.~6 -- Accuracy over the 21-case grid: (a) worst relative error, (b) error / bound.}
+\caption*{Fig.~8 -- Accuracy over the 21-case grid: (a) worst relative error, (b) error / bound.}
 \end{figure}
 \noindent\textbf{How to read it:} (a) 56-bit errors $10^{-7}$ to $1.2\times10^{-5}$, 64-bit
 $10^{-8}$ to $7\times10^{-7}$; $\partial_\kappa$ and $\partial_\rho$ are the weakest. (b) every
@@ -276,7 +294,7 @@ conservative, as a worst-case bound must be, but within a factor of ten.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.6\linewidth]{fig_bound_sweep.pdf}
-\caption*{Fig.~7 -- Held-out 10,500-input sweep: distribution of the worst error/bound per input.}
+\caption*{Fig.~9 -- Held-out 10,500-input sweep: distribution of the worst error/bound per input.}
 \end{figure}
 \noindent\textbf{How to read it:} a cumulative distribution; the whole curve sits left of 0.36,
 nowhere near 1. Out-of-domain inputs that were not flagged also stay inside the bound.
@@ -285,7 +303,7 @@ raised \texttt{range\_err} and none exceeded the bound.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=\linewidth]{fig_bump.pdf}
-\caption*{Fig.~8 -- Bump-and-reprice error against bump size, and the adjoint (flat line).}
+\caption*{Fig.~7 -- Bump-and-reprice error against bump size, and the adjoint (flat line).}
 \end{figure}
 \noindent\textbf{How to read it:} U-shaped curves: on the right the truncation error of central
 differences ($\propto h^2$); on the left rounding divided by $h$ ($\propto\epsilon/h$), much worse in
@@ -295,20 +313,21 @@ gets the best bump size chosen afterwards, and it has nothing to tune.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.62\linewidth]{fig_latency.pdf}
-\caption*{Fig.~9 -- Latency of one price + 9 Greeks: one CPU core vs.\ one FPGA engine.}
+\caption*{Fig.~10 -- Latency of one price + 9 Greeks: one CPU core vs.\ one FPGA engine.}
 \end{figure}
-\noindent\textbf{How to read it:} log scale. The ZCU102 (15.9\,$\mu$s) beats every CPU method,
-narrowly beating analytic Greeks (20.3\,$\mu$s); the ZedBoard (65.3\,$\mu$s) beats the AD tools and
-bumping but not analytic Greeks.
-\say{We are 4.9--15$\times$ faster than forward AD, taped AAD and bumping, 1.3$\times$ faster than
-hand-derived Greeks on the larger FPGA, and slower than them on the small one. Throughput is
-the CPU's: four cores give 2.5$\times$ one engine.}
+\noindent\textbf{How to read it:} log scale. The ZCU102 (15.9\,$\mu$s, computed) beats forward AD,
+taped AAD and bumping, and scalar analytic Greeks (20.3\,$\mu$s), but \textbf{not} analytic Greeks
+vectorised across terms (13.6\,$\mu$s).
+\say{We are 4.9--15$\times$ faster than the general-purpose methods, but a vectorised laptop core
+with hand-derived Greeks is faster than our engine, and four cores give 216,000 evaluations per
+second. We claim no speed advantage over a well-optimised CPU.}
 
 \subsection*{Tables in the paper}
 I: positioning against related work. II: the three configurations. III: implementation
 (LUT, FF, DSP, BRAM, clock, slack). IV: \textbf{assumptions with rationale} (A1--A14). V: adjoint
 vs.\ forward mode. VI: significant figures. VII: silicon validation (1,469/1,469 bit-exact).
-VIII: latency, throughput and energy vs.\ CPU (HWiNFO slots marked in red).
+VIII: three equal-throughput engines (Vivado). XI: the bound relative to each value (a-priori
+accuracy). XII: latency, throughput and energy vs.\ CPU, with measured CPU package power.
 
 \subsection*{Not paper evidence}
 Vivado screenshots and the hedging figures (12 NIFTY trades) are in the report only. Hedging
@@ -321,29 +340,32 @@ decisions do not depend on how the Greeks are computed.''} The old fig1--fig5 in
 \begin{center}\small
 \begin{tabular}{@{}L{4.2cm}L{11.2cm}@{}}
 \toprule
-Greeks cost & \textbf{1.04 pricings} (56-bit); 1.55 on the multiplier-bound 64-bit design\\
+Greeks cost & \textbf{1.04 pricings} on the same hardware (56-bit; 1.55 on 64-bit); at equal throughput 1.03$\times$ cycles, 1.68$\times$ LUT, 2$\times$ DSP\\
+vs.\ forward mode & factored forward engine: +6.8\% LUT, +12.2\% FF, +25\% DSP, 6$\times$ less accurate\\
 vs.\ bump-and-reprice & 18.4$\times$ fewer cycles; 32--560$\times$ more accurate\\
 Error bound & never exceeded over 10,500 + 10,500 held-out inputs (worst 0.378 / 0.356); 0.199 ZedBoard, 0.255 ZCU102\\
 Accuracy (56-bit, 99th pct.) & price, delta, strike, theta, rho, vega $\ge$ 5.3 significant figures; $\partial_\kappa$ 3.5, $\partial_\xi$ 3.0\\
 Silicon & ZedBoard 450/450 (+9/9 vector); ZCU102 1,010/1,010; worst ZCU102 price error $7.3\times10^{-7}$\\
 Area & Zynq-7020: 72.8\% LUT, 72/220 DSP; ZCU102: 77,515 LUT (28\%), 510 DSP (20\%), +1.601\,ns at 100\,MHz\\
-Latency vs.\ CPU (i5-1155G7, idle) & analytic 20.3\,$\mu$s; ZedBoard 65.3 (CPU 3.2$\times$ faster); ZCU102 15.9 (1.3$\times$ faster); 4.9--15$\times$ faster than forward (78.0), CoDiPack (103.8), bump (238.1)\\
-Throughput & 4 CPU cores 158k/s vs.\ one 64-bit engine 62.8k/s: \textbf{CPU wins}\\
-Energy & 44\,$\mu$J (ZedBoard), 40\,$\mu$J (64-bit), \textbf{simulated} activity; CPU pending HWiNFO (rated-power estimate 76--177\,$\mu$J, so 2--4$\times$)\\
+Latency vs.\ CPU (i5-1155G7, idle) & analytic 20.3\,$\mu$s scalar, \textbf{13.6\,$\mu$s vectorised}; ZedBoard 65.3; ZCU102 15.9 (computed): \textbf{CPU wins}; 4.9--15$\times$ faster than forward (78.0), CoDiPack (103.8), bump (238.1)\\
+Throughput & 4 CPU cores 216k/s (vectorised) vs.\ one 64-bit engine 62.8k/s: \textbf{CPU wins}\\
+Energy & 44\,$\mu$J (ZedBoard), 40\,$\mu$J (64-bit), simulated, chip level; CPU measured (HWiNFO): 40.9\,$\mu$J vectorised, 54.6 scalar: \textbf{parity}\\
 COS method error & separate from rounding; worst vega $7.8\times10^{-3}$ ($\xi=1$, $T=0.34$); 256 terms fix it\\
 \bottomrule
 \end{tabular}
 \end{center}
 \textbf{Framing:} the contribution is the \textbf{cost and certified accuracy of Greeks in
-hardware} and bit-exact silicon, not raw speed against hand-written CPU code.
+hardware} and bit-exact silicon, not speed or energy against a CPU.
 
 % =====================================================================
 \section{Limitations and status (say these before he finds them)}
 \begin{enumerate}
 \item The adjoint is \textbf{hand-derived}, not generated automatically.
 \item The bound is \textbf{first order} and covers \textbf{rounding only}; COS truncation error is separate and unbounded.
-\item \textbf{Energy}: FPGA simulated (SAIF), CPU pending measurement (HWiNFO).
-\item The latency lead is \textbf{narrow} (1.3$\times$) and only on the larger FPGA; the CPU wins throughput.
+\item \textbf{Energy}: FPGA simulated (SAIF), CPU measured (HWiNFO): parity at chip level.
+\item \textbf{No latency or throughput advantage}: a vectorised CPU core (13.6\,$\mu$s) beats the engine's computed 15.9\,$\mu$s, and four cores give 216k/s.
+\item The 1.04$\times$ needs twice the multipliers of a price-only engine; at equal throughput the Greeks cost $\approx$1.7$\times$ the area.
+\item The bound is a \textbf{design-time} tool (0.1\,s per input in software); the engine does not attach it to each result.
 \item Bus transfers not yet timed (ZCU102 processor-system run pending).
 \item Bounded input domain; $S_0$ fixed at 100 (prices scale with $(S_0,K)$ together).
 \item $\partial V/\partial\kappa$ and $\partial V/\partial\xi$: about 3 significant figures at the 99th percentile.
@@ -365,11 +387,12 @@ hardware} and bit-exact silicon, not raw speed against hand-written CPU code.
 % =====================================================================
 \section{Questions the supervisor may ask, with answers}
 \subsection{Novelty and positioning}
-\qa{What exactly is new?}{The first FPGA computation of option Greeks by adjoint differentiation, and the first FPGA COS pricer, with (i) a tape-free adjoint datapath at 1.04$\times$ the price, (ii) a per-Greek rounding bound for a fixed-point datapath that itself performs the adjoint, and (iii) bit-exact silicon on two FPGA families. Adjoints, COS and Linnainmaa's bound are each established; the combination in hardware is new.}
+\qa{What exactly is new?}{To our knowledge (after a literature search) the first FPGA computation of option Greeks by adjoint differentiation, and the first FPGA COS pricer (COS has run on GPUs), with (i) a co-scheduled adjoint datapath with a register-resident tape, measured against price-only and forward-mode engines of equal throughput, (ii) a per-Greek rounding bound for a fixed-point datapath that itself performs the adjoint, and (iii) bit-exact silicon on two FPGA families. Adjoints, COS and Linnainmaa's bound are each established; the combination in hardware is new.}
 \qa{Is this really AAD?}{It is adjoint differentiation; the reverse sweep is hand-derived in the graph and verified. Automatic derivation is future work, and the claim is worded accordingly.}
 \qa{Hasn't someone done Greeks on FPGAs?}{Yes, by re-simulation or finite differences: Klaisoongnoen et al.\ (HEART 2022, STAC-A2 Monte Carlo on an Alveo U280), the AMD Vitis Quantitative Finance library (finite differences). Capriotti \& Giles' 2024 review of fifteen years of AAD in finance lists no FPGA adjoint.}
-\qa{Cui et al.\ already derived analytic Heston gradients. Why bother?}{We measured that approach: hand-derived Greeks cost 1.5 pricings on a CPU (20.3\,$\mu$s); the hardware gets 1.04. Our forward-mode study shows the hand-factored forward method needs 25\% more multiplies per term than the adjoint.}
-\qa{Why not just use a CPU?}{On a small FPGA a CPU core with analytic Greeks is faster. The FPGA's case is Greeks at almost no extra cost, a certified bound on every Greek, deterministic latency, energy per evaluation, and a narrow latency lead on the larger FPGA.}
+\qa{Cui et al.\ already derived analytic Heston gradients. Why bother?}{We measured that approach: hand-derived Greeks cost 1.5 pricings on a CPU (20.3\,$\mu$s); the hardware gets 1.04 on the same hardware, 1.03$\times$ cycles and $\approx$1.7$\times$ area at equal throughput. Implemented at equal throughput, the hand-factored forward engine needs 7\% more LUTs and 25\% more DSPs and is 6$\times$ less accurate.}
+\qa{Why not just use a CPU?}{For speed and energy, a CPU is as good or better: vectorised analytic Greeks take 13.6\,$\mu$s on one core and the energy per evaluation is at parity. The FPGA's case is the cost and accuracy of its Greeks in hardware, a first-order bound on every Greek, deterministic latency, and a datapath that a generator produces and verifies automatically.}
+\qa{Delta and Gamma come almost free from the COS sum. Isn't the adjoint overkill?}{Yes for Delta and the strike sensitivity (closed forms, Fang \& Oosterlee Remark 3.2); the adjoint's real work is the seven Greeks entering through the characteristic function. A fair bump baseline using the closed forms needs 15 pricings ($\approx$14.5$\times$ the adjoint's cycles, not 18.4). Gamma is second order and not computed.}
 
 \subsection{Heston and COS}
 \qa{Which characteristic-function form, and why?}{The stable form (Albrecher et al.), $g=(\kappa-i\rho\xi u-d)/(\kappa-i\rho\xi u+d)$ with $e^{-dT}$; it avoids the branch-cut discontinuity of the complex logarithm for long maturities.}
@@ -381,15 +404,16 @@ hardware} and bit-exact silicon, not raw speed against hand-written CPU code.
 \qa{Why is $S_0$ fixed?}{Homogeneity: $V(\lambda S_0,\lambda K)=\lambda V(S_0,K)$. The host scales inputs and outputs.}
 
 \subsection{Adjoint differentiation}
-\qa{Where is the tape?}{There is none. The schedule is static, so each forward value's lifetime is known; the scheduler keeps it in a register until the reverse sweep uses it, within a 506-cycle term (447 storage registers).}
+\qa{Where is the tape?}{In registers. The schedule is static, so each forward value's lifetime is known; the scheduler keeps it in a rotating register until the reverse sweep uses it: 447 across all terms in flight, against 150 for a price-only schedule. It costs flip-flops (and some shift-register LUTs), not memory traffic.}
 \qa{Why reverse mode with only 9 inputs?}{Reverse costs about one sweep per output: one output, nine inputs. The forward-mode table quantifies it: 250 multiplies per term against 313--802.}
-\qa{The cheap-gradient bound is 4--5$\times$. How do you get 1.04?}{In operations it is 250/126 $\approx$ 2$\times$ multiplies; in \emph{time} it is 1.04 because the CORDIC units set the pace and the adjoint's multiplies fill idle multiplier slots. Where multipliers bind (64-bit) it is 1.55$\times$.}
+\qa{The cheap-gradient bound is 4--5$\times$. How do you get 1.04?}{In operations it is 250/126 $\approx$ 2$\times$ multiplies; in \emph{time} it is 1.04 on the same hardware because the CORDIC units set the pace and the adjoint's multiplies fill idle multiplier slots. But a price-only engine needs only half the multipliers for that pace, so in area-time the Greeks cost about 2$\times$ multipliers, 1.7$\times$ area. Where multipliers bind (64-bit) it is 1.55$\times$ on the same hardware.}
 \qa{How did you verify the adjoint?}{Against the double-precision model and the forward-mode datapaths ($6\times10^{-14}$), against CoDiPack and analytic Greeks on the CPU ($1.3\times10^{-10}$), and bit-exact RTL against the emulator.}
 
 \subsection{Fixed point and the bound}
 \qa{Derive your bound.}{Each operation adds a rounding error of at most $\tfrac12$ ulp; to first order the output error is $\sum_i (\partial y/\partial w_i)\,\delta_i$; bound each term by its absolute value: $\sum_i |\partial y/\partial w_i|\,2^{-(FL+1)}$. The sensitivities come from a reverse sweep over the graph (Linnainmaa 1976).}
 \qa{Why only first order?}{Second-order terms are $\approx2^{-28}$ smaller. Checked: 50-digit evaluation agrees ($\le$ 0.24 of the bound), and the bound holds at 44 bits where those terms are 4,096$\times$ larger.}
-\qa{Is it a rigorous bound?}{A first-order estimate, not interval arithmetic; rigorous up to the dropped second-order terms, which the checks show are negligible. Say ``first-order bound'', never ``guaranteed''.}
+\qa{Is it a rigorous bound?}{A first-order estimate, not interval arithmetic; rigorous up to the dropped second-order terms, which the checks show are negligible. Say ``first-order bound'', never ``guaranteed''. AD-based word-length analysis on FPGAs is prior art (Gaffar et al.\ 2002; Lee et al.\ 2006); our step is applying it to a datapath that contains its own adjoint.}
+\qa{How are CORDIC, Newton--Raphson and tables modelled in the bound?}{Newton--Raphson, tables and series are expanded into graph operations, so each internal rounding is modelled; their approximation error is common to the fixed and exact evaluations and is $\le1.1\times10^{-8}$ relative. CORDIC units are single operations with measured local errors: rotation $\le$1.14\,ulp (modelled 2); the vectoring angle grows as $1.75/|z|$\,ulp, so it is modelled as $2\max(1,1/|z|)$\,ulp. That correction was found during the review; no published number changed.}
 \qa{Why is the bound loose (0.1--0.4)?}{Worst-case half-ulp errors with aligned signs do not happen; rounding errors partly cancel. 0.1--0.4 is tight for a worst-case bound.}
 \qa{Why 56 bits?}{The shortest word at which every Greek's worst relative error is $\le1.2\times10^{-5}$ on the grid (52 bits: $5.8\times10^{-4}$), with the error under the bound; and 56$\times$56 maps to 9 DSP48s. The 64-bit design is for the larger chip.}
 \qa{How do you prevent overflow?}{Shift ranges measured over the domain plus margin; every shifter raises \texttt{range\_err} if exceeded. No overflows over 10,500 inputs; flags only outside the domain after the refit.}
@@ -406,26 +430,27 @@ hardware} and bit-exact silicon, not raw speed against hand-written CPU code.
 
 \subsection{Results and fairness}
 \qa{Is the CPU comparison fair?}{Same algorithm (COS 128, frozen range, parity) in double precision, g++ -O3 -march=native, best of 5 on an idle machine, and the strongest software baseline (hand-derived analytic Greeks) included. The ZedBoard figure is loop-only (the CPU's work outside its loop is 0.03\,$\mu$s); bus transfers are not yet timed.}
-\qa{Your energy numbers?}{FPGA: simulated activity on the routed netlist (power $\times$ latency: 0.676\,W $\times$ 65.3\,$\mu$s $\approx$ 44\,$\mu$J). CPU: measured package power from HWiNFO (to be added). Until then the energy ratio is an estimate.}
-\qa{Throughput is worse than 4 cores. Why should anyone care?}{The engine uses 20\% of the ZCU102's DSPs, so several would fit (not built); per-evaluation latency, determinism and energy are the FPGA's strengths, not batch throughput.}
-\qa{Only 21 cases for the accuracy figure?}{Fig.~6 shows 21 for readability; the claim rests on 10,500 + 10,500 held-out inputs including seven hard regimes, plus a 50-digit check.}
+\qa{Your energy numbers?}{FPGA: simulated activity on the routed netlist, chip level (2.485\,W $\times$ 15.9\,$\mu$s $\approx$ 40\,$\mu$J). CPU: package power measured with HWiNFO, 8.8\,W with eight processes at 216,000/s $\approx$ 40.9\,$\mu$J. Parity, so no energy claim.}
+\qa{Throughput is worse than 4 cores. Why should anyone care?}{We do not claim throughput. Three engines would fit on the ZCU102 by LUTs ($\approx$188k/s, projected), still below the vectorised CPU's 216k/s. The case is the cost and certified accuracy of the Greeks.}
+\qa{Did you compare against a vectorised CPU?}{Yes: the \texttt{-O3} loop was scalar; a structure-of-arrays version with glibc's vector maths takes 13.6\,$\mu$s on one core and beats the engine's computed latency. A single-loop vectorised version spilled registers and was slower than scalar.}
+\qa{Only 21 cases for the accuracy figure?}{Fig.~8 shows 21 for readability; the claim rests on 10,500 + 10,500 held-out inputs including seven hard regimes, plus a 50-digit check.}
 \qa{Why are $\partial V/\partial\kappa$ and $\partial V/\partial\xi$ weak?}{They are small and computed through long chains with cancellation. Always within their bound, and the bound tells the user their accuracy in advance; that is the point of a bound.}
 
 \subsection{Practicalities and status}
 \qa{What happened with the ZCU102 processor run?}{The board's DDR fails calibration with Vivado's preset (likely a different memory module on the lab board's revision). The program now runs from on-chip memory and the setup skips the DDR steps; the re-run is pending.}
 \qa{Why the NIFTY data?}{To test silicon on real calibrated parameters, not only random draws: 50 trading days, all bit-exact on the ZCU102.}
 \qa{Does the hedging show your Greeks are better?}{No, and we do not claim that; it is an illustration with 12 trades.}
-\qa{What's next?}{Finish the ZCU102 power/timing run and the CPU power measurement; automatic derivation of the reverse sweep; several engines per device; 100\,MHz on the Zynq-7020 with DSP pipeline registers; strike chains (one reverse sweep serves every strike; designed and scheduled, not built).}
+\qa{What's next?}{Finish the ZCU102 processor-system run (end-to-end latency, board power); automatic derivation of the reverse sweep; several engines per device; 100\,MHz on the Zynq-7020 with DSP pipeline registers; strike chains (one reverse sweep serves every strike; designed and scheduled, not built).}
 
 % =====================================================================
 \section{Last-minute advice}
 \begin{itemize}
 \item If he challenges a number, answer from \texttt{validation/results/} and the paper's tables.
-\item \textbf{Lead with the honest limits} (hand-derived adjoint; first-order bound; simulated FPGA energy and pending CPU power; CPU wins throughput) before he finds them.
+\item \textbf{Lead with the honest limits} (hand-derived adjoint; first-order, design-time bound; no speed or energy advantage over a vectorised CPU; the Greeks cost $\approx$1.7$\times$ the area at equal throughput) before he finds them.
 \item The three sentences to remember:
 \begin{enumerate}
-\item \emph{``The reverse sweep is compiled into the datapath: there is no tape.''}
-\item \emph{``Greeks cost 4\% over the price because the reverse sweep fills multiplier slots the CORDIC-bound forward pass leaves idle.''}
+\item \emph{``The reverse sweep is co-scheduled with the forward pass; its tape lives in scheduled registers.''}
+\item \emph{``At equal throughput the Greeks cost 3\% in cycles and about 1.7$\times$ the area, less than forward mode, and 6$\times$ more accurate.''}
 \item \emph{``Every Greek has a first-order rounding bound, never exceeded in 21,000 inputs or on silicon.''}
 \end{enumerate}
 \end{itemize}

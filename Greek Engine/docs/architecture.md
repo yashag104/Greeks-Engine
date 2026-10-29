@@ -231,8 +231,9 @@ in Vivado 2026.1 on the lab PC, which has the ZU9EG licence. Reports in
 | latency | 1,593 cycles = **15.9 µs** per whole evaluation (setup and finish on chip) | same |
 | power, engine alone, simulated activity | ~40 µJ per evaluation (xczu7ev dynamic + xczu9eg static) | 2.485 W (1.883 dynamic): ~40 µJ per evaluation |
 
-Against the analytic CPU method (20.3 µs, one idle core) this is about 1.3× faster
-on the same scope. The board run checks every output but cannot time the engine (each
+Against the scalar analytic CPU method (20.3 µs, one idle core) this is 1.3× faster
+on the same scope, but the same method vectorised across terms takes 13.6 µs (§4.6b),
+so the engine is not faster than a well-optimised CPU. The board run checks every output but cannot time the engine (each
 JTAG transaction is far slower than an evaluation), so the latency is the cycle count
 at the clock. Worst price error against the double-precision reference on the board:
 7.3e-7 (ZedBoard 1.5e-5). Logs: `validation/results/board_*zcu102_2026-10-25.log`,
@@ -275,20 +276,21 @@ terms. It is the strongest software competitor and it changes the comparison:
   methods: 1.2× faster than forward mode, 1.6× faster than taped AAD and 3.6×
   faster than plain bump-and-reprice. The 64-bit engine on the ZCU102 (15.9 µs) is
   about 1.3× faster than the analytic method, and 4.9×, 6.5× and 15× faster than
-  forward mode, AAD and bumping. The latency advantage over the best software is
-  narrow and holds only on the larger FPGA; the paper must say so.
+  forward mode, AAD and bumping. Vectorised across terms, the analytic method takes
+  13.6 µs (§4.6b): there is no latency advantage over a well-optimised CPU.
 - **Throughput:** the analytic method on 4 cores / 8 processes reached
-  158,000 evaluations/s on the idle laptop, against 15,300 for one ZedBoard engine
-  and 62,800 for one 64-bit engine (2.5× fewer).
+  158,000 evaluations/s scalar and 216,000 vectorised, against 15,300 for one
+  ZedBoard engine and 62,800 for one 64-bit engine.
 - **Energy:** engine power from the routed netlist simulated on real evaluations
   (22 Oct 2026, `hardware/vivado/power`): 0.676 W at 70 MHz on the Zynq-7020, so
   about 44 µJ per evaluation; 2.485 W at 100 MHz for the 64-bit engine (xczu7ev; the
   ZCU102's xczu9eg adds 0.03 W static), about 40 µJ per whole evaluation. Vivado's vectorless figure (0.204 W for the engine, 0.340 W for the
-  board design) underestimated dynamic power about 6×. CPU power could not be
-  measured under WSL; at the part's 12–28 W configurable power and the analytic
-  method's idle-machine throughput (158,000/s), about 76–177 µJ per evaluation, so
-  roughly 2–4× more than the FPGA. Energy per Greek set is the FPGA's remaining measured-or-estimated
-  advantage, and it rests on a CPU power estimate.
+  board design) underestimated dynamic power about 6×. CPU package power, measured
+  with HWiNFO on 29 Oct (`validation/results/cpu_energy.csv`): idle 5.5 W; 7.9 W and
+  8.8 W with eight processes of the scalar and vectorised analytic methods, i.e.
+  54.6 and 40.9 µJ per evaluation at full throughput (167 and 115 µJ on one core).
+  At chip level the 64-bit engine's 40 µJ matches the vectorised CPU: **no energy
+  advantage.**
 - **Greeks overhead:** the FPGA's Greeks cost 1.04 pricings; the best hand-written
   software costs 1.5, and general AD tools 5.7–7.6. The engine reaches this without
   anyone deriving the derivatives of the characteristic function by hand.
@@ -296,6 +298,35 @@ terms. It is the strongest software competitor and it changes the comparison:
   K, r, v0 and theta bumps) costs 10.7 pricings on the CPU, against 17.4 for plain
   bumping. The hardware advantage over bumping should therefore be quoted against
   an optimised bump as well, not only the 18.4× against a plain one.
+
+### 4.6b Review findings, 28–29 Oct 2026
+
+An external review of the paper draft asked for the baselines behind several claims. Each was
+measured:
+
+- **Equal-throughput engines (Vivado, Zynq-7020, out of context, 70 MHz, II 32;
+  `validation/results/vivado/cmp`).** Price only (4 multipliers): 21,251 LUT, 15,303 FF,
+  36 DSP, 4,457 cycles. Adjoint (8): 35,782 / 27,204 / 72, 4,572. Factored forward mode
+  (10; `gen_tb.py --tangent factored`): 38,199 / 30,514 / 90, 4,449. All three bit-exact
+  against their models. So the Greeks cost 1.03× the cycles, 1.68× the LUTs, 1.78× the FFs
+  and 2× the DSPs of a right-sized price engine; forward mode needs 6.8 % more LUTs,
+  12.2 % more FFs and 25 % more DSPs and is 6× less accurate at 56 bits (worst Greek
+  7.4e-5 vs 1.2e-5 over the 21 cases; `run_fwd_accuracy.py`).
+- **Register-resident tape.** The scheduler's 447 storage registers are the rotating
+  registers of all terms in flight (price-only schedule: 150; factored forward: 374).
+- **CORDIC model in the bound.** Rotation ≤ 1.14 ulp (model 2 ulp); the vectoring angle
+  reaches 1.75/|z| ulp, so its local error is now 2·max(1, 1/|z|) ulp (`ir.py`). All bound
+  results regenerated; published worst ratios unchanged (0.103 / 0.378 / 0.356 / 0.255 /
+  0.24). Primitive approximation error (NR, tables, series) ≤ 1.1e-8 relative.
+- **Vectorised CPU (`run_simd.py`).** The `-O3` term loop is scalar. A structure-of-arrays
+  version (`analytic_soa`, `-Ofast -fopenmp-simd`, libmvec) takes 13.6 µs on one core
+  (scalar 22.7 µs in the same session), 216,000 evals/s on four cores; agrees with forward
+  mode to 9.3e-12. The single-loop vectorised version spills and is slower than scalar.
+  Throughput on the laptop drifts ±25 % with temperature, so methods are interleaved.
+- **CPU energy (HWiNFO):** see the Energy bullet above; parity at chip level.
+- **COS Delta/Gamma** have closed forms (Fang & Oosterlee 2008, Remark 3.2; Junike 2024), so
+  a fair bump baseline needs 15 pricings (≈ 14.5× the adjoint's cycles). Gamma is not
+  computed.
 
 ### 4.7 Strike chains (design study, 1 Oct 2026: scheduled and emulated, not built)
 
