@@ -16,10 +16,13 @@ reachable it says so.
    pricing had run on CPUs and GPUs (Zhang & Oosterlee 2009); the only FPGA Fourier
    pricer (AMD `hcfEngine`) uses trapezoidal integration and returns the price
    alone.
-3. **A tape-free adjoint datapath.** The reverse sweep is compiled into a
-   statically scheduled fixed-point datapath that shares arithmetic units with the
-   forward pass, with no tape memory or replay logic. This is possible because the
-   COS pricer runs the same operations for every input.
+3. **A co-scheduled adjoint datapath with a register-resident tape.** The hand-derived
+   reverse sweep is scheduled into the forward pass's fixed-point datapath and shares
+   its arithmetic units; forward values live in statically allocated rotating registers,
+   not in tape memory, and there is no replay logic. This works because the COS pricer
+   runs the same operations for every input. Static reverse sweeps for control-flow-free
+   code are well known (source-transformation AD, training accelerators); the claim is
+   the application to option Greeks on an FPGA, not the principle.
 4. **Nine Greeks for 1.04× the cost of the price.** 4,733 cycles against 4,568 for
    the price alone on the same hardware; software AAD costs 5.7–7.6× on the
    measured CPU (`architecture.md` §4.6) and bump-and-reprice 19×. The 1.04× is
@@ -50,11 +53,11 @@ Against a CPU running the same algorithm (idle laptop, 23 Oct 2026), the ZedBoar
 engine is 1.2–1.6× faster than the general AD methods, but **hand-derived analytic
 Greeks on one CPU core are about 3.2× faster than it** (20.3 µs against 65.3 µs). The
 64-bit engine on the ZCU102 (15.9 µs per whole evaluation, run bit-exact on the board)
-is about **1.3× faster than the analytic method** and 4.9–6.5× faster than the AD
-methods; four cores still give 2.5× its throughput. The FPGA's claims against a CPU
-are the Greeks overhead (1.04 pricings against 1.5 for the best software), a narrow
-latency lead on the larger FPGA, and about 2–4× less energy per evaluation (engine
-power from simulated activity, CPU power estimated; `architecture.md` §4.6).
+is 4.9–6.5× faster than the AD methods but **not faster than the analytic method
+vectorised across terms (13.6 µs)**, and four cores give more throughput. Measured CPU
+package power puts energy per evaluation at parity (40 µJ FPGA chip-level vs 40.9 µJ
+vectorised CPU). The FPGA's claims against a CPU are therefore the cost and accuracy of
+its Greeks and the per-Greek bound, **not speed or energy** (`architecture.md` §4.6b).
 
 ## 2. What the novelty builds on
 
@@ -203,14 +206,14 @@ nothing that does adjoint Greeks or COS on an FPGA.
    wins latency by about 3.2×** and throughput by more; the ZedBoard beats only the
    general methods: forward mode (78.0 µs, 1.2×), CoDiPack AAD (103.8 µs, 1.6×) and
    bump-and-reprice (238.1 µs, 3.6×). The 64-bit engine on the ZCU102 (15.9 µs, run
-   bit-exact on the board) is **about 1.3× faster than the analytic method** on one
-   core, 4.9–15× faster than the others, and 2.5× slower in throughput than four
-   cores. Energy per evaluation is about 2–4× lower on the FPGA (engine power from
-   simulated activity, 22 Oct 2026), against a CPU power figure that was not measured.
-   Argue the latency lead only for the larger FPGA and only as narrow. Argue
-   Greeks overhead (1.04 against 1.5 for the best software), the per-Greek error
-   bound, energy per Greek set, and what a larger device with several engines or
-   strike sharing would deliver; and measure CPU power before relying on energy.
+   bit-exact on the board) is 1.3× faster than the scalar analytic method but slower
+   than the same method vectorised across terms (13.6 µs, 29 Oct), 4.9–15× faster than
+   the others, and slower in throughput than four cores (216,000/s vectorised). Energy
+   per evaluation, with measured CPU package power, is at parity (40 vs 40.9 µJ).
+   Do not argue latency, throughput or energy. Argue the cost of the Greeks at equal
+   throughput (1.03× cycles, ~1.7× area of a price-only engine; less area and 6× more
+   accurate than a factored forward datapath), the per-Greek error bound, and bit-exact
+   silicon.
    Strike sharing (`architecture.md` §4.7) cuts the cost per extra strike to
    about 7% of one option in hardware, but the same sharing makes the CPU about 9×
    cheaper per strike too (2.3 µs per strike at 32 strikes, one idle core), and
