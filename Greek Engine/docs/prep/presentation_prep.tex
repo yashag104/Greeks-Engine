@@ -47,8 +47,10 @@ pricings in practice. \textbf{No published FPGA work computes Greeks by an adjoi
 
 \textbf{The key idea.} The COS pricing method performs exactly the same operations for every
 input. So the reverse sweep can be written once, scheduled at design time into the same
-datapath as the forward pass, with no tape memory and no replay logic, and its
-multiplications fill multiplier slots the forward pass leaves idle.
+datapath as the forward pass. The forward values it needs are still stored (it is still a
+tape) but in a fixed set of scheduled registers rather than in memory, with no addressing and
+no replay logic; and its multiplications fill multiplier slots the forward pass leaves idle.
+Both cost area: the registers and twice the multipliers of a price-only engine.
 
 \textbf{Headline results.}
 \begin{itemize}
@@ -111,12 +113,13 @@ this costs a small constant multiple of the function (theory: $\le$ 4--5$\times$
 
 In software the forward values needed by the backward sweep are stored on a \textbf{tape},
 which is memory-bound: 5.7--7.6 pricings on our CPU (CoDiPack 7.6). In our engine there is
-\textbf{no tape memory}: control flow never depends on the input, so every forward value's
+still a tape, but \textbf{not in memory}: control flow never depends on the input, so every forward value's
 lifetime is known at design time, and the scheduler keeps it in a rotating register exactly as
 long as the reverse sweep needs it. It is a \emph{register-resident tape compiled into the
 schedule}: 447 rotating registers across all terms in flight (the price-only schedule needs 150),
-which is why the Greeks add 11,901 flip-flops in Vivado. Say ``register-resident tape'', not
-``tape-free''.
+which is why the Greeks add 11,901 flip-flops and 1,129 shift-register LUTs in Vivado. The
+storage is real and costs area; what is gone is the memory, the addressing and the replay. Say
+``register-resident tape'', never ``tape-free'' or ``no tape''.
 
 \textbf{State this yourself:} the reverse sweep is \textbf{hand-derived} as operations in the
 generator's graph (\texttt{heston.py}) and verified numerically. The generator does not
@@ -234,7 +237,7 @@ to the model, and the bound applies to the hardware.}
 Top: forward pass $\rightarrow$ reverse sweep $\rightarrow$ normalisation $\rightarrow$ 9
 accumulators, one datapath; forward values held in 447 registers. Bottom: bars 506 cycles long
 starting every 32 cycles; about 16 overlap.
-\say{The forward values the reverse sweep needs sit in scheduled registers, not in tape memory.
+\say{The forward values the reverse sweep needs are still stored, as a tape, but in scheduled registers rather than memory, and that storage costs area.
 II = 32 is set equally by the multipliers and the CORDIC units; the reverse sweep fits into the
 idle multiplier slots because the engine has twice the multipliers a price-only engine needs.}
 
