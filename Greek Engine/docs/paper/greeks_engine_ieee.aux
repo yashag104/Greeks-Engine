@@ -1,0 +1,127 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{heston}
+\citation{fang}
+\citation{klai,klaih2rc,vitisquant}
+\citation{giles,capriotti,capgiles24}
+\citation{tapenade}
+\citation{gaffar,lee06}
+\citation{albrecher}
+\citation{fang}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {II}Background and Related Work}{1}{section.2}\protected@file@percent }
+\newlabel{sec:background}{{II}{1}{Background and Related Work}{section.2}{}}
+\citation{fang}
+\citation{junike}
+\citation{griewank}
+\citation{griewank92}
+\citation{cui}
+\citation{deschryver,deschryver13}
+\citation{jin}
+\citation{tse}
+\citation{klai,klaih2rc,klai24}
+\citation{vitisquant}
+\citation{zhang09,zhang14}
+\citation{gremse}
+\citation{gaffar}
+\citation{lee06}
+\citation{gappa}
+\citation{linnainmaa}
+\citation{deschryver,deschryver13}
+\citation{jin,tse}
+\citation{klai,klaih2rc,klai24}
+\citation{vitisquant}
+\citation{zhang09,zhang14}
+\citation{gremse}
+\citation{cui}
+\citation{tang}
+\citation{volder}
+\citation{linnainmaa}
+\citation{rau}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Related work (figures not directly comparable)}}{2}{table.1}\protected@file@percent }
+\newlabel{tab:related}{{I}{2}{Related work (figures not directly comparable)}{table.1}{}}
+\newlabel{eq:cos}{{1}{2}{Background and Related Work}{equation.2.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}Method}{2}{section.3}\protected@file@percent }
+\newlabel{sec:method}{{III}{2}{Method}{section.3}{}}
+\newlabel{sec:bound}{{III}{2}{Method}{section.3}{}}
+\newlabel{eq:bound}{{2}{2}{Method}{equation.3.2}{}}
+\citation{codipack}
+\citation{cui}
+\citation{fang}
+\citation{fang}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Implementation and Methodology}{3}{section.4}\protected@file@percent }
+\newlabel{sec:methodology}{{IV}{3}{Implementation and Methodology}{section.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Results}{3}{section.5}\protected@file@percent }
+\newlabel{sec:results}{{V}{3}{Results}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-A}}Cost of the Greeks}{3}{subsection.5.1}\protected@file@percent }
+\newlabel{sec:res-cost}{{\mbox  {V-A}}{3}{Cost of the Greeks}{subsection.5.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Board implementations (Vivado, post-route, JTAG systems)}}{3}{table.2}\protected@file@percent }
+\newlabel{tab:impl}{{II}{3}{Board implementations (Vivado, post-route, JTAG systems)}{table.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Assumptions, rationale and checks}}{3}{table.3}\protected@file@percent }
+\newlabel{tab:assumptions}{{III}{3}{Assumptions, rationale and checks}{table.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-B}}Adjoint against forward mode}{3}{subsection.5.2}\protected@file@percent }
+\newlabel{sec:res-modes}{{\mbox  {V-B}}{3}{Adjoint against forward mode}{subsection.5.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Design flow. One operation graph yields the bit-accurate model, the error bound and the scheduled RTL; the RTL is checked register by register against the model, implemented in Vivado and run on two boards, whose outputs are compared bit for bit with the same model.}}{4}{figure.1}\protected@file@percent }
+\newlabel{fig:flow}{{1}{4}{Design flow. One operation graph yields the bit-accurate model, the error bound and the scheduled RTL; the RTL is checked register by register against the model, implemented in Vivado and run on two boards, whose outputs are compared bit for bit with the same model}{figure.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Top: one COS term; the reverse sweep shares the forward datapath and reads forward values from scheduled rotating registers. Bottom: the modulo schedule (first 10 of 128 terms).}}{4}{figure.2}\protected@file@percent }
+\newlabel{fig:sched}{{2}{4}{Top: one COS term; the reverse sweep shares the forward datapath and reads forward values from scheduled rotating registers. Bottom: the modulo schedule (first 10 of 128 terms)}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Cycles per evaluation (cycle-exact RTL simulation): price only on the same hardware and at the same II with half the multipliers, the adjoint engine, and bump-and-reprice.}}{4}{figure.3}\protected@file@percent }
+\newlabel{fig:cycles}{{3}{4}{Cycles per evaluation (cycle-exact RTL simulation): price only on the same hardware and at the same II with half the multipliers, the adjoint engine, and bump-and-reprice}{figure.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Engines of equal throughput (II = 32), Zynq-7020, 70\,MHz}}{4}{table.4}\protected@file@percent }
+\newlabel{tab:equal}{{IV}{4}{Engines of equal throughput (II = 32), Zynq-7020, 70\,MHz}{table.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Cycles by datapath and shared multipliers (scheduler)}}{4}{table.5}\protected@file@percent }
+\newlabel{tab:modes}{{V}{4}{Cycles by datapath and shared multipliers (scheduler)}{table.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-C}}Accuracy and the bound}{4}{subsection.5.3}\protected@file@percent }
+\newlabel{sec:res-acc}{{\mbox  {V-C}}{4}{Accuracy and the bound}{subsection.5.3}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VI}{\ignorespaces Held-out sweep, 56-bit design, 9,500 in-domain inputs: significant figures and the bound relative to the value}}{5}{table.6}\protected@file@percent }
+\newlabel{tab:acc}{{VI}{5}{Held-out sweep, 56-bit design, 9,500 in-domain inputs: significant figures and the bound relative to the value}{table.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VII}{\ignorespaces Silicon validation (outputs compared bit for bit with the model)}}{5}{table.7}\protected@file@percent }
+\newlabel{tab:silicon}{{VII}{5}{Silicon validation (outputs compared bit for bit with the model)}{table.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-D}}Silicon validation}{5}{subsection.5.4}\protected@file@percent }
+\newlabel{sec:res-silicon}{{\mbox  {V-D}}{5}{Silicon validation}{subsection.5.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {V-E}}Against a CPU}{5}{subsection.5.5}\protected@file@percent }
+\newlabel{sec:res-cpu}{{\mbox  {V-E}}{5}{Against a CPU}{subsection.5.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {VIII}{\ignorespaces Latency, throughput and energy per evaluation}}{5}{table.8}\protected@file@percent }
+\newlabel{tab:cpu}{{VIII}{5}{Latency, throughput and energy per evaluation}{table.8}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {VI}Discussion and Conclusion}{5}{section.6}\protected@file@percent }
+\newlabel{sec:discussion}{{VI}{5}{Discussion and Conclusion}{section.6}{}}
+\bibcite{heston}{1}
+\bibcite{fang}{2}
+\bibcite{junike}{3}
+\bibcite{albrecher}{4}
+\bibcite{giles}{5}
+\bibcite{capriotti}{6}
+\bibcite{capgiles24}{7}
+\bibcite{griewank}{8}
+\bibcite{griewank92}{9}
+\bibcite{tapenade}{10}
+\bibcite{linnainmaa}{11}
+\bibcite{cui}{12}
+\bibcite{codipack}{13}
+\bibcite{klai}{14}
+\bibcite{klaih2rc}{15}
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Rounding accuracy over the 21-case grid. (a) Worst relative error of the price $V$ and each Greek against the same graph in double precision. (b) Worst error divided by the bound (\ref {eq:bound}).}}{6}{figure.4}\protected@file@percent }
+\newlabel{fig:accuracy}{{4}{6}{Rounding accuracy over the 21-case grid. (a) Worst relative error of the price $V$ and each Greek against the same graph in double precision. (b) Worst error divided by the bound (\ref {eq:bound})}{figure.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Relative error of bump-and-reprice against relative bump size, and of the adjoint engine, for four Greeks (56-bit design, base case); the other five behave alike.}}{6}{figure.5}\protected@file@percent }
+\newlabel{fig:bump}{{5}{6}{Relative error of bump-and-reprice against relative bump size, and of the adjoint engine, for four Greeks (56-bit design, base case); the other five behave alike}{figure.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Latency of one price and nine Greeks: one CPU core (i5-1155G7, idle; measured) and one FPGA engine (cycles $\times $ period, transfers excluded).}}{6}{figure.6}\protected@file@percent }
+\newlabel{fig:latency}{{6}{6}{Latency of one price and nine Greeks: one CPU core (i5-1155G7, idle; measured) and one FPGA engine (cycles $\times $ period, transfers excluded)}{figure.6}{}}
+\@writefile{toc}{\contentsline {section}{References}{6}{section*.1}\protected@file@percent }
+\bibcite{klai24}{16}
+\bibcite{deschryver}{17}
+\bibcite{deschryver13}{18}
+\bibcite{jin}{19}
+\bibcite{tse}{20}
+\bibcite{vitisquant}{21}
+\bibcite{zhang09}{22}
+\bibcite{zhang14}{23}
+\bibcite{gremse}{24}
+\bibcite{gaffar}{25}
+\bibcite{lee06}{26}
+\bibcite{gappa}{27}
+\bibcite{tang}{28}
+\bibcite{volder}{29}
+\bibcite{rau}{30}
+\gdef \@abspage@last{7}

@@ -1,0 +1,2255 @@
+#-----------------------------------------------------------
+# Vivado v2025.2 (64-bit)
+# SW Build 6299465 on Fri Nov 14 19:35:11 GMT 2025
+# IP Build 6300035 on Fri Nov 14 10:48:45 MST 2025
+# SharedData Build 6298862 on Thu Nov 13 04:50:51 MST 2025
+# Start of session at: Wed Oct 28 17:24:30 2026
+# Process ID         : 37400
+# Current directory  : C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado
+# Command line       : vivado.exe -mode batch -nojournal -log ..\..\validation\results\vivado\cmp\heston_cmp_fwd10_z7h.log -source synth_impl.tcl -tclargs heston_cmp_fwd10_z7h xc7z020clg484-1 14.286 ../../validation/results/vivado/cmp/heston_cmp_fwd10_z7h
+# Log file           : C:/Users/hp/Greeks-Engine/Greek Engine/hardware/vivado/../../validation/results/vivado/cmp/heston_cmp_fwd10_z7h.log
+# Journal file       : 
+# Running On         : SaY-PC
+# Platform           : Windows Server 2016 or Windows 10
+# Operating System   : 26200
+# Processor Detail   : 11th Gen Intel(R) Core(TM) i5-1155G7 @ 2.50GHz
+# CPU Frequency      : 2496 MHz
+# CPU Physical cores : 4
+# CPU Logical cores  : 8
+# Host memory        : 16804 MB
+# Swap memory        : 22090 MB
+# Total Virtual      : 38895 MB
+# Available Virtual  : 13913 MB
+#-----------------------------------------------------------
+source synth_impl.tcl
+# set top    [lindex $argv 0]
+# set part   [lindex $argv 1]
+# set clk_ns [lindex $argv 2]
+# set outdir [lindex $argv 3]
+# set here   [file dirname [file normalize [info script]]]
+# set vdir   [file normalize "$here/../verilog"]
+# file mkdir $outdir
+# if {[string match "heston_aad_*" $top] || [string match "heston_bump_z*" $top] || [string match "heston_cmp_*" $top]} {
+#   # generated shared-multiplier designs (hardware/gen): self-contained files
+#   read_verilog [list "$vdir/gen/$top.v"]
+#   if {[string match "heston_bump_z7" $top]} { read_verilog [list "$vdir/gen/z7_pricer.v"] }
+#   if {[string match "heston_bump_zu" $top]} { read_verilog [list "$vdir/gen/zu_pricer.v"] }
+#   if {[string match "*_axi" $top]} { read_verilog [list "$vdir/gen/[string range $top 0 end-4].v"] }
+# } else {
+#   set srcs {
+#     heston_top_level.v heston_bump_top.v heston_cos_forward.v heston_char_func.v
+#     heston_payoff_coeff.v complex_div.v complex_exp.v complex_log.v complex_mult.v
+#     complex_sqrt.v cordic.v fp_div.v fp_exp.v fp_log.v fp_sqrt.v
+#   }
+#   foreach f $srcs { read_verilog [list "$vdir/$f"] }
+# }
+read_verilog: Time (s): cpu = 00:00:15 ; elapsed = 00:00:13 . Memory (MB): peak = 531.352 ; gain = 218.520
+# set clk_port [expr {[string match "*_axi" $top] ? "aclk" : "clk"}]
+# set xdc "$outdir/clock.xdc"
+# set fp [open $xdc w]
+# puts $fp "create_clock -name clk -period $clk_ns \[get_ports $clk_port\]"
+# close $fp
+# read_xdc -mode out_of_context [list $xdc]
+# synth_design -top $top -part $part -mode out_of_context \
+#              -include_dirs [list $vdir] -flatten_hierarchy rebuilt
+Command: synth_design -top heston_cmp_fwd10_z7h -part xc7z020clg484-1 -mode out_of_context -include_dirs {{C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog}} -flatten_hierarchy rebuilt
+Starting synth_design
+Attempting to get a license for feature 'Synthesis' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Synthesis' and/or device 'xc7z020'
+INFO: [Device 21-403] Loading part xc7z020clg484-1
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 2 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 29436
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:15 ; elapsed = 00:00:22 . Memory (MB): peak = 1307.902 ; gain = 539.945
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-6901] identifier 'mu0_out' is used before its declaration [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1144]
+WARNING: [Synth 8-6901] identifier 'mu6_out' is used before its declaration [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1243]
+WARNING: [Synth 8-6901] identifier 'v495_s1' is used before its declaration [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1298]
+WARNING: [Synth 8-6901] identifier 'mu9_out' is used before its declaration [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1377]
+INFO: [Synth 8-6157] synthesizing module 'heston_cmp_fwd10_z7h' [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:4]
+INFO: [Synth 8-6157] synthesizing module 'heston_cmp_fwd10_z7h_rot' [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3248]
+	Parameter WL bound to: 56 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'heston_cmp_fwd10_z7h_rot' (0#1) [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3248]
+INFO: [Synth 8-6157] synthesizing module 'heston_cmp_fwd10_z7h_vec' [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3313]
+	Parameter WL bound to: 56 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'heston_cmp_fwd10_z7h_vec' (0#1) [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3313]
+INFO: [Synth 8-6155] done synthesizing module 'heston_cmp_fwd10_z7h' (0#1) [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:4]
+WARNING: [Synth 8-6014] Unused sequential element zt_reg was removed.  [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3293]
+WARNING: [Synth 8-6014] Unused sequential element xr_reg was removed.  [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3306]
+WARNING: [Synth 8-6014] Unused sequential element yr_reg was removed.  [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3306]
+WARNING: [Synth 8-6014] Unused sequential element zt_reg was removed.  [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3358]
+WARNING: [Synth 8-6014] Unused sequential element zr_reg was removed.  [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3369]
+WARNING: [Synth 8-6014] Unused sequential element p_S0_reg was removed.  [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:71]
+WARNING: [Synth 8-6014] Unused sequential element p_K_reg was removed.  [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:72]
+WARNING: [Synth 8-6014] Unused sequential element p_theta_reg was removed.  [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:77]
+WARNING: [Synth 8-6014] Unused sequential element p_is_call_reg was removed.  [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:80]
+WARNING: [Synth 8-7129] Port b[55] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[54] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[53] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[52] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[51] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[50] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[49] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[48] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[47] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[46] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[45] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[44] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[43] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[42] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[41] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[40] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[39] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[38] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[37] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[36] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[35] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[34] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[33] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[32] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[31] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[30] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[29] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[28] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[27] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[26] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[25] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[24] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[23] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[22] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[21] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[20] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[19] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[18] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[17] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[16] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[15] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[14] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[13] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[12] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[11] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[10] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[9] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[8] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[7] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[6] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[5] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[4] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[3] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[2] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[1] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port b[0] in module heston_cmp_fwd10_z7h_rot is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[55] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[54] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[53] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[52] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[51] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[50] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[49] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[48] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[47] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[46] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[45] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[44] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[43] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[42] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[41] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[40] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[39] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[38] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[37] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[36] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[35] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[34] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[33] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[32] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[31] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[30] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[29] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[28] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[27] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[26] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[25] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[24] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[23] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[22] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[21] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[20] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[19] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[18] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[17] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[16] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[15] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[14] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[13] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+WARNING: [Synth 8-7129] Port S0[12] in module heston_cmp_fwd10_z7h is either unconnected or has no load
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:26 ; elapsed = 00:00:36 . Memory (MB): peak = 1542.141 ; gain = 774.184
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:26 ; elapsed = 00:00:37 . Memory (MB): peak = 1542.141 ; gain = 774.184
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:26 ; elapsed = 00:00:37 . Memory (MB): peak = 1542.141 ; gain = 774.184
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 1542.141 ; gain = 0.000
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [C:/Users/hp/Greeks-Engine/Greek Engine/validation/results/vivado/cmp/heston_cmp_fwd10_z7h/clock.xdc]
+Finished Parsing XDC File [C:/Users/hp/Greeks-Engine/Greek Engine/validation/results/vivado/cmp/heston_cmp_fwd10_z7h/clock.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.077 . Memory (MB): peak = 1660.523 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:03 ; elapsed = 00:00:03 . Memory (MB): peak = 1660.523 ; gain = 0.000
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:01:18 ; elapsed = 00:01:36 . Memory (MB): peak = 1660.523 ; gain = 892.566
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xc7z020clg484-1
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:01:18 ; elapsed = 00:01:36 . Memory (MB): peak = 1660.523 ; gain = 892.566
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:01:18 ; elapsed = 00:01:36 . Memory (MB): peak = 1660.523 ; gain = 892.566
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-3936] Found unconnected internal register 'mu1_out_reg' and it is trimmed from '112' to '56' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2460]
+WARNING: [Synth 8-3936] Found unconnected internal register 'mu4_out_reg' and it is trimmed from '112' to '56' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2590]
+WARNING: [Synth 8-3936] Found unconnected internal register 'mu2_out_reg' and it is trimmed from '112' to '56' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2504]
+WARNING: [Synth 8-3936] Found unconnected internal register 'mu7_out_reg' and it is trimmed from '112' to '56' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2719]
+WARNING: [Synth 8-3936] Found unconnected internal register 'mu6_out_reg' and it is trimmed from '112' to '56' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2676]
+WARNING: [Synth 8-3936] Found unconnected internal register 'mu3_out_reg' and it is trimmed from '112' to '56' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2547]
+WARNING: [Synth 8-3936] Found unconnected internal register 'mu5_out_reg' and it is trimmed from '112' to '56' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2633]
+WARNING: [Synth 8-3936] Found unconnected internal register 'mu8_out_reg' and it is trimmed from '112' to '56' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2762]
+WARNING: [Synth 8-3936] Found unconnected internal register 'mu9_out_reg' and it is trimmed from '112' to '56' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2805]
+WARNING: [Synth 8-3936] Found unconnected internal register 'mu0_out_reg' and it is trimmed from '112' to '56' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2416]
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:01:30 ; elapsed = 00:01:51 . Memory (MB): peak = 1660.523 ; gain = 892.566
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input  113 Bit       Adders := 1     
+	   2 Input  112 Bit       Adders := 19    
+	   2 Input   91 Bit       Adders := 1     
+	   2 Input   86 Bit       Adders := 7     
+	   2 Input   85 Bit       Adders := 5     
+	   2 Input   64 Bit       Adders := 18    
+	   3 Input   64 Bit       Adders := 4     
+	   2 Input   62 Bit       Adders := 4     
+	   2 Input   59 Bit       Adders := 2     
+	   2 Input   56 Bit       Adders := 138   
+	   3 Input   56 Bit       Adders := 55    
+	   2 Input   32 Bit       Adders := 1     
+	   2 Input   16 Bit       Adders := 19    
+	   2 Input    7 Bit       Adders := 11    
+	   2 Input    6 Bit       Adders := 10    
+	   2 Input    5 Bit       Adders := 10    
+	   2 Input    4 Bit       Adders := 7     
+	   2 Input    3 Bit       Adders := 1     
++---Registers : 
+	              112 Bit    Registers := 20    
+	               64 Bit    Registers := 5     
+	               56 Bit    Registers := 700   
+	               16 Bit    Registers := 30    
+	                7 Bit    Registers := 10    
+	                5 Bit    Registers := 5     
+	                2 Bit    Registers := 2     
+	                1 Bit    Registers := 79    
++---Multipliers : 
+	              56x56  Multipliers := 10    
++---Muxes : 
+	   2 Input  112 Bit        Muxes := 10    
+	   2 Input   64 Bit        Muxes := 15    
+	   2 Input   56 Bit        Muxes := 73    
+	   2 Input   55 Bit        Muxes := 3     
+	   2 Input   54 Bit        Muxes := 8     
+	   3 Input   37 Bit        Muxes := 2     
+	   2 Input   35 Bit        Muxes := 5     
+	   2 Input   16 Bit        Muxes := 10    
+	   2 Input    7 Bit        Muxes := 2     
+	   2 Input    6 Bit        Muxes := 20    
+	   2 Input    5 Bit        Muxes := 10    
+	   2 Input    4 Bit        Muxes := 14    
+	   2 Input    3 Bit        Muxes := 2     
+	   3 Input    2 Bit        Muxes := 2     
+	   4 Input    2 Bit        Muxes := 2     
+	   2 Input    1 Bit        Muxes := 27    
+	  32 Input    1 Bit        Muxes := 10    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 220 (col length:60)
+BRAMs: 280 (col length: RAMB18 60 RAMB36 30)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-3936] Found unconnected internal register 'v427_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1241]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v794_reg' and it is trimmed from '56' to '55' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2266]
+INFO: [Synth 8-12192] Not enough pipeline registers after wide multiplier. Pipeline registers present is 1. Recommended levels of pipeline registers is 10. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2588]
+DSP Report: Generating DSP mu4_P0, operation Mode is: A2*B2.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: Generating DSP mu4_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: Generating DSP mu4_P_reg, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu4_P_reg is absorbed into DSP mu4_P_reg.
+DSP Report: register mu4_P_reg is absorbed into DSP mu4_P_reg.
+DSP Report: register mu4_P_reg is absorbed into DSP mu4_P_reg.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P_reg.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P_reg.
+DSP Report: Generating DSP mu4_P0, operation Mode is: A2*B2.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: Generating DSP mu4_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: Generating DSP mu4_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu4_P_reg is absorbed into DSP mu4_P_reg.
+DSP Report: register mu4_P_reg is absorbed into DSP mu4_P_reg.
+DSP Report: register mu4_P_reg is absorbed into DSP mu4_P_reg.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P_reg.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P_reg.
+DSP Report: Generating DSP mu4_P0, operation Mode is: A2*B2.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: Generating DSP mu4_P0, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: register mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P0.
+DSP Report: Generating DSP mu4_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu4_P_reg is absorbed into DSP mu4_P_reg.
+DSP Report: register mu4_P_reg is absorbed into DSP mu4_P_reg.
+DSP Report: register mu4_P_reg is absorbed into DSP mu4_P_reg.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P_reg.
+DSP Report: operator mu4_P0 is absorbed into DSP mu4_P_reg.
+INFO: [Synth 8-12192] Not enough pipeline registers after wide multiplier. Pipeline registers present is 1. Recommended levels of pipeline registers is 10. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2674]
+INFO: [Synth 8-12192] Not enough pipeline registers after wide multiplier. Pipeline registers present is 1. Recommended levels of pipeline registers is 10. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2458]
+DSP Report: Generating DSP mu6_P0, operation Mode is: A2*B2.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: Generating DSP mu6_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: Generating DSP mu6_P_reg, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu6_P_reg is absorbed into DSP mu6_P_reg.
+DSP Report: register mu6_P_reg is absorbed into DSP mu6_P_reg.
+DSP Report: register mu6_P_reg is absorbed into DSP mu6_P_reg.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P_reg.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P_reg.
+DSP Report: Generating DSP mu6_P0, operation Mode is: A2*B2.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: Generating DSP mu6_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: Generating DSP mu6_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu6_P_reg is absorbed into DSP mu6_P_reg.
+DSP Report: register mu6_P_reg is absorbed into DSP mu6_P_reg.
+DSP Report: register mu6_P_reg is absorbed into DSP mu6_P_reg.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P_reg.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P_reg.
+DSP Report: Generating DSP mu6_P0, operation Mode is: A2*B2.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: Generating DSP mu6_P0, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: register mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P0.
+DSP Report: Generating DSP mu6_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu6_P_reg is absorbed into DSP mu6_P_reg.
+DSP Report: register mu6_P_reg is absorbed into DSP mu6_P_reg.
+DSP Report: register mu6_P_reg is absorbed into DSP mu6_P_reg.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P_reg.
+DSP Report: operator mu6_P0 is absorbed into DSP mu6_P_reg.
+DSP Report: Generating DSP mu1_P0, operation Mode is: A2*B2.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: Generating DSP mu1_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: Generating DSP mu1_P_reg, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu1_P_reg is absorbed into DSP mu1_P_reg.
+DSP Report: register mu1_P_reg is absorbed into DSP mu1_P_reg.
+DSP Report: register mu1_P_reg is absorbed into DSP mu1_P_reg.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P_reg.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P_reg.
+DSP Report: Generating DSP mu1_P0, operation Mode is: A2*B2.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: Generating DSP mu1_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: Generating DSP mu1_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu1_P_reg is absorbed into DSP mu1_P_reg.
+DSP Report: register mu1_P_reg is absorbed into DSP mu1_P_reg.
+DSP Report: register mu1_P_reg is absorbed into DSP mu1_P_reg.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P_reg.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P_reg.
+DSP Report: Generating DSP mu1_P0, operation Mode is: A2*B2.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: Generating DSP mu1_P0, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: register mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P0.
+DSP Report: Generating DSP mu1_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu1_P_reg is absorbed into DSP mu1_P_reg.
+DSP Report: register mu1_P_reg is absorbed into DSP mu1_P_reg.
+DSP Report: register mu1_P_reg is absorbed into DSP mu1_P_reg.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P_reg.
+DSP Report: operator mu1_P0 is absorbed into DSP mu1_P_reg.
+INFO: [Synth 8-12192] Not enough pipeline registers after wide multiplier. Pipeline registers present is 1. Recommended levels of pipeline registers is 10. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2717]
+INFO: [Synth 8-12192] Not enough pipeline registers after wide multiplier. Pipeline registers present is 1. Recommended levels of pipeline registers is 10. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2545]
+DSP Report: Generating DSP mu7_P0, operation Mode is: A2*B2.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: Generating DSP mu7_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: Generating DSP mu7_P_reg, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu7_P_reg is absorbed into DSP mu7_P_reg.
+DSP Report: register mu7_P_reg is absorbed into DSP mu7_P_reg.
+DSP Report: register mu7_P_reg is absorbed into DSP mu7_P_reg.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P_reg.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P_reg.
+DSP Report: Generating DSP mu7_P0, operation Mode is: A2*B2.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: Generating DSP mu7_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: Generating DSP mu7_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu7_P_reg is absorbed into DSP mu7_P_reg.
+DSP Report: register mu7_P_reg is absorbed into DSP mu7_P_reg.
+DSP Report: register mu7_P_reg is absorbed into DSP mu7_P_reg.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P_reg.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P_reg.
+DSP Report: Generating DSP mu7_P0, operation Mode is: A2*B2.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: Generating DSP mu7_P0, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: register mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P0.
+DSP Report: Generating DSP mu7_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu7_P_reg is absorbed into DSP mu7_P_reg.
+DSP Report: register mu7_P_reg is absorbed into DSP mu7_P_reg.
+DSP Report: register mu7_P_reg is absorbed into DSP mu7_P_reg.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P_reg.
+DSP Report: operator mu7_P0 is absorbed into DSP mu7_P_reg.
+DSP Report: Generating DSP mu3_P0, operation Mode is: A2*B2.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: Generating DSP mu3_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: Generating DSP mu3_P_reg, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu3_P_reg is absorbed into DSP mu3_P_reg.
+DSP Report: register mu3_P_reg is absorbed into DSP mu3_P_reg.
+DSP Report: register mu3_P_reg is absorbed into DSP mu3_P_reg.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P_reg.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P_reg.
+DSP Report: Generating DSP mu3_P0, operation Mode is: A2*B2.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: Generating DSP mu3_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: Generating DSP mu3_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu3_P_reg is absorbed into DSP mu3_P_reg.
+DSP Report: register mu3_P_reg is absorbed into DSP mu3_P_reg.
+DSP Report: register mu3_P_reg is absorbed into DSP mu3_P_reg.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P_reg.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P_reg.
+DSP Report: Generating DSP mu3_P0, operation Mode is: A2*B2.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: Generating DSP mu3_P0, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: register mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P0.
+DSP Report: Generating DSP mu3_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu3_P_reg is absorbed into DSP mu3_P_reg.
+DSP Report: register mu3_P_reg is absorbed into DSP mu3_P_reg.
+DSP Report: register mu3_P_reg is absorbed into DSP mu3_P_reg.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P_reg.
+DSP Report: operator mu3_P0 is absorbed into DSP mu3_P_reg.
+INFO: [Synth 8-5546] ROM "at" won't be mapped to RAM because it is too sparse
+WARNING: [Synth 8-3936] Found unconnected internal register 'v716_reg' and it is trimmed from '56' to '55' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2234]
+INFO: [Synth 8-12192] Not enough pipeline registers after wide multiplier. Pipeline registers present is 0. Recommended levels of pipeline registers is 10. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2502]
+DSP Report: Generating DSP mu2_P0, operation Mode is: A2*B2.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: Generating DSP mu2_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: Generating DSP mu2_P0, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: Generating DSP mu2_P0, operation Mode is: A2*B2.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: Generating DSP mu2_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: Generating DSP mu2_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: Generating DSP mu2_P0, operation Mode is: A2*B2.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: Generating DSP mu2_P0, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: Generating DSP mu2_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: register mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+DSP Report: operator mu2_P0 is absorbed into DSP mu2_P0.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v458_reg[13] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v544_reg[20] )
+INFO: [Synth 8-5544] ROM "o131" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5546] ROM "at" won't be mapped to RAM because it is too sparse
+WARNING: [Synth 8-3936] Found unconnected internal register 'v301_s9_reg' and it is trimmed from '56' to '55' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2904]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v301_s8_reg' and it is trimmed from '56' to '55' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2903]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v301_s7_reg' and it is trimmed from '56' to '55' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2902]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v301_s6_reg' and it is trimmed from '56' to '55' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2901]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v301_s5_reg' and it is trimmed from '56' to '55' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2900]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v301_s4_reg' and it is trimmed from '56' to '55' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2899]
+INFO: [Synth 8-5544] ROM "o131" won't be mapped to Block RAM because address size (2) smaller than threshold (5)
+INFO: [Synth 8-5546] ROM "at" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-12192] Not enough pipeline registers after wide multiplier. Pipeline registers present is 1. Recommended levels of pipeline registers is 10. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2760]
+INFO: [Synth 8-12192] Not enough pipeline registers after wide multiplier. Pipeline registers present is 1. Recommended levels of pipeline registers is 10. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2631]
+INFO: [Synth 8-12192] Not enough pipeline registers after wide multiplier. Pipeline registers present is 1. Recommended levels of pipeline registers is 10. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2803]
+INFO: [Synth 8-12192] Not enough pipeline registers after wide multiplier. Pipeline registers present is 1. Recommended levels of pipeline registers is 10. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2414]
+DSP Report: Generating DSP mu8_P0, operation Mode is: A2*B2.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: Generating DSP mu8_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: Generating DSP mu8_P_reg, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu8_P_reg is absorbed into DSP mu8_P_reg.
+DSP Report: register mu8_P_reg is absorbed into DSP mu8_P_reg.
+DSP Report: register mu8_P_reg is absorbed into DSP mu8_P_reg.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P_reg.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P_reg.
+DSP Report: Generating DSP mu8_P0, operation Mode is: A2*B2.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: Generating DSP mu8_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: Generating DSP mu8_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu8_P_reg is absorbed into DSP mu8_P_reg.
+DSP Report: register mu8_P_reg is absorbed into DSP mu8_P_reg.
+DSP Report: register mu8_P_reg is absorbed into DSP mu8_P_reg.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P_reg.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P_reg.
+DSP Report: Generating DSP mu8_P0, operation Mode is: A2*B2.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: Generating DSP mu8_P0, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: register mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P0.
+DSP Report: Generating DSP mu8_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu8_P_reg is absorbed into DSP mu8_P_reg.
+DSP Report: register mu8_P_reg is absorbed into DSP mu8_P_reg.
+DSP Report: register mu8_P_reg is absorbed into DSP mu8_P_reg.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P_reg.
+DSP Report: operator mu8_P0 is absorbed into DSP mu8_P_reg.
+DSP Report: Generating DSP mu5_P0, operation Mode is: A2*B2.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: Generating DSP mu5_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: Generating DSP mu5_P_reg, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu5_P_reg is absorbed into DSP mu5_P_reg.
+DSP Report: register mu5_P_reg is absorbed into DSP mu5_P_reg.
+DSP Report: register mu5_P_reg is absorbed into DSP mu5_P_reg.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P_reg.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P_reg.
+DSP Report: Generating DSP mu5_P0, operation Mode is: A2*B2.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: Generating DSP mu5_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: Generating DSP mu5_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu5_P_reg is absorbed into DSP mu5_P_reg.
+DSP Report: register mu5_P_reg is absorbed into DSP mu5_P_reg.
+DSP Report: register mu5_P_reg is absorbed into DSP mu5_P_reg.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P_reg.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P_reg.
+DSP Report: Generating DSP mu5_P0, operation Mode is: A2*B2.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: Generating DSP mu5_P0, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: register mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P0.
+DSP Report: Generating DSP mu5_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu5_P_reg is absorbed into DSP mu5_P_reg.
+DSP Report: register mu5_P_reg is absorbed into DSP mu5_P_reg.
+DSP Report: register mu5_P_reg is absorbed into DSP mu5_P_reg.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P_reg.
+DSP Report: operator mu5_P0 is absorbed into DSP mu5_P_reg.
+DSP Report: Generating DSP mu9_P0, operation Mode is: A2*B2.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: Generating DSP mu9_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: Generating DSP mu9_P_reg, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu9_P_reg is absorbed into DSP mu9_P_reg.
+DSP Report: register mu9_P_reg is absorbed into DSP mu9_P_reg.
+DSP Report: register mu9_P_reg is absorbed into DSP mu9_P_reg.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P_reg.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P_reg.
+DSP Report: Generating DSP mu9_P0, operation Mode is: A2*B2.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: Generating DSP mu9_P0, operation Mode is: PCIN+A2*B2.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: Generating DSP mu9_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu9_P_reg is absorbed into DSP mu9_P_reg.
+DSP Report: register mu9_P_reg is absorbed into DSP mu9_P_reg.
+DSP Report: register mu9_P_reg is absorbed into DSP mu9_P_reg.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P_reg.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P_reg.
+DSP Report: Generating DSP mu9_P0, operation Mode is: A2*B2.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: Generating DSP mu9_P0, operation Mode is: (PCIN>>17)+A2*B2.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: register mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P0.
+DSP Report: Generating DSP mu9_P_reg, operation Mode is: (PCIN+A2*B2)'.
+DSP Report: register mu9_P_reg is absorbed into DSP mu9_P_reg.
+DSP Report: register mu9_P_reg is absorbed into DSP mu9_P_reg.
+DSP Report: register mu9_P_reg is absorbed into DSP mu9_P_reg.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P_reg.
+DSP Report: operator mu9_P0 is absorbed into DSP mu9_P_reg.
+DSP Report: Generating DSP mu0_P0, operation Mode is: A2*B.
+DSP Report: register mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: Generating DSP mu0_P0, operation Mode is: PCIN+A*B2.
+DSP Report: register mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: Generating DSP mu0_P_reg, operation Mode is: (PCIN>>17)+A2*B.
+DSP Report: register mu0_P_reg is absorbed into DSP mu0_P_reg.
+DSP Report: register mu0_P_reg is absorbed into DSP mu0_P_reg.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P_reg.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P_reg.
+DSP Report: Generating DSP mu0_P0, operation Mode is: A2*B.
+DSP Report: register mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: Generating DSP mu0_P0, operation Mode is: PCIN+A*B2.
+DSP Report: register mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: Generating DSP mu0_P_reg, operation Mode is: (PCIN+A*B2)'.
+DSP Report: register mu0_P_reg is absorbed into DSP mu0_P_reg.
+DSP Report: register mu0_P_reg is absorbed into DSP mu0_P_reg.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P_reg.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P_reg.
+DSP Report: Generating DSP mu0_P0, operation Mode is: A*B2.
+DSP Report: register mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: Generating DSP mu0_P0, operation Mode is: (PCIN>>17)+A*B2.
+DSP Report: register mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P0.
+DSP Report: Generating DSP mu0_P_reg, operation Mode is: (PCIN+A*B2)'.
+DSP Report: register mu0_P_reg is absorbed into DSP mu0_P_reg.
+DSP Report: register mu0_P_reg is absorbed into DSP mu0_P_reg.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P_reg.
+DSP Report: operator mu0_P0 is absorbed into DSP mu0_P_reg.
+INFO: [Synth 8-5546] ROM "at" won't be mapped to RAM because it is too sparse
+WARNING: [Synth 8-3936] Found unconnected internal register 'v501_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2129]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v614_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2184]
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v614_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v501_reg[6] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v500_reg[13] )
+WARNING: [Synth 8-3936] Found unconnected internal register 'v617_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1375]
+INFO: [Synth 8-3886] merging instance 'v750_reg[26]' (FDE) to 'v682_reg[26]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[25]' (FDE) to 'v682_reg[25]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[24]' (FDE) to 'v682_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[23]' (FDE) to 'v682_reg[23]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[22]' (FDE) to 'v682_reg[22]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[21]' (FDE) to 'v682_reg[21]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[20]' (FDE) to 'v682_reg[20]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[19]' (FDE) to 'v682_reg[19]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[18]' (FDE) to 'v682_reg[18]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[17]' (FDE) to 'v682_reg[17]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[16]' (FDE) to 'v682_reg[16]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[15]' (FDE) to 'v682_reg[15]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[14]' (FDE) to 'v682_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[13]' (FDE) to 'v682_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[12]' (FDE) to 'v682_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[11]' (FDE) to 'v682_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[10]' (FDE) to 'v682_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[9]' (FDE) to 'v682_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[8]' (FDE) to 'v682_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[7]' (FDE) to 'v682_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[6]' (FDE) to 'v682_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[5]' (FDE) to 'v682_reg[5]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[4]' (FDE) to 'v682_reg[4]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[3]' (FDE) to 'v682_reg[3]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[2]' (FDE) to 'v682_reg[2]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[1]' (FDE) to 'v682_reg[1]'
+INFO: [Synth 8-3886] merging instance 'v750_reg[0]' (FDE) to 'v682_reg[0]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[0]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[1]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[2]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[3]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[4]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[5]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[6]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[7]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[8]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[9]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[10]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[11]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[12]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[13]' (FDE) to 'v410_reg[24]'
+INFO: [Synth 8-3886] merging instance 'v410_reg[14]' (FDE) to 'v410_reg[24]'
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v410_reg[24] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v615_reg[55] )
+INFO: [Synth 8-5546] ROM "at" won't be mapped to RAM because it is too sparse
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v517_reg[53] )
+WARNING: [Synth 8-3936] Found unconnected internal register 'v338_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2914]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v341_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2916]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v341_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2036]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v338_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2035]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v337_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2034]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v393_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2939]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v393_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2075]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v371_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1207]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v319_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1160]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v673_s4_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3034]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v673_s3_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3033]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v673_s2_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3032]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v673_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:3031]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v673_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2216]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v575_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2992]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v575_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2170]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v553_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1338]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v651_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1404]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v543_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1322]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v285_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2883]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v266_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1119]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v542_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2148]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v641_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1388]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v640_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2194]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v455_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1259]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v487_s1_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2953]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v487_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2123]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v454_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2101]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v465_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1275]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v424_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2086]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v499_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1296]
+INFO: [Synth 8-3886] merging instance 'v318_reg[16]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[17]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[18]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[19]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[20]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[21]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[22]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[23]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[24]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[25]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[26]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[27]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[28]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[29]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[30]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[31]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[32]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[33]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[34]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[35]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[36]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[37]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[38]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[39]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[40]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[41]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[42]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[43]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[44]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[45]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[46]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[47]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[48]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[49]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[50]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[51]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[52]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[53]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[54]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[55]' (FDE) to 'v318_reg[6]'
+INFO: [Synth 8-3886] merging instance 'v337_reg[15]' (FDE) to 'v337_reg[5]'
+INFO: [Synth 8-3886] merging instance 'v454_reg[15]' (FDE) to 'v454_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v454_reg[14]' (FDE) to 'v454_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v454_reg[13]' (FDE) to 'v454_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v454_reg[12]' (FDE) to 'v454_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v454_reg[11]' (FDE) to 'v454_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v454_reg[10]' (FDE) to 'v454_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v454_reg[9]' (FDE) to 'v454_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v454_reg[8]' (FDE) to 'v454_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v640_reg[15]' (FDE) to 'v640_reg[14]'
+INFO: [Synth 8-3886] merging instance 'v640_reg[14]' (FDE) to 'v640_reg[13]'
+INFO: [Synth 8-3886] merging instance 'v640_reg[13]' (FDE) to 'v640_reg[12]'
+INFO: [Synth 8-3886] merging instance 'v640_reg[12]' (FDE) to 'v640_reg[11]'
+INFO: [Synth 8-3886] merging instance 'v640_reg[11]' (FDE) to 'v640_reg[10]'
+INFO: [Synth 8-3886] merging instance 'v640_reg[10]' (FDE) to 'v640_reg[9]'
+INFO: [Synth 8-3886] merging instance 'v640_reg[9]' (FDE) to 'v640_reg[8]'
+INFO: [Synth 8-3886] merging instance 'v640_reg[8]' (FDE) to 'v640_reg[7]'
+INFO: [Synth 8-3886] merging instance 'v318_reg[15]' (FDE) to 'v318_reg[6]'
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v318_reg[0] )
+INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v424_reg[5] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v322_reg[55] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v319_reg[0] )
+WARNING: [Synth 8-3936] Found unconnected internal register 'v361_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:1191]
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v468_reg[55] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v287_reg[55] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v556_reg[55] )
+WARNING: [Synth 8-3936] Found unconnected internal register 'v555_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2159]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v373_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2064]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v268_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2000]
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v268_reg[8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v373_reg[8] )
+WARNING: [Synth 8-3936] Found unconnected internal register 'v321_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2029]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v467_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2112]
+WARNING: [Synth 8-3936] Found unconnected internal register 'v653_reg' and it is trimmed from '56' to '16' bits. [C:/Users/hp/Greeks-Engine/Greek Engine/hardware/verilog/gen/heston_cmp_fwd10_z7h.v:2205]
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v653_reg[8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v467_reg[8] )
+INFO: [Synth 8-3333] propagating constant 0 across sequential element (\v321_reg[8] )
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:05:12 ; elapsed = 00:08:45 . Memory (MB): peak = 1682.035 ; gain = 914.078
+---------------------------------------------------------------------------------
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu1_P0_d : 0 0 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu1_P0_d : 0 1 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu1_P0_d : 0 2 : 3475 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu3_P0_d : 0 0 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu3_P0_d : 0 1 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu3_P0_d : 0 2 : 3475 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB3 mu4_P0_8 : 0 0 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB3 mu4_P0_8 : 0 1 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB3 mu4_P0_8 : 0 2 : 3475 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu5_P0_d : 0 0 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu5_P0_d : 0 1 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu5_P0_d : 0 2 : 3475 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu6_P0_8 : 0 0 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu6_P0_8 : 0 1 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu6_P0_8 : 0 2 : 3475 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu7_P0_8 : 0 0 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu7_P0_8 : 0 1 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu7_P0_8 : 0 2 : 3475 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu8_P0_8 : 0 0 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu8_P0_8 : 0 1 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu8_P0_8 : 0 2 : 3475 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu9_P0_10 : 0 0 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu9_P0_10 : 0 1 : 3408 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu9_P0_10 : 0 2 : 3475 10291 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB6 mu2_P0_7 : 0 0 : 3408 10243 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB6 mu2_P0_7 : 0 1 : 3408 10243 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB6 mu2_P0_7 : 0 2 : 3427 10243 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu0_P0_19 : 0 0 : 3390 10233 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu0_P0_19 : 0 1 : 3386 10233 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu0_P0_19 : 0 2 : 3457 10233 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu1_P0_c : 0 0 : 3408 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu1_P0_c : 0 1 : 3137 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu1_P0_c : 0 2 : 3456 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu3_P0_c : 0 0 : 3408 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu3_P0_c : 0 1 : 3137 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu3_P0_c : 0 2 : 3456 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB3 mu4_P0_4 : 0 0 : 3408 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB3 mu4_P0_4 : 0 1 : 3137 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB3 mu4_P0_4 : 0 2 : 3456 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu5_P0_c : 0 0 : 3408 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu5_P0_c : 0 1 : 3137 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu5_P0_c : 0 2 : 3456 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu6_P0_4 : 0 0 : 3408 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu6_P0_4 : 0 1 : 3137 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu6_P0_4 : 0 2 : 3456 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu7_P0_4 : 0 0 : 3408 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu7_P0_4 : 0 1 : 3137 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu7_P0_4 : 0 2 : 3456 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu8_P0_4 : 0 0 : 3408 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu8_P0_4 : 0 1 : 3137 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu8_P0_4 : 0 2 : 3456 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu9_P0_f : 0 0 : 3408 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu9_P0_f : 0 1 : 3137 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu9_P0_f : 0 2 : 3456 10001 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB6 mu2_P0_4 : 0 0 : 3408 9953 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB6 mu2_P0_4 : 0 1 : 3137 9953 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB6 mu2_P0_4 : 0 2 : 3408 9953 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu0_P0_15 : 0 0 : 3390 9943 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu0_P0_15 : 0 1 : 3119 9943 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu0_P0_15 : 0 2 : 3434 9943 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu1_P0_b : 0 0 : 3137 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu1_P0_b : 0 1 : 3156 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu1_P0_b : 0 2 : 3185 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu3_P0_b : 0 0 : 3137 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu3_P0_b : 0 1 : 3156 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu3_P0_b : 0 2 : 3185 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB3 mu4_P0_0 : 0 0 : 3137 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB3 mu4_P0_0 : 0 1 : 3156 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB3 mu4_P0_0 : 0 2 : 3185 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu5_P0_b : 0 0 : 3137 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu5_P0_b : 0 1 : 3156 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu5_P0_b : 0 2 : 3185 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu6_P0_0 : 0 0 : 3137 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu6_P0_0 : 0 1 : 3156 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB4 mu6_P0_0 : 0 2 : 3185 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu7_P0_0 : 0 0 : 3137 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu7_P0_0 : 0 1 : 3156 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB5 mu7_P0_0 : 0 2 : 3185 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu8_P0_0 : 0 0 : 3137 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu8_P0_0 : 0 1 : 3156 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu8_P0_0 : 0 2 : 3185 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu9_P0_e : 0 0 : 3137 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu9_P0_e : 0 1 : 3156 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu9_P0_e : 0 2 : 3185 9478 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB6 mu2_P0_0 : 0 0 : 3137 9430 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB6 mu2_P0_0 : 0 1 : 3156 9430 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB6 mu2_P0_0 : 0 2 : 3137 9430 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu0_P0_11 : 0 0 : 3119 9424 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu0_P0_11 : 0 1 : 3138 9424 : Used 1 time 0
+ Sort Area is heston_cmp_fwd10_z7h__GB8 mu0_P0_11 : 0 2 : 3167 9424 : Used 1 time 0
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+DSP: Preliminary Mapping Report (see note below. The ' indicates corresponding REG is set)
++--------------------------+------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name               | DSP Mapping      | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++--------------------------+------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|heston_cmp_fwd10_z7h__GB3 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | PCIN+A2*B2       | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | (PCIN>>17)+A2*B2 | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB3 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | PCIN+A2*B2       | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | (PCIN+A2*B2)'    | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB3 | A2*B2            | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | (PCIN>>17)+A2*B2 | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | (PCIN+A2*B2)'    | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | PCIN+A2*B2       | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN>>17)+A2*B2 | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | PCIN+A2*B2       | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN+A2*B2)'    | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A2*B2            | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN>>17)+A2*B2 | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN+A2*B2)'    | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | PCIN+A2*B2       | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN>>17)+A2*B2 | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | PCIN+A2*B2       | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN+A2*B2)'    | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A2*B2            | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN>>17)+A2*B2 | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN+A2*B2)'    | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | PCIN+A2*B2       | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN>>17)+A2*B2 | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | PCIN+A2*B2       | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN+A2*B2)'    | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A2*B2            | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN>>17)+A2*B2 | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN+A2*B2)'    | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | PCIN+A2*B2       | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN>>17)+A2*B2 | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | PCIN+A2*B2       | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN+A2*B2)'    | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A2*B2            | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN>>17)+A2*B2 | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN+A2*B2)'    | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB6 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | PCIN+A2*B2       | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | (PCIN>>17)+A2*B2 | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | PCIN+A2*B2       | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | PCIN+A2*B2       | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | A2*B2            | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | (PCIN>>17)+A2*B2 | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | PCIN+A2*B2       | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A2*B2       | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17)+A2*B2 | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A2*B2       | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A2*B2)'    | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A2*B2            | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17)+A2*B2 | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A2*B2)'    | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A2*B2       | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17)+A2*B2 | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A2*B2       | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A2*B2)'    | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A2*B2            | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17)+A2*B2 | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A2*B2)'    | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A2*B2       | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17)+A2*B2 | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A2*B2            | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A2*B2       | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A2*B2)'    | 22     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A2*B2            | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17)+A2*B2 | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A2*B2)'    | 18     | 18     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A2*B             | 22     | 18     | -      | -      | 48     | 1    | 0    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A*B2        | 22     | 18     | -      | -      | 48     | 0    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17)+A2*B  | 22     | 18     | -      | -      | 48     | 1    | 0    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A2*B             | 22     | 18     | -      | -      | 48     | 1    | 0    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A*B2        | 18     | 18     | -      | -      | 48     | 0    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A*B2)'     | 22     | 18     | -      | -      | 48     | 0    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A*B2             | 18     | 18     | -      | -      | 48     | 0    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17)+A*B2  | 18     | 18     | -      | -      | 48     | 0    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A*B2)'     | 18     | 18     | -      | -      | 48     | 0    | 1    | -    | -    | -     | 0    | 1    | 
++--------------------------+------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+Note: The table above is a preliminary report that shows the DSPs inferred at the current stage of the synthesis flow. Some DSP may be reimplemented as non DSP primitives later in the synthesis flow. Multiple instantiated DSPs are reported only once.
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying XDC Timing Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Applying XDC Timing Constraints : Time (s): cpu = 00:05:52 ; elapsed = 00:09:42 . Memory (MB): peak = 1863.434 ; gain = 1095.477
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:07:45 ; elapsed = 00:12:00 . Memory (MB): peak = 2066.684 ; gain = 1298.727
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+INFO: [Synth 8-7052] The timing for the instance i_16/v268_reg_rep_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance i_16/v268_reg_rep_0 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+INFO: [Synth 8-7052] The timing for the instance i_16/v268_reg_rep_1 (implemented as a Block RAM) might be sub-optimal as no optional output register could be merged into the ram block. Providing additional output register may help in improving timing.
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:08:12 ; elapsed = 00:12:41 . Memory (MB): peak = 2096.859 ; gain = 1328.902
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:08:53 ; elapsed = 00:13:32 . Memory (MB): peak = 2185.238 ; gain = 1417.281
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:08:54 ; elapsed = 00:13:33 . Memory (MB): peak = 2185.238 ; gain = 1417.281
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:09:23 ; elapsed = 00:14:09 . Memory (MB): peak = 2240.746 ; gain = 1472.789
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:09:23 ; elapsed = 00:14:09 . Memory (MB): peak = 2240.746 ; gain = 1472.789
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:09:28 ; elapsed = 00:14:20 . Memory (MB): peak = 2260.875 ; gain = 1492.918
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:09:29 ; elapsed = 00:14:21 . Memory (MB): peak = 2260.875 ; gain = 1492.918
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Static Shift Register Report:
++---------------------+------------------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+|Module Name          | RTL Name         | Length | Width | Reset Signal | Pull out first Reg | Pull out last Reg | SRL16E | SRLC32E | 
++---------------------+------------------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+|heston_cmp_fwd10_z7h | v350_s4_reg[55]  | 3      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v939_s8_reg[55]  | 8      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v584_s4_reg[55]  | 4      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v259_s9_reg[55]  | 9      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v534_s4_reg[55]  | 4      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v923_s3_reg[55]  | 3      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v795_s7_reg[55]  | 8      | 55    | NO           | YES                | YES               | 55     | 0       | 
+|heston_cmp_fwd10_z7h | v795_s7_reg[0]   | 8      | 1     | NO           | YES                | NO                | 1      | 0       | 
+|heston_cmp_fwd10_z7h | v671_s4_reg[55]  | 4      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v929_s8_reg[55]  | 8      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v950_s3_reg[55]  | 3      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v951_s4_reg[55]  | 4      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v587_s4_reg[55]  | 4      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v352_s4_reg[55]  | 3      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v672_s4_reg[55]  | 4      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v535_s4_reg[55]  | 4      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v924_s3_reg[55]  | 3      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v930_s8_reg[55]  | 8      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v952_s11_reg[55] | 11     | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v250_s12_reg[55] | 10     | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v722_s7_reg[55]  | 8      | 55    | NO           | YES                | YES               | 55     | 0       | 
+|heston_cmp_fwd10_z7h | v300_s8_reg[55]  | 9      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v351_s2_reg[55]  | 3      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v948_s8_reg[55]  | 8      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v258_s9_reg[55]  | 9      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v592_s8_reg[55]  | 8      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v531_s8_reg[55]  | 8      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v922_s9_reg[55]  | 9      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v673_s4_reg[15]  | 5      | 16    | NO           | YES                | YES               | 16     | 0       | 
+|heston_cmp_fwd10_z7h | v346_s2_reg[0]   | 3      | 1     | NO           | NO                 | YES               | 1      | 0       | 
+|heston_cmp_fwd10_z7h | v343_s2_reg[0]   | 3      | 1     | NO           | NO                 | YES               | 1      | 0       | 
+|heston_cmp_fwd10_z7h | v536_s2_reg[1]   | 3      | 1     | NO           | NO                 | YES               | 1      | 0       | 
+|heston_cmp_fwd10_z7h | v926_s9_reg[55]  | 9      | 56    | NO           | NO                 | YES               | 56     | 0       | 
+|heston_cmp_fwd10_z7h | v301_s3_reg[55]  | 3      | 55    | NO           | NO                 | YES               | 55     | 0       | 
+|heston_cmp_fwd10_z7h | v525_s5_reg[55]  | 5      | 55    | NO           | NO                 | YES               | 55     | 0       | 
+|heston_cmp_fwd10_z7h | v525_s5_reg[0]   | 5      | 1     | NO           | NO                 | NO                | 1      | 0       | 
+|heston_cmp_fwd10_z7h | v301_s9_reg[54]  | 6      | 55    | NO           | NO                 | YES               | 55     | 0       | 
+|heston_cmp_fwd10_z7h | v524_s6_reg[55]  | 6      | 55    | NO           | NO                 | YES               | 55     | 0       | 
+|heston_cmp_fwd10_z7h | v524_s6_reg[0]   | 6      | 1     | NO           | NO                 | NO                | 1      | 0       | 
++---------------------+------------------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+DSP Final Report (the ' indicates corresponding REG is set)
++--------------------------+-------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|Module Name               | DSP Mapping       | A Size | B Size | C Size | D Size | P Size | AREG | BREG | CREG | DREG | ADREG | MREG | PREG | 
++--------------------------+-------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+|heston_cmp_fwd10_z7h__GB3 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | PCIN+A'*B'        | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | (PCIN>>17+A'*B')' | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB3 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | PCIN+A'*B'        | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | (PCIN+A'*B')'     | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB3 | A'*B'             | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | PCIN>>17+A'*B'    | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB3 | (PCIN+A'*B')'     | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | PCIN+A'*B'        | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN>>17+A'*B')' | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | PCIN+A'*B'        | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN+A'*B')'     | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A'*B'             | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | PCIN>>17+A'*B'    | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN+A'*B')'     | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | PCIN+A'*B'        | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN>>17+A'*B')' | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | PCIN+A'*B'        | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN+A'*B')'     | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB4 | A'*B'             | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | PCIN>>17+A'*B'    | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB4 | (PCIN+A'*B')'     | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | PCIN+A'*B'        | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN>>17+A'*B')' | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | PCIN+A'*B'        | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN+A'*B')'     | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A'*B'             | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | PCIN>>17+A'*B'    | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN+A'*B')'     | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | PCIN+A'*B'        | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN>>17+A'*B')' | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | PCIN+A'*B'        | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN+A'*B')'     | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB5 | A'*B'             | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | PCIN>>17+A'*B'    | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB5 | (PCIN+A'*B')'     | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A'*B'        | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17+A'*B')' | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A'*B'        | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A'*B')'     | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN>>17+A'*B'    | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A'*B')'     | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A'*B'        | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17+A'*B')' | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A'*B'        | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A'*B')'     | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN>>17+A'*B'    | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A'*B')'     | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A'*B'        | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17+A'*B')' | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A'*B'        | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A'*B')'     | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN>>17+A'*B'    | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A'*B')'     | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A'*B'        | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN>>17+A'*B')' | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN+A'*B'        | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A'*B')'     | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB8 | A'*B'             | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | PCIN>>17+A'*B'    | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB8 | (PCIN+A'*B')'     | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 1    | 
+|heston_cmp_fwd10_z7h__GB6 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | PCIN+A'*B'        | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | PCIN>>17+A'*B'    | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | A'*B'             | 30     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | PCIN+A'*B'        | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | PCIN+A'*B'        | 30     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | A'*B'             | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | PCIN>>17+A'*B'    | 17     | 17     | -      | -      | 0      | 1    | 1    | -    | -    | -     | 0    | 0    | 
+|heston_cmp_fwd10_z7h__GB6 | PCIN+A'*B'        | 17     | 17     | -      | -      | 48     | 1    | 1    | -    | -    | -     | 0    | 0    | 
++--------------------------+-------------------+--------+--------+--------+--------+--------+------+------+------+------+-------+------+------+
+
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+---------+------+
+|      |Cell     |Count |
++------+---------+------+
+|1     |CARRY4   |  4556|
+|2     |DSP48E1  |    90|
+|4     |LUT1     |  2958|
+|5     |LUT2     | 13155|
+|6     |LUT3     |  2286|
+|7     |LUT4     |  1801|
+|8     |LUT5     |  5168|
+|9     |LUT6     | 15445|
+|10    |MUXF7    |  3944|
+|11    |MUXF8    |   640|
+|12    |RAMB18E1 |     4|
+|14    |SRL16E   |  1808|
+|15    |FDRE     | 30347|
+|16    |FDSE     |    57|
++------+---------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:09:29 ; elapsed = 00:14:22 . Memory (MB): peak = 2260.875 ; gain = 1492.918
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 428 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:08:30 ; elapsed = 00:13:50 . Memory (MB): peak = 2260.875 ; gain = 1374.535
+Synthesis Optimization Complete : Time (s): cpu = 00:09:30 ; elapsed = 00:14:25 . Memory (MB): peak = 2260.875 ; gain = 1492.918
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:02 ; elapsed = 00:00:03 . Memory (MB): peak = 2269.992 ; gain = 0.000
+INFO: [Netlist 29-17] Analyzing 9234 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 3 CPU seconds
+WARNING: [Netlist 29-101] Netlist 'heston_cmp_fwd10_z7h' is not ideal for floorplanning, since the cellview 'heston_cmp_fwd10_z7h' contains a large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [C:/Users/hp/Greeks-Engine/Greek Engine/validation/results/vivado/cmp/heston_cmp_fwd10_z7h/clock.xdc]
+Finished Parsing XDC File [C:/Users/hp/Greeks-Engine/Greek Engine/validation/results/vivado/cmp/heston_cmp_fwd10_z7h/clock.xdc]
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.117 . Memory (MB): peak = 2287.961 ; gain = 0.000
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+Synth Design complete | Checksum: 9598a09d
+INFO: [Common 17-83] Releasing license: Synthesis
+165 Infos, 174 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:10:36 ; elapsed = 00:15:53 . Memory (MB): peak = 2287.961 ; gain = 1756.609
+# write_checkpoint -force "$outdir/post_synth.dcp"
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:03 ; elapsed = 00:00:01 . Memory (MB): peak = 2287.961 ; gain = 0.000
+INFO: [Common 17-1381] The checkpoint 'C:/Users/hp/Greeks-Engine/Greek Engine/validation/results/vivado/cmp/heston_cmp_fwd10_z7h/post_synth.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:01:01 ; elapsed = 00:01:06 . Memory (MB): peak = 2287.961 ; gain = 0.000
+# report_utilization -file "$outdir/util_synth.rpt"
+# opt_design
+Command: opt_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7z020'
+Running DRC as a precondition to command opt_design
+
+Starting DRC Task
+INFO: [DRC 23-27] Running DRC with 2 threads
+WARNING: [DRC 23-814] Not all possible (connectivity based) DRCs may have been run because this design is seen as Out of Context.
+INFO: [Project 1-461] DRC finished with 0 Errors
+INFO: [Project 1-462] Please refer to the DRC report (report_drc) for more information.
+
+Time (s): cpu = 00:00:04 ; elapsed = 00:00:03 . Memory (MB): peak = 2287.961 ; gain = 0.000
+
+Starting Cache Timing Information Task
+Ending Cache Timing Information Task | Checksum: 1de648662
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.205 . Memory (MB): peak = 2287.961 ; gain = 0.000
+
+Starting Logic Optimization Task
+
+Phase 1 Initialization
+
+Phase 1.1 Core Generation And Design Setup
+Phase 1.1 Core Generation And Design Setup | Checksum: 1de648662
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.190 . Memory (MB): peak = 2287.961 ; gain = 0.000
+
+Phase 1.2 Setup Constraints And Sort Netlist
+Phase 1.2 Setup Constraints And Sort Netlist | Checksum: 1de648662
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.371 . Memory (MB): peak = 2287.961 ; gain = 0.000
+Phase 1 Initialization | Checksum: 1de648662
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.389 . Memory (MB): peak = 2287.961 ; gain = 0.000
+
+Phase 2 Timer Update And Timing Data Collection
+
+Phase 2.1 Detect if minReqCache needed
+Phase 2.1 Detect if minReqCache needed | Checksum: 1de648662
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 2287.961 ; gain = 0.000
+
+Phase 2.2 Timer Update
+Phase 2.2 Timer Update | Checksum: 1de648662
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 2287.961 ; gain = 0.000
+Phase 2 Timer Update And Timing Data Collection | Checksum: 1de648662
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 2287.961 ; gain = 0.000
+
+Phase 3 Retarget
+INFO: [Opt 31-1851] Number of loadless carry chains removed were: 0
+INFO: [Opt 31-1834] Total Chains To Be Transformed Were: 0 AND Number of Transformed insts Created are: 0
+INFO: [Opt 31-1566] Pulled 14 inverters resulting in an inversion of 330 pins
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Opt 31-49] Retargeted 0 cell(s).
+Phase 3 Retarget | Checksum: 14e54d39b
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:11 . Memory (MB): peak = 2287.961 ; gain = 0.000
+Retarget | Checksum: 14e54d39b
+INFO: [Opt 31-389] Phase Retarget created 0 cells and removed 34 cells
+
+Phase 4 Constant propagation
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Phase 4 Constant propagation | Checksum: 1f7fdfead
+
+Time (s): cpu = 00:00:11 ; elapsed = 00:00:16 . Memory (MB): peak = 2287.961 ; gain = 0.000
+Constant propagation | Checksum: 1f7fdfead
+INFO: [Opt 31-389] Phase Constant propagation created 2 cells and removed 6 cells
+
+Phase 5 Sweep
+INFO: [Constraints 18-11670] Building netlist checker database with flags, 0x8
+Done building netlist checker database: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.065 . Memory (MB): peak = 2287.961 ; gain = 0.000
+Phase 5 Sweep | Checksum: 24329c28c
+
+Time (s): cpu = 00:00:14 ; elapsed = 00:00:20 . Memory (MB): peak = 2287.961 ; gain = 0.000
+Sweep | Checksum: 24329c28c
+INFO: [Opt 31-389] Phase Sweep created 0 cells and removed 0 cells
+
+Phase 6 BUFG optimization
+Phase 6 BUFG optimization | Checksum: 24329c28c
+
+Time (s): cpu = 00:00:16 ; elapsed = 00:00:22 . Memory (MB): peak = 2287.961 ; gain = 0.000
+BUFG optimization | Checksum: 24329c28c
+INFO: [Opt 31-662] Phase BUFG optimization created 0 cells of which 0 are BUFGs and removed 0 cells.
+
+Phase 7 Shift Register Optimization
+INFO: [Opt 31-1064] SRL Remap converted 0 SRLs to 0 registers and converted 0 registers of register chains to 0 SRLs
+Phase 7 Shift Register Optimization | Checksum: 24329c28c
+
+Time (s): cpu = 00:00:17 ; elapsed = 00:00:23 . Memory (MB): peak = 2287.961 ; gain = 0.000
+Shift Register Optimization | Checksum: 24329c28c
+INFO: [Opt 31-389] Phase Shift Register Optimization created 0 cells and removed 0 cells
+
+Phase 8 Post Processing Netlist
+Phase 8 Post Processing Netlist | Checksum: 24329c28c
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:00:24 . Memory (MB): peak = 2287.961 ; gain = 0.000
+Post Processing Netlist | Checksum: 24329c28c
+INFO: [Opt 31-389] Phase Post Processing Netlist created 0 cells and removed 0 cells
+
+Phase 9 Finalization
+
+Phase 9.1 Finalizing Design Cores and Updating Shapes
+Phase 9.1 Finalizing Design Cores and Updating Shapes | Checksum: 1495536ce
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:42 . Memory (MB): peak = 2287.961 ; gain = 0.000
+
+Phase 9.2 Verifying Netlist Connectivity
+
+Starting Connectivity Check Task
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.725 . Memory (MB): peak = 2287.961 ; gain = 0.000
+Phase 9.2 Verifying Netlist Connectivity | Checksum: 1495536ce
+
+Time (s): cpu = 00:00:31 ; elapsed = 00:00:42 . Memory (MB): peak = 2287.961 ; gain = 0.000
+Phase 9 Finalization | Checksum: 1495536ce
+
+Time (s): cpu = 00:00:31 ; elapsed = 00:00:42 . Memory (MB): peak = 2287.961 ; gain = 0.000
+Opt_design Change Summary
+=========================
+
+
+-------------------------------------------------------------------------------------------------------------------------
+|  Phase                        |  #Cells created  |  #Cells Removed  |  #Constrained objects preventing optimizations  |
+-------------------------------------------------------------------------------------------------------------------------
+|  Retarget                     |               0  |              34  |                                              0  |
+|  Constant propagation         |               2  |               6  |                                              0  |
+|  Sweep                        |               0  |               0  |                                              0  |
+|  BUFG optimization            |               0  |               0  |                                              0  |
+|  Shift Register Optimization  |               0  |               0  |                                              0  |
+|  Post Processing Netlist      |               0  |               0  |                                              0  |
+-------------------------------------------------------------------------------------------------------------------------
+
+
+Ending Logic Optimization Task | Checksum: 1495536ce
+
+Time (s): cpu = 00:00:31 ; elapsed = 00:00:42 . Memory (MB): peak = 2287.961 ; gain = 0.000
+
+Starting Power Optimization Task
+INFO: [Pwropt 34-132] Skipping clock gating for clocks with a period < 2.00 ns.
+INFO: [Pwropt 34-9] Applying IDT optimizations ...
+INFO: [Pwropt 34-10] Applying ODC optimizations ...
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Running Vector-less Activity Propagation...
+
+Finished Running Vector-less Activity Propagation
+
+
+Starting PowerOpt Patch Enables Task
+INFO: [Pwropt 34-162] WRITE_MODE attribute of 0 BRAM(s) out of a total of 4 has been updated to save power. Run report_power_opt to get a complete listing of the BRAMs updated.
+INFO: [Pwropt 34-201] Structural ODC has moved 2 WE to EN ports
+Number of BRAM Ports augmented: 6 newly gated: 2 Total Ports: 8
+Number of Flops added for Enable Generation: 4
+
+Ending PowerOpt Patch Enables Task | Checksum: 15c014001
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Ending Power Optimization Task | Checksum: 15c014001
+
+Time (s): cpu = 00:01:10 ; elapsed = 00:01:05 . Memory (MB): peak = 2371.914 ; gain = 83.953
+
+Starting Final Cleanup Task
+Ending Final Cleanup Task | Checksum: 15c014001
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.022 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Netlist sorting complete. Time (s): cpu = 00:00:02 ; elapsed = 00:00:02 . Memory (MB): peak = 2371.914 ; gain = 0.000
+INFO: [Common 17-83] Releasing license: Implementation
+25 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+opt_design completed successfully
+opt_design: Time (s): cpu = 00:02:02 ; elapsed = 00:02:13 . Memory (MB): peak = 2371.914 ; gain = 83.953
+# place_design
+Command: place_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7z020'
+INFO: [Common 17-83] Releasing license: Implementation
+INFO: [DRC 23-27] Running DRC with 2 threads
+WARNING: [DRC 23-814] Not all possible (connectivity based) DRCs may have been run because this design is seen as Out of Context.
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Running DRC as a precondition to command place_design
+INFO: [DRC 23-27] Running DRC with 2 threads
+WARNING: [DRC 23-814] Not all possible (connectivity based) DRCs may have been run because this design is seen as Out of Context.
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+INFO: [Place 30-611] Multithreading enabled for place_design using a maximum of 2 CPUs
+
+Starting Placer Task
+
+Phase 1 Placer Initialization
+
+Phase 1.1 Placer Initialization Netlist Sorting
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Phase 1.1 Placer Initialization Netlist Sorting | Checksum: 111c7aa35
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.107 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device | Checksum: 6a34d53a
+
+Time (s): cpu = 00:00:16 ; elapsed = 00:00:18 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 1.3 Build Placer Netlist Model
+Phase 1.3 Build Placer Netlist Model | Checksum: f2687b32
+
+Time (s): cpu = 00:02:09 ; elapsed = 00:01:52 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 1.4 Constrain Clocks/Macros
+Phase 1.4 Constrain Clocks/Macros | Checksum: f2687b32
+
+Time (s): cpu = 00:02:10 ; elapsed = 00:01:54 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Phase 1 Placer Initialization | Checksum: f2687b32
+
+Time (s): cpu = 00:02:11 ; elapsed = 00:01:54 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 2 Global Placement
+
+Phase 2.1 Floorplanning
+Phase 2.1 Floorplanning | Checksum: 9bb16e67
+
+Time (s): cpu = 00:03:59 ; elapsed = 00:03:11 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 2.2 Update Timing before SLR Path Opt
+Phase 2.2 Update Timing before SLR Path Opt | Checksum: 737f1188
+
+Time (s): cpu = 00:05:51 ; elapsed = 00:04:24 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 2.3 Post-Processing in Floorplanning
+Phase 2.3 Post-Processing in Floorplanning | Checksum: 737f1188
+
+Time (s): cpu = 00:05:51 ; elapsed = 00:04:25 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 2.4 Global Place Phase1
+Phase 2.4 Global Place Phase1 | Checksum: 8c7d42bf
+
+Time (s): cpu = 00:13:31 ; elapsed = 00:11:09 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 2.5 Global Place Phase2
+
+Phase 2.5.1 UpdateTiming Before Physical Synthesis
+Phase 2.5.1 UpdateTiming Before Physical Synthesis | Checksum: 16384074a
+
+Time (s): cpu = 00:15:39 ; elapsed = 00:12:49 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 2.5.2 Physical Synthesis In Placer
+INFO: [Physopt 32-1035] Found 0 LUTNM shape to break, 1335 LUT instances to create LUTNM shape
+INFO: [Physopt 32-1044] Break lutnm for timing: one critical 0, two critical 0, total 0, new lutff created 0
+INFO: [Physopt 32-1138] End 1 Pass. Optimized 547 nets or LUTs. Breaked 0 LUT, combined 547 existing LUTs and moved 0 existing LUT
+INFO: [Physopt 32-1408] Pass 1. Identified 2 candidate nets for high-fanout optimization.
+INFO: [Physopt 32-81] Processed net ph[1]. Replicated 55 times.
+INFO: [Physopt 32-81] Processed net ph[0]. Replicated 54 times.
+INFO: [Physopt 32-232] Optimized 2 nets. Created 109 new instances.
+INFO: [Physopt 32-775] End 1 Pass. Optimized 2 nets or cells. Created 109 new cells, deleted 0 existing cell and moved 0 existing cell
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 2371.914 ; gain = 0.000
+INFO: [Physopt 32-670] No setup violation found.  DSP Register Optimization was not performed.
+INFO: [Physopt 32-670] No setup violation found.  Shift Register to Pipeline Optimization was not performed.
+INFO: [Physopt 32-670] No setup violation found.  Shift Register Optimization was not performed.
+INFO: [Physopt 32-670] No setup violation found.  BRAM Register Optimization was not performed.
+INFO: [Physopt 32-670] No setup violation found.  URAM Register Optimization was not performed.
+INFO: [Physopt 32-949] No candidate nets found for dynamic/static region interface net replication
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.111 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization                                     |  Added Cells  |  Removed Cells  |  Optimized Cells/Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  LUT Combining                                    |            0  |            547  |                   547  |           0  |           1  |  00:00:08  |
+|  Retime                                           |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Very High Fanout                                 |          109  |              0  |                     2  |           0  |           1  |  00:00:30  |
+|  DSP Register                                     |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  Shift Register to Pipeline                       |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  Shift Register                                   |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  BRAM Register                                    |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  URAM Register                                    |            0  |              0  |                     0  |           0  |           0  |  00:00:00  |
+|  Dynamic/Static Region Interface Net Replication  |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Total                                            |          109  |            547  |                   549  |           0  |           4  |  00:00:38  |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Phase 2.5.2 Physical Synthesis In Placer | Checksum: 15e300d54
+
+Time (s): cpu = 00:17:49 ; elapsed = 00:14:49 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Phase 2.5 Global Place Phase2 | Checksum: 10bae50f6
+
+Time (s): cpu = 00:17:59 ; elapsed = 00:15:03 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Phase 2 Global Placement | Checksum: 10bae50f6
+
+Time (s): cpu = 00:17:59 ; elapsed = 00:15:03 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 3 Detail Placement
+
+Phase 3.1 Commit Multi Column Macros
+Phase 3.1 Commit Multi Column Macros | Checksum: 1272e01a3
+
+Time (s): cpu = 00:19:55 ; elapsed = 00:17:04 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 3.2 Commit Most Macros & LUTRAMs
+Phase 3.2 Commit Most Macros & LUTRAMs | Checksum: 167e025f9
+
+Time (s): cpu = 00:22:29 ; elapsed = 00:19:47 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 3.3 Area Swap Optimization
+Phase 3.3 Area Swap Optimization | Checksum: 150bb03ff
+
+Time (s): cpu = 00:22:34 ; elapsed = 00:19:52 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 3.4 Pipeline Register Optimization
+Phase 3.4 Pipeline Register Optimization | Checksum: 13afe311f
+
+Time (s): cpu = 00:22:34 ; elapsed = 00:19:53 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 3.5 Fast Optimization
+Phase 3.5 Fast Optimization | Checksum: 103157ed2
+
+Time (s): cpu = 00:24:13 ; elapsed = 00:21:13 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 3.6 Small Shape Detail Placement
+Phase 3.6 Small Shape Detail Placement | Checksum: 1117bf114
+
+Time (s): cpu = 00:25:45 ; elapsed = 00:24:15 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 3.7 Re-assign LUT pins
+Phase 3.7 Re-assign LUT pins | Checksum: cbe30d0b
+
+Time (s): cpu = 00:26:19 ; elapsed = 00:25:14 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 3.8 Pipeline Register Optimization
+Phase 3.8 Pipeline Register Optimization | Checksum: d004a3bf
+
+Time (s): cpu = 00:26:20 ; elapsed = 00:25:15 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Phase 3 Detail Placement | Checksum: d004a3bf
+
+Time (s): cpu = 00:26:21 ; elapsed = 00:25:16 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 4 Post Placement Optimization and Clean-Up
+
+Phase 4.1 Post Commit Optimization
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+
+Phase 4.1.1 Post Placement Optimization
+Post Placement Optimization Initialization | Checksum: 1a3fa4740
+
+Phase 4.1.1.1 BUFG Insertion
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 2 CPUs
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=0.760 | TNS=0.000 |
+Phase 1 Physical Synthesis Initialization | Checksum: 21bb3e037
+
+Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 2371.914 ; gain = 0.000
+INFO: [Place 46-33] Processed net p_3_in12_in, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net v688_s1[55]_i_1_n_0, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net v859_s1[55]_i_1_n_0, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net v885[55]_i_1_n_0, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net v345_s1[55]_i_1_n_0, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net p_19_in, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net p_0_in10_in, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-33] Processed net p_1_in, BUFG insertion was skipped due to placement/routing conflicts.
+INFO: [Place 46-56] BUFG insertion identified 8 candidate nets. Inserted BUFG: 0, Replicated BUFG Driver: 0, Skipped due to Placement/Routing Conflicts: 8, Skipped due to Timing Degradation: 0, Skipped due to netlist editing failed: 0.
+Ending Physical Synthesis Task | Checksum: 1fb8bec9b
+
+Time (s): cpu = 00:00:12 ; elapsed = 00:00:15 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Phase 4.1.1.1 BUFG Insertion | Checksum: 1a3fa4740
+
+Time (s): cpu = 00:28:22 ; elapsed = 00:27:25 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 4.1.1.2 Post Placement Timing Optimization
+INFO: [Place 30-746] Post Placement Timing Summary WNS=0.760. For the most accurate timing information please run report_timing.
+Phase 4.1.1.2 Post Placement Timing Optimization | Checksum: 20f3aa678
+
+Time (s): cpu = 00:28:26 ; elapsed = 00:27:29 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Time (s): cpu = 00:28:26 ; elapsed = 00:27:29 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Phase 4.1 Post Commit Optimization | Checksum: 20f3aa678
+
+Time (s): cpu = 00:28:27 ; elapsed = 00:27:30 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 4.2 Post Placement Cleanup
+Phase 4.2 Post Placement Cleanup | Checksum: 20f3aa678
+
+Time (s): cpu = 00:28:30 ; elapsed = 00:27:33 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 4.3 Placer Reporting
+
+Phase 4.3.1 Print Estimated Congestion
+INFO: [Place 30-612] Post-Placement Estimated Congestion 
+ ____________________________________________________
+|           | Global Congestion | Short Congestion  |
+| Direction | Region Size       | Region Size       |
+|___________|___________________|___________________|
+|      North|              32x32|                8x8|
+|___________|___________________|___________________|
+|      South|                8x8|                4x4|
+|___________|___________________|___________________|
+|       East|              16x16|                2x2|
+|___________|___________________|___________________|
+|       West|                4x4|                1x1|
+|___________|___________________|___________________|
+
+Phase 4.3.1 Print Estimated Congestion | Checksum: 20f3aa678
+
+Time (s): cpu = 00:28:31 ; elapsed = 00:27:35 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Phase 4.3 Placer Reporting | Checksum: 20f3aa678
+
+Time (s): cpu = 00:28:32 ; elapsed = 00:27:36 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 4.4 Final Placement Cleanup
+Netlist sorting complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Time (s): cpu = 00:28:33 ; elapsed = 00:27:38 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Phase 4 Post Placement Optimization and Clean-Up | Checksum: 15aac0cac
+
+Time (s): cpu = 00:28:34 ; elapsed = 00:27:39 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Ending Placer Task | Checksum: 8337e56a
+
+Time (s): cpu = 00:28:35 ; elapsed = 00:27:40 . Memory (MB): peak = 2371.914 ; gain = 0.000
+39 Infos, 2 Warnings, 0 Critical Warnings and 0 Errors encountered.
+place_design completed successfully
+place_design: Time (s): cpu = 00:29:09 ; elapsed = 00:28:16 . Memory (MB): peak = 2371.914 ; gain = 0.000
+# write_checkpoint -force "$outdir/post_place.dcp"
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.004 . Memory (MB): peak = 2371.914 ; gain = 0.000
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.361 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Write ShapeDB Complete: Time (s): cpu = 00:00:05 ; elapsed = 00:00:02 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Wrote PlaceStorage: Time (s): cpu = 00:00:26 ; elapsed = 00:00:15 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Wrote Netlist Cache: Time (s): cpu = 00:00:01 ; elapsed = 00:00:00.681 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Wrote Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.085 . Memory (MB): peak = 2371.914 ; gain = 0.000
+Write Physdb Complete: Time (s): cpu = 00:00:28 ; elapsed = 00:00:16 . Memory (MB): peak = 2371.914 ; gain = 0.000
+INFO: [Common 17-1381] The checkpoint 'C:/Users/hp/Greeks-Engine/Greek Engine/validation/results/vivado/cmp/heston_cmp_fwd10_z7h/post_place.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:37 ; elapsed = 00:00:33 . Memory (MB): peak = 2371.914 ; gain = 0.000
+# phys_opt_design
+Command: phys_opt_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7z020'
+
+Starting Initial Update Timing Task
+WARNING: [Timing 38-242] The property HD.CLK_SRC of clock port "clk" is not set. In out-of-context mode, this prevents timing estimation for clock delay/skew
+Resolution: Set the HD.CLK_SRC property of the out-of-context port to the location of the clock buffer instance in the top-level design
+
+Time (s): cpu = 00:01:20 ; elapsed = 00:01:03 . Memory (MB): peak = 2371.914 ; gain = 0.000
+INFO: [Vivado_Tcl 4-2279] Estimated Timing Summary | WNS= 0.760 | TNS= 0.000 | 
+INFO: [Vivado_Tcl 4-383] Design worst setup slack (WNS) is greater than or equal to 0.000 ns. All physical synthesis setup optimizations will be skipped.
+INFO: [Vivado_Tcl 4-232] No setup violation found. The netlist was not modified.
+INFO: [Common 17-83] Releasing license: Implementation
+5 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+phys_opt_design completed successfully
+phys_opt_design: Time (s): cpu = 00:01:22 ; elapsed = 00:01:06 . Memory (MB): peak = 2371.914 ; gain = 0.000
+# route_design
+Command: route_design
+Attempting to get a license for feature 'Implementation' and/or device 'xc7z020'
+INFO: [Common 17-349] Got license for feature 'Implementation' and/or device 'xc7z020'
+
+
+Starting Routing Task
+INFO: [Route 35-254] Multithreading enabled for route_design using a maximum of 2 CPUs
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: 3612617e ConstDB: 0 ShapeSum: 372c10fc RouteDB: 15f972f0
+WARNING: [Route 35-197] Clock port "clk" does not have an associated HD.CLK_SRC. Without this constraint, timing analysis may not be accurate and upstream checks cannot be done to ensure correct clock placement.
+WARNING: [Route 35-198] Port "v0[55]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[55]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[44]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[44]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_184[55]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_184[55]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[45]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[45]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[45]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[45]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[48]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[48]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[48]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[48]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[52]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[52]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[52]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[52]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[47]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[47]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[47]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[47]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[46]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[46]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[46]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[46]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[50]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[50]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[54]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[54]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[54]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[54]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[49]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[49]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[49]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[49]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_184[50]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_184[50]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[55]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[55]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[55]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[55]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[55]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[55]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[51]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[51]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[49]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[49]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[45]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[45]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[50]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[50]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[50]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[50]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[44]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[44]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[44]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[44]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[54]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[54]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[54]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[54]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[47]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[47]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[42]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[42]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[42]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[42]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[42]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[42]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[48]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[48]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_210[46]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_210[46]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_184[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_184[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[52]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[52]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[51]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[51]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[49]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[49]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[48]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[48]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[47]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[47]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[52]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[52]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_210[54]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_210[54]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_210[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_210[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[41]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[41]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[44]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[44]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[46]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[46]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[41]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[41]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_238[55]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_238[55]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_184[54]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_184[54]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_245[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_245[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_244[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_244[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_246[43]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_246[43]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_246[46]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_246[46]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_210[55]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_210[55]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_238[54]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_238[54]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "kappa[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "kappa[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_238[52]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_238[52]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[32]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[32]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[32]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[32]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_246[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_246[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_210[50]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_210[50]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_245[54]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_245[54]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_244[54]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_244[54]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_211[55]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_211[55]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[45]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[45]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "v0[40]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "v0[40]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[43]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[43]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_60[54]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_60[54]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_234[54]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_234[54]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_238[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_238[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_184[48]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_184[48]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[43]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[43]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_184[32]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_184[32]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_184[41]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_184[41]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[28]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[28]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[28]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[28]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[41]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[41]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_246[52]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_246[52]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_210[49]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_210[49]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_210[52]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_210[52]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_60[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_60[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_238[50]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_238[50]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_182[51]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_182[51]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_237[51]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_237[51]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_184[49]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_184[49]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_184[44]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_184[44]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_211[52]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_211[52]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[53]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[53]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[40]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[40]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_245[45]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_245[45]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_244[45]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_244[45]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "xi[41]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "xi[41]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "rho[41]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "rho[41]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+WARNING: [Route 35-198] Port "hs_211[49]" does not have an associated HD.PARTPIN_LOCS, which will prevent the partial routing of the signal "hs_211[49]". Without this partial route, timing analysis to/from this port will not be accurate, and no routing information for this port can be exported.
+INFO: [Common 17-14] Message 'Route 35-198' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Constraints 18-8777] Unable to split tiles. All required files are not available.
+Post Restoration Checksum: NetGraph: 46502caf | NumContArr: 3ae9195d | Constraints: c2a8fa9d | Timing: c2a8fa9d
+Phase 1 Build RT Design | Checksum: 2068b3b46
+
+Time (s): cpu = 00:03:42 ; elapsed = 00:03:55 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: 2068b3b46
+
+Time (s): cpu = 00:03:45 ; elapsed = 00:03:58 . Memory (MB): peak = 2371.914 ; gain = 0.000
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: 2068b3b46
+
+Time (s): cpu = 00:03:45 ; elapsed = 00:03:59 . Memory (MB): peak = 2371.914 ; gain = 0.000
+ Number of Nodes with overlaps = 0
+
+Phase 2.3 Update Timing
+Phase 2.3 Update Timing | Checksum: 28579d8c7
+
+Time (s): cpu = 00:05:29 ; elapsed = 00:05:27 . Memory (MB): peak = 2383.133 ; gain = 11.219
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=1.284  | TNS=0.000  | WHS=0.007  | THS=0.000  |
+
+
+Phase 2.4 Soft Constraint Pins - Fast Budgeting
+Phase 2.4 Soft Constraint Pins - Fast Budgeting | Checksum: 24365a28e
+
+Time (s): cpu = 00:06:10 ; elapsed = 00:06:08 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0 %
+  Global Horizontal Routing Utilization  = 0 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 59602
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 59602
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Phase 2 Router Initialization | Checksum: 25707d9d5
+
+Time (s): cpu = 00:06:13 ; elapsed = 00:06:11 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 3 Global Routing
+Phase 3 Global Routing | Checksum: 25707d9d5
+
+Time (s): cpu = 00:06:13 ; elapsed = 00:06:11 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 4 Initial Routing
+
+Phase 4.1 Initial Net Routing Pass
+Phase 4.1 Initial Net Routing Pass | Checksum: 257617cb8
+
+Time (s): cpu = 00:07:53 ; elapsed = 00:07:29 . Memory (MB): peak = 2833.070 ; gain = 461.156
+Phase 4 Initial Routing | Checksum: 257617cb8
+
+Time (s): cpu = 00:07:54 ; elapsed = 00:07:29 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 5 Rip-up And Reroute
+
+Phase 5.1 Global Iteration 0
+ Number of Nodes with overlaps = 27966
+ Number of Nodes with overlaps = 8857
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.315  | TNS=0.000  | WHS=N/A    | THS=N/A    |
+
+WARNING: [Route 35-447] Congestion is preventing the router from routing all nets. The router will prioritize the successful completion of routing all nets over timing optimizations.
+Phase 5.1 Global Iteration 0 | Checksum: 2e746852e
+
+Time (s): cpu = 01:37:43 ; elapsed = 01:20:00 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 5.2 Global Iteration 1
+ Number of Nodes with overlaps = 20318
+ Number of Nodes with overlaps = 4197
+ Number of Nodes with overlaps = 835
+ Number of Nodes with overlaps = 146
+ Number of Nodes with overlaps = 45
+ Number of Nodes with overlaps = 20
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.288 | TNS=-1.542 | WHS=N/A    | THS=N/A    |
+
+Phase 5.2 Global Iteration 1 | Checksum: 15185ad35
+
+Time (s): cpu = 02:12:14 ; elapsed = 01:47:54 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 5.3 Global Iteration 2
+ Number of Nodes with overlaps = 777
+ Number of Nodes with overlaps = 193
+ Number of Nodes with overlaps = 60
+ Number of Nodes with overlaps = 30
+ Number of Nodes with overlaps = 16
+ Number of Nodes with overlaps = 11
+ Number of Nodes with overlaps = 12
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.275  | TNS=0.000  | WHS=N/A    | THS=N/A    |
+
+Phase 5.3 Global Iteration 2 | Checksum: 26549a457
+
+Time (s): cpu = 02:14:46 ; elapsed = 01:50:34 . Memory (MB): peak = 2833.070 ; gain = 461.156
+Phase 5 Rip-up And Reroute | Checksum: 26549a457
+
+Time (s): cpu = 02:14:47 ; elapsed = 01:50:34 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 6 Delay and Skew Optimization
+
+Phase 6.1 Delay CleanUp
+Phase 6.1 Delay CleanUp | Checksum: 26549a457
+
+Time (s): cpu = 02:14:48 ; elapsed = 01:50:35 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 6.2 Clock Skew Optimization
+Phase 6.2 Clock Skew Optimization | Checksum: 26549a457
+
+Time (s): cpu = 02:14:49 ; elapsed = 01:50:36 . Memory (MB): peak = 2833.070 ; gain = 461.156
+Phase 6 Delay and Skew Optimization | Checksum: 26549a457
+
+Time (s): cpu = 02:14:49 ; elapsed = 01:50:36 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 7 Post Hold Fix
+
+Phase 7.1 Hold Fix Iter
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=0.275  | TNS=0.000  | WHS=0.036  | THS=0.000  |
+
+Phase 7.1 Hold Fix Iter | Checksum: 1d9688d25
+
+Time (s): cpu = 02:15:03 ; elapsed = 01:50:46 . Memory (MB): peak = 2833.070 ; gain = 461.156
+Phase 7 Post Hold Fix | Checksum: 1d9688d25
+
+Time (s): cpu = 02:15:03 ; elapsed = 01:50:47 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 8 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 47.2832 %
+  Global Horizontal Routing Utilization  = 43.1617 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+Phase 8 Route finalize | Checksum: 1d9688d25
+
+Time (s): cpu = 02:15:06 ; elapsed = 01:50:49 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 9 Verifying routed nets
+
+ Verification completed successfully
+Phase 9 Verifying routed nets | Checksum: 1d9688d25
+
+Time (s): cpu = 02:15:07 ; elapsed = 01:50:50 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 10 Depositing Routes
+Phase 10 Depositing Routes | Checksum: 1f974b6c0
+
+Time (s): cpu = 02:16:02 ; elapsed = 01:52:01 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 11 Post Process Routing
+Phase 11 Post Process Routing | Checksum: 1f974b6c0
+
+Time (s): cpu = 02:16:03 ; elapsed = 01:52:03 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Phase 12 Post Router Timing
+INFO: [Route 35-57] Estimated Timing Summary | WNS=0.275  | TNS=0.000  | WHS=0.036  | THS=0.000  |
+
+INFO: [Route 35-327] The final timing numbers are based on the router estimated timing analysis. For a complete and accurate timing signoff, please run report_timing_summary.
+Phase 12 Post Router Timing | Checksum: 1f974b6c0
+
+Time (s): cpu = 02:16:04 ; elapsed = 01:52:04 . Memory (MB): peak = 2833.070 ; gain = 461.156
+Total Elapsed time in route_design: 6723.51 secs
+
+Phase 13 Post-Route Event Processing
+Phase 13 Post-Route Event Processing | Checksum: dc677fdb
+
+Time (s): cpu = 02:16:05 ; elapsed = 01:52:04 . Memory (MB): peak = 2833.070 ; gain = 461.156
+INFO: [Route 35-16] Router Completed Successfully
+Ending Routing Task | Checksum: dc677fdb
+
+Time (s): cpu = 02:16:06 ; elapsed = 01:52:05 . Memory (MB): peak = 2833.070 ; gain = 461.156
+
+Routing Is Done.
+INFO: [Common 17-83] Releasing license: Implementation
+12 Infos, 103 Warnings, 0 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 02:16:09 ; elapsed = 01:52:10 . Memory (MB): peak = 2833.070 ; gain = 461.156
+# write_checkpoint -force "$outdir/post_route.dcp"
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 2833.070 ; gain = 0.000
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.001 . Memory (MB): peak = 2833.070 ; gain = 0.000
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Write ShapeDB Complete: Time (s): cpu = 00:00:03 ; elapsed = 00:00:01 . Memory (MB): peak = 2833.070 ; gain = 0.000
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:13 ; elapsed = 00:00:06 . Memory (MB): peak = 2833.070 ; gain = 0.000
+Wrote PlaceStorage: Time (s): cpu = 00:00:21 ; elapsed = 00:00:18 . Memory (MB): peak = 2833.070 ; gain = 0.000
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.767 . Memory (MB): peak = 2833.070 ; gain = 0.000
+Wrote Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.082 . Memory (MB): peak = 2833.070 ; gain = 0.000
+Write Physdb Complete: Time (s): cpu = 00:00:34 ; elapsed = 00:00:26 . Memory (MB): peak = 2833.070 ; gain = 0.000
+INFO: [Common 17-1381] The checkpoint 'C:/Users/hp/Greeks-Engine/Greek Engine/validation/results/vivado/cmp/heston_cmp_fwd10_z7h/post_route.dcp' has been generated.
+write_checkpoint: Time (s): cpu = 00:00:49 ; elapsed = 00:00:48 . Memory (MB): peak = 2833.070 ; gain = 0.000
+# report_utilization    -file "$outdir/util.rpt"
+report_utilization: Time (s): cpu = 00:00:04 ; elapsed = 00:00:05 . Memory (MB): peak = 2833.070 ; gain = 0.000
+# report_utilization    -hierarchical -file "$outdir/util_hier.rpt"
+report_utilization: Time (s): cpu = 00:00:07 ; elapsed = 00:00:10 . Memory (MB): peak = 2833.070 ; gain = 0.000
+# report_timing_summary -file "$outdir/timing.rpt"
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: min_max.
+INFO: [Timing 38-191] Multithreading enabled for timing update using a maximum of 2 CPUs
+WARNING: [Timing 38-242] The property HD.CLK_SRC of clock port "clk" is not set. In out-of-context mode, this prevents timing estimation for clock delay/skew
+Resolution: Set the HD.CLK_SRC property of the out-of-context port to the location of the clock buffer instance in the top-level design
+report_timing_summary: Time (s): cpu = 00:02:22 ; elapsed = 00:01:53 . Memory (MB): peak = 2833.070 ; gain = 0.000
+# report_power          -file "$outdir/power.rpt"
+Command: report_power -file ../../validation/results/vivado/cmp/heston_cmp_fwd10_z7h/power.rpt
+Running Vector-less Activity Propagation...
+
+Finished Running Vector-less Activity Propagation
+WARNING: [Power 33-332] Found switching activity that implies high-fanout reset nets being asserted for excessive periods of time which may result in inaccurate power analysis.
+Resolution: To review and fix problems, please run Power Constraints Advisor in the GUI from Tools > Power Constraints Advisor or run report_power with the -advisory option to generate a text report.
+0 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+report_power completed successfully
+report_power: Time (s): cpu = 00:01:41 ; elapsed = 00:01:26 . Memory (MB): peak = 2833.070 ; gain = 0.000
+# set wns [get_property SLACK [get_timing_paths -max_paths 1 -nworst 1 -setup]]
+# set fp [open "$outdir/summary.txt" w]
+# puts $fp "top $top"
+# puts $fp "part $part"
+# puts $fp "clk_ns $clk_ns"
+# puts $fp "wns_ns $wns"
+# close $fp
+INFO: [Common 17-206] Exiting Vivado at Wed Oct 28 20:10:32 2026...
