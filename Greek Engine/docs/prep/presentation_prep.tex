@@ -219,7 +219,7 @@ skips the DDR steps; \textbf{this run is still pending}.
 
 % =====================================================================
 \section{The figures in the paper and how to explain them}
-The paper (\texttt{docs/paper/greeks\_engine\_ieee.pdf}) has ten figures, in IEEE style.
+The paper (\texttt{docs/paper/greeks\_engine\_ieee.pdf}) has six figures, in IEEE style (Figs.~1--3 and 4--6 below); the other four below are supplementary, kept in the repository, with their data in the paper's tables.
 Below, in order of importance, is each figure with how to read it and what to say.
 
 \subsection*{Fig.~1 -- Design flow (diagram)}
@@ -251,7 +251,7 @@ Bump-and-reprice needs 18.4$\times$ the cycles on identical hardware.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.62\linewidth]{fig_equal.pdf}
-\caption*{Fig.~4 -- Three engines of equal throughput implemented in Vivado, normalised to price only.}
+\caption*{Supplementary (data in paper Table~IV) -- Three engines of equal throughput implemented in Vivado, normalised to price only.}
 \end{figure}
 \noindent\textbf{How to read it:} price only (4 multipliers), adjoint (8), factored forward mode
 (10), all at II = 32 on the Zynq-7020. The adjoint costs 1.68$\times$ the LUTs, 1.78$\times$ the
@@ -262,7 +262,7 @@ DSPs and is 6$\times$ more accurate at the same word length. A real but modest a
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.62\linewidth]{fig_modes.pdf}
-\caption*{Fig.~5 -- Adjoint against three forward-mode datapaths built by the same generator (scheduler).}
+\caption*{Supplementary (data in paper Table~V) -- Adjoint against three forward-mode datapaths built by the same generator (scheduler).}
 \end{figure}
 \noindent\textbf{How to read it:} left, multiplies per term (126 price, \textbf{250 adjoint},
 313 factored, 396 sparse, 802 dense); right, cycles with 8 multipliers (4,731 vs.\ 5,622,
@@ -274,7 +274,7 @@ factored forward method and 26 (234, more than the chip has) for the dense one.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.62\linewidth]{fig_dse.pdf}
-\caption*{Fig.~6 -- Cycles against the number of shared 64-bit multipliers.}
+\caption*{Supplementary -- Cycles against the number of shared 64-bit multipliers.}
 \end{figure}
 \noindent\textbf{How to read it:} log--log; cycles halve as multipliers double until the
 dependency chain of a term dominates past 64. The adjoint stays 1.1--1.9$\times$ the price and
@@ -284,7 +284,7 @@ FPGA, and the figure shows where extra hardware stops paying.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=\linewidth]{fig_accuracy.pdf}
-\caption*{Fig.~8 -- Accuracy over the 21-case grid: (a) worst relative error, (b) error / bound.}
+\caption*{Fig.~4 -- Accuracy over the 21-case grid: (a) worst relative error, (b) error / bound.}
 \end{figure}
 \noindent\textbf{How to read it:} (a) 56-bit errors $10^{-7}$ to $1.2\times10^{-5}$, 64-bit
 $10^{-8}$ to $7\times10^{-7}$; $\partial_\kappa$ and $\partial_\rho$ are the weakest. (b) every
@@ -294,7 +294,7 @@ conservative, as a worst-case bound must be, but within a factor of ten.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.6\linewidth]{fig_bound_sweep.pdf}
-\caption*{Fig.~9 -- Held-out 10,500-input sweep: distribution of the worst error/bound per input.}
+\caption*{Supplementary -- Held-out 10,500-input sweep: distribution of the worst error/bound per input.}
 \end{figure}
 \noindent\textbf{How to read it:} a cumulative distribution; the whole curve sits left of 0.36,
 nowhere near 1. Out-of-domain inputs that were not flagged also stay inside the bound.
@@ -303,7 +303,7 @@ raised \texttt{range\_err} and none exceeded the bound.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=\linewidth]{fig_bump.pdf}
-\caption*{Fig.~7 -- Bump-and-reprice error against bump size, and the adjoint (flat line).}
+\caption*{Fig.~5 -- Bump-and-reprice error against bump size, and the adjoint (flat line).}
 \end{figure}
 \noindent\textbf{How to read it:} U-shaped curves: on the right the truncation error of central
 differences ($\propto h^2$); on the left rounding divided by $h$ ($\propto\epsilon/h$), much worse in
@@ -313,7 +313,7 @@ gets the best bump size chosen afterwards, and it has nothing to tune.}
 
 \begin{figure}[H]\centering
 \includegraphics[width=0.62\linewidth]{fig_latency.pdf}
-\caption*{Fig.~10 -- Latency of one price + 9 Greeks: one CPU core vs.\ one FPGA engine.}
+\caption*{Fig.~6 -- Latency of one price + 9 Greeks: one CPU core vs.\ one FPGA engine.}
 \end{figure}
 \noindent\textbf{How to read it:} log scale. The ZCU102 (15.9\,$\mu$s, computed) beats forward AD,
 taped AAD and bumping, and scalar analytic Greeks (20.3\,$\mu$s), but \textbf{not} analytic Greeks
@@ -323,11 +323,11 @@ with hand-derived Greeks is faster than our engine, and four cores give 216,000 
 second. We claim no speed advantage over a well-optimised CPU.}
 
 \subsection*{Tables in the paper}
-I: positioning against related work. II: the three configurations. III: implementation
-(LUT, FF, DSP, BRAM, clock, slack). IV: \textbf{assumptions with rationale} (A1--A14). V: adjoint
-vs.\ forward mode. VI: significant figures. VII: silicon validation (1,469/1,469 bit-exact).
-VIII: three equal-throughput engines (Vivado). XI: the bound relative to each value (a-priori
-accuracy). XII: latency, throughput and energy vs.\ CPU, with measured CPU package power.
+I: related work. II: board implementations (LUT, FF, DSP, clock, slack, cycles). III:
+\textbf{assumptions with rationale} (A1--A14). IV: three equal-throughput engines (Vivado). V: adjoint
+vs.\ forward mode (scheduler). VI: significant figures and the bound relative to each value
+(held-out sweep). VII: silicon validation (1,469/1,469 bit-exact). VIII: latency, throughput and
+energy vs.\ CPU, with measured CPU package power.
 
 \subsection*{Not paper evidence}
 Vivado screenshots and the hedging figures (12 NIFTY trades) are in the report only. Hedging
@@ -433,7 +433,7 @@ hardware} and bit-exact silicon, not speed or energy against a CPU.
 \qa{Your energy numbers?}{FPGA: simulated activity on the routed netlist, chip level (2.485\,W $\times$ 15.9\,$\mu$s $\approx$ 40\,$\mu$J). CPU: package power measured with HWiNFO, 8.8\,W with eight processes at 216,000/s $\approx$ 40.9\,$\mu$J. Parity, so no energy claim.}
 \qa{Throughput is worse than 4 cores. Why should anyone care?}{We do not claim throughput. Three engines would fit on the ZCU102 by LUTs ($\approx$188k/s, projected), still below the vectorised CPU's 216k/s. The case is the cost and certified accuracy of the Greeks.}
 \qa{Did you compare against a vectorised CPU?}{Yes: the \texttt{-O3} loop was scalar; a structure-of-arrays version with glibc's vector maths takes 13.6\,$\mu$s on one core and beats the engine's computed latency. A single-loop vectorised version spilled registers and was slower than scalar.}
-\qa{Only 21 cases for the accuracy figure?}{Fig.~8 shows 21 for readability; the claim rests on 10,500 + 10,500 held-out inputs including seven hard regimes, plus a 50-digit check.}
+\qa{Only 21 cases for the accuracy figure?}{Fig.~4 shows 21 for readability; the claim rests on 10,500 + 10,500 held-out inputs including seven hard regimes, plus a 50-digit check.}
 \qa{Why are $\partial V/\partial\kappa$ and $\partial V/\partial\xi$ weak?}{They are small and computed through long chains with cancellation. Always within their bound, and the bound tells the user their accuracy in advance; that is the point of a bound.}
 
 \subsection{Practicalities and status}
