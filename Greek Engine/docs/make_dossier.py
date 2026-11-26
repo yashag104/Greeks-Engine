@@ -197,12 +197,12 @@ bound for every output, a modulo-scheduled Verilog datapath and the host code. T
 ZedBoard (Zynq-7020) and, as a 64-bit configuration computing everything on chip, on a ZCU102 (Zynq UltraScale+),
 with every output bit-exact against the model on both.</p>
 <div class="kpis">
-<div class="kpi"><div class="l">Greeks cost</div><div class="v">1.04&times;</div><div class="d">price + 9 Greeks: 4,733 cycles against 4,568 for the price alone (Zynq-7020 config.)</div></div>
+<div class="kpi"><div class="l">Greeks cost, equal throughput</div><div class="v">1.03&times;</div><div class="d">cycles of a right-sized price-only engine, at 1.68&times; its LUTs and 2&times; its DSPs (Vivado, Zynq-7020)</div></div>
 <div class="kpi"><div class="l">Against bump-and-reprice</div><div class="v">18.4&times;</div><div class="d">fewer cycles on the same hardware, and 32&ndash;560&times; more accurate</div></div>
 <div class="kpi"><div class="l">On silicon</div><div class="v">1,460 / 1,460</div><div class="d">outputs bit-exact: 450 on the ZedBoard, 1,010 on the ZCU102 (incl. 50 real NIFTY days); worst 0.255 of the error bound</div></div>
-<div class="kpi"><div class="l">ZCU102 latency</div><div class="v">15.9 &micro;s</div><div class="d">whole evaluation at 100 MHz; ~1.3&times; faster than the best CPU method on one idle core (20.3 &micro;s)</div></div>
+<div class="kpi"><div class="l">ZCU102 latency</div><div class="v">15.9 &micro;s</div><div class="d">whole evaluation at 100 MHz (computed); not faster than vectorised analytic Greeks on one CPU core (13.6 &micro;s)</div></div>
 <div class="kpi"><div class="l">Error bound</div><div class="v">&le; 0.378</div><div class="d">worst measured error / first-order bound over 10,500 inputs; never exceeded</div></div>
-<div class="kpi"><div class="l">Energy</div><div class="v">40&ndash;44 &micro;J</div><div class="d">per evaluation (engine power from simulated activity); ~2&ndash;4&times; less than the CPU estimate</div></div>
+<div class="kpi"><div class="l">Energy</div><div class="v">40&ndash;44 &micro;J</div><div class="d">per evaluation (simulated activity, chip level); parity with the vectorised CPU (40.9 &micro;J, measured)</div></div>
 </div>
 <div class="box"><b>Verified:</b> bit-exact RTL against the emulator (25 automated checks); bit-exact on the ZedBoard
 (1 + 50 cases, twice) and on the ZCU102 (1 + 50 cases + 50 real NIFTY days); error bound over 10,500 + 10,500 held-out
@@ -357,9 +357,10 @@ keep &ldquo;adjoint&rdquo; and &ldquo;for option Greeks&rdquo;: forward-mode AD 
 so &ldquo;first AD on an FPGA&rdquo; would be false.</li>
 <li><b>The first FPGA implementation of the COS method.</b> COS had run on CPUs and GPUs; the only FPGA Fourier pricer (AMD's
 <code>hcfEngine</code>) uses trapezoidal integration and returns the price alone.</li>
-<li><b>A tape-free adjoint datapath.</b> The reverse sweep is compiled into a statically scheduled fixed-point datapath that
-shares its units with the forward pass, possible because the COS pricer's graph does not depend on its inputs.</li>
-<li><b>All nine Greeks for 1.04 pricings, with the fewest multipliers.</b> Forward-mode datapaths built by the same generator need
+<li><b>A co-scheduled adjoint datapath with a register-resident tape.</b> The hand-derived reverse sweep is scheduled into the
+forward pass's fixed-point datapath and shares its units; forward values live in statically allocated rotating registers, possible
+because the COS pricer's graph does not depend on its inputs.</li>
+<li><b>All nine Greeks for 1.04 pricings on the same hardware; 1.03&times; the cycles and ~1.7&times; the area of a price-only engine of equal throughput; fewer resources than forward mode.</b> Forward-mode datapaths built by the same generator need
 more multiplies for the same Greeks: 313 per term hand-factored like analytic Greeks and 802 as an AD tool would build them,
 against the adjoint's 250; reaching the same pace takes 10 and 26 multipliers against 8. <span class="pill wn">Wording</span>
 the 1.04&times; itself is not unique (with 16 multipliers the factored forward method also reaches it); the claim is fewer
@@ -371,9 +372,9 @@ bound over 21 cases, 0.378 over 10,500 inputs, 0.356 over 10,500 held-out inputs
 <li><b>A generator for fixed-point adjoint datapaths</b> that emits the emulator, bound, schedule, Verilog, wrappers and host C from one
 description (tool contribution; Pham et al. 2016 generated Monte Carlo pricers without Greeks).</li>
 </ol>
-<div class="box warn"><b>Not claimed:</b> a latency win on the Zynq-7020 (the CPU is 3.2&times; faster there), or more than a narrow one on the ZCU102 (1.3&times;); throughput against a
-multi-core CPU; a statistical hedging result; a measured (rather than simulated) energy figure, until the board and CPU
-measurements are done.</div>
+<div class="box warn"><b>Not claimed:</b> any speed or energy advantage over a CPU: vectorised analytic Greeks take 13.6 &micro;s on one laptop core
+(the ZCU102 engine's computed latency is 15.9 &micro;s), four cores give 216,000 evaluations/s, and energy is at parity
+(40 vs 40.9 &micro;J); a statistical hedging result.</div>
 </section>
 
 <section id="results">
@@ -558,9 +559,9 @@ confidence. The 50 trading days' calibrated parameters are ready as board vector
 <tr><td>Speed at equal multipliers</td><td>4,731 vs 5,622 and 13,597 cycles (8 mult.); equal once CORDIC-bound with 16</td><td><span class="pill ok">better</span> / <span class="pill wn">equal</span></td></tr>
 <tr><td rowspan="6">CPU, same algorithm (i5-1155G7)</td><td>Greeks overhead</td><td>1.04 pricings vs 1.5 (analytic), 5.7&ndash;7.6 (AD tools), 17.4 (bump)</td><td><span class="pill ok">better</span></td></tr>
 <tr><td>Latency, Zynq-7020</td><td>65.3 &micro;s vs 20.3 &micro;s analytic (CPU 3.2&times; faster); 1.2&ndash;3.6&times; faster than AD tools and bumping</td><td><span class="pill no">worse</span> vs analytic</td></tr>
-<tr><td>Latency, ZCU102</td><td>15.9 &micro;s vs 20.3 &micro;s analytic (~1.3&times; faster); 4.9&ndash;15&times; faster than AD tools and bumping</td><td><span class="pill ok">better</span> (narrowly)</td></tr>
-<tr><td>Throughput</td><td>4 CPU cores 158k/s vs one engine 15.3k/s (Zynq) or 62.8k/s (ZCU102)</td><td><span class="pill no">worse</span> (2.5&ndash;10&times;)</td></tr>
-<tr><td>Energy</td><td>40&ndash;44 &micro;J vs an estimated 76&ndash;177 &micro;J (~2&ndash;4&times; less)</td><td><span class="pill ok">better</span> <span class="pill wn">CPU estimated</span></td></tr>
+<tr><td>Latency, ZCU102</td><td>15.9 &micro;s (computed) vs 20.3 &micro;s scalar / 13.6 &micro;s vectorised analytic; 4.9&ndash;15&times; faster than AD tools and bumping</td><td><span class="pill no">worse</span> vs vectorised</td></tr>
+<tr><td>Throughput</td><td>4 CPU cores 216k/s (vectorised) vs one engine 15.3k/s (Zynq) or 62.8k/s (ZCU102)</td><td><span class="pill no">worse</span></td></tr>
+<tr><td>Energy</td><td>40&ndash;44 &micro;J (chip level, simulated) vs 40.9 &micro;J vectorised / 54.6 &micro;J scalar (measured package power)</td><td><span class="pill wn">parity</span></td></tr>
 <tr><td>Accuracy</td><td>Fixed point is less precise than double, but rounding sits below the COS method's own error in typical cases, and only the FPGA gives a per-Greek bound</td><td><span class="pill wn">trade-off</span></td></tr>
 <tr><td>First generation (hand-written)</td><td>Cycles, area</td><td>92&times; fewer cycles; fits a Zynq-7020; bit-exact on silicon</td><td><span class="pill ok">better</span></td></tr>
 </table></div>
@@ -600,9 +601,9 @@ and latency and energy per evaluation.</div>
 <h2>8. Limitations</h2>
 <ul>
 <li><b>Board runs pending</b> for the ZedBoard processor system (bus-transfer timing) and its NIFTY run. The ZCU102 latency is the cycle count at the clock: the board run checks every output but JTAG cannot time the engine.</li>
-<li><b>CPU power estimated</b> from the part's rated 12&ndash;28 W (CPU timings are measured, on an idle machine).</li>
+<li><b>CPU power measured</b> with HWiNFO (package power, 29 Oct); CPU timings measured on an idle machine.</li>
 <li><b>Power is simulated, engine only</b>: no clock generator, bus or board; a supply measurement is pending. 57% of nets were matched by name, the rest propagated.</li>
-<li><b>Latency</b>: on the Zynq-7020 one laptop core with hand-derived Greeks is 3.2&times; faster (timing does not close at 100 MHz there, Fmax ~79 MHz); on the ZCU102 the engine leads by only 1.3&times;, and four cores give 2.5&times; its throughput.</li>
+<li><b>Latency</b>: on the Zynq-7020 one laptop core with hand-derived Greeks is 3.2&times; faster (timing does not close at 100 MHz there, Fmax ~79 MHz); on the ZCU102 the engine is slower than vectorised analytic Greeks on one core (13.6 &micro;s), and four cores give 3.4&times; its throughput.</li>
 <li><b>The bound is first order and covers rounding only</b>; the COS method's own error is separate and reaches 7.8&times;10<sup>&minus;3</sup> on vega in the worst board case.</li>
 <li><b>&part;V/&part;&kappa; and &part;V/&part;&xi;</b> carry only about 3 significant figures at the 99th percentile.</li>
 <li><b>The adjoint is hand-derived</b> (verified, not generated by an AD tool); say &ldquo;adjoint differentiation&rdquo;.</li>

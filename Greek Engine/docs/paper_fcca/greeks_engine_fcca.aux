@@ -1,0 +1,79 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand\HyField@AuxAddToFields[1]{}
+\providecommand\HyField@AuxAddToCoFields[2]{}
+\citation{capgiles24}
+\citation{klai}
+\citation{junike24}
+\citation{omahony24}
+\citation{haas25}
+\citation{omahony23}
+\citation{klai}
+\citation{klaih2rc}
+\citation{klai24}
+\citation{vitisquant}
+\citation{vitisquant}
+\citation{capgiles24}
+\citation{benkhalifa25}
+\@writefile{toc}{\contentsline {section}{\numberline {I}Introduction}{1}{section.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {II}Proposed Architecture}{1}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-A}}Heston Model and COS Pricing}{1}{subsection.2.1}\protected@file@percent }
+\citation{enzyme}
+\citation{cong22}
+\newlabel{eq:cos}{{1}{2}{Heston Model and COS Pricing}{equation.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-B}}Adjoint Differentiation}{2}{subsection.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-C}}Co-Scheduled Adjoint Datapath}{2}{subsection.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {\mbox  {II-D}}Fixed-Point Arithmetic and Per-Greek Error Bound}{2}{subsection.2.4}\protected@file@percent }
+\newlabel{sec:bound}{{\mbox  {II-D}}{2}{Fixed-Point Arithmetic and Per-Greek Error Bound}{subsection.2.4}{}}
+\newlabel{eq:bound}{{2}{2}{Fixed-Point Arithmetic and Per-Greek Error Bound}{equation.2.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {III}FPGA Implementation}{2}{section.3}\protected@file@percent }
+\citation{vitisquant}
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Top-level datapath of the proposed Heston Greeks FPGA accelerator (Zynq-7000 configuration; on the ZedBoard, the setup and finish steps run as generated C on the processor).}}{3}{figure.1}\protected@file@percent }
+\newlabel{fig:top}{{1}{3}{Top-level datapath of the proposed Heston Greeks FPGA accelerator (Zynq-7000 configuration; on the ZedBoard, the setup and finish steps run as generated C on the processor)}{figure.1}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Microarchitecture of the term pipeline: shared arithmetic units fed by phase-selected operand multiplexers, dedicated logic, and the register chains that form the tape (Zynq-7000 configuration; the ZCU102 configuration has 32 multipliers and one pipelined CORDIC rotator and vectorer at II\,=\,8).}}{3}{figure.2}\protected@file@percent }
+\newlabel{fig:micro}{{2}{3}{Microarchitecture of the term pipeline: shared arithmetic units fed by phase-selected operand multiplexers, dedicated logic, and the register chains that form the tape (Zynq-7000 configuration; the ZCU102 configuration has 32 multipliers and one pipelined CORDIC rotator and vectorer at II\,=\,8)}{figure.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Top: one COS term of the co-scheduled datapath; the reverse sweep reads forward values from scheduled rotating registers. Bottom: modulo schedule of the first 10 of 128 terms.}}{3}{figure.3}\protected@file@percent }
+\newlabel{fig:sched}{{3}{3}{Top: one COS term of the co-scheduled datapath; the reverse sweep reads forward values from scheduled rotating registers. Bottom: modulo schedule of the first 10 of 128 terms}{figure.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {IV}Results}{3}{section.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces Behavioural simulation of the 64-bit engine for two evaluations back to back: \texttt  {start}, busy, the setup, term and finish phases, the phase and term counters, the price accumulator, three of the ten outputs, \texttt  {done} and \texttt  {range\_err}. All outputs of both evaluations match the bit-accurate model.}}{4}{figure.4}\protected@file@percent }
+\newlabel{fig:wave}{{4}{4}{Behavioural simulation of the 64-bit engine for two evaluations back to back: \texttt {start}, busy, the setup, term and finish phases, the phase and term counters, the price accumulator, three of the ten outputs, \texttt {done} and \texttt {range\_err}. All outputs of both evaluations match the bit-accurate model}{figure.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Hardware validation on the ZCU102: (a) the board, driven over JTAG; (b) the board during the NIFTY test; (c) the test comparing every output bit for bit with the model.}}{4}{figure.5}\protected@file@percent }
+\newlabel{fig:hw}{{5}{4}{Hardware validation on the ZCU102: (a) the board, driven over JTAG; (b) the board during the NIFTY test; (c) the test comparing every output bit for bit with the model}{figure.5}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {I}{\ignorespaces Post-Route Implementation Results}}{4}{table.1}\protected@file@percent }
+\newlabel{tab:impl}{{I}{4}{Post-Route Implementation Results}{table.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {II}{\ignorespaces Engines Implemented at Equal Pace (II = 32) on Zynq-7000 at 70\,MHz}}{4}{table.2}\protected@file@percent }
+\newlabel{tab:equal}{{II}{4}{Engines Implemented at Equal Pace (II = 32) on Zynq-7000 at 70\,MHz}{table.2}{}}
+\citation{klai}
+\citation{klaih2rc}
+\citation{vitisquant}
+\citation{klai,klaih2rc}
+\citation{klai}
+\citation{klaih2rc}
+\citation{klai,klaih2rc}
+\citation{klai,klaih2rc}
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Relative error of bump-and-reprice against bump size, and of the proposed adjoint engine, for four representative Greeks (56-bit, base case).}}{5}{figure.6}\protected@file@percent }
+\newlabel{fig:bump}{{6}{5}{Relative error of bump-and-reprice against bump size, and of the proposed adjoint engine, for four representative Greeks (56-bit, base case)}{figure.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7}{\ignorespaces Clock cycles for the price and nine Greeks on the same fabric: bump-and-reprice, as used by existing FPGA engines, dense and factored forward-mode differentiation, and the proposed adjoint engine. Ratios are relative to the proposed engine.}}{5}{figure.7}\protected@file@percent }
+\newlabel{fig:cmp}{{7}{5}{Clock cycles for the price and nine Greeks on the same fabric: bump-and-reprice, as used by existing FPGA engines, dense and factored forward-mode differentiation, and the proposed adjoint engine. Ratios are relative to the proposed engine}{figure.7}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {III}{\ignorespaces Silicon Validation (Outputs Compared Bit for Bit with the Model)}}{5}{table.3}\protected@file@percent }
+\newlabel{tab:silicon}{{III}{5}{Silicon Validation (Outputs Compared Bit for Bit with the Model)}{table.3}{}}
+\citation{klai,klaih2rc}
+\bibcite{capgiles24}{1}
+\bibcite{klai}{2}
+\bibcite{junike24}{3}
+\bibcite{omahony24}{4}
+\bibcite{haas25}{5}
+\bibcite{omahony23}{6}
+\bibcite{klaih2rc}{7}
+\bibcite{klai24}{8}
+\bibcite{vitisquant}{9}
+\bibcite{benkhalifa25}{10}
+\bibcite{enzyme}{11}
+\bibcite{cong22}{12}
+\@writefile{lot}{\contentsline {table}{\numberline {IV}{\ignorespaces Comparison With FPGA Heston Option-Pricing and Greeks Engines}}{6}{table.4}\protected@file@percent }
+\newlabel{tab:compare}{{IV}{6}{Comparison With FPGA Heston Option-Pricing and Greeks Engines}{table.4}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {V}{\ignorespaces Price and Nine Greeks: Runtime, Energy and Efficiency of the Proposed Engine Versus CPU Implementations}}{6}{table.5}\protected@file@percent }
+\newlabel{tab:cpu}{{V}{6}{Price and Nine Greeks: Runtime, Energy and Efficiency of the Proposed Engine Versus CPU Implementations}{table.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {V}Conclusion}{6}{section.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{References}{6}{section*.1}\protected@file@percent }
+\gdef \@abspage@last{6}

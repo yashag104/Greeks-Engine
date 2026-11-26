@@ -22,7 +22,8 @@
 \contentsline {subsection}{\numberline {3.11}The 64-bit engine on a Zynq UltraScale+ (ZCU102)}{16}{subsection.3.11}%
 \contentsline {subsection}{\numberline {3.12}Power from simulated switching activity}{16}{subsection.3.12}%
 \contentsline {subsection}{\numberline {3.13}Against a CPU}{17}{subsection.3.13}%
-\contentsline {subsection}{\numberline {3.14}Many strikes at once (design study)}{18}{subsection.3.14}%
-\contentsline {subsection}{\numberline {3.15}Illustration: hedging on real market data}{18}{subsection.3.15}%
-\contentsline {subsection}{\numberline {3.16}Improvement over the first generation}{21}{subsection.3.16}%
-\contentsline {section}{\numberline {4}Timeline}{21}{section.4}%
+\contentsline {subsection}{\numberline {3.14}Revisions after review (29 October)}{18}{subsection.3.14}%
+\contentsline {subsection}{\numberline {3.15}Many strikes at once (design study)}{19}{subsection.3.15}%
+\contentsline {subsection}{\numberline {3.16}Illustration: hedging on real market data}{19}{subsection.3.16}%
+\contentsline {subsection}{\numberline {3.17}Improvement over the first generation}{22}{subsection.3.17}%
+\contentsline {section}{\numberline {4}Timeline}{22}{section.4}%
