@@ -80,6 +80,39 @@ def fig_cycles():
     save(fig, "fig_cycles")
 
 
+# ---- Fig. comparison: cycles for the price and nine Greeks, existing methods vs. proposed ----
+# Same fabric and multipliers per configuration. Bump-and-reprice and the adjoint are
+# RTL-verified cycle counts (gen_cycles.csv); the forward-mode datapaths are scheduled
+# with the same scheduler (mode_baselines.csv).
+def fig_compare_cycles():
+    g = {(r["family"], int(r["mults"])): r for r in rows("gen_cycles.csv")}
+    m = {(r["family"], int(r["mults"]), r["datapath"]): int(r["cycles"]) for r in rows("mode_baselines.csv")}
+    cfgs = [("z7", 8, "56-bit, 8 multipliers\n(Zynq-7000)"), ("zu", 32, "64-bit, 32 multipliers\n(Zynq UltraScale+)")]
+    series = [("Bump-and-reprice (existing FPGA engines)", C_BUMP, "////", lambda f, k: int(g[(f, k)]["cycles_bump"])),
+              ("Forward mode, dense (AD tool)", "#F0E442", "xxxx", lambda f, k: m[(f, k, "forward dense (AD tool)")]),
+              ("Forward mode, factored (analytic)", C_FWD, "\\\\\\\\", lambda f, k: m[(f, k, "forward factored (analytic)")]),
+              ("Adjoint (proposed)", C_ADJ, "", lambda f, k: int(g[(f, k)]["cycles_aad"]))]
+    x = np.arange(len(cfgs))
+    w = 0.2
+    fig, ax = plt.subplots(figsize=(COL1, 2.1))
+    for i, (lab, col, hatch, fn) in enumerate(series):
+        vals = [fn(f, k) for f, k, _ in cfgs]
+        props = [int(g[(f, k)]["cycles_aad"]) for f, k, _ in cfgs]
+        b = ax.bar(x + (i - 1.5) * w, vals, w, label=lab, color=col, hatch=hatch, edgecolor="black", linewidth=0.4)
+        for rect, v, pv in zip(b, vals, props):
+            txt = "{:,}".format(v) + ("" if v == pv else "  ({:.1f}$\\times$)".format(v / pv))
+            ax.text(rect.get_x() + rect.get_width() / 2, v * 1.12, txt, ha="center", va="bottom", fontsize=5.5, rotation=90)
+    ax.set_yscale("log")
+    ax.set_ylim(500, 2e6)
+    ax.set_xticks(x)
+    ax.set_xticklabels([c[2] for c in cfgs])
+    ax.set_ylabel("Clock cycles, price + 9 Greeks")
+    ax.grid(axis="y", which="major")
+    ax.set_axisbelow(True)
+    ax.legend(loc="lower center", bbox_to_anchor=(0.5, 1.0), frameon=False, ncol=2, fontsize=6)
+    save(fig, "fig_compare_cycles")
+
+
 # ---- Fig. equal throughput: three engines implemented in Vivado, normalised to price only --
 VIV = os.path.join(RES, "vivado")
 ENGINES = [("Price only (4 mult.)", os.path.join(VIV, "cmp", "heston_cmp_price4_z7h"), 4457, None, C_PRICE, "...."),
@@ -300,6 +333,7 @@ def fig_latency():
 
 if __name__ == "__main__":
     fig_cycles()
+    fig_compare_cycles()
     fig_equal()
     fig_modes()
     fig_dse()

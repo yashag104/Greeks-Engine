@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.5)  23 NOV 2026 11:55
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023/Debian) (preloaded format=pdflatex 2026.10.5)  25 NOV 2026 20:31
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -764,68 +764,79 @@ Package hyperref Info: Link coloring OFF on input line 36.
 \@outlinefile=\write4
 \openout4 = `greeks_engine_fcca.out'.
 
-LaTeX Font Info:    Trying to load font information for U+msa on input line 51.
+LaTeX Font Info:    Trying to load font information for OMS+ptm on input line 4
+6.
+
+(/usr/share/texlive/texmf-dist/tex/latex/psnfss/omsptm.fd
+File: omsptm.fd 
+)
+LaTeX Font Info:    Font shape `OMS/ptm/m/n' in size <10> not available
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 46.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 48.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 51.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 48.
 
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
-Underfull \hbox (badness 2318) in paragraph at lines 101--105
-[]\OT1/ptm/m/n/10 We com-pare ad-joint, forward-mode and bump-and-
- []
-
-[1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texmf-
-dist/fonts/enc/dvips/base/8r.enc}
+) [1{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}{/usr/share/texlive/texm
+f-dist/fonts/enc/dvips/base/8r.enc}
 
 
 ]
-LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 2
-29.
-
-(/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1pcr.fd
+LaTeX Font Info:    Trying to load font information for OT1+pcr on input line 1
+70.
+ (/usr/share/texlive/texmf-dist/tex/latex/psnfss/ot1pcr.fd
 File: ot1pcr.fd 2001/06/04 font definitions for OT1/pcr.
 )
-Underfull \vbox (badness 10000) has occurred while \output is active []
+<figures/fig_wave.png, id=96, 517.4532pt x 177.0615pt>
+File: figures/fig_wave.png Graphic file (type png)
+<use figures/fig_wave.png>
+Package pdftex.def Info: figures/fig_wave.png  used on input line 273.
+(pdftex.def)             Requested size: 516.0pt x 176.5666pt.
 
- [2]
-<figures/hw_zcu102.jpg, id=122, 722.7pt x 1219.55624pt>
+[2]
+Underfull \vbox (badness 2781) has occurred while \output is active []
+
+<figures/hw_zcu102.jpg, id=116, 722.7pt x 1219.55624pt>
 File: figures/hw_zcu102.jpg Graphic file (type jpg)
 <use figures/hw_zcu102.jpg>
-Package pdftex.def Info: figures/hw_zcu102.jpg  used on input line 273.
+Package pdftex.def Info: figures/hw_zcu102.jpg  used on input line 311.
 (pdftex.def)             Requested size: 62.38255pt x 105.27057pt.
-<figures/hw_run.jpg, id=123, 963.6pt x 1284.8pt>
+<figures/hw_run.jpg, id=117, 963.6pt x 1284.8pt>
 File: figures/hw_run.jpg Graphic file (type jpg)
 <use figures/hw_run.jpg>
-Package pdftex.def Info: figures/hw_run.jpg  used on input line 277.
+Package pdftex.def Info: figures/hw_run.jpg  used on input line 315.
 (pdftex.def)             Requested size: 78.94218pt x 105.25626pt.
-<figures/hw_console.png, id=124, 1081.03876pt x 229.85875pt>
+<figures/hw_console.png, id=118, 1081.03876pt x 229.85875pt>
 File: figures/hw_console.png Graphic file (type png)
 <use figures/hw_console.png>
-Package pdftex.def Info: figures/hw_console.png  used on input line 280.
+Package pdftex.def Info: figures/hw_console.png  used on input line 318.
 (pdftex.def)             Requested size: 251.99872pt x 53.5819pt.
-<../paper/figures/fig_cycles.pdf, id=128, 228.03192pt x 190.21063pt>
-File: ../paper/figures/fig_cycles.pdf Graphic file (type pdf)
-<use ../paper/figures/fig_cycles.pdf>
-Package pdftex.def Info: ../paper/figures/fig_cycles.pdf  used on input line 33
-1.
-(pdftex.def)             Requested size: 252.0pt x 210.20172pt.
-
-[3 <./figures/hw_zcu102.jpg> <./figures/hw_run.jpg> <./figures/hw_console.png>]
-<../paper/figures/fig_bump.pdf, id=145, 437.04077pt x 123.47931pt>
+<../paper/figures/fig_bump.pdf, id=119, 437.04077pt x 123.47931pt>
 File: ../paper/figures/fig_bump.pdf Graphic file (type pdf)
 <use ../paper/figures/fig_bump.pdf>
-Package pdftex.def Info: ../paper/figures/fig_bump.pdf  used on input line 374.
+Package pdftex.def Info: ../paper/figures/fig_bump.pdf  used on input line 359.
 
 (pdftex.def)             Requested size: 516.0pt x 145.80038pt.
-[4 <../paper/figures/fig_cycles.pdf>]
-Underfull \vbox (badness 3428) has occurred while \output is active []
+ [3]
+<figures/fig_compare_cycles.pdf, id=131, 249.05891pt x 170.88242pt>
+File: figures/fig_compare_cycles.pdf Graphic file (type pdf)
+<use figures/fig_compare_cycles.pdf>
+Package pdftex.def Info: figures/fig_compare_cycles.pdf  used on input line 383
+.
+(pdftex.def)             Requested size: 252.0pt x 172.90797pt.
 
+[4 <./figures/fig_wave.png> <./figures/hw_zcu102.jpg> <./figures/hw_run.jpg> <.
+/figures/hw_console.png>] [5 <../paper/figures/fig_bump.pdf> <./figures/fig_com
+pare_cycles.pdf>]
+Overfull \hbox (0.67036pt too wide) in paragraph at lines 520--537
+ [][] 
+ []
 
 
 ** Conference Paper **
@@ -838,7 +849,7 @@ Before submitting the final camera ready copy, remember to:
  uses only Type 1 fonts and that every step in the generation
  process uses the appropriate paper size.
 
-[5 <../paper/figures/fig_bump.pdf>] (./greeks_engine_fcca.aux)
+[6] (./greeks_engine_fcca.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-22>
@@ -847,13 +858,13 @@ Package rerunfilecheck Info: File `greeks_engine_fcca.out' has not changed.
 (rerunfilecheck)             Checksum: 9105452A2322E4C957C46523A04EFA17;1565.
  ) 
 Here is how much of TeX's memory you used:
- 22039 strings out of 476182
- 412159 string characters out of 5795595
- 1959975 words of memory out of 5000000
- 43618 multiletter control sequences out of 15000+600000
- 603580 words of font info for 125 fonts, out of 8000000 for 9000
+ 22105 strings out of 476182
+ 413414 string characters out of 5795595
+ 1966975 words of memory out of 5000000
+ 43684 multiletter control sequences out of 15000+600000
+ 604610 words of font info for 129 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 84i,12n,87p,460b,861s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,12n,87p,1200b,891s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx6.pfb></usr
 /share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx8.pfb></usr/share/
 texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/share/texliv
@@ -866,20 +877,20 @@ sfonts/cm/cmmi9.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/
 cm/cmr10.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6
 .pfb></usr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></u
 sr/share/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/share
-/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texli
-ve/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy5.pfb></usr/share/texlive/texm
-f-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/share/texlive/texmf-dist/
-fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/t
-ype1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/pu
-blic/amsfonts/cm/cmsy9.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/couri
-er/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb><
-/usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/tex
-live/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist
-/fonts/type1/urw/times/utmri8a.pfb>
-Output written on greeks_engine_fcca.pdf (5 pages, 873991 bytes).
+/texlive/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/share/texlive
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texlive/texmf
+-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/share/texlive/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmsy7.pfb></usr/share/texlive/texmf-dist/fonts/ty
+pe1/public/amsfonts/cm/cmsy8.pfb></usr/share/texlive/texmf-dist/fonts/type1/pub
+lic/amsfonts/cm/cmsy9.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/courie
+r/ucrr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmb8a.pfb></
+usr/share/texlive/texmf-dist/fonts/type1/urw/times/utmbi8a.pfb></usr/share/texl
+ive/texmf-dist/fonts/type1/urw/times/utmr8a.pfb></usr/share/texlive/texmf-dist/
+fonts/type1/urw/times/utmri8a.pfb>
+Output written on greeks_engine_fcca.pdf (6 pages, 900399 bytes).
 PDF statistics:
- 330 PDF objects out of 1000 (max. 8388607)
- 245 compressed objects within 3 object streams
- 48 named destinations out of 1000 (max. 500000)
- 118 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 337 PDF objects out of 1000 (max. 8388607)
+ 248 compressed objects within 3 object streams
+ 43 named destinations out of 1000 (max. 500000)
+ 123 words of extra memory for PDF output out of 10000 (max. 10000000)
 
