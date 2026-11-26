@@ -37,24 +37,15 @@
 
 \title{An Adjoint-Differentiation FPGA Accelerator for\\ Heston Option Greeks with Per-Greek Rounding-Error Bounds}
 
-\author{Author 1, Author 2, and Author 3}
+\author{\IEEEauthorblockN{Yash Agrawal, Govind Prasad, and Natasha Hazarika}
+\IEEEauthorblockA{Department of Electrical and Electronics Engineering, Birla Institute of Technology and Science, Pilani\\
+Pilani Campus, Rajasthan, India\\
+Email: \{f20230306, govind.prasad, natasha.hazarika\}@pilani.bits-pilani.ac.in}}
 
 \maketitle
 
 \begin{abstract}
-In this work, we propose a field-programmable gate array (FPGA) accelerator that computes the
-price of a European option under the Heston stochastic-volatility model together with all nine
-first-order sensitivities (Greeks) using adjoint (reverse-mode) differentiation. The price is
-evaluated with the Fourier-cosine (COS) method, whose operations do not depend on the input, so
-the reverse sweep is scheduled together with the forward pass in one fixed-point datapath, with
-its intermediate values held in registers allocated at design time. On a
-Xilinx Zynq-7000, the price and nine Greeks take 1.03$\times$ the cycles of a price-only engine of
-equal throughput, whereas bump-and-reprice takes 18.4$\times$ the cycles and is 32--560$\times$
-less accurate. Compared with a forward-mode engine of equal throughput, the proposed engine uses
-25\% fewer digital signal processing (DSP) blocks and is 6$\times$ more accurate. The error bound
-was not exceeded over 21,000 test inputs, and all 1,469 outputs measured on Zynq-7000 and Zynq
-UltraScale+ boards, including 50 calibrations to NIFTY index options, matched the model bit for
-bit. On the Zynq UltraScale+, one evaluation takes 15.9\,$\mu$s at an estimated 40\,$\mu$J.
+In this work, we propose a hardware accelerator for option pricing that computes the price of a European option under the Heston stochastic-volatility model together with all nine first-order sensitivities (Greeks). The price is evaluated with the Fourier-cosine (COS) method, whose operations do not depend on the input, so the reverse (adjoint) sweep that yields the Greeks runs alongside the forward sweep in a single fixed-point pipeline, with its intermediate values stored in registers allocated at design time. Proposed accelerator computes the price and all Greeks in 18.4$\times$ fewer clock cycles on a Xilinx Zynq-7000 field-programmable gate array (FPGA) and 12.3$\times$ fewer on a Zynq UltraScale+ FPGA, with about two orders of magnitude lower error compared with existing engines and models. It has been tested with real NIFTY index options and Heston model for 50 trading days over one year, the board computed the price within $1.7\times10^{-7}$ and every Greek within $1.6\times10^{-5}$ relative error, and all 1,469 outputs measured on both boards matches with the bit-accurate model.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -66,42 +57,35 @@ Adjoint differentiation, FPGA accelerator, Heston model, option Greeks, rounding
 Option Greeks are the sensitivities of an option price to the spot price, strike, maturity,
 interest rate and model parameters, and trading desks use them for hedging, risk limits and model
 calibration~\cite{capgiles24}. They must be recomputed whenever market data change~\cite{klai}. Under the
-Heston stochastic-volatility model~\cite{heston}, the option price has no closed form and is
-evaluated numerically. The COS method~\cite{fang} evaluates it as a short series of independent
-terms, and the number of terms required for a given accuracy was analysed in~\cite{junike24}. Calibration, which consumes these sensitivities, has also been accelerated with
-neural-network surrogates~\cite{horvath21}.
+Heston stochastic-volatility model, the option price has no closed form and is
+evaluated numerically. The COS method evaluates it as a short series of independent
+terms, and the number of terms required for a given accuracy was analysed in~\cite{junike24}.
 
-FPGAs have been widely studied for option pricing, as surveyed in~\cite{omahony24}. The authors
-in~\cite{deschryver13} proposed a multi-level Monte Carlo FPGA accelerator for the Heston model,
-and in~\cite{haas25}, the authors proposed a nested multi-level Monte Carlo framework for FPGAs.
-The authors in~\cite{omahony23} implemented American multinomial option pricing on an FPGA using
+FPGAs have been widely studied for option pricing, as surveyed in~\cite{omahony24}. In~\cite{haas25}, the authors proposed a nested multi-level Monte Carlo framework for FPGAs.
+The authors in~\cite{omahony23}, implemented American multinomial option pricing on an FPGA using
 oneAPI. In~\cite{klai} and~\cite{klaih2rc}, the authors computed option Greeks for the STAC-A2
-benchmark on Xilinx Alveo and Intel Stratix-10 FPGAs, and in~\cite{klai24}, the authors evaluated
-Versal AI Engines for the same workload. The AMD Vitis Quantitative Finance Library~\cite{vitisquant}
-also provides Heston pricing engines for FPGAs, and the COS method has been accelerated on
-graphics processing units (GPUs)~\cite{zhang14}. However, the existing FPGA engines obtain Greeks
-by bump-and-reprice, i.e., by perturbing each input and pricing again. Nine Greeks by central
-differences require 19 pricings, and their accuracy depends on a bump size that cannot be chosen
-well for every Greek at once. In software, bump-and-reprice has largely been replaced by adjoint
-algorithmic differentiation (AAD)~\cite{griewank}, which returns all derivatives of a price in one
+benchmark on Xilinx Alveo and Intel Stratix-10 FPGAs. In~\cite{klai24}, the authors evaluated
+Versal AI Engines for the same workload. The AMD Vitis Quantitative Finance Library~\cite{vitisquant} provides Heston pricing engines for FPGAs. The COS method has already been implemented on
+graphics processing units (GPUs). The library engines in~\cite{vitisquant} obtain them by
+bump-and-reprice, i.e., by perturbing each input and pricing again. The calculation of nine Greeks using bump-and-reorice require 19 pricings, and their accuracy depends on a bump size that cannot be chosen
+well for every Greek at once. Adjoint
+algorithmic differentiation (AAD) has already replaced bump-and-reprice as it returns all price derivatives in a single
 reverse sweep, and the review in~\cite{capgiles24} of fifteen years of AAD in finance reports no
 FPGA implementation. On FPGAs, error analysis has been used to choose fixed-point
-formats~\cite{benkhalifa25}, and the authors in~\cite{inrarch} proposed a dataflow compiler for
-the gradients of neural representations, but neither computes option Greeks.
+formats~\cite{benkhalifa25}.
 
-Motivated by the cycle cost and accuracy limitations of bump-and-reprice in hardware, we propose
+However the existing design uses more cycles and are not highly reliable becasue of poor accuracy, we propose
 an FPGA accelerator that computes the Heston price and all nine Greeks by adjoint differentiation
 in a single pass. To the best of our knowledge, this is the first FPGA implementation of both
 adjoint Greeks and the COS method. The main contributions of this work are as follows.
 \begin{itemize}
 \item We design a co-scheduled forward and reverse datapath in which the reverse sweep shares the
-arithmetic units of the forward pass and its stored values are held in a register tape sized at
-design time, so that the price and nine Greeks take 1.03$\times$ the cycles of a price-only
-engine of equal throughput.
-\item We compare adjoint, forward-mode and bump-and-reprice engines built through the same design
-flow. The adjoint engine needs 18.4$\times$ fewer cycles than bump-and-reprice and is up to
-560$\times$ more accurate, and at equal throughput it uses 25\% fewer DSP blocks than forward mode
-and is 6$\times$ more accurate.
+arithmetic units of the forward pass and its store values in the register tape allocated at
+design time, so that the price and all nine Greeks are obtained in a single pass.
+\item We compare the proposed engine with bump-and-reprice and forward-mode engines built through
+the same design flow on the same fabric. The proposed engine needs 18.4$\times$ fewer cycles than
+bump-and-reprice and has about two orders of magnitude lower error, and at equal throughput it uses 25\%
+fewer DSP blocks than forward mode and is 6$\times$ more accurate.
 \item We derive a first-order rounding-error bound for every Greek of the fixed-point datapath,
 not exceeded over 21,000 inputs, and validate the engine bit-exactly on Zynq-7000 and Zynq
 UltraScale+ boards, including 50 parameter sets calibrated to NIFTY index options.
@@ -109,29 +93,6 @@ UltraScale+ boards, including 50 parameter sets calibrated to NIFTY index option
 
 % =============================================================================
 \section{Proposed Architecture}
-\begin{figure*}[!t]
-\centering
-\begin{tikzpicture}[node distance=0.35cm]
-  \node[key, text width=8.5cm] (src) at (0,0) {Heston--COS price and its adjoint sweep, one operation graph\\[-1pt]
-    \normalfont\tiny setup (once) $\cdot$ term ($\times$128, forward + reverse) $\cdot$ finish (once)};
-  \foreach \x/\n/\t in {-6.2/emu/{Bit-accurate\\fixed-point model}, -3.1/flt/{Double-precision\\model},
-                        0/bnd/{Error bound $B_y$\\for price and each Greek}, 3.1/sch/{Modulo scheduler\\(II\,=\,32)}, 6.2/rtl/{Verilog RTL,\\AXI wrappers, host C}}
-    \node[blk, text width=2.45cm] (\n) at (\x,-1.3) {\t};
-  \foreach \n in {emu,flt,bnd,sch} \draw[arr] (src.south) -- ++(0,-0.25) -| (\n.north);
-  \draw[arr] (sch) -- (rtl);
-  \node[blk, text width=2.45cm] (tb) at (6.2,-2.75) {Testbench: every\\register bit-exact};
-  \node[blk, text width=2.45cm] (viv) at (3.1,-2.75) {Vivado: synthesis,\\place, route};
-  \node[key, text width=3.3cm, minimum height=0.5cm] (zed) at (-2.4,-2.38) {ZedBoard (Zynq-7000), 56-bit};
-  \node[key, text width=3.3cm, minimum height=0.5cm] (zcu) at (-2.4,-3.12) {ZCU102 (Zynq US+), 64-bit};
-  \node[blk, text width=2.45cm] (cmp) at (-6.2,-2.75) {Board outputs vs.\\model: bit for bit};
-  \draw[arr] (rtl) -- (tb); \draw[arr] (tb) -- (viv);
-  \draw[arr] (viv.west) -- ++(-0.6,0) |- (zed.east); \draw[arr] (viv.west) -- ++(-0.6,0) |- (zcu.east);
-  \draw[arr] (zed.west) -- ++(-0.5,0) |- (cmp.east); \draw[arr] (zcu.west) -- ++(-0.5,0) |- (cmp.east);
-  \draw[darr] (emu) -- node[lbl, right] {expected} (cmp);
-\end{tikzpicture}
-\caption{Design flow of the proposed accelerator. One operation graph yields the bit-accurate model, the error bound and the scheduled RTL, which is verified register by register, implemented in Vivado and validated bit for bit on two FPGA boards.}
-\label{fig:flow}
-\end{figure*}
 
 \subsection{Heston Model and COS Pricing}
 The Heston model describes the spot price $S_t$ and its variance $v_t$ as
@@ -162,11 +123,11 @@ which carries a truncation error of $O(h^2)$ and a rounding error of $O(\epsilon
 $\epsilon$ is the arithmetic resolution. Forward-mode differentiation propagates one tangent per
 input through the computation. Reverse-mode (adjoint) differentiation instead propagates the
 adjoint $\bar w_i=\partial V/\partial w_i$ of every intermediate value $w_i$ backwards from the
-price, and returns all nine Greeks in one sweep~\cite{griewank}. In software, the reverse sweep
-reads a tape of intermediate values recorded during the forward pass~\cite{codipack}; for programs
+price, and returns all nine Greeks in one sweep. In software, the reverse sweep
+reads a tape of intermediate values recorded during the forward pass; for programs
 without data-dependent control flow, the sweep can instead be generated ahead of
 time~\cite{enzyme}. The COS pricer has no data-dependent control flow, which the proposed
-architecture exploits in hardware.
+architecture employs in hardware.
 
 \subsection{Co-Scheduled Adjoint Datapath}
 Each COS term evaluates the payoff coefficient and the characteristic function (forward pass),
@@ -190,6 +151,70 @@ cycles and about 16 terms are in flight, as shown at the bottom of Fig.~\ref{fig
 units set this pace, and the 124 additional multiplications per term of the reverse sweep occupy
 multiplier slots that the forward pass leaves free. The 128-term loop completes in
 $127\cdot32+506+2=4{,}572$ cycles.
+
+Fig.~\ref{fig:top} shows the top-level datapath of the proposed engine. The host writes the
+nine inputs into an AXI4-Lite register file and starts the engine. The setup block computes the
+quantities shared by all terms, the term pipeline evaluates the 128 terms, and the finish block
+applies the discount factor, the chain rule through the setup quantities and put--call parity to
+the nine accumulated sums. Fig.~\ref{fig:micro} shows the microarchitecture of the term pipeline,
+where the phase counter selects, in every cycle, the operands of the operation that the scheduler
+assigned to each shared unit at that phase. The results pass to dedicated adders, shifters and
+normalisers, or into the register chains that form the tape. Since the schedule repeats every II
+cycles, the same multiplexer settings serve every term.
+
+\begin{figure*}[!t]
+\centering
+\begin{tikzpicture}[font=\scriptsize, >=Stealth, x=0.95cm, y=0.82cm]
+\tikzset{b/.style={draw=ink, rounded corners=1.5pt, align=center, inner sep=2.5pt, fill=white}}
+\node[b, fill=accsoft, draw=acc, text width=1.7cm, minimum height=1.2cm] (host) at (0.7,0) {Host\\(JTAG-to-AXI\\master or ARM)};
+\node[b, fill=black!6, text width=1.5cm, minimum height=2.7cm] (rf) at (4.1,0) {\textbf{AXI4-Lite}\\\textbf{register file}\\[2pt]9 inputs\\start / done\\10 outputs\\\texttt{range\_err}};
+\draw[<->, semithick] (host.east) -- node[above, font=\tiny]{AXI4-Lite} (rf.west |- host.east);
+\draw[semithick, rounded corners=2pt, fill=accsoft!35] (5.55,-2.3) rectangle (15.55,2.75);
+\node[font=\scriptsize\bfseries, anchor=north west] at (5.6,2.75) {Greeks engine (generated Verilog)};
+\node[b, text width=1.6cm, minimum height=1.05cm] (setup) at (7.0,1.0) {\textbf{Setup} (once)\\$[a,b]$, $x$, shared\\parts of $\varphi$};
+\node[b, text width=1.6cm, minimum height=1.05cm] (ctl) at (7.0,-1.1) {\textbf{Control}\\term counter $k$\\phase $t \bmod 32$};
+\node[b, fill=accsoft, draw=acc, text width=2.3cm, minimum height=2.7cm] (term) at (9.9,0) {\textbf{Term pipeline}\\[2pt]128 terms, II\,=\,32,\\about 16 in flight\\[2pt]forward $\to$ reverse\\$\to$ normalise\\(Fig.~\ref{fig:micro})};
+\node[b, text width=1.3cm, minimum height=1.8cm] (acc) at (12.45,0) {\textbf{9 accu-\\mulators}\\[2pt]price and\\8 adjoints};
+\node[b, text width=1.5cm, minimum height=1.8cm] (fin) at (14.6,0) {\textbf{Finish} (once)\\[2pt]discount,\\chain rule,\\parity};
+\draw[->, semithick] (rf.east |- setup) -- (setup.west);
+\draw[->, semithick] (rf.east |- ctl) -- node[above, font=\tiny]{start} (ctl.west);
+\draw[->, semithick] (setup.east) -- (term.west |- setup.east);
+\draw[->, semithick] (ctl.east) -- (term.west |- ctl.east);
+\draw[->, semithick] (term) -- (acc);
+\draw[->, semithick] (acc) -- (fin);
+\draw[->, semithick] (fin.south) -- (14.6,-2.75) -- node[below, font=\tiny]{price, nine Greeks and done} (4.1,-2.75) -- (rf.south);
+\end{tikzpicture}
+\caption{Top-level datapath of the proposed Heston Greeks FPGA accelerator (Zynq-7000 configuration; on the ZedBoard, the setup and finish steps run as generated C on the processor).}
+\label{fig:top}
+\vspace{6pt}
+\begin{tikzpicture}[font=\scriptsize, >=Stealth, x=0.95cm, y=0.78cm]
+\tikzset{b/.style={draw=ink, rounded corners=1.5pt, align=center, inner sep=2.5pt, fill=white}}
+\node[b, fill=black!6, text width=1.5cm, minimum height=3.6cm] (mux) at (0,0) {\textbf{Operand}\\\textbf{multiplexers}\\[3pt]select the\\inputs of each\\unit by phase\\$t \bmod 32$};
+\node[b, fill=accsoft, draw=acc, text width=2.5cm] (mul) at (3.4,1.6) {\textbf{8 multipliers}\\56$\times$56-bit, 9 DSP each};
+\node[b, fill=accsoft, draw=acc, text width=2.5cm] (rot) at (3.4,0) {\textbf{3 CORDIC rotators}\\$\cos$, $\sin$};
+\node[b, fill=accsoft, draw=acc, text width=2.5cm] (vec) at (3.4,-1.6) {\textbf{2 CORDIC vectorers}\\$|z|$, $\arg z$};
+\node[font=\scriptsize\bfseries] at (3.4,2.55) {shared units};
+\node[b, text width=2.4cm, minimum height=1.0cm] (glue) at (7.4,1.3) {\textbf{Dedicated logic}\\add/sub, shifts,\\normalise, ROMs};
+\node[b, fill=orange!12, text width=2.4cm, minimum height=1.2cm] (tape) at (7.4,-1.3) {\textbf{Register chains}\\register-resident tape\\(447 registers)};
+\draw[->, semithick] (mux.east |- mul) -- (mul.west);
+\draw[->, semithick] (mux.east |- rot) -- (rot.west);
+\draw[->, semithick] (mux.east |- vec) -- (vec.west);
+\draw[->, semithick] (mul.east) -- (glue.west |- mul.east);
+\draw[->, semithick] (rot.east) -- (5.45,0) |- ([yshift=-2.5mm]glue.west);
+\draw[->, semithick] (vec.east) -- (tape.west |- vec.east);
+\draw[->, semithick] (glue.south) -- (tape.north);
+\draw[->, semithick] (tape.south) -- (7.4,-2.85) -- node[below, font=\tiny]{forward values held for the reverse sweep, and other stored operands} (0,-2.85) -- (mux.south);
+\draw[->, semithick] (glue.north) -- (7.4,3.05) -- node[above, font=\tiny]{results as operands of later operations} (0,3.05) -- (mux.north);
+\node[font=\tiny, align=center] (in) at (-2.0,1.2) {setup\\values};
+\draw[->] (in) -- (mux.west |- in);
+\node[font=\tiny, align=center] (ph) at (-2.0,-1.2) {phase\\counter};
+\draw[->] (ph) -- (mux.west |- ph);
+\node[font=\tiny, align=center] (out) at (10.1,1.3) {to the 9\\accumulators};
+\draw[->] (glue.east) -- (out);
+\end{tikzpicture}
+\caption{Microarchitecture of the term pipeline: shared arithmetic units fed by phase-selected operand multiplexers, dedicated logic, and the register chains that form the tape (Zynq-7000 configuration; the ZCU102 configuration has 32 multipliers and one pipelined CORDIC rotator and vectorer at II\,=\,8).}
+\label{fig:micro}
+\end{figure*}
 
 \begin{figure}[!t]
 \centering
@@ -243,13 +268,21 @@ vectored input. The bound is evaluated at design time to select and certify the 
 
 % =============================================================================
 \section{FPGA Implementation}
-Fig.~\ref{fig:flow} shows the design flow. One Python description of the computation, consisting
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{figures/fig_wave.png}
+\caption{Behavioural simulation of the 64-bit engine for two evaluations back to back: \texttt{start}, busy, the setup, term and finish phases, the phase and term counters, the price accumulator, three of the ten outputs, \texttt{done} and \texttt{range\_err}. All outputs of both evaluations match the bit-accurate model.}
+\label{fig:wave}
+\end{figure*}
+
+One Python description of the computation, consisting
 of a setup step once per evaluation, the COS term 128 times and a finish step, forms an operation
 graph that contains both the forward pricing operations and the reverse sweep. From this graph,
 the generator derives a bit-accurate fixed-point model, a double-precision model, the error bound
 of Section~\ref{sec:bound}, and a modulo schedule emitted as Verilog together with AXI4-Lite
 wrappers and bit-exact host C code, as a high-level synthesis tool does in C-based
-flows~\cite{cong22}. The generated testbench checks every register against the model.
+flows~\cite{cong22}. The generated testbench checks every register against the model, and each
+engine is then implemented in Vivado and validated bit for bit on the board.
 
 
 
@@ -258,7 +291,12 @@ the 56-bit engine runs the 128-term loop in the programmable logic (PL), while t
 finish steps run as bit-exact generated C on the host. On the Zynq UltraScale+ (ZCU102), a 64-bit
 engine with 32 multipliers computes the whole evaluation on chip in 1,593 cycles. Each engine sits
 behind an AXI4-Lite register file and is driven over JTAG through a JTAG-to-AXI master. Fig.~\ref{fig:hw} shows the hardware setup on the
-ZCU102, and Table~\ref{tab:impl} gives the post-route results.
+ZCU102, and Table~\ref{tab:impl} gives the post-route results. Fig.~\ref{fig:wave} gives the
+behavioural simulation of the 64-bit engine for two evaluations back to back. After \texttt{start},
+the engine spends 113 cycles in the setup step, starts one COS term every 8 cycles for 1,431 cycles,
+and spends 49 cycles in the finish step, so \texttt{done} rises 1,593 cycles (15.9\,$\mu$s at
+100\,MHz) after \texttt{start}. The outputs of both evaluations match the bit-accurate model, and
+\texttt{range\_err} stays low.
 
 \begin{figure}[!t]
 \centering
@@ -302,62 +340,80 @@ FF & 32,134 (30.2\%) & 63,547 (11.6\%)\\
 DSP & 72 (32.7\%) & 510 (20.2\%)\\
 BRAM tiles & 4.5 (3.2\%) & 7.5 (0.8\%)\\
 Clock (MHz); WNS (ns) & 70; +0.458 & 100; +1.601\\
+Setup / term loop / finish (cycles) & host / 4,572 / host & 113 / 1,431 / 49\\
 Cycles per evaluation & 4,572 (loop) & 1,593 (whole)\\
 Latency, price + 9 Greeks & 65.3\,$\mu$s & 15.9\,$\mu$s\\
 Power, engine$^{a}$ & 0.676\,W & 2.485\,W\\
 Energy per evaluation & 44\,$\mu$J & 40\,$\mu$J\\
 \bottomrule
 \end{tabular}
-\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize $^{a}$On-chip power of the routed engine from gate-level switching activity on bit-exact evaluations, including device static power. Resources include the JTAG-to-AXI test system.}
+\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize $^{a}$On-chip power of the routed engine from gate-level switching activity on bit-exact evaluations, including device static power; the 64-bit netlist was simulated on the xczu7ev, whose static power is 0.03\,W below that of the xczu9eg. Resources include the JTAG-to-AXI test system.}
 \end{table}
+
+
+
+
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig_bump.pdf}
+\caption{Relative error of bump-and-reprice against bump size, and of the proposed adjoint engine, for four representative Greeks (56-bit, base case).}
+\label{fig:bump}
+\end{figure*}
 
 % =============================================================================
 \section{Results}
-In this section, we evaluate the proposed accelerator in terms of cost, accuracy, silicon
-validation, and comparison with software and prior FPGA engines.
+In this section, we compare the proposed accelerator with the existing approaches in terms of
+cycles, area, accuracy, performance and energy efficiency, and validate it on silicon.
 
-Fig.~\ref{fig:cycles} gives the cycles per evaluation on identical fabric. A price-only engine
-reaches II\,$=$\,32 with four multipliers, and the adjoint engine returns the price and nine Greeks
-at the same throughput in 4,733 instead of 4,613 cycles, a 3\% increase, whereas bump-and-reprice
-requires 86,860 cycles (18.4$\times$). On the 64-bit configuration, the corresponding figures are
-1,593, 1,540 and 19,562 cycles. Table~\ref{tab:equal} gives the three engines of equal throughput
-implemented on the Zynq-7000. The nine Greeks add 1.68$\times$ the look-up tables (LUTs) and
-2$\times$ the DSP blocks of the price-only engine at 1.03$\times$ its cycles. Since obtaining the
-same Greeks from the price-only engine by bump-and-reprice takes 19 runs per option, the adjoint
-engine delivers about 11$\times$ more priced-and-differentiated options per unit area and time.
+Fig.~\ref{fig:cmp} gives the cycles needed for the price and nine Greeks on identical fabric. The
+existing FPGA Greeks engines re-run the pricer for every perturbed input~\cite{vitisquant}.
+Implemented with the same arithmetic and scheduler as the proposed engine, this bump-and-reprice
+engine needs 86,860 cycles on the Zynq-7000 configuration and 19,562 cycles on the UltraScale+
+configuration, whereas the proposed engine needs 4,733 and 1,593 cycles, i.e., 18.4$\times$ and
+12.3$\times$ fewer. Three forward-mode datapaths were also generated from the same primitives and
+scheduler: dense, as a vector forward-mode tool builds it; sparse, with structural zeros removed;
+and factored, with exponent derivatives shared per term, as a hand derivation of analytic Greeks
+does. Per COS term, they need 802, 396 and 313 multiplications, against 250 for the proposed
+engine, and the dense and factored datapaths need 2.9$\times$ and 1.2$\times$ more cycles than
+the proposed engine on the Zynq-7000 configuration.
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=\columnwidth]{fig_cycles.pdf}
-\caption{Cycles per evaluation: price only (same multipliers, and same throughput with half the multipliers), the proposed adjoint engine, and bump-and-reprice on the same fabric.}
-\label{fig:cycles}
+\includegraphics[width=\columnwidth]{figures/fig_compare_cycles.pdf}
+\caption{Clock cycles for the price and nine Greeks on the same fabric: bump-and-reprice, as used by existing FPGA engines, dense and factored forward-mode differentiation, and the proposed adjoint engine. Ratios are relative to the proposed engine.}
+\label{fig:cmp}
 \end{figure}
+
+
+
+
 
 \begin{table}[!t]
 \centering
-\caption{Engines of Equal Throughput (II = 32) on Zynq-7000 at 70\,MHz}
+\caption{Engines Implemented at Equal Pace (II = 32) on Zynq-7000 at 70\,MHz}
 \label{tab:equal}
 \footnotesize
-\setlength{\tabcolsep}{2.4pt}
+\setlength{\tabcolsep}{2.2pt}
 \begin{tabular}{@{}lrrrrrr@{}}
 \toprule
-\textbf{Engine} & \textbf{Mult.} & \textbf{LUT} & \textbf{FF} & \textbf{DSP} & \textbf{Cycles} & \textbf{Greek err.}\\
+\textbf{Engine} & \textbf{Mult.} & \textbf{LUT} & \textbf{DSP} & \textbf{Cycles$^{a}$} & \textbf{Options/s} & \textbf{Greek err.}\\
 \midrule
-Price only & 4 & 21,251 & 15,303 & 36 & 4,457 & ---\\
-\textbf{Adjoint (proposed)} & \textbf{8} & \textbf{35,782} & \textbf{27,204} & \textbf{72} & 4,572 & $\mathbf{1.2\times10^{-5}}$\\
-Forward, factored & 10 & 38,199 & 30,514 & 90 & 4,449 & $7.4\times10^{-5}$\\
+Bump-and-reprice & 4 & 21,251 & 36 & 84,683 & 827 & $1.2\times10^{-4\,b}$\\
+Forward, factored & 10 & 38,199 & 90 & 4,449 & 15,734 & $7.4\times10^{-5}$\\
+\textbf{Adjoint (proposed)} & \textbf{8} & \textbf{35,782} & \textbf{72} & \textbf{4,572} & \textbf{15,311} & $\mathbf{1.2\times10^{-5}}$\\
 \bottomrule
 \end{tabular}
-\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize Out-of-context implementations; all three verified bit-exact against their models. Greek err.: worst relative error of any Greek over 21 test cases.}
+\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize Out-of-context implementations, all verified bit-exact against their models. $^{a}$For the price and nine Greeks; bump-and-reprice runs the price engine (4,457 cycles) 19 times. Greek err.: worst relative error of any Greek over 21 test cases; $^{b}$base case only, at the best bump size for each Greek (Fig.~\ref{fig:bump}).}
 \end{table}
 
-Three forward-mode datapaths were generated from the same primitives and scheduler for
-comparison: dense, as a vector forward-mode tool builds it; sparse, with structural zeros removed;
-and factored, with exponent derivatives shared per term, as a hand derivation of analytic Greeks
-does. Per COS term, they need 802, 396 and 313 multiplications, against 250 for the adjoint. At
-equal throughput (Table~\ref{tab:equal}), the factored forward engine requires 6.8\% more LUTs,
-12.2\% more flip-flops (FFs) and 25\% more DSP blocks, and since it carries its tangents without
-per-term rescaling, it is 6$\times$ less accurate at the same word length.
+Table~\ref{tab:equal} gives the three engines implemented at the same initiation interval on the
+Zynq-7000. The bump-and-reprice engine is built on the smallest price engine of the same pace and
+needs 19 runs per option, so the proposed engine delivers 18.5$\times$ more priced-and-differentiated
+options per second, and 11.0$\times$ more per LUT. The factored forward engine reaches the same rate
+as the proposed engine but requires 6.8\% more LUTs, 12.2\% more flip-flops and 25\% more DSP
+blocks, and since it carries its tangents without per-term rescaling, it is 6$\times$ less accurate
+at the same word length.
 
 On a 21-case grid, the 56-bit engine computes the price to within $6.1\times10^{-7}$ and every
 Greek to within $1.2\times10^{-5}$ relative error of the same algorithm in double precision, and
@@ -366,15 +422,18 @@ bound on the grid, 0.378 over a sweep of 10,500 inputs that includes seven hard 
 as Feller-violating parameters and extreme correlation, or 0.356 on a further held-out sweep of 10,500 inputs. A
 50-digit re-evaluation confirms the first-order assumption, as the hardware error stays within
 0.24 of the bound. Fig.~\ref{fig:bump} gives the error of bump-and-reprice on the same pricer and
-word length. The adjoint Greeks are 32--560$\times$ more accurate (median 145$\times$) than the best
-bump size chosen separately for each Greek, without any tuning.
+word length. Even with the best bump size chosen separately for each Greek, which requires the
+exact Greek to be known, bump-and-reprice reaches relative errors of only $1.0\times10^{-6}$ to
+$1.2\times10^{-4}$, against $7.5\times10^{-9}$ to $1.4\times10^{-6}$ for the adjoint Greeks
+without any tuning, i.e., a median of 145$\times$ lower error (32$\times$ to 560$\times$ across
+the nine Greeks at the base case). This gap follows from the arithmetic resolution
+$\epsilon=2^{-28}$, since the best central difference balances its $O(h^2)$ truncation error against
+its $O(\epsilon/h)$ rounding error at a relative error of order $\epsilon^{2/3}\approx2\times10^{-6}$,
+whereas the adjoint error is of order $\epsilon$ times the sensitivity of the Greek to rounding.
 
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=\textwidth]{fig_bump.pdf}
-\caption{Relative error of bump-and-reprice against bump size, and of the proposed adjoint engine, for four representative Greeks (56-bit, base case).}
-\label{fig:bump}
-\end{figure*}
+
+
+
 
 Table~\ref{tab:silicon} gives the silicon validation on both boards, with the engines run back to
 back without reset and including 50 Heston parameter sets calibrated to NIFTY index options. All
@@ -400,95 +459,114 @@ ZCU102 & NIFTY calibrations & 50 & 500 / 500 & 0.255\\
 \end{tabular}
 \end{table}
 
+\begin{table*}[!t]
+\centering
+\caption{Comparison With FPGA Heston Option-Pricing and Greeks Engines}
+\label{tab:compare}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{@{}L{2.8cm}C{3.8cm}C{3.4cm}C{3.4cm}C{2.9cm}@{}}
+\toprule
+\textbf{Metric} & \textbf{Proposed} & \textbf{Klaisoongnoen et al.~\cite{klai}} & \textbf{Klaisoongnoen et al.~\cite{klaih2rc}} & \textbf{AMD Vitis~\cite{vitisquant}}\\
+\midrule
+Model & Heston & Heston (STAC-A2) & Heston (STAC-A2) & Heston\\
+Pricing method & COS (Fourier) & MC + Longstaff--Schwartz & MC + Longstaff--Schwartz & Monte Carlo\\
+Greeks computed by & \textbf{Adjoint, one pass} & Not stated & Not stated & Central differences\\
+Pricings for 9 Greeks & \textbf{1} & N/R & N/R & 19\\
+Workload per run & One option, price + 9 Greeks & 25k paths, 5--50 assets & 25k paths, 5--50 assets & N/R\\
+Platform & Zynq-7000; Zynq US+ & Alveo U280 & Alveo U280; Stratix-10 & Alveo\\
+Clock (MHz) & 70; 100 & 300 & 300; 254--320 & N/R\\
+Arithmetic & 56/64-bit fixed point & Half, single, double, fixed & Single, double & Floating point\\
+Power (W) & 0.68; 2.49 (on chip) & 29.7 (card) & N/R & N/R\\
+Runtime & 65.3; 15.9\,$\mu$s per option & 115.4\,ms (tiny) & 67.3\,ms (tiny) & N/R\\
+Energy & 44; 40\,$\mu$J per option & 5.51\,J (tiny) & 2.51\,J (tiny) & N/R\\
+Efficiency gain vs.\ CPU & 70--652$\times$ (AD, bump); 0.3--5.3$\times$ (analytic) & 8--185$\times$ vs.\ 2$\times$24-core Xeon & up to 752$\times$ vs.\ 2$\times$24-core Xeon & N/R\\
+Accuracy guarantee & \textbf{Per-Greek rounding bound} & None & None & None\\
+Silicon validation & 1,469/1,469 outputs bit-exact & Runtime, energy & Runtime, energy & Library\\
+\bottomrule
+\end{tabular}
+\par\vspace{2pt}\parbox{\textwidth}{\scriptsize N/R: not reported. MC: Monte Carlo. \cite{klai,klaih2rc} accelerate the Heston path generation and Longstaff--Schwartz reduction of STAC-A2 (unofficial ports, not STAC audits); runtime and energy are for the tiny problem size in double precision, single kernel in~\cite{klai} and all kernels with streaming in~\cite{klaih2rc}, and their efficiency gains are against the best multi-core CPU configuration. Workloads differ, so runtimes and energies are not directly comparable across columns.}
+\end{table*}
+
+Table~\ref{tab:compare} compares the proposed engine with the FPGA Heston and Greeks engines in the
+literature, using their reported metrics. The engines in~\cite{klai,klaih2rc} accelerate the
+Monte Carlo path generation and Longstaff--Schwartz reduction of the STAC-A2 benchmark over
+25,000 paths, so their runtime per batch and ours per option are not directly comparable. They
+report efficiency gains of 8--185$\times$ and up to 752$\times$ over a dual 24-core Xeon, and the
+proposed engine achieves 70--652$\times$ over general CPU differentiation methods (Table~\ref{tab:cpu}). The proposed
+engine is the only one that computes Greeks by an adjoint, needing a single pass instead of 19
+pricings, the only one that uses a Fourier method, and the only one that attaches an accuracy
+guarantee to each Greek.
+
 Table~\ref{tab:cpu} compares the engine with the same algorithm on a laptop central processing
-unit (CPU), an Intel i5-1155G7 in double precision. The UltraScale+ engine computes the price and
-nine Greeks 4.9$\times$ faster than forward-mode automatic differentiation, 6.5$\times$ faster than
-taped AAD (CoDiPack~\cite{codipack}) and 15$\times$ faster than bump-and-reprice on one core, and it
-is within 1.2$\times$ of hand-optimised analytic Greeks in latency at a similar energy per
-evaluation (40 against 40.9\,$\mu$J), with a fixed, input-independent cycle count.
-Table~\ref{tab:compare} compares the design with FPGA engines from the literature. The proposed
-engine is the only one that computes Greeks by an adjoint, the only one that uses a Fourier
-method, and the only one that attaches an accuracy guarantee to each Greek.
+unit (CPU), an Intel i5-1155G7 in double precision, using the metrics of~\cite{klai,klaih2rc}:
+performance in evaluations per second and energy efficiency, i.e., performance per joule. On one
+core, the proposed UltraScale+ engine computes the price and nine Greeks 15$\times$, 6.5$\times$
+and 4.9$\times$ faster than bump-and-reprice, taped AAD (CoDiPack) and forward-mode
+AD, and is 652$\times$, 124$\times$ and 70$\times$ more energy efficient. It is also 1.3$\times$
+faster than hand-derived analytic Greeks on one core. Only the vectorised analytic implementation
+is faster, by 1.2$\times$ on one core and by 3.4$\times$ on four cores, at a similar energy per
+evaluation (40.9 against 40\,$\mu$J), while the proposed engine adds a fixed, input-independent cycle
+count and a bound on the error of every Greek.
+
+
 
 \begin{table}[!t]
 \centering
-\caption{Price and Nine Greeks: FPGA Engine Versus CPU Implementations}
+\caption{Price and Nine Greeks: Runtime, Energy and Efficiency of the Proposed Engine Versus CPU Implementations}
 \label{tab:cpu}
 \footnotesize
-\setlength{\tabcolsep}{2.2pt}
-\begin{tabular}{@{}lrrr@{}}
+\setlength{\tabcolsep}{1.8pt}
+\begin{tabular}{@{}lrrrrr@{}}
 \toprule
-\textbf{Implementation} & \textbf{Latency} & \textbf{Cost vs.} & \textbf{Energy}\\
-& \textbf{($\mu$s)} & \textbf{price} & \textbf{($\mu$J)}\\
+\textbf{Implementation} & \textbf{Runtime} & \textbf{Energy} & \textbf{Perf.} & \multicolumn{2}{c}{\textbf{Proposed (US+) gain}}\\
+\cmidrule(l){5-6}
+& \textbf{($\mu$s)} & \textbf{($\mu$J)} & \textbf{(s$^{-1}$)} & \textbf{Speed} & \textbf{Effic.}\\
 \midrule
-CPU, bump-and-reprice & 238.1 & 17.4$\times$ & ---\\
-CPU, taped AAD (CoDiPack) & 103.8 & 7.6$\times$ & ---\\
-CPU, forward-mode AD & 78.0 & 5.7$\times$ & ---\\
-CPU, analytic Greeks (vectorised) & 13.6 & --- & 40.9$^{a}$\\
+CPU, bump-and-reprice & 238.1 & 1,745$^{a}$ & 4,200 & 15.0$\times$ & 652$\times$\\
+CPU, taped AAD & 103.8 & 760$^{a}$ & 9,637 & 6.5$\times$ & 124$\times$\\
+CPU, forward-mode AD & 78.0 & 572$^{a}$ & 12,815 & 4.9$\times$ & 70$\times$\\
+CPU, analytic & 20.3 & 167 & 49,181 & 1.3$\times$ & 5.3$\times$\\
+CPU, analytic, vectorised & 13.6 & 115 & 73,529 & 0.85$\times$ & 2.5$\times$\\
+\quad same, four cores & 4.6$^{b}$ & 40.9 & 216,088 & 0.29$\times$ & 0.30$\times$\\
 \midrule
-\textbf{FPGA, Zynq-7000 (proposed)} & \textbf{65.3} & \textbf{1.04$\times$} & \textbf{44}\\
-\textbf{FPGA, Zynq US+ (proposed)} & \textbf{15.9} & \textbf{1.55$\times$} & \textbf{40}\\
+\textbf{FPGA, Zynq-7000} & \textbf{65.3} & \textbf{44} & \textbf{15,314} & --- & ---\\
+\textbf{FPGA, Zynq US+} & \textbf{15.9} & \textbf{40} & \textbf{62,775} & 1$\times$ & 1$\times$\\
 \bottomrule
 \end{tabular}
-\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize CPU: Intel i5-1155G7, g++ -O3, one core; latency is the best of five runs. $^{a}$Measured package power at full four-core throughput. Cost: time relative to the price alone on the same platform. FPGA latency from the cycle count at the operating clock.}
+\par\vspace{2pt}\parbox{\columnwidth}{\scriptsize CPU: Intel i5-1155G7, g++ -O3, one core unless stated; runtime is the best of five runs. Energy: measured package power (HWiNFO) times runtime; $^{a}$with the 7.3\,W measured for one busy core. $^{b}$Per evaluation at full throughput. FPGA: runtime from the cycle count at the operating clock, energy from the on-chip power of Table~\ref{tab:impl}. Efficiency: performance per joule, as in~\cite{klai,klaih2rc}.}
 \end{table}
 
-\begin{table*}[!t]
-\centering
-\caption{Comparison With FPGA Option-Pricing and Greeks Engines}
-\label{tab:compare}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{@{}L{2.6cm}C{3.4cm}C{3.5cm}C{2.9cm}C{3.2cm}@{}}
-\toprule
-\textbf{Metric} & \textbf{Proposed} & \textbf{Klaisoongnoen et al.~\cite{klai,klaih2rc}} & \textbf{AMD Vitis Quant.~\cite{vitisquant}} & \textbf{de Schryver et al.~\cite{deschryver13}}\\
-\midrule
-Model & Heston & Heston (STAC-A2) & Heston & Heston\\
-Pricing method & COS (Fourier) & Monte Carlo + Longstaff--Schwartz & Monte Carlo & Multi-level Monte Carlo\\
-Greeks computed by & \textbf{Adjoint, one pass} & Re-simulation (finite differences) & Central differences & --- (price only)\\
-Greeks cost vs.\ price & \textbf{1.03$\times$ (equal throughput)} & N/R & 19 pricings & ---\\
-Arithmetic & 56/64-bit fixed point & Double, single, half, fixed (explored) & Floating point & N/R\\
-Accuracy guarantee & \textbf{Per-Greek rounding bound} & None & None & None\\
-Platform & Zynq-7000, Zynq US+ & Alveo U280, Stratix-10 & Alveo & Virtex-6\\
-Silicon-validated & Yes, bit-exact & Yes & Library & Yes\\
-Reported result & 15.9\,$\mu$s, 40\,$\mu$J per price + 9 Greeks & 8--185$\times$ efficiency vs.\ 2$\times$ Xeon 8260M & N/R & $\approx$100 M steps/s at 3.58\,W\\
-\bottomrule
-\end{tabular}
-\par\vspace{2pt}\parbox{\textwidth}{\scriptsize N/R: not reported. Reported results are each work's own headline metric and are not directly comparable across pricing methods.}
-\end{table*}
+
+
+
 
 % =============================================================================
 \section{Conclusion}
 In this work, we proposed an FPGA accelerator that computes Heston option prices and all nine
-first-order Greeks by adjoint differentiation. By scheduling the reverse sweep together with the
-forward COS pass in a single fixed-point datapath, with its stored values in a register tape, the
-engine returns the Greeks for 1.03$\times$ the cycles of a price-only engine of equal throughput,
-needs 18.4$\times$ fewer cycles than bump-and-reprice and 25\% fewer DSP blocks than forward mode,
-and is 32--560$\times$ more accurate than bump-and-reprice. A per-Greek rounding-error bound, not
-exceeded over 21,000 inputs, accompanies every output, and bit-exact operation was confirmed on
-Zynq-7000 and Zynq UltraScale+ boards, demonstrating the suitability of the proposed accelerator
-for derivatives risk computation.
+first-order Greeks by adjoint differentiation in a single pass. By scheduling the reverse sweep
+together with the forward COS pass in one fixed-point datapath, with its stored values in a
+register tape, the engine needs 18.4$\times$ fewer cycles than the bump-and-reprice approach of
+existing FPGA engines on the same fabric with about two orders of magnitude lower error, and it uses 25\%
+fewer DSP blocks than forward mode at the same throughput. On a Zynq UltraScale+, it computes the
+price and nine Greeks in 15.9\,$\mu$s, 15$\times$ faster and 652$\times$ more energy efficient than
+bump-and-reprice on a CPU core. A per-Greek rounding-error bound, not exceeded over 21,000 inputs,
+accompanies every output, and bit-exact operation was confirmed on Zynq-7000 and Zynq UltraScale+
+boards, demonstrating the suitability of the proposed accelerator for derivatives risk
+computation.
 
 % =============================================================================
 \begin{thebibliography}{99}
 \bibitem{capgiles24} L.~Capriotti and M.~Giles, ``15 years of adjoint algorithmic differentiation (AAD) in finance,'' \emph{Quant. Finance}, vol.~24, no.~9, pp.~1353--1379, 2024.
 \bibitem{klai} M.~Klaisoongnoen, N.~Brown, and O.~Thomson~Brown, ``Low-power option Greeks: Efficiency-driven market risk analysis using FPGAs,'' in \emph{Proc. Int. Symp. Highly-Efficient Accelerators and Reconfigurable Technologies (HEART)}, 2022, pp.~95--101.
-\bibitem{heston} S.~L. Heston, ``A closed-form solution for options with stochastic volatility with applications to bond and currency options,'' \emph{Rev. Financial Stud.}, vol.~6, no.~2, pp.~327--343, 1993.
-\bibitem{fang} F.~Fang and C.~W. Oosterlee, ``A novel pricing method for European options based on Fourier-cosine series expansions,'' \emph{SIAM J. Sci. Comput.}, vol.~31, no.~2, pp.~826--848, 2008.
 \bibitem{junike24} G.~Junike, ``On the number of terms in the COS method for European option pricing,'' \emph{Numer. Math.}, vol.~156, pp.~533--564, 2024.
-\bibitem{horvath21} B.~Horvath, A.~Muguruza, and M.~Tomas, ``Deep learning volatility: A deep neural network perspective on pricing and calibration in (rough) volatility models,'' \emph{Quant. Finance}, vol.~21, no.~1, pp.~11--27, 2021.
 \bibitem{omahony24} A.~T. O'Mahony, B.~Hanzon, and E.~Popovici, ``The role of FPGAs in modern option pricing techniques: A survey,'' \emph{Electronics}, vol.~13, no.~16, art.~3186, 2024.
-\bibitem{deschryver13} C.~de~Schryver, P.~Torruella, and N.~Wehn, ``A multi-level Monte Carlo FPGA accelerator for option pricing in the Heston model,'' in \emph{Proc. Design, Automation \& Test in Europe (DATE)}, 2013, pp.~248--253.
 \bibitem{haas25} I.-B. Haas and M.~B. Giles, ``A nested MLMC framework for efficient simulations on FPGAs,'' \emph{Monte Carlo Methods Appl.}, vol.~31, no.~3, pp.~173--188, 2025.
 \bibitem{omahony23} A.~T. O'Mahony, G.~Zeidan, B.~Hanzon, and E.~M. Popovici, ``American multinomial option pricing on FPGA using oneAPI,'' in \emph{Proc. IEEE 66th Int. Midwest Symp. Circuits Syst. (MWSCAS)}, 2023, pp.~831--835.
 \bibitem{klaih2rc} M.~Klaisoongnoen, N.~Brown, and O.~Thomson~Brown, ``Fast and energy-efficient derivatives risk analysis: Streaming option Greeks on Xilinx and Intel FPGAs,'' in \emph{Proc. Int. Workshop Heterogeneous High-Performance Reconfigurable Computing (H2RC), SC22}, 2022, pp.~18--27.
 \bibitem{klai24} M.~Klaisoongnoen, N.~Brown, T.~Dykes, J.~R. Jones, and U.-U. Haus, ``Evaluating Versal AI Engines for option price discovery in market risk analysis,'' in \emph{Proc. ACM/SIGDA Int. Symp. Field-Programmable Gate Arrays (FPGA)}, 2024.
 \bibitem{vitisquant} AMD, ``Vitis Libraries: Quantitative Finance Library,'' [Online]. Available: \url{https://github.com/Xilinx/Vitis_Libraries}
-\bibitem{zhang14} B.~Zhang and C.~W. Oosterlee, ``Acceleration of option pricing technique on graphics processing units,'' \emph{Concurrency Computat.: Pract. Exper.}, vol.~26, no.~9, pp.~1626--1639, 2014.
-\bibitem{griewank} A.~Griewank and A.~Walther, \emph{Evaluating Derivatives: Principles and Techniques of Algorithmic Differentiation}, 2nd~ed. Philadelphia, PA, USA: SIAM, 2008.
 \bibitem{benkhalifa25} D.~Ben~Khalifa, I.~Winandy, A.~Dion, F.~Manni, P.-L. Garoche, and M.~Martel, ``Automated fixed-point precision optimization for FPGA synthesis,'' \emph{IEEE Open J. Circuits Syst.}, 2025, doi: 10.1109/OJCAS.2025.3580744.
-\bibitem{inrarch} S.~Abi-Karam, R.~Sarkar, D.~Xu, Z.~Fan, Z.~Wang, and C.~Hao, ``INR-Arch: A dataflow architecture and compiler for arbitrary-order gradient computations in implicit neural representation processing,'' in \emph{Proc. IEEE/ACM Int. Conf. Comput.-Aided Design (ICCAD)}, 2023, pp.~1--9.
-\bibitem{codipack} M.~Sagebaum, T.~Albring, and N.~R. Gauger, ``High-performance derivative computations using CoDiPack,'' \emph{ACM Trans. Math. Softw.}, vol.~45, no.~4, 2019.
 \bibitem{enzyme} W.~S. Moses \emph{et~al.}, ``Reverse-mode automatic differentiation and optimization of GPU kernels via Enzyme,'' in \emph{Proc. Int. Conf. High Perform. Comput., Netw., Storage Anal. (SC)}, 2021.
 \bibitem{cong22} J.~Cong, J.~Lau, G.~Liu, S.~Neuendorffer, P.~Pan, K.~Vissers, and Z.~Zhang, ``FPGA HLS today: Successes, challenges, and opportunities,'' \emph{ACM Trans. Reconfigurable Technol. Syst.}, vol.~15, no.~4, pp.~1--42, 2022.
 \end{thebibliography}
